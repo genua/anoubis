@@ -533,7 +533,7 @@ __send_notify(struct anoubis_msg *m, struct event_info_session *ev_info)
 		ng = anoubis_server_getnotify(sess->proto);
 		if (!ng)
 			continue;
-		anoubis_notify(ng, head);
+		anoubis_notify(ng, head, ANOUBISD_MAX_PENDNG_EVENTS);
 	}
 	anoubis_notify_destroy_head(head);
 	DEBUG(DBG_TRACE, " >anoubis_notify_destroy_head");
@@ -1371,7 +1371,7 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 		ng = anoubis_server_getnotify(sess->proto);
 		if (!ng)
 			continue;
-		ret = anoubis_notify(ng, head);
+		ret = anoubis_notify(ng, head, ANOUBISD_MAX_PENDNG_EVENTS);
 		if (ret < 0)
 			log_warn("anoubis_notify: Error code %d", -ret);
 		if (ret > 0) {

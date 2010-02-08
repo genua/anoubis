@@ -304,13 +304,14 @@ anoubis_notify_create_head(struct anoubis_msg * m,
  */
 
 int anoubis_notify(struct anoubis_notify_group * ng,
-    struct anoubis_notify_head * head)
+    struct anoubis_notify_head * head, unsigned int limit)
 {
 	struct anoubis_notify_event * nev;
 	struct anoubis_msg * m = head->m;
 	int ret, opcode;
 	u_int32_t uid, ruleid, subsystem;
 	anoubis_token_t token;
+	unsigned int pendingcnt = 0;
 
 	opcode = get_value(m->u.general->type);
 	switch(opcode) {
@@ -344,6 +345,7 @@ int anoubis_notify(struct anoubis_notify_group * ng,
 	if (!reg_match_all(ng, uid, ruleid, subsystem))
 		return 0;
 	LIST_FOREACH(nev, &ng->pending, next) {
+		pendingcnt++;
 		if (nev->token == token)
 			return -EEXIST;
 	}
@@ -356,6 +358,8 @@ int anoubis_notify(struct anoubis_notify_group * ng,
 			return ret;
 		return 1;
 	}
+	if (limit && pendingcnt >= limit)
+		return -ENOSPC;
 	nev = malloc(sizeof(struct anoubis_notify_event));
 	if (!nev)
 		return -ENOMEM;

@@ -176,7 +176,7 @@ tc_Communicator_lud_server(const char *sockname)
 			head = anoubis_notify_create_head(currNotify, NULL,
 			    NULL);
 			fail_if(head == NULL, "Cannot create msg head");
-			anoubis_notify(ng, head);
+			anoubis_notify(ng, head, 0);
 			anoubis_notify_destroy_head(head);
 		}
 	}

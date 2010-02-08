@@ -59,7 +59,7 @@
 .Ft void
 .Fn anoubis_notify_destroy_head "struct anoubis_notify_head * h"
 .Ft int
-.Fn anoubis_notify "struct anoubis_notify_group * ng" "struct anoubis_notify_head * head"
+.Fn anoubis_notify "struct anoubis_notify_group * ng" "struct anoubis_notify_head * head" "unsigned int limit"
 .Ft int
 .Fn anoubis_notify_answer "struct anoubis_notify_group * ng" "anoubis_token_t token" "int verdict" "int delegate"
 .Ft int
@@ -103,6 +103,11 @@ This is done by
 This function will return a positive value if the event could actually
 be sent and zero if the event did not match any active registration of
 the group.
+The parameter
+.Nm limit
+limits the total number of events in the session that are waiting for
+a reply.
+If the limit is reached an error is returned.
 .Pp
 If the event is a notify and not an ask event (i.e. no reply from the
 peer is required) this is all that must be done and the caller should

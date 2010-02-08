@@ -54,7 +54,8 @@ int anoubis_notify_register(struct anoubis_notify_group * g,
     uid_t uid, u_int32_t ruleid, u_int32_t subsystem);
 int anoubis_notify_unregister(struct anoubis_notify_group * g,
     uid_t uid, u_int32_t ruleid, u_int32_t subsystem);
-int anoubis_notify(struct anoubis_notify_group *, struct anoubis_notify_head *);
+int anoubis_notify(struct anoubis_notify_group *, struct anoubis_notify_head *,
+    unsigned int limit);
 int anoubis_notify_sendreply(struct anoubis_notify_head * head,
     int verdict, void * you, uid_t uid);
 int anoubis_notify_answer(struct anoubis_notify_group * ng,

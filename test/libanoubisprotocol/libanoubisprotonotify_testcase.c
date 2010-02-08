@@ -107,7 +107,7 @@ START_TEST(tp_notify_reg)
 		m->u.notify->token = ++token;
 		head = anoubis_notify_create_head(m, NULL, NULL);
 		for(j=0; j<NRCLIENT; ++j) {
-			ret = anoubis_notify(ng[j], head);
+			ret = anoubis_notify(ng[j], head, 0);
 			fail_if(ret < 0, "notify failed with %d", ret);
 			if (ret)
 				cnt[j]++;
@@ -191,7 +191,7 @@ START_TEST(tp_ask)
 		m->u.notify->token = TOKENOFF+k;
 		heads[k] = anoubis_notify_create_head(m, NULL, NULL);
 		for(i=0; i<NRCLIENT; ++i) {
-			int ret = anoubis_notify(ng[i], heads[k]);
+			int ret = anoubis_notify(ng[i], heads[k], 0);
 			fail_if(ret != 1, "Did not notify (%d)", ret);
 		}
 	}

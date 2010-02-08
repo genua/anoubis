@@ -277,7 +277,7 @@ static void do_notify(struct anoubis_notify_group * grp)
 	if (!head < 0) {
 		anoubis_msg_free(m);
 	}
-	ret = anoubis_notify(grp, head);
+	ret = anoubis_notify(grp, head, 0);
 	fail_if(ret < 0);
 	if (ret == 0)
 		anoubis_notify_destroy_head(head);
