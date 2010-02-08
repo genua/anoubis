@@ -97,7 +97,6 @@ AnoubisGuiApp::~AnoubisGuiApp(void)
 {
 	/* Destroy versionmanagement */
 	delete VersionCtrl::getInstance();
-	delete PolicyCtrl::getInstance();
 	Debug::uninitialize();
 
 	/* XXX KM: if we delete this instance a
@@ -153,6 +152,9 @@ bool AnoubisGuiApp::OnInit()
 
 	/* Initialization of versionmanagement */
 	VersionCtrl::getInstance(); /* Make sure c'tor is invoked */
+
+	/* Initialize policy-controller */
+	PolicyCtrl::getInstance();
 
 	/* Assign the passphrase-callback */
 	KeyCtrl::getInstance()->setPassphraseReader(this);
@@ -249,6 +251,9 @@ AnoubisGuiApp::OnExit(void)
 	int result = wxApp::OnExit();
 
 	delete AnIconList::getInstance();
+
+	/* Destroy policy-controller */
+	delete PolicyCtrl::getInstance();
 
 	/* Destroy job-controller */
 	JobCtrl *jobCtrl = JobCtrl::getInstance();
