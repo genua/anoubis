@@ -21,3 +21,17 @@ context {
 		context new any
 	}
 }
+
+sandbox {
+
+	# Only allow anoubis to edit .xanoubis
+	{"/usr/bin/xanoubis", "/sbin/anoubisctl", "/sbin/sfssig"} {
+		allow  path "@home@/.xanoubis"  rwx
+		allow  any rwx
+	}
+
+	any {
+		deny path "@home@/.xanoubis"  rwx
+		allow  any rwx
+	}
+}

@@ -31,6 +31,7 @@ use strict;
 use warnings "all";
 use Getopt::Std;
 use File::Path;
+use User::pwent;
 
 my $opt = {};
 getopts("hqno",$opt) || usage();
@@ -65,19 +66,35 @@ closedir($dirh);
 
 foreach my $file (@files) {
 	my $name;
-	if ($No_Rename or $file =~ /^[0-9]+$/ or $file eq 'default') {
+	my $homedir;
+	my $pw;
+
+	if ($No_Rename or $file =~ /^\d+$/ or $file eq 'default') {
 		$name = $file;
-	}
-	else {
+		$pw = getpw($name);
+		if (defined($pw)) {
+			$homedir = $pw->dir;
+		}
+	} else {
 		# translate name to uid
-		$name = getpwnam($file);
-		if (! defined $name or $name !~ /^\d+$/ ) {
-			info("user $file not found, ignoring\n");
+		$pw = getpw($file);
+		if (! defined $pw) {
+			info ("undefined name\n");
 			next;
 		}
+		$name = $pw->uid;
+		if (! defined $name) {
+			info ("undefined name\n");
+			next;
+		}
+		if ($name !~ /^\d+$/ ) {
+			info("user $file not found, ignoring: $name\n");
+			next;
+		}
+		$homedir = $pw->dir;
 	}
 
-	process_file("$source/$file", "$target/$name");
+	process_file("$source/$file", "$target/$name", "$file", $homedir);
 }
 
 exit(0);
@@ -86,8 +103,21 @@ exit(0);
 # Subroutines
 ##########################################################################
 
-sub get_pathname {
+# replace "@placeholder@"
+# possible placeholder:
+# @progname@ replace the progname with a execution path
+# @home@ replace home with the home of the user
+sub get_placeholder {
 	my $file = shift;
+	my $home = shift;
+
+	if ($file =~ m/^home$/) {
+		if (defined($home)) {
+			return $home;
+		} else {
+			return "/nonexistent";
+		}
+	}
 
 	my $output;
 	if ($file =~ /^\$([A-Za-z0-9_]+)(.*)$/ && exists $ENV{$1} ) {
@@ -110,7 +140,7 @@ sub get_pathname {
 }
 
 sub process_file {
-	my ($source, $target) = @_;
+	my ($source, $target, $user, $homedir) = @_;
 
 	if (-e $target) {
 		info("$target already exists, ignoring $source\n");
@@ -131,8 +161,11 @@ sub process_file {
 			$line .= $newline;
 		}
 
-		# replace "@prog@" by filename
-		$line =~ s{\@(\S+)\@}{get_pathname($1)}ge;
+		# replace "@placeholder@"
+		# possible placeholder:
+		# @progname@ replace the progname with a execution path
+		# @home@ replace home with the home of the user
+		$line =~ s{\@(\S+)\@}{get_placeholder($1, $homedir)}ge;
 
 		print $outh "$line\n";
 	}
