@@ -97,8 +97,12 @@ apncvs_init(struct apncvs *cvs)
 	dname = dirname(dirc);
 
 	if (stat(dname, &fstat) != 0) {
-		/* Create the parent directory */
-		if (mkdir(dname, S_IRWXU | S_IRGRP | S_IXGRP) != 0) {
+		/*
+		 * Create the parent directory. This might create
+		 * ~/.xanoubis. So make sure that is does this with
+		 * appropriatly restricted permission.
+		 */
+		if (mkdir(dname, S_IRWXU) != 0) {
 			free(dirc);
 			return (-1);
 		}
