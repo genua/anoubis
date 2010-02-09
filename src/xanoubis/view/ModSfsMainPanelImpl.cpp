@@ -133,8 +133,8 @@ ModSfsMainPanelImpl::update(Subject *subject)
 			AnMessageDialog *dlg = new AnMessageDialog(this,
 			    _("You have selected a new certificate. To be "
 			    "able to use the key, you need to activate it! "
-			    "Please inform your administrator (e.g. by "
-			    "email)."), _("Certificate notice"),
+			    "Please inform your administrator."),
+			    _("Certificate notice"),
 			    wxOK | wxICON_INFORMATION);
 			dlg->onNotifyCheck(wxT("/Options/ShowCertMessage"));
 			dlg->ShowModal();
@@ -518,19 +518,18 @@ ModSfsMainPanelImpl::onGenerateKeyPairButton(wxCommandEvent&)
 		AnMessageDialog *infoDlg = new AnMessageDialog(this,
 		    _("You have created a new keypair. To be "
 		    "able to use it, you need to activate it! "
-		    "Please inform your administrator (e.g. by "
-		    "email)."), _("Certificate notice"),
+		    "Please inform your administrator."),
+		    _("Certificate notice"),
 		    wxOK | wxICON_INFORMATION);
 		infoDlg->onNotifyCheck(wxT("/Options/ShowCertMessage"));
 		infoDlg->ShowModal();
 		infoDlg->Destroy();
 	} else {
-		result = anMessageBox(_("You have created a new keypair but "
-		    "it is not used because a keypair is already "
-		    "configured.\nDo you want to replace the currently "
-		    "configured keypair with the new one? (If you say yes "
-		    "here, you need to inform your administrator (e.g. by "
-		    "email)."), _("Certificate notice"),
+		result = anMessageBox(_("A keypair has already been "
+		    "configured. Would you like to use the newly generated "
+		    "keypair from now on?\n\nIf so, the certificate needs to "
+		    "be activated. Please inform your administrator."),
+		    _("Certificate notice"),
 		    wxYES_NO | wxICON_QUESTION, this);
 
 		if (result == wxYES) {

@@ -34,7 +34,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-02-04 15:32+0100\n"
+"POT-Creation-Date: 2010-02-08 14:51+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1922,11 +1922,11 @@ msgstr ""
 #: view/ModSfsMainPanelImpl.cpp:134
 msgid ""
 "You have selected a new certificate. To be able to use the key, you need to "
-"activate it! Please inform your administrator (e.g. by email)."
+"activate it! Please inform your administrator."
 msgstr ""
 
 #: view/ModSfsMainPanelImpl.cpp:137 view/ModSfsMainPanelImpl.cpp:522
-#: view/ModSfsMainPanelImpl.cpp:533
+#: view/ModSfsMainPanelImpl.cpp:532
 msgid "Certificate notice"
 msgstr ""
 
@@ -1995,50 +1995,51 @@ msgstr ""
 #: view/ModSfsMainPanelImpl.cpp:519
 msgid ""
 "You have created a new keypair. To be able to use it, you need to activate "
-"it! Please inform your administrator (e.g. by email)."
+"it! Please inform your administrator."
 msgstr ""
 
 #: view/ModSfsMainPanelImpl.cpp:528
 msgid ""
-"You have created a new keypair but it is not used because a keypair is "
-"already configured.\n"
-"Do you want to replace the currently configured keypair with the new one? "
-"(If you say yes here, you need to inform your administrator (e.g. by email)."
+"A keypair has already been configured. Would you like to use the newly "
+"generated keypair from now on?\n"
+"\n"
+"If so, the certificate needs to be activated. Please inform your "
+"administrator."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:725
+#: view/ModSfsMainPanelImpl.cpp:724
 msgid ""
 "Cannot load the private key!\n"
 "The file you specified does not exist."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:727 view/ModSfsMainPanelImpl.cpp:735
-#: view/ModSfsMainPanelImpl.cpp:773
+#: view/ModSfsMainPanelImpl.cpp:726 view/ModSfsMainPanelImpl.cpp:734
+#: view/ModSfsMainPanelImpl.cpp:772
 msgid "Load private key"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:734
+#: view/ModSfsMainPanelImpl.cpp:733
 msgid "Failed to load the private key!\n"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:771
+#: view/ModSfsMainPanelImpl.cpp:770
 msgid ""
 "Cannot load the certificate!\n"
 "The file you specified does not exist."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:779
+#: view/ModSfsMainPanelImpl.cpp:778
 #, c-format
 msgid ""
 "Failed to load certificate from\n"
 "%ls."
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:781
+#: view/ModSfsMainPanelImpl.cpp:780
 msgid "Load certificate"
 msgstr ""
 
-#: view/ModSfsMainPanelImpl.cpp:797
+#: view/ModSfsMainPanelImpl.cpp:796
 msgid "[invalid date]"
 msgstr ""
 
@@ -3370,27 +3371,27 @@ msgstr ""
 msgid "Permissions"
 msgstr ""
 
-#: widgets/AnPickFromFs.cpp:60
+#: widgets/AnPickFromFs.cpp:61
 msgid "Pick..."
 msgstr ""
 
-#: widgets/AnPickFromFs.cpp:62
+#: widgets/AnPickFromFs.cpp:63
 msgid "use right mouse button to alter pick mode"
 msgstr ""
 
-#: widgets/AnPickFromFs.cpp:66
+#: widgets/AnPickFromFs.cpp:67
 msgid "Pick a file"
 msgstr ""
 
-#: widgets/AnPickFromFs.cpp:68
+#: widgets/AnPickFromFs.cpp:69
 msgid "Pick a directory"
 msgstr ""
 
-#: widgets/AnPickFromFs.cpp:189
+#: widgets/AnPickFromFs.cpp:190
 msgid "Symbolic link was resolved"
 msgstr ""
 
-#: widgets/AnPickFromFs.cpp:195
+#: widgets/AnPickFromFs.cpp:196
 msgid "Failure to resolve: "
 msgstr ""
 
