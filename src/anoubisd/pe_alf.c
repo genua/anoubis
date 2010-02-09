@@ -52,6 +52,9 @@
 #ifndef s6_addr32
 #define s6_addr32 __u6_addr.__u6_addr32
 #endif
+#ifndef IPPROTO_SCTP
+#define IPPROTO_SCTP	132
+#endif
 #endif
 
 #ifdef LINUX
@@ -264,13 +267,14 @@ pe_decide_alffilt(struct apn_rule *rule, struct alf_event *msg,
 		return (-1);
 	}
 
-	/* We only decide on UDP and TCP. */
-	if (msg->protocol != IPPROTO_UDP && msg->protocol != IPPROTO_TCP)
+	/* We only decide on UDP, TCP and SCTP. */
+	if (msg->protocol != IPPROTO_UDP && msg->protocol != IPPROTO_TCP &&
+	    msg->protocol != IPPROTO_SCTP)
 		return (-1);
 
-	/* For TCP, we only decide on ACCEPT/CONNECT but allow SEND/RECVMSG */
+	/* For TCP/SCTP we validate ACCEPT/CONNECT and allow SEND/RECVMSG */
 	if ((msg->op == ALF_SENDMSG || msg->op == ALF_RECVMSG) &&
-	    msg->protocol == IPPROTO_TCP) {
+	    (msg->protocol == IPPROTO_TCP || msg->protocol == IPPROTO_SCTP)) {
 		if (log)
 			*log = APN_LOG_NONE;
 		return APN_ACTION_ALLOW;
@@ -298,7 +302,7 @@ pe_decide_alffilt(struct apn_rule *rule, struct alf_event *msg,
 		    "msg operation %d", msg->family, msg->op);
 		/*
 		 * Operation
-		 * NOTE CEH: Currently TCP SEND and TCP RECEIVE events
+		 * NOTE CEH: Currently TCP/SCTP SEND and TCP RECEIVE events
 		 * NOTE CEH: do not reach this point at all. However, if
 		 * NOTE CEH: they do so again in the future, they should
 		 * NOTE CEH: be treated by the corresponding CONNECT/ACCEPT
@@ -311,10 +315,11 @@ pe_decide_alffilt(struct apn_rule *rule, struct alf_event *msg,
 			continue;
 
 		case ALF_SENDMSG:
-			if (msg->protocol == IPPROTO_TCP)
+			if (msg->protocol == IPPROTO_TCP ||
+			    msg->protocol == IPPROTO_SCTP)
 				break;
 			/*
-			 * Treat no TCP SENDMSG packets according to the
+			 * Treat non TCP/SCTP SENDMSG packets according to the
 			 * proper SEND rule.
 			 */
 			/* FALLTHROUGH */
@@ -326,10 +331,11 @@ pe_decide_alffilt(struct apn_rule *rule, struct alf_event *msg,
 			break;
 
 		case ALF_RECVMSG:
-			if (msg->protocol == IPPROTO_TCP)
+			if (msg->protocol == IPPROTO_TCP ||
+			    msg->protocol == IPPROTO_SCTP)
 				break;
 			/*
-			 * Treat non TCP RECVMSG packets according to the
+			 * Treat non TCP/SCTP RECVMSG packets according to the
 			 * proper RECEIVE rule.
 			 */
 			/* FALLTHROUGH */
@@ -366,6 +372,7 @@ pe_decide_alffilt(struct apn_rule *rule, struct alf_event *msg,
 		    msg->op);
 		switch (msg->protocol) {
 		case IPPROTO_TCP:
+		case IPPROTO_SCTP:
 			if (msg->op == ALF_CONNECT) {
 				if (pe_addrmatch_out(msg, hp) == 0)
 					continue;
@@ -448,8 +455,9 @@ pe_decide_alfcap(struct apn_rule *rule, struct alf_event *msg, int *log,
 		return (APN_ACTION_DENY);
 	}
 
-	/* We decide on everything except UDP and TCP */
-	if (msg->protocol == IPPROTO_UDP || msg->protocol == IPPROTO_TCP)
+	/* We decide on everything except UDP, TCP and SCTP */
+	if (msg->protocol == IPPROTO_UDP || msg->protocol == IPPROTO_TCP ||
+	    msg->protocol == IPPROTO_SCTP)
 		return (-1);
 
 	decision = -1;
@@ -674,6 +682,9 @@ pe_dump_alfmsg(struct alf_event *msg)
 		break;
 	case IPPROTO_TCP:
 		proto = "tcp";
+		break;
+	case IPPROTO_SCTP:
+		proto = "sctp";
 		break;
 	default:
 		proto = "<unknown>";

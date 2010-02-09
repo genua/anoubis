@@ -100,8 +100,9 @@ static int	apn_print_rule_cleaned(struct apn_rule *, int, FILE *,
  * History:
  * - 1.0  Initial version
  * - 1.1  nosfs-flag appended to context-block
+ * - 1.2  sctp protocol support
  */
-static int	apn_version = APN_PARSER_MKVERSION(1,1);
+static int	apn_version = APN_PARSER_MKVERSION(1,2);
 
 /*
  * Parser descriptions for different APN syntax versions. The first entry

@@ -57,8 +57,12 @@
 #include "apn.h"
 #include "apninternals.h"
 
+#ifndef IPPROTO_SCTP
+#define IPPROTO_SCTP	132
+#endif
+
 #define PARSER_MINVERSION		APN_PARSER_MKVERSION(1,0)
-#define PARSER_MAXVERSION		APN_PARSER_MKVERSION(1,1)
+#define PARSER_MAXVERSION		APN_PARSER_MKVERSION(1,2)
 
 #define APN_FILE	1
 #define APN_IOVEC	2
@@ -168,7 +172,7 @@ typedef struct {
 %expect 0
 
 %token	ALLOW DENY ALF SFS SB CAP CONTEXT RAW ALL OTHER LOG CONNECT ACCEPT
-%token	INET INET6 FROM TO PORT ANY TCP UDP DEFAULT NEW ASK ALERT OPEN
+%token	INET INET6 FROM TO PORT ANY TCP UDP SCTP DEFAULT NEW ASK ALERT OPEN
 %token	READ WRITE EXEC CHMOD ERROR APPLICATION RULE HOST TFILE BOTH SEND
 %token	RECEIVE TASK UNTIL COLON PATH KEY UID APNVERSION
 %token	SELF SIGNEDSELF VALID INVALID UNKNOWN CONTINUE BORROW NOSFS
@@ -571,6 +575,7 @@ netaccess	: CONNECT			{ $$ = APN_CONNECT; }
 
 proto		: UDP				{ $$ = IPPROTO_UDP; }
 		| TCP				{ $$ = IPPROTO_TCP; }
+		| SCTP				{ $$ = IPPROTO_SCTP; }
 		;
 
 hosts		: FROM hostspec portspec TO hostspec portspec	{
@@ -1365,6 +1370,7 @@ lookup(char *s)
 		{ "rule",	RULE },
 		{ "sandbox",	SB },
 		{ "sb",		SB },
+		{ "sctp",	SCTP },
 		{ "self",	SELF },
 		{ "send",	SEND },
 		{ "sfs",	SFS },
@@ -1378,7 +1384,7 @@ lookup(char *s)
 		{ "until",	UNTIL },
 		{ "valid",	VALID },
 		{ "write",	WRITE },
-		/* the above list has to be sorted always */
+		/* the above list has to be sorted alphabetically */
 	};
 	const struct keywords	*p;
 
@@ -1908,6 +1914,7 @@ validate_alffilterspec(struct apn_afiltspec *afspec)
 		break;
 
 	case IPPROTO_TCP:
+	case IPPROTO_SCTP:
 		if (afspec->netaccess != APN_CONNECT && afspec->netaccess !=
 		    APN_ACCEPT && afspec->netaccess != APN_BOTH) {
 			yyerror("Invalid connection state");
