@@ -693,6 +693,28 @@ apn_copyinsert_sb(struct apn_ruleset *rs, struct apn_rule *nrule,
 	return apn_copyinsert_common(rs, nrule, id, filename, subject, APN_SB);
 }
 
+/**
+ * Print a string (usually a path name and escape everything within the
+ * string to make sure that the printed string does not cause parse errors
+ *
+ * @param file The target file.
+ * @param string The string.
+ */
+static void
+apn_print_string(FILE *file, const char *string)
+{
+	char	c;
+	int	i;
+
+	fprintf(file, "\"");
+	for (i=0; (c=string[i]); ++i) {
+		if (c == '"' || c == '\\')
+			fprintf(file, "\\");
+		fprintf(file, "%c", c);
+	}
+	fprintf(file, "\"");
+}
+
 static int
 apn_print_chain_cleaned(struct apn_chain * chain, int flags, FILE * file,
     int (*check)(struct apn_scope *, void *), void *data)
@@ -1014,7 +1036,8 @@ apn_print_app(struct apn_app *app, FILE *file)
 	while (hp) {
 		if (hp->name == NULL)
 			return (1);
-		fprintf(file, "\"%s\" ", hp->name);
+		apn_print_string(file, hp->name);
+		fprintf(file, " ");
 		if (apn_print_subject(&hp->subject, file))
 			return 1;
 		hp = hp->next;
@@ -1162,10 +1185,13 @@ apn_print_sfsaccessrule(struct apn_sfsaccess *rule, FILE *file)
 	if (rule == NULL || file == NULL)
 		return (1);
 
-	if (rule->path)
-		fprintf(file, "path \"%s\" ", rule->path);
-	else
+	if (rule->path) {
+		fprintf(file, "path ");
+		apn_print_string(file, rule->path);
+		fprintf(file, " ");
+	} else {
 		fprintf(file, "any ");
+	}
 
 	if (rule->subject.type == APN_CS_NONE)
 		return 1;
@@ -1195,10 +1221,13 @@ apn_print_sfsdefaultrule(struct apn_sfsdefault *rule, FILE *file)
 
 	fprintf(file, "default ");
 
-	if (rule->path)
-		fprintf(file, "path \"%s\" ", rule->path);
-	else
+	if (rule->path) {
+		fprintf(file, "path ");
+		apn_print_string(file, rule->path);
+		fprintf(file, " ");
+	} else {
 		fprintf(file, "any ");
+	}
 
 	if (apn_print_log(rule->log, file) == 1)
 		return 1;
@@ -1399,8 +1428,11 @@ apn_print_sbaccess(struct apn_sbaccess *sba, FILE *file)
 	if (!sba->path && sba->cs.type == APN_CS_NONE) {
 		fprintf(file, " any");
 	} else {
-		if (sba->path)
-			fprintf(file, " path \"%s\" ", sba->path);
+		if (sba->path) {
+			fprintf(file, " path ");
+			apn_print_string(file, sba->path);
+			fprintf(file, " ");
+		}
 		if (apn_print_subject(&sba->cs, file))
 			return 1;
 	}
