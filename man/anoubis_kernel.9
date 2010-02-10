@@ -76,7 +76,7 @@ The application is informed whether or not the request has succeeded.
 Events are exchanged using 3 message types:
 .Bl -dash
 .It 
-Network communication (TCP connect, UDP send/receive)
+Network communication (TCP and SCTP connect/accept, UDP send/receive)
 .It 
 File operations (open, unlink, truncate)
 .It 
@@ -86,7 +86,7 @@ Pathname operations (link, rename)
 The first type is handled by the ALF module, the other two are covered by the SFS module. 
 .Pp
 .Sh LINUX
-The built-in anoubis_core module has three main roles. It provides modular access to the LSM security hooks, which enables multiple Anoubis security modules to utilize the same hook. Secondly it provides userland interaction via the anoubis device which is used by anoubisd. And thirdly it provides generic evendev communication routines which are used by the other modules. The ALF module uses anoubis_core to hook into the Linux socket subsystem and generates events for UDP and TCP connections. The SFS module uses anoubis_core inode and pathname hooks to generate events.
+The built-in anoubis_core module has three main roles. It provides modular access to the LSM security hooks, which enables multiple Anoubis security modules to utilize the same hook. Secondly it provides userland interaction via the anoubis device which is used by anoubisd. And thirdly it provides generic evendev communication routines which are used by the other modules. The ALF module uses anoubis_core to hook into the Linux socket subsystem and generates events for TCP, SCTP and UDP connections. The SFS module uses anoubis_core inode and pathname hooks to generate events.
 .Pp
 The Linux version of Anoubis uses extended attributes ( see
 .Xr attr 5 
