@@ -33,6 +33,7 @@
 #include "AppPolicy.h"
 #include "PolicyCtrl.h"
 #include "PolicyRuleSet.h"
+#include "SbModel.h"
 #include "ServiceList.h"
 #include "main.h"
 
@@ -66,17 +67,15 @@ RuleWizardHistory::RuleWizardHistory(void)
 	haveSandboxPolicy_	   = false;
 	overwriteSandboxPolicy_    = OVERWRITE_NO;
 	sandboxReadPermission_     = PERM_RESTRICT_DEFAULT;
-	sandboxReadFileList_.Clear();
 	sandboxReadAsk_		   = true;
 	sandboxReadValidSignature_ = false;
 	sandboxWritePermission_    = PERM_RESTRICT_DEFAULT;
-	sandboxWriteFileList_.Clear();
 	sandboxWriteAsk_	    = true;
 	sandboxWriteValidSignature_ = false;
 	sandboxExecutePermission_   = PERM_RESTRICT_DEFAULT;
-	sandboxExecuteFileList_.Clear();
 	sandboxExecuteAsk_	      = true;
 	sandboxExecuteValidSignature_ = false;
+	sandboxFileList_ = new SbModel;
 	cstype_			      = APN_CS_NONE;
 
 	shallActivatePolicy_ = true;
@@ -85,6 +84,7 @@ RuleWizardHistory::RuleWizardHistory(void)
 RuleWizardHistory::~RuleWizardHistory(void)
 {
 	delete alfClientPortList_;
+	delete sandboxFileList_;
 }
 
 void
@@ -312,54 +312,6 @@ RuleWizardHistory::getAlfServerPermission(void) const
 /*
  * Sandbox methods
  */
-bool
-RuleWizardHistory::isSandboxDefaultAvailable(const wxString & filter) const
-{
-	return (!getSandboxDefaults(filter).IsEmpty());
-}
-
-wxArrayString
-RuleWizardHistory::getSandboxDefaults(const wxString & filter) const
-{
-	wxString	path;
-	wxString	perm;
-	wxString	line;
-	wxTextFile	file;
-	wxArrayString	list;
-
-	file.Open(wxGetApp().getWizardPath() + wxFILE_SEP_PATH +
-	    wxT("sandbox"));
-
-	if (!file.IsOpened()) {
-		/* sandbox defaults file does not exists - return empty list */
-		return (list);
-	}
-
-	line = file.GetFirstLine().BeforeFirst('#');
-	line.Trim(true);
-	line.Trim(false);
-	while (!file.Eof()) {
-		if (!line.IsEmpty()) {
-			/* Slice the string */
-			line.Replace(wxT("\t"), wxT(" "));
-			path = line.BeforeFirst(' ');
-			perm = line.AfterLast(' ');
-
-			if (perm.Find(filter) != wxNOT_FOUND) {
-				list.Add(path);
-			}
-		}
-		line = file.GetNextLine().BeforeFirst('#');
-		line.Trim(true);
-		line.Trim(false);
-	}
-
-	file.Close();
-
-	return (list);
-}
-
-
 void
 RuleWizardHistory::setSandbox(enum permissionAnswer answer)
 {
@@ -422,41 +374,10 @@ RuleWizardHistory::setSandboxPermission(SbEntry::Permission permission,
 	}
 }
 
-wxArrayString
-RuleWizardHistory::getSandboxFileList(SbEntry::Permission permission) const
+SbModel *
+RuleWizardHistory::getSandboxFileList(void) const
 {
-	wxArrayString result;
-
-	switch (permission) {
-	case SbEntry::READ:
-		result = sandboxReadFileList_;
-		break;
-	case SbEntry::WRITE:
-		result = sandboxWriteFileList_;
-		break;
-	case SbEntry::EXECUTE:
-		result = sandboxExecuteFileList_;
-		break;
-	}
-
-	return (result);
-}
-
-void
-RuleWizardHistory::setSandboxFileList(SbEntry::Permission permission,
-    const wxArrayString &list)
-{
-	switch (permission) {
-	case SbEntry::READ:
-		sandboxReadFileList_ = list;
-		break;
-	case SbEntry::WRITE:
-		sandboxWriteFileList_ = list;
-		break;
-	case SbEntry::EXECUTE:
-		sandboxExecuteFileList_ = list;
-		break;
-	}
+	return (sandboxFileList_);
 }
 
 bool
@@ -661,7 +582,7 @@ RuleWizardHistory::fillSandboxNavi(wxWindow *parent, wxSizer *naviSizer,
 		break;
 	case PERM_RESTRICT_USER:
 		text.Printf(_("read user defined (%d)"),
-		    sandboxReadFileList_.GetCount());
+		    sandboxFileList_->getEntryCount(SbEntry::READ));
 		addValue(parent, naviSizer, text);
 		if (sandboxReadAsk_) {
 			text = _("read access other: ask");
@@ -692,7 +613,7 @@ RuleWizardHistory::fillSandboxNavi(wxWindow *parent, wxSizer *naviSizer,
 		break;
 	case PERM_RESTRICT_USER:
 		text.Printf(_("write user defined (%d)"),
-		    sandboxWriteFileList_.GetCount());
+		    sandboxFileList_->getEntryCount(SbEntry::WRITE));
 		addValue(parent, naviSizer, text);
 		if (sandboxWriteAsk_) {
 			text = _("write access other: ask");
@@ -723,7 +644,7 @@ RuleWizardHistory::fillSandboxNavi(wxWindow *parent, wxSizer *naviSizer,
 		break;
 	case PERM_RESTRICT_USER:
 		text.Printf(_("execute user defined (%d)"),
-		    sandboxExecuteFileList_.GetCount());
+		    sandboxFileList_->getEntryCount(SbEntry::EXECUTE));
 		addValue(parent, naviSizer, text);
 		if (sandboxExecuteAsk_) {
 			text = _("execute access other: ask");

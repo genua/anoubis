@@ -29,33 +29,53 @@
 #include <wx/dirdlg.h>
 #include <wx/filename.h>
 
-#include "RuleWizardSandboxReadFilesPage.h"
+#include <AnListColumn.h>
+#include <AnListCtrl.h>
+#include <SbEntry.h>
+#include <SbModel.h>
+#include <SbModelRowProvider.h>
 
-#define ALL_FILES_ENTRY	_("(all files)")
+#include "RuleWizardSandboxProperty.h"
+#include "RuleWizardSandboxReadFilesPage.h"
 
 RuleWizardSandboxReadFilesPage::RuleWizardSandboxReadFilesPage(wxWindow *parent,
     RuleWizardHistory *history) : RuleWizardSandboxFilesPageBase(parent)
 {
-	int width;
-
 	history_ = history;
 
+	/* The initial column width */
+	int width = fileListCtrl->GetClientSize().GetWidth() / 3;
+
+	AnListColumn *col;
+
 	/* Create columns */
-	fileListCtrl->InsertColumn(COLUMN_PATH, _("Path"));
-	fileListCtrl->InsertColumn(COLUMN_FILE, _("File"));
-	fileListCtrl->InsertColumn(COLUMN_STD, _("Standard"));
+	col = fileListCtrl->addColumn(new RuleWizardSandboxProperty(
+	    RuleWizardSandboxProperty::PATH));
+	col->setWidth(width);
+	col = fileListCtrl->addColumn(new RuleWizardSandboxProperty(
+	    RuleWizardSandboxProperty::FILE));
+	col->setWidth(width);
+	col = fileListCtrl->addColumn(new RuleWizardSandboxProperty(
+	    RuleWizardSandboxProperty::STD));
+	col->setWidth(width);
 
-	/* Set initial column width */
-	width = fileListCtrl->GetClientSize().GetWidth() / 3;
-	fileListCtrl->SetColumnWidth(COLUMN_PATH, width);
-	fileListCtrl->SetColumnWidth(COLUMN_FILE, width);
-	fileListCtrl->SetColumnWidth(COLUMN_STD, width);
+	/* Assign row-provider to list */
+	rowProvider_ = new SbModelRowProvider(
+	    history_->getSandboxFileList(), SbEntry::READ);
+	fileListCtrl->setRowProvider(rowProvider_);
 
-	defaultsButton->Enable(history_->isSandboxDefaultAvailable(wxT("r")));
+	defaultsButton->Enable(
+	    history_->getSandboxFileList()->canAssignDefaults());
 
 	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED,
 	    wxWizardEventHandler(RuleWizardSandboxReadFilesPage::onPageChanged),
 	    NULL, this);
+}
+
+RuleWizardSandboxReadFilesPage::~RuleWizardSandboxReadFilesPage(void)
+{
+	fileListCtrl->setRowProvider(0);
+	delete rowProvider_;
 }
 
 void
@@ -75,11 +95,8 @@ RuleWizardSandboxReadFilesPage::onPageChanged(wxWizardEvent &)
 void
 RuleWizardSandboxReadFilesPage::onAddFileButton(wxCommandEvent &)
 {
-	long		index;
-	wxFileName	path;
+	wxFileName	path(history_->getProgram());
 	wxFileDialog	fileDlg(this);
-
-	path.Assign(history_->getProgram());
 
 	wxBeginBusyCursor();
 	fileDlg.SetDirectory(path.GetPath());
@@ -88,12 +105,10 @@ RuleWizardSandboxReadFilesPage::onAddFileButton(wxCommandEvent &)
 	wxEndBusyCursor();
 
 	if (fileDlg.ShowModal() == wxID_OK) {
-		path.Assign(fileDlg.GetPath());
-		index = fileListCtrl->GetItemCount();
-		fileListCtrl->InsertItem(index, wxEmptyString);
-		fileListCtrl->SetItem(index, COLUMN_PATH, path.GetPath());
-		fileListCtrl->SetItem(index, COLUMN_FILE, path.GetFullName());
-		storeFileList();
+		SbEntry *entry = history_->getSandboxFileList()->getEntry(
+		    fileDlg.GetPath(), true);
+		entry->setPermission(SbEntry::READ, true);
+
 		updateNavi();
 	}
 }
@@ -101,22 +116,18 @@ RuleWizardSandboxReadFilesPage::onAddFileButton(wxCommandEvent &)
 void
 RuleWizardSandboxReadFilesPage::onAddDirectoryButton(wxCommandEvent &)
 {
-	long		index;
-	wxFileName	path;
+	wxFileName	path(history_->getProgram());
 	wxDirDialog	dirDlg(this);
-
-	path.Assign(history_->getProgram());
 
 	wxBeginBusyCursor();
 	dirDlg.SetPath(path.GetPath());
 	wxEndBusyCursor();
 
 	if (dirDlg.ShowModal() == wxID_OK) {
-		index = fileListCtrl->GetItemCount();
-		fileListCtrl->InsertItem(index, wxEmptyString);
-		fileListCtrl->SetItem(index, COLUMN_PATH, dirDlg.GetPath());
-		fileListCtrl->SetItem(index, COLUMN_FILE, ALL_FILES_ENTRY);
-		storeFileList();
+		SbEntry *entry = history_->getSandboxFileList()->getEntry(
+		    dirDlg.GetPath(), true);
+		entry->setPermission(SbEntry::READ, true);
+
 		updateNavi();
 	}
 }
@@ -124,44 +135,42 @@ RuleWizardSandboxReadFilesPage::onAddDirectoryButton(wxCommandEvent &)
 void
 RuleWizardSandboxReadFilesPage::onDefaultsButton(wxCommandEvent &)
 {
-	long		index;
-	wxArrayString	list;
-	wxFileName	path;
+	history_->getSandboxFileList()->assignDefaults(SbEntry::READ);
 
-	list = history_->getSandboxDefaults(wxT("r"));
-	for (size_t i=0; i<list.GetCount(); i++) {
-		index = fileListCtrl->GetItemCount();
-		fileListCtrl->InsertItem(index, wxEmptyString);
-
-		path.Assign(list.Item(i));
-		fileListCtrl->SetItem(index, COLUMN_PATH, path.GetPath());
-		if (path.IsDir()) {
-			fileListCtrl->SetItem(index, COLUMN_FILE,
-			    ALL_FILES_ENTRY);
-		} else {
-			fileListCtrl->SetItem(index, COLUMN_FILE,
-			    path.GetFullName());
-		}
-		fileListCtrl->SetItem(index, COLUMN_STD, wxT("x"));
-	}
-	storeFileList();
 	updateNavi();
 }
 
 void
 RuleWizardSandboxReadFilesPage::onDeleteButton(wxCommandEvent &)
 {
-	long index;
+	std::list<SbEntry *>	removeList;
+	int			index = -1;
 
-	index = fileListCtrl->GetNextItem(-1, wxLIST_NEXT_ALL,
-	    wxLIST_STATE_SELECTED);
-	while (index != wxNOT_FOUND) {
-		fileListCtrl->SetItemState(index, 0, wxLIST_STATE_SELECTED);
-		fileListCtrl->DeleteItem(index);
-		index = fileListCtrl->GetNextItem(index - 1, wxLIST_NEXT_ALL,
-		    wxLIST_STATE_SELECTED);
-	}
-	storeFileList();
+	/*
+	 * AnListCtrl restores selected internally, if the content of the list
+	 * changes. That's why you have to collect the selected services
+	 * before removing them from the model.
+	 */
+	while (true) {
+		if ((index = fileListCtrl->getNextSelection(index)) == -1)
+			break;
+
+		SbEntry *entry = rowProvider_->getEntryAt(index);
+
+		if (entry != 0)
+			removeList.push_back(entry);
+        }
+
+	/*
+	 * Now it's save to remove the services from the model as you are
+	 * independent from the selection
+	 */
+	for (std::list<SbEntry *>::const_iterator it = removeList.begin();
+	    it != removeList.end(); ++it) {
+		SbEntry *entry = (*it);
+		entry->setPermission(SbEntry::READ, false);
+        }
+
 	updateNavi();
 }
 
@@ -192,36 +201,6 @@ RuleWizardSandboxReadFilesPage::onValidCheckBox(wxCommandEvent & event)
 {
 	history_->setSandboxValidSignature(SbEntry::READ, event.GetInt());
 	updateNavi();
-}
-
-void
-RuleWizardSandboxReadFilesPage::storeFileList(void) const
-{
-	long		index;
-	wxString	compound;
-	wxListItem	line;
-	wxArrayString	list;
-
-	for (index=0; index<fileListCtrl->GetItemCount(); index++) {
-		/* Get Path */
-		line.SetId(index);
-		line.SetColumn(COLUMN_PATH);
-		fileListCtrl->GetItem(line);
-		compound = line.GetText();
-
-		/* Get File */
-		line.SetId(index);
-		line.SetColumn(COLUMN_FILE);
-		fileListCtrl->GetItem(line);
-		if (line.GetText() != ALL_FILES_ENTRY) {
-			compound.Append(wxFILE_SEP_PATH);
-			compound.Append(line.GetText());
-		}
-
-		list.Add(compound);
-	}
-
-	history_->setSandboxFileList(SbEntry::READ, list);
 }
 
 void

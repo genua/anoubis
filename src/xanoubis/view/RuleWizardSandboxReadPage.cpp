@@ -25,6 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <SbModel.h>
+
 #include "RuleWizardSandboxReadPage.h"
 
 RuleWizardSandboxReadPage::RuleWizardSandboxReadPage(wxWindow *parent,
@@ -46,8 +48,8 @@ RuleWizardSandboxReadPage::RuleWizardSandboxReadPage(wxWindow *parent,
 		break;
 	}
 
-	defaultRadioButton->Enable(history_->isSandboxDefaultAvailable(
-	    wxT("r")));
+	defaultRadioButton->Enable(
+	    history_->getSandboxFileList()->canAssignDefaults());
 
 	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED,
 	    wxWizardEventHandler(RuleWizardSandboxReadPage::onPageChanged),

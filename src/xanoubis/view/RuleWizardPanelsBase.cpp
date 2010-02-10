@@ -862,7 +862,7 @@ RuleWizardSandboxFilesPageBase::RuleWizardSandboxFilesPageBase( wxWindow* parent
 	fileListLabel->Wrap( -1 );
 	mainSizer->Add( fileListLabel, 0, wxALL, 5 );
 	
-	fileListCtrl = new wxListCtrl( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT );
+	fileListCtrl = new AnListCtrl( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_VIRTUAL );
 	mainSizer->Add( fileListCtrl, 1, wxALL|wxEXPAND, 5 );
 	
 	wxBoxSizer* buttonSizer;

@@ -375,6 +375,8 @@ xanoubis_SOURCES= \
 	view/RuleWizardSandboxExecutePage.h \
 	view/RuleWizardSandboxExecuteFilesPage.cpp \
 	view/RuleWizardSandboxExecuteFilesPage.h \
+	view/RuleWizardSandboxProperty.cpp \
+	view/RuleWizardSandboxProperty.h \
 	view/RuleWizardSandboxReadPage.cpp \
 	view/RuleWizardSandboxReadPage.h \
 	view/RuleWizardSandboxReadFilesPage.cpp \

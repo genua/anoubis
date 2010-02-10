@@ -388,7 +388,7 @@ class RuleWizardSandboxFilesPageBase : public wxPanel
 		
 		wxStaticText* questionLabel;
 		wxStaticText* fileListLabel;
-		wxListCtrl* fileListCtrl;
+		AnListCtrl* fileListCtrl;
 		wxStaticText* add_label;
 		wxButton* addFileButton;
 		wxButton* addDirectoryButton;

@@ -212,14 +212,14 @@ class RuleWizard : public wxWizard
 
 	private:
 		/**
-		 * Store made input within this class.
-		 */
-		RuleWizardHistory history_;
-
-		/**
 		 * The array of pages.
 		 */
 		wxWizardPage *pages_[PAGE_EOL];
+
+		/**
+		 * Store made input within this class.
+		 */
+		RuleWizardHistory history_;
 
 		/**
 		 * Handle event of finished wizard.
@@ -259,24 +259,6 @@ class RuleWizard : public wxWizard
 		void createAlfPortList(AlfAppPolicy *, int) const;
 
 		/**
-		 * Create the filter policies by list of files.
-		 * @param[in] 1st The sandbox application policy (aka parent).
-		 * @param[in] 2nd The list of files.
-		 * @return Nothing.
-		 * @param[in] 3rd The permission.
-		 */
-		void createSbFileList(SbAppPolicy *, const wxArrayString &,
-		    int) const;
-
-		/**
-		 * Create the filter policies from a file list that is
-		 * read from the default configuration in /etc/
-		 * @param[in] 1st The sandbox application policy (aka parent)
-		 * @param[in] 2nd The permission.
-		 */
-		void createSbDefaultFileList(SbAppPolicy *, int) const;
-
-		/**
 		 * Create a rule with the given permission for the root
 		 * directory. If the permission is DENY the rule will log.
 		 * @param[in] 1st The sandbox application policy (aka parent)
@@ -288,10 +270,51 @@ class RuleWizard : public wxWizard
 		/**
 		 * Create sandbox policies.
 		 * @param[in] 1st The sandbox application policy (aka parent).
-		 * @param[in] 2nd The type of sb policies.
 		 * @return Nothing.
 		 */
-		void createSbPermission(SbAppPolicy *, int) const;
+		void createSbPermissions(SbAppPolicy *) const;
+
+		/**
+		 * First step of creation of sandbox-permission-rules.
+		 *
+		 * Here, the user can choose, if default-sandbox-policies
+		 * should be created.
+		 */
+		void createSbPermissionsStage1(void) const;
+
+		/**
+		 * Second step of creation of sandbox-permission-rules.
+		 *
+		 * For each permission (read, write, execute) the user can
+		 * choose, if default-policies should be created or the access
+		 * can be allowed for everything.
+		 *
+		 * @param[in] 1st The sandbox application policy (aka parent).
+		 * @param[in] 2nd The permission
+		 */
+		void createSbPermissionsStage2(SbAppPolicy *,
+		    SbEntry::Permission) const;
+
+		/**
+		 * Third step of creation of sandbox-permission-rules.
+		 *
+		 * For each permission (read, write, execute) the user can
+		 * specify an own list of allowed files.
+		 *
+		 * @param[in] 1st The sandbox application policy (aka parent).
+		 * @param[in] 2nd The permission
+		 */
+		void createSbPermissionsStage3(SbAppPolicy *,
+		    SbEntry::Permission) const;
+
+		/**
+		 * Converts a SbEntry::Permission-value into an
+		 * APN_SBA_*-value.
+		 *
+		 * @param [in] The permission
+		 * @return The related SbEntry::Permission-value
+		 */
+		static int toAPN_SBA(SbEntry::Permission);
 };
 
 #endif	/* _RULEWIZARD_H_ */

@@ -51,6 +51,8 @@
 #include "SbAccessFilterPolicy.h"
 #include "Service.h"
 #include "ServiceList.h"
+#include "SbEntry.h"
+#include "SbModel.h"
 #include "DefaultFilterPolicy.h"
 #include "PolicyCtrl.h"
 #include "PolicyRuleSet.h"
@@ -596,9 +598,7 @@ RuleWizard::createSandboxPolicy(PolicyRuleSet *ruleSet) const
 	sbApp->prependFilterPolicy(dflFilter);
 	dflFilter->setActionNo(APN_ACTION_ASK);
 
-	createSbPermission(sbApp, APN_SBA_EXEC);
-	createSbPermission(sbApp, APN_SBA_WRITE);
-	createSbPermission(sbApp, APN_SBA_READ);
+	createSbPermissions(sbApp);
 }
 
 void
@@ -658,42 +658,6 @@ RuleWizard::createAlfPortList(AlfAppPolicy *app, int direction) const
 }
 
 void
-RuleWizard::createSbFileList(SbAppPolicy *app, const wxArrayString & list,
-    int permission) const
-{
-	SbAccessFilterPolicy	*filter;
-
-	for (size_t i=0; i<list.GetCount(); i++) {
-		filter = new SbAccessFilterPolicy(app);
-		app->prependFilterPolicy(filter);
-
-		filter->setActionNo(APN_ACTION_ALLOW);
-		filter->setLogNo(APN_LOG_NONE);
-		filter->setPath(list.Item(i));
-		filter->setAccessMask(permission);
-	}
-}
-
-void
-RuleWizard::createSbDefaultFileList(SbAppPolicy *app, int section) const
-{
-	wxArrayString		list;
-
-	switch(section) {
-	case APN_SBA_READ:
-		list = history_.getSandboxDefaults(wxT("r"));
-		break;
-	case APN_SBA_WRITE:
-		list = history_.getSandboxDefaults(wxT("w"));
-		break;
-	case APN_SBA_EXEC:
-		list = history_.getSandboxDefaults(wxT("x"));
-		break;
-	}
-	createSbFileList(app, list, section);
-}
-
-void
 RuleWizard::createSbPermissionRoot(SbAppPolicy *app, int section,
     int action) const
 {
@@ -712,99 +676,140 @@ RuleWizard::createSbPermissionRoot(SbAppPolicy *app, int section,
 }
 
 void
-RuleWizard::createSbPermission(SbAppPolicy *app, int section) const
+RuleWizard::createSbPermissions(SbAppPolicy *app) const
 {
-	bool					 ask;
-	bool					 signature;
-	RuleWizardHistory::permissionAnswer	 permission;
-	wxArrayString				 list;
+	/*
+	 * Stage 1: The user can choose, if default-sandbox-policies should be
+	 *          created.
+	 */
+	createSbPermissionsStage1();
 
-	/* First check the global permissions. */
-	permission = history_.haveSandbox();
-	switch (permission) {
-	case RuleWizardHistory::PERM_RESTRICT_DEFAULT:
-		createSbDefaultFileList(app, section);
-		return;
-	case RuleWizardHistory::PERM_RESTRICT_USER:
-		break;
-	case RuleWizardHistory::PERM_ALLOW_ALL:
-		/* Should not happen. */
-		createSbPermissionRoot(app, section, APN_ACTION_ALLOW);
-		return;
-	case RuleWizardHistory::PERM_NONE:
-		/* Handled by the caller. */
-		return;
-	case RuleWizardHistory::PERM_DENY_ALL:
-		/* Not allowed for Sandbox rules. */
-		return;
+	/*
+	 * Stage 2: For each permission (read, write, execute) the user can
+	 *          choose, if default-policies should be created or the access
+	 *          can be allowed for everything.
+	 */
+	createSbPermissionsStage2(app, SbEntry::READ);
+	createSbPermissionsStage2(app, SbEntry::WRITE);
+	createSbPermissionsStage2(app, SbEntry::EXECUTE);
+
+	/*
+	 * Stage 3: For each permission (read, write, execute) the user can
+	 *          specify an own list of allowed files.
+	 */
+	createSbPermissionsStage3(app, SbEntry::READ);
+	createSbPermissionsStage3(app, SbEntry::WRITE);
+	createSbPermissionsStage3(app, SbEntry::EXECUTE);
+
+	/*
+	 * Finally convert entries of the SbModel into policies
+	 */
+	SbModel *model = history_.getSandboxFileList();
+	for (unsigned int i = 0; i < model->getEntryCount(); i++) {
+		SbEntry *entry = model->getEntry(i);
+
+		SbAccessFilterPolicy *filter = new SbAccessFilterPolicy(app);
+		app->prependFilterPolicy(filter);
+
+		filter->setActionNo(APN_ACTION_ALLOW);
+		filter->setLogNo(APN_LOG_NONE);
+		filter->setPath(entry->getPath());
+
+		int accessMask = 0;
+		if (entry->hasPermission(SbEntry::READ))
+			accessMask |= APN_SBA_READ;
+		if (entry->hasPermission(SbEntry::WRITE))
+			accessMask |= APN_SBA_WRITE;
+		if (entry->hasPermission(SbEntry::EXECUTE))
+			accessMask |= APN_SBA_EXEC;
+		filter->setAccessMask(accessMask);
+	}
+}
+
+void
+RuleWizard::createSbPermissionsStage1(void) const
+{
+	if (history_.haveSandbox() ==
+	    RuleWizardHistory::PERM_RESTRICT_DEFAULT) {
+		/*
+		 * The user has chosen
+		 * "Yes, load default policies (skip wizard)".
+		 * Load defaults for all permissions.
+		 */
+		history_.getSandboxFileList()->assignDefaults(SbEntry::READ);
+		history_.getSandboxFileList()->assignDefaults(SbEntry::WRITE);
+		history_.getSandboxFileList()->assignDefaults(SbEntry::EXECUTE);
 	}
 
 	/*
-	 * At this point we know that the global permission choice is
-	 * PERM_RESTRICT_USER. Look at the local permissions.
+	 * For any other possibilities nothing is to do.
+	 * - "Yes, create policies (wizard guided)": The decision is made in a
+	 *   later step of th wizard
+	 * - "No, do not create sandbox policies": No sandbox-policies should
+	 *   be created.
 	 */
-	switch (section) {
-	case APN_SBA_READ:
-		permission = history_.getSandboxPermission(SbEntry::READ);
-		break;
-	case APN_SBA_WRITE:
-		permission = history_.getSandboxPermission(SbEntry::WRITE);
-		break;
-	case APN_SBA_EXEC:
-		permission = history_.getSandboxPermission(SbEntry::EXECUTE);
-		break;
+}
+
+void
+RuleWizard::createSbPermissionsStage2(SbAppPolicy *app,
+    SbEntry::Permission permission) const
+{
+	if (history_.haveSandbox() != RuleWizardHistory::PERM_RESTRICT_USER) {
+		/* Wizard has not reached stage 2, abort */
+		return;
 	}
 
-	switch (permission) {
+	switch (history_.getSandboxPermission(permission)) {
 	case RuleWizardHistory::PERM_ALLOW_ALL:
-		createSbPermissionRoot(app, section, APN_ACTION_ALLOW);
-		return;
+		/*
+		 * The user has chosen "unrestricted".
+		 * Create an allow-policy for the root-directory.
+		 */
+		createSbPermissionRoot(app, toAPN_SBA(permission),
+		    APN_ACTION_ALLOW);
+		break;
 	case RuleWizardHistory::PERM_RESTRICT_DEFAULT:
-		createSbDefaultFileList(app, section);
-		return;
-	case RuleWizardHistory::PERM_RESTRICT_USER:
-		break;
-	case RuleWizardHistory::PERM_NONE:
-	case RuleWizardHistory::PERM_DENY_ALL:
-		/* Should not happen. Nothing to do. */
-		return;
-	}
-
-	/*
-	 * At this point both the global and the local permission are
-	 * PERM_RESTRICT_USER. Generate rules accordingly.
-	 */
-	switch (section) {
-	case APN_SBA_READ:
-		ask = history_.getSandboxAsk(SbEntry::READ);
-		signature = history_.getSandboxValidSignature(SbEntry::READ);
-		list = history_.getSandboxFileList(SbEntry::READ);
-		break;
-	case APN_SBA_WRITE:
-		ask = history_.getSandboxAsk(SbEntry::WRITE);
-		signature = history_.getSandboxValidSignature(SbEntry::WRITE);
-		list = history_.getSandboxFileList(SbEntry::WRITE);
-		break;
-	case APN_SBA_EXEC:
-		ask = history_.getSandboxAsk(SbEntry::EXECUTE);
-		signature = history_.getSandboxValidSignature(SbEntry::WRITE);
-		list = history_.getSandboxFileList(SbEntry::EXECUTE);
+		/*
+		 * The user has chosen "restricted (default)".
+		 * Load defaults for the given permission.
+		 */
+		history_.getSandboxFileList()->assignDefaults(permission);
 		break;
 	default:
+		/*
+		 * For the third possibility "restricted" nothing is to do
+		 * at this point. The decision is made in the next step of
+		 * the wizard.
+		 */
+		break;
+	}
+}
+
+void
+RuleWizard::createSbPermissionsStage3(SbAppPolicy *app,
+    SbEntry::Permission permission) const
+{
+	if (history_.getSandboxPermission(permission) !=
+	    RuleWizardHistory::PERM_RESTRICT_USER) {
+		/* The wizard has not reached stage 3, abort */
 		return;
 	}
 
+	int section = toAPN_SBA(permission);
+
+	/*
+	 * The user has filled up the sandbox-model by its own.
+	 * You only need to convert it into policies.
+	 */
+
 	/* Create the rule for the root directory. */
-	if (ask) {
+	if (history_.getSandboxAsk(permission))
 		createSbPermissionRoot(app, section, APN_ACTION_ASK);
-	} else {
+	else
 		createSbPermissionRoot(app, section, APN_ACTION_DENY);
-	}
-	/* Create special rules for the files in the file list. */
-	createSbFileList(app, list, section);
 
 	/* Finally put signature rules first if those were requested. */
-	if (signature) {
+	if (history_.getSandboxValidSignature(permission)) {
 		SbAccessFilterPolicy	*filter;
 		int			 action = APN_ACTION_ALLOW;
 		int			 log = APN_LOG_NONE;
@@ -831,4 +836,19 @@ RuleWizard::createSbPermission(SbAppPolicy *app, int section) const
 		filter->setActionNo(action);
 		filter->setLogNo(log);
 	}
+}
+
+inline int
+RuleWizard::toAPN_SBA(SbEntry::Permission permission)
+{
+	switch (permission) {
+	case SbEntry::READ:
+		return (APN_SBA_READ);
+	case SbEntry::WRITE:
+		return (APN_SBA_WRITE);
+	case SbEntry::EXECUTE:
+		return (APN_SBA_EXEC);
+	}
+
+	return (-1); /* Never reached */
 }

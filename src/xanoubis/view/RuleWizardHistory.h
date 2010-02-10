@@ -28,7 +28,6 @@
 #ifndef _RULEWIZARDHISTORY_H_
 #define _RULEWIZARDHISTORY_H_
 
-#include <wx/arrstr.h>
 #include <wx/font.h>
 #include <wx/sizer.h>
 #include <wx/string.h>
@@ -36,6 +35,7 @@
 
 #include <SbEntry.h>
 
+class SbModel;
 class ServiceList;
 
 /**
@@ -276,22 +276,6 @@ class RuleWizardHistory
 		enum permissionAnswer getAlfServerPermission(void) const;
 
 		/**
-		 * Are defaults for the sandbox available?
-		 * @param[in] 1st Permission: a combination of (""|"r"|"w"|"x")
-		 * @return True if there are defaults.
-		 */
-		bool isSandboxDefaultAvailable(const wxString &) const;
-
-		/**
-		 * Get sandbox defaults.
-		 * If the sandbox defaults file exists and contains values with
-		 * the given permission those are returned in a list.
-		 * @param[in] 1st Permission: a combination of (""|"r"|"w"|"x")
-		 * @return The list of sandbox defaults.
-		 */
-		wxArrayString getSandboxDefaults(const wxString &) const;
-
-		/**
 		 * Store answer to the question: sandbox wizard, sandbox
 		 * defaults or no sandbox?
 		 * @param[in] 1st The answer.
@@ -349,20 +333,11 @@ class RuleWizardHistory
 		    SbEntry::Permission, permissionAnswer);
 
 		/**
-		 * Get the list of sandbox files for the given permission.
-		 * @param[in] 1st The permission
+		 * Get the list of sandbox files.
+		 * @param None
 		 * @return The list of files.
 		 */
-		wxArrayString getSandboxFileList(SbEntry::Permission) const;
-
-		/**
-		 * Store the list of sandbox files for the given permission.
-		 * @param[in] 1st The permission
-		 * @param[in] 2nd The list of read file.
-		 * @return Nothing.
-		 */
-		void setSandboxFileList(SbEntry::Permission,
-		    const wxArrayString &);
+		SbModel *getSandboxFileList(void) const;
 
 		/**
 		 * Shall we ask on any other read access?
@@ -554,11 +529,6 @@ class RuleWizardHistory
 		enum permissionAnswer sandboxReadPermission_;
 
 		/**
-		 * The list of sandbox read access.
-		 */
-		wxArrayString sandboxReadFileList_;
-
-		/**
 		 * Shall we ask on any other read access?
 		 */
 		bool sandboxReadAsk_;
@@ -572,11 +542,6 @@ class RuleWizardHistory
 		 * Sandbox write permissions.
 		 */
 		enum permissionAnswer sandboxWritePermission_;
-
-		/**
-		 * The list of sandbox write access.
-		 */
-		wxArrayString sandboxWriteFileList_;
 
 		/**
 		 * Shall we ask on any other write access?
@@ -594,9 +559,9 @@ class RuleWizardHistory
 		enum permissionAnswer sandboxExecutePermission_;
 
 		/**
-		 * The list of sandbox execute access.
+		 * The list of sandbox files.
 		 */
-		wxArrayString sandboxExecuteFileList_;
+		SbModel *sandboxFileList_;
 
 		/**
 		 * Shall we ask on any other execute access?

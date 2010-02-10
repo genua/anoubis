@@ -33,6 +33,8 @@
 #include "RuleWizardPanelsBase.h"
 #include "RuleWizardHistory.h"
 
+class SbModelRowProvider;
+
 /**
  *
  */
@@ -45,15 +47,16 @@ class RuleWizardSandboxWriteFilesPage : public RuleWizardSandboxFilesPageBase
 		RuleWizardSandboxWriteFilesPage(wxWindow *,
 		    RuleWizardHistory *);
 
+		/**
+		 * D'tor.
+		 */
+		~RuleWizardSandboxWriteFilesPage(void);
+
 	private:
 		/**
-		 * Use these indices for the columns of the file list.
+		 * Row-provider of the sandbox-list.
 		 */
-		enum fileColumns {
-			COLUMN_PATH = 0,	/**< Column for path */
-			COLUMN_FILE,		/**< Column for filename */
-			COLUMN_STD,		/**< Column for std-flag */
-		};
+		SbModelRowProvider *rowProvider_;
 
 		/**
 		 * Store the input here.
@@ -134,15 +137,6 @@ class RuleWizardSandboxWriteFilesPage : public RuleWizardSandboxFilesPageBase
 		 * @return Nothing.
 		 */
 		virtual void onValidCheckBox(wxCommandEvent &);
-
-		/**
-		 * Store file list.
-		 * This will take the input of the file list and stores
-		 * it to the history.
-		 * @param None.
-		 * @return Nothing.
-		 */
-		void storeFileList(void) const;
 
 		/**
 		 * Update navigation.
