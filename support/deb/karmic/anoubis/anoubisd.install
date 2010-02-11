@@ -1,0 +1,8 @@
+etc/anoubis/anoubisd.conf
+sbin/anoubisd
+sbin/anoubisctl
+sbin/sfssig
+usr/bin/anoubis-keygen
+sbin/anoubis-keyinstall
+etc/udev/*
+usr/share/anoubisd/*

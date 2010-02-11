@@ -1,0 +1,287 @@
+apnversion 1.1
+alf {
+	# Anoubis software
+	/sbin/anoubisctl {
+		# allow all because of NFS, X, etc.
+		default allow
+	}
+	/sbin/sfssig {
+		# allow all because of NFS, X, etc.
+		default allow
+	}
+	/usr/bin/xanoubis {
+		# allow all because of NFS, X, etc.
+		default allow
+	}
+
+	# AntiVirus software
+	@freshclam@ {
+		default ask
+	}
+
+	# TrueCrypt
+	@truecrypt@ {
+		default ask
+	}
+
+	/usr/sbin/sshd  {
+		allow accept tcp all
+
+		# connect required for port forwarding
+		allow connect log tcp all
+		default log deny
+	}
+
+	@ssh@ {
+		# DNS
+		allow connect	tcp from any to any port domain
+		allow send	udp from any to any port domain
+		allow receive	udp from any port domain to any
+
+		# NFS/portmap
+		allow send udp from any	to 127.0.0.1 port sunrpc
+		allow receive udp from 127.0.0.1 port sunrpc to any
+		allow connect tcp from any to 127.0.0.1 port sunrpc
+
+		# allow port forwarding only from localhost
+		allow accept tcp from 127.0.0.1 to any
+		allow accept tcp from ::1 to any
+
+		# ssh outbound conections
+		allow connect tcp from any to any port ssh
+
+		# for non-standard ports, ask
+		ask connect tcp all
+
+		default log deny
+	}
+
+	# Mail
+	{ @evolution@, @kmail@}  {
+		# DNS
+		allow connect tcp from any to any port domain
+		allow send udp from any to any port domain
+		allow receive udp from any port domain to any
+
+		# NFS/portmap
+		allow send udp from any to 127.0.0.1 port sunrpc
+		allow receive udp from 127.0.0.1 port sunrpc to any
+		allow connect tcp from any to 127.0.0.1 port sunrpc
+
+		# X
+		allow connect tcp from any to 127.0.0.1 port 6000 - 6099
+		allow connect tcp from any to ::1 port 6000 - 6099
+
+		# pulseaudio
+		allow connect tcp from any to 127.0.0.1 port 16001
+		allow connect tcp from any to ::1 port 16001
+
+		### mail protocols
+		# smtp
+		allow connect tcp from any to any port { smtp, smtps }
+		# msa
+		allow connect tcp from any to any port submission
+		# pop
+		allow connect tcp from any to any port { pop3, pop3s }
+		# imap
+		allow connect tcp from any to any port { imap, imaps }
+
+		default log ask
+	}
+
+	# Internet-Browser
+	{ @epiphany@, @epiphany-gecko@,
+	@firefox@, @xulrunner@,
+	@konqueror@, /usr/lib/kde3/konqueror.so } {
+		# DNS
+		allow connect tcp from any to any port domain
+		allow send udp from any to any port domain
+		allow receive udp from any port domain to any
+
+		# NFS/portmap
+		allow connect tcp from any to 127.0.0.1 port sunrpc
+		allow send udp from any to 127.0.0.1 port sunrpc
+		allow receive udp from 127.0.0.1 port sunrpc to any
+
+		# X
+		allow connect tcp from any to 127.0.0.1 port 6000 - 6099
+		allow connect tcp from any to ::1 port 6000 - 6099
+
+		allow connect tcp from any to any port { http, https }
+		ask connect tcp from any to any port { 8000, 8080 }
+
+		default ask
+	}
+
+	any {
+		# NFS/portmap
+		allow send udp from any to 127.0.0.1 port sunrpc
+		allow receive udp from 127.0.0.1 port sunrpc to any
+		allow connect tcp from any to 127.0.0.1 port sunrpc
+
+		# DNS
+		allow connect tcp from any to any port domain
+		allow send udp from any to any port domain
+		allow receive udp from any port domain to any
+
+		#
+		allow connect tcp from any to 127.0.0.1 port 6000 - 6099
+		allow connect tcp from any to ::1 port 6000 - 6099
+
+		default log ask
+	}
+}
+sfs {
+	path "/home" self valid allow invalid log deny unknown continue
+	path "/home" signed-self valid allow invalid log deny unknown continue
+}
+sandbox {
+	# Anoubis software
+	/sbin/anoubisctl {
+		default allow
+	}
+	/sbin/sfssig {
+		default allow
+	}
+	/usr/bin/xanoubis {
+		default allow
+	}
+
+	# AntiVirus software
+	{ @antivir@, @avguard@, @avscan@ } {
+		allow path "/" rw
+		default ask
+	}
+	{ @clamscan@, @clamdscan@, @clamd@ } {
+		allow path "/" rw
+		default ask
+	}
+
+	# TrueCrypt
+	@truecrypt@ {
+		allow path "/" rw
+		allow path "@sudo@" rx
+		allow path "@mkfs.ext2@" rx
+		allow path "@mkfs.ext3@" rx
+		default ask
+	}
+
+	@kdeinit4@  {
+		allow path "/tmp" rw
+		allow path "/var/tmp" rw
+		allow path "/var" r
+		allow path "/usr" rx
+		allow path "/lib" rx
+		allow path "/bin" rx
+		allow path "/home" r
+		allow path "/etc" r
+		default ask
+	}
+
+	# daemon socket
+	any {
+		deny log path "/var/run/anoubisd.sock" rwx
+	}
+
+}
+context {
+	# Anoubis software
+	/sbin/anoubisctl nosfs {
+		# new context for cvs
+		context new any
+	}
+	/sbin/sfssig nosfs {
+	}
+	/usr/bin/xanoubis nosfs {
+		# new context for cvs
+		context new any
+	}
+
+	# AntiVirus software
+	{ @clamscan@, @clamdscan@, @clamd@ } nosfs {
+	}
+
+	# TrueCrypt
+	@truecrypt@ {
+		# no context new for sudo
+	}
+
+	/usr/sbin/sshd  {
+		context new any
+	}
+
+	@ssh@  {
+		context new any
+	}
+
+	@evolution@  {
+		context new any
+	}
+
+	{ @kdeinit4@, @kioslave@, @klauncher@,
+	@kdeinit@ }  {
+		context borrow /usr/bin/konqueror
+		context borrow /usr/lib/kde3/konqueror.so
+		context borrow /usr/bin/kmail
+		context open /usr/lib/kde3/konqueror.so
+		context open /usr/lib/kde4/kio_http.so
+		context open /usr/lib/kde4/kio_imap4.so
+		context open /usr/lib/kde4/kio_pop3.so
+		context open /usr/lib/kde4/kio_ftp.so
+		context open /usr/lib/kde4/kio_sftp.so
+		context open /usr/lib/kde4/kio_smtp.so
+		context open /usr/lib/kde3/kio_http.so
+		context open /usr/lib/kde3/kio_imap4.so
+		context open /usr/lib/kde3/kio_pop3.so
+		context open /usr/lib/kde3/kio_ftp.so
+		context open /usr/lib/kde3/kio_sftp.so
+		context open /usr/lib/kde3/kio_smtp.so
+		context new any
+	}
+
+	@kmail@ {
+		context open /usr/lib/kde4/kio_imap4.so
+		context open /usr/lib/kde4/kio_pop3.so
+		context open /usr/lib/kde4/kio_smtp.so
+		context open /usr/lib/kde3/kio_imap4.so
+		context open /usr/lib/kde3/kio_pop3.so
+		context open /usr/lib/kde3/kio_smtp.so
+		context new any
+	}
+
+	{ /usr/lib/kde4/kio_http.so, /usr/lib/kde3/kio_http.so } {
+		context borrow /usr/bin/konqueror
+		context borrow /usr/lib/kde3/konqueror.so
+		context new any
+	}
+
+	{ /usr/lib/kde4/kio_imap4.so, /usr/lib/kde3/kio_imap4.so } {
+		context borrow /usr/bin/kmail
+	}
+
+	{ /usr/lib/kde4/kio_ftp.so, /usr/lib/kde3/kio_ftp.so } {
+		context borrow /usr/bin/konqueror
+		context borrow /usr/lib/kde3/konqueror.so
+	}
+
+	{ /usr/lib/kde4/kio_sftp.so, /usr/lib/kde3/kio_sftp.so } {
+		context borrow /usr/bin/konqueror
+		context borrow /usr/lib/kde3/konqueror.so
+	}
+
+	{ /usr/lib/kde4/kio_smtp.so, /usr/lib/kde3/kio_smtp.so } {
+		context borrow /usr/bin/kmail
+	}
+
+	{ /usr/lib/kde4/kio_pop3.so, /usr/lib/kde3/kio_pop3.so } {
+		context borrow /usr/bin/kmail
+	}
+
+	{ @firefox@, @xulrunner@,
+	@konqueror@, /usr/lib/kde3/konqueror.so } {
+	}
+
+	any {
+		context new any
+	}
+}

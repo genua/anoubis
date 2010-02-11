@@ -1,0 +1,8 @@
+%%NAME%% (%%VERSION%%) unstable; urgency=low
+
+  * Automatic build of %%NAME%%
+  * debian/rules:
+    - Added install target for desktopfile and application icon installation
+    - Added dh_desktop to register desktopfile
+
+ -- Stefan Fritsch <fritsch@genua.de>  %%FULLDATE%%

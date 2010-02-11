@@ -1,0 +1,10 @@
+debian/tmp/usr/share/man/man1/anoubis-keygen.1
+debian/tmp/usr/share/man/man1/anoubis-keyinstall.1
+debian/tmp/usr/share/man/man4/dev-anoubis.4
+debian/tmp/usr/share/man/man4/eventdev.4
+debian/tmp/usr/share/man/man5/anoubisd.conf.5
+debian/tmp/usr/share/man/man8/anoubisd.8
+debian/tmp/usr/share/man/man8/anoubisctl.8
+debian/tmp/usr/share/man/man8/sfssig.8
+debian/tmp/usr/share/man/man9/anoubis_kernel.9
+debian/tmp/usr/share/man/man9/eventdev.9

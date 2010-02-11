@@ -1,0 +1,23 @@
+apnversion 1.0
+alf {
+	any {
+		# DNS
+		allow connect tcp from any	   to any port domain
+		allow send    udp from any	   to any port domain
+		allow receive udp from any port domain to any
+
+		# SMTP
+		allow accept  tcp from any to any port { smtp, smtps }
+		allow connect tcp from any to any port { smtp, smtps }
+
+		# ident
+		allow connect tcp from any to any port ident
+
+		default log deny
+	}
+}
+context {
+	any {
+		context new any
+	}
+}

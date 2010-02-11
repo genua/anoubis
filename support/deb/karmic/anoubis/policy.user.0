@@ -1,0 +1,37 @@
+apnversion 1.1
+# dummy user policy to disable user/default policy for this user
+
+alf {
+	# AntiVirus software
+	@avupdate@ {
+		default allow
+	}
+
+	any {
+		default allow
+	}
+}
+context {
+	# AntiVirus software
+	"/usr/lib/AntiVir/savapi" nosfs {
+		context new any
+	}
+
+	any {
+		context new any
+	}
+}
+
+sandbox {
+
+	# Only allow anoubis to edit .xanoubis
+	{"/usr/bin/xanoubis", "/sbin/anoubisctl", "/sbin/sfssig"} {
+		allow  path "@home@/.xanoubis"  rwx
+		allow  any rwx
+	}
+
+	any {
+		deny path "@home@/.xanoubis"  rwx
+		allow  any rwx
+	}
+}

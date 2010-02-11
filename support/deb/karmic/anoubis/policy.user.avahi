@@ -1,0 +1,29 @@
+apnversion 1.0
+# dummy user policy to disable user/default policy for this user
+
+alf {
+	any {
+		default allow
+	}
+}
+
+sandbox {
+
+	# Only allow anoubis to edit .xanoubis
+	{"/usr/bin/xanoubis", "/sbin/anoubisctl", "/sbin/sfssig"} {
+		allow  path "@home@/.xanoubis"  rwx
+		allow  any rwx
+	}
+
+	any {
+		deny path "@home@/.xanoubis"  rwx
+		allow  any rwx
+	}
+}
+
+
+context {
+	any {
+		context new any
+	}
+}

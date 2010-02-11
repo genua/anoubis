@@ -1,0 +1,87 @@
+apnversion 1.1
+alf {
+	# Anoubis software
+	/sbin/anoubisctl {
+		# allow all because of NFS, X, etc.
+		default allow
+	}
+	/sbin/sfssig {
+		# allow all because of NFS, X, etc.
+		default allow
+	}
+	/usr/bin/xanoubis {
+		# allow all because of NFS, X, etc.
+		default allow
+	}
+
+	# AntiVirus software
+	@freshclam@ {
+		default ask
+	}
+
+	# TrueCrypt
+	@truecrypt@ {
+		default ask
+	}
+
+	any {
+		default allow
+	}
+}
+sandbox {
+	# Anoubis software
+	/sbin/anoubisctl {
+		default allow
+	}
+	/sbin/sfssig {
+		default allow
+	}
+	/usr/bin/xanoubis {
+		default allow
+	}
+
+	# AntiVirus software
+	{ @antivir@, @avguard@, @avscan@ } {
+		allow path "/" rw
+		default ask
+	}
+	{ @clamscan@, @clamdscan@, @clamd@ } {
+		allow path "/" rw
+		default ask
+	}
+
+	# TrueCrypt
+	@truecrypt@ {
+		allow path "/" rw
+		allow path "@sudo@" rx
+		allow path "@mkfs.ext2@" rx
+		allow path "@mkfs.ext3@" rx
+		default ask
+	}
+}
+context {
+	# Anoubis software
+	/sbin/anoubisctl nosfs {
+		# new context for cvs
+		context new any
+	}
+	/sbin/sfssig nosfs {
+	}
+	/usr/bin/xanoubis nosfs {
+		# new context for cvs
+		context new any
+	}
+
+	# AntiVirus software
+	{ @clamscan@, @clamdscan@, @clamd@ } nosfs {
+	}
+
+	# TrueCrypt
+	@truecrypt@ {
+		# no context new for sudo
+	}
+
+	any {
+		context new any
+	}
+}

@@ -1,0 +1,93 @@
+#!/bin/sh
+set -e
+
+if [ "$1" != configure ]
+	then
+	exit 0
+fi
+
+ANOUBIS_USER=_anoubisd
+NOSFS_GROUP=_nosfs
+POLICY_DIR=/var/lib/anoubis/policy
+
+if ! getent passwd $ANOUBIS_USER >/dev/null; then
+	adduser --quiet --system --no-create-home --home /var/run/anoubisd \
+	    --disabled-login --group --force-badname $ANOUBIS_USER
+fi
+
+if ! getent group $NOSFS_GROUP >/dev/null; then
+	addgroup --force-badname $NOSFS_GROUP
+fi
+
+setperms () {
+	if ! dpkg-statoverride --list $4 > /dev/null 2>&1 ; then
+	    dpkg-statoverride --update --add $1 $2 $3 $4
+	fi
+}
+
+
+rmoverride () {
+	if dpkg-statoverride --list $1 > /dev/null 2>&1 ; then
+	    dpkg-statoverride --remove $1
+	fi
+}
+
+for dir in ${POLICY_DIR} ${POLICY_DIR}/user ${POLICY_DIR}/admin \
+    ${POLICY_DIR}/pubkeys; do
+	setperms $ANOUBIS_USER $ANOUBIS_USER 0700 $dir
+done
+
+for bin in /sbin/anoubisctl /sbin/sfssig; do
+	setperms root $NOSFS_GROUP 2755 $bin
+done
+
+setperms root $ANOUBIS_USER 0750 /var/lib/anoubis
+
+# remove overrides from older packages
+rmoverride /etc/anoubis/policy/admin/default
+rmoverride /etc/anoubis/policy/admin/0
+rmoverride /etc/anoubis/policy/admin/1
+rmoverride /etc/anoubis/policy
+rmoverride /etc/anoubis/policy/user
+rmoverride /etc/anoubis/policy/admin
+rmoverride /etc/anoubis/policy/pubkeys
+
+# migrate broken startlink
+if [ -n "$2" ] &&
+   [ -L /etc/rcS.d/S36anoubisd ]
+then
+	mv /etc/rcS.d/S36anoubisd /etc/rcS.d/S37anoubisd
+fi
+
+# update run dir permissions from old versions
+if [ -d /var/run/anoubisd ] ; then
+	chown root:_anoubisd /var/run/anoubisd
+	chmod 0770 /var/run/anoubisd
+fi
+
+# copy new default policy
+/usr/share/anoubisd/install_policy -q\
+	/usr/share/anoubisd/policy_templates/admin \
+	/var/lib/anoubis/policy/admin
+
+/usr/share/anoubisd/install_policy -q\
+	/usr/share/anoubisd/policy_templates/user \
+	/var/lib/anoubis/policy/user
+
+# update xanoubis profiles
+# we just overwrite the old files until we have a better mechanism
+# for updates
+rm -f /etc/anoubis/profiles/admin
+rm -f /etc/anoubis/profiles/medium
+rm -f /etc/anoubis/profiles/high
+/usr/share/anoubisd/install_policy -q -n -o \
+	/usr/share/anoubisd/policy_templates/profiles \
+	/etc/anoubis/profiles
+
+# our udev rules file is only effective starting with the next reboot.
+# Therefore update permissions manually now.
+if [ -e /dev/anoubis ] ; then
+	chmod 644 /dev/anoubis
+fi
+
+#DEBHELPER#

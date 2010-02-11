@@ -1,0 +1,34 @@
+Source: anoubis
+Section: misc
+Priority: extra
+Maintainer: Stefan Fritsch <fritsch@genua.de>
+Build-Depends: debhelper (>= 5), libx11-dev, libwxgtk2.8-dev, check,
+  pkg-config (>= 0.18), libevent-dev, libssl-dev, libattr1-dev, libnotify-dev,
+  flex, bison
+Standards-Version: 3.7.3
+
+Package: anoubisd
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, adduser, perl-modules, cvs,
+  openssl
+Description: Central daemon of the Anoubis Security Suite
+ anoubisd is the user land daemon of the Anoubis Security Suite.  Together
+ with a kernel security module it implements an Application Level Firewall
+ (ALF), Filesystem Signatures (SFS) and sandboxing.
+
+Package: xanoubis
+Architecture: any
+Depends: ${shlibs:Depends}, notification-daemon, anoubisd (>= 0.9.1), cvs,
+  wx2.8-i18n, openssl
+Description: Graphical user interface of the Anoubis Security Suite
+ xanoubis is the GUI of the anoubis security suite. Users can use xanoubis
+ to create rules and signatures for the Application Level Firewall
+ (ALF), Filesystem Signatures (SFS) and sandboxing.
+
+Package: anoubis-dbg
+Section: libdevel
+Architecture: any
+Depends: anoubisd (= ${binary:Version})
+Description: Debugging symbols for anoubisd/xanoubis
+ This package contains the debug symbols of all the Anoubis Security Suite
+ components.
