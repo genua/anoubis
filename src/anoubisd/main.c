@@ -1335,10 +1335,9 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 	msg_csum = (struct anoubisd_msg_csumop *)msg->msg;
 	rawmsg.length = msg_csum->len;
 	rawmsg.u.buf = msg_csum->msg;
-	if (sfs_parse_checksumop(&csop, &rawmsg, msg_csum->uid) < 0) {
-		err = -EINVAL;
+	err = sfs_parse_checksumop(&csop, &rawmsg, msg_csum->uid);
+	if (err < 0)
 		goto out;
-	}
 
 	switch (csop.op) {
 	case _ANOUBIS_CHECKSUM_OP_LIST:
