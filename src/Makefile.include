@@ -45,6 +45,14 @@ else
 check_ldadd = @CHECK_LIBS@
 endif
 
+if OPENBSD
+intl_ldadd	= -lintl -liconv
+intl_include	= -I/usr/local/include
+else
+intl_ldadd	=
+intl_include	=
+endif
+
 if NEEDBSDCOMPAT
 bsdcompat_cppflags = -I$(libanoubisinclude)/bsdcompat
 else
@@ -57,7 +65,7 @@ basic_cppflags = $(prog_AM_CPPFLAGS) \
 	-I$(top_builddir)/src \
 	-I$(top_srcdir)/include
 
-anoubis_cppflags = $(libanoubis_cppflags) $(basic_cppflags)
+anoubis_cppflags = $(libanoubis_cppflags) $(basic_cppflags) $(intl_include)
 
 # define standard variables for test programs:
 #   test_cppflags
@@ -89,14 +97,15 @@ test_so_ldflags = \
 # conditionally static link of libraries to accomplish correct Code Coverage
 if GCOV_ENABLED
 libanoubis_dependencies = $(libanoubis)
-libanoubis_ldadd = $(libanoubis)
+libanoubis_ldadd = $(libanoubis) $(intl_ldadd)
 else
 libanoubis_dependencies = $(libanoubis_so)
 # we can't ldadd the so file directly, because then the relative path to the
 # .so file will be put into the executable :-(
-libanoubis_ldadd = -lanoubis
+libanoubis_ldadd = -lanoubis $(intl_ldadd)
 endif
-test_ldadd = $(check_ldadd) $(libanoubischeck) $(libanoubis_ldadd)
+test_ldadd = $(check_ldadd) $(libanoubischeck) $(libanoubis_ldadd) \
+	     $(intl_ldadd)
 # dependency must be declared manually due to automake bug
 test_dependencies = $(libanoubischeck) $(libanoubis_dependencies)
 

@@ -148,6 +148,7 @@ AC_CONFIG_FILES([
 	test/libanoubisprotocol/Makefile
 	test/xanoubis/Makefile
 	test/libanoubissig/Makefile
+	test/libanoubiserrorcode/Makefile
 	test/anoubisd/Makefile
 	test/bsdcompat/Makefile
 	test/libapn/Makefile
@@ -330,8 +331,13 @@ case $host in
 	;;
 	*-*-openbsd*)
 	AC_DEFINE(OPENBSD, 1, "Define OpenBSD")
+	obsd=yes
 	;;
 esac
+
+dnl makefile.include should know that platform is openbsd, to inlcude
+dnl libintl.h
+AM_CONDITIONAL(OPENBSD,[test "x$obsd" = xyes ])
 
 dnl Enable ugly hack to save some compile time on ix86 (32bit)
 dnl this is only used for the libGUIcomponents.so which is only

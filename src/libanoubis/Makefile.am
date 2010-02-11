@@ -97,6 +97,7 @@ csources = \
 	anoubisprotocol/server/anoubis_policy.c \
 	anoubisprotocol/server/anoubis_server.c \
 	anoubissig/anoubis_sig.c \
+	anoubiserrorcode/anoubis_errno.c \
 	anoubisui/apnvm/apncmd.c \
 	anoubisui/apnvm/apncvs.c \
 	anoubisui/apnvm/apnvm.c \

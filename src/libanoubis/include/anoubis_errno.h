@@ -24,6 +24,16 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _ANOUBIS_ERRNO_H_
+#define _ANOUBIS_ERRNO_H_
+
+#include <errno.h>
+#include <libintl.h>
+#include <string.h>
+
+/* following defines are used by anoubisprotocol*/
+
 #define ANOUBIS_E_OK		0
 #define ANOUBIS_E_PERM		1
 #define ANOUBIS_E_NOENT		2
@@ -59,3 +69,33 @@
 #define ANOUBIS_E_PIPE		32
 
 #define ANOUBIS_E_AGAIN		1024
+
+
+/* following defines and fucntion are used by anoubiserrorcodes*/
+
+/*
+ * all error_codes > A_ERRORCODE_BASE will be (re-)defined by anoubis
+ */
+#define A_ERRORCODE_BASE 1024
+
+/*
+ * some macros to define anoubis_errorcodes
+ */
+#define A_TEST_ERRORCODE1 1024
+#define A_TEST_ERRORCODE2 1025
+#define A_TEST_ERRORCODE3 1027
+
+/*
+ * Get Anoubis error code string.
+ *
+ * This method returns an error string corresponding to given error code.
+ *
+ * @param[in]	error code
+ *
+ * @return	corresponding error text
+ *		If errnum < A_ERROR_CODE_BASE, systems strerror will
+ *		be called and its error text will be returned.
+ */
+char *anoubis_strerror(int errnum);
+
+#endif /*_ANOUBIS_ERRNO_H_*/

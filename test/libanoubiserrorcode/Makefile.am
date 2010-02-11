@@ -1,5 +1,4 @@
-##########################################################################
-# Copyright (c) 2008 GeNUA mbH <info@genua.de>
+# Copyright (c) 2007 GeNUA mbH <info@genua.de>
 #
 # All rights reserved.
 #
@@ -25,19 +24,20 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##########################################################################
 
-if NEEDBSDCOMPAT
-BSDCOMPAT=bsdcompat
-endif
 
-if XANOUBIS
-GUI=xanoubis
-endif
+TESTS = test_libanoubiserrorcode
+noinst_PROGRAMS = test_libanoubiserrorcode
 
-SUBDIRS = libanoubischeck libapn libanoubischat libanoubisprotocol \
-	libanoubisui anoubisd libanoubissig libanoubiserrorcode \
-	$(GUI) $(BSDCOMPAT)
+include $(top_srcdir)/src/Makefile.include
 
-# targets must exist, but need not to do anything
-flawfinder:
-lint:
-splint:
+TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(test_ldpath) SRCDIR=$(top_srcdir)/src
+
+AM_CPPFLAGS = $(test_cppflags)
+AM_LDFLAGS = $(test_ldflags)
+LDADD = $(test_ldadd)
+
+test_libanoubiserrorcode_DEPENDENCIES = $(test_dependencies)
+test_libanoubiserrorcode_SOURCES =                  \
+	libanoubiserrorcode_testcase.c    \
+	libanoubiserrorcode_testsuite.c             \
+	libanoubiserrorcode_testrunner.c
