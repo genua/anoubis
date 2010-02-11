@@ -44,6 +44,7 @@ TESTS = \
 	testSuite_Services \
 	testSuite_Sandbox \
 	testSuite_Sfs \
+	testSuite_StringList \
 	testSuite_Key \
 	testSuite_Notifications \
 	testSuite_Config \
@@ -198,6 +199,17 @@ testSuite_Sfs_SOURCES = \
 	testrunner.cpp \
 	suite_Sfs/testSuite.cpp \
 	suite_Sfs/tc_SfsDir.cpp
+
+#
+# Testsuite: StringList
+#
+testSuite_StringList_CPPFLAGS = $(AM_CPPFLAGS)
+testSuite_StringList_DEPENDENCIES = $(dependencies)
+testSuite_StringList_LDADD = $(LDADD) -lGUIcomponents
+
+testSuite_StringList_SOURCES = \
+	testrunner.cpp \
+	suite_StringList/testSuite.cpp
 
 #
 # Testsuite: Key
