@@ -47,8 +47,15 @@ usage() if (scalar @ARGV != 2);
 my $dummy = 0;
 
 my $user = '_anoubisd';
-my (undef, undef, $uid, $gid) = getpwnam($user);
+my $anoubis_pw = getpw($user);
+my $uid;
+my $gid;
 if (!$No_Chown) {
+	if (! defined $anoubis_pw) {
+		die ("No such user: $user\n");
+	}
+	$uid = $anoubis_pw->uid;
+	$gid = $anoubis_pw->gid;
 	(defined $uid && defined $gid) or
 	    die "Could not get user id of user $user\n";
 }
@@ -66,7 +73,7 @@ closedir($dirh);
 
 foreach my $file (@files) {
 	my $name;
-	my $homedir;
+	my $homedir = "/nonexistent";
 	my $pw;
 
 	if ($No_Rename or $file =~ /^\d+$/ or $file eq 'default') {
@@ -94,7 +101,7 @@ foreach my $file (@files) {
 		$homedir = $pw->dir;
 	}
 
-	process_file("$source/$file", "$target/$name", "$file", $homedir);
+	process_file("$source/$file", "$target/$name", "$file", "$homedir");
 }
 
 exit(0);
