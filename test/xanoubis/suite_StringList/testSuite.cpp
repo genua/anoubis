@@ -186,7 +186,7 @@ START_TEST(add_idx)
 	fail_unless(model->get(4) == wxT("c"));
 	fail_unless(model->get(5) == wxT("x"));
 	fail_unless(model->get(6) == wxEmptyString);
-	
+
 	assert_StringProxy(0, wxT("y"));
 	assert_StringProxy(1, wxT("a"));
 	assert_StringProxy(2, wxT("b"));

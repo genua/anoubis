@@ -56,7 +56,6 @@ class AnPickFromFs;
 #include <wx/button.h>
 #include <wx/dialog.h>
 #include <wx/checkbox.h>
-#include <wx/listbox.h>
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -215,7 +214,7 @@ class RuleWizardContextExceptionPageBase : public wxPanel
 		wxStaticText* questionLabel;
 		
 		wxStaticText* exceptionListLabel;
-		wxListBox* exceptionListBox;
+		AnListCtrl* exceptionList;
 		wxButton* addButton;
 		
 		wxButton* deleteButton;

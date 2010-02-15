@@ -35,6 +35,7 @@
 #include "PolicyRuleSet.h"
 #include "SbModel.h"
 #include "ServiceList.h"
+#include "StringListModel.h"
 #include "main.h"
 
 RuleWizardHistory::RuleWizardHistory(void)
@@ -52,7 +53,7 @@ RuleWizardHistory::RuleWizardHistory(void)
 	haveContextPolicy_ = false;
 	isSameContext_	   = true;
 	haveContextException_ = false;
-	contextExceptionBinaryList_.Clear();
+	contextExceptionList_ = new StringListModel;
 	noSfs_ = false;
 
 	haveAlfPolicy_	     = false;
@@ -83,6 +84,7 @@ RuleWizardHistory::RuleWizardHistory(void)
 
 RuleWizardHistory::~RuleWizardHistory(void)
 {
+	delete contextExceptionList_;
 	delete alfClientPortList_;
 	delete sandboxFileList_;
 }
@@ -176,7 +178,7 @@ RuleWizardHistory::setContextException(bool exception)
 {
 	haveContextException_ = exception;
 	if (!haveContextException_) {
-		contextExceptionBinaryList_.Clear();
+		contextExceptionList_->clear();
 	}
 }
 
@@ -186,40 +188,10 @@ RuleWizardHistory::haveContextException(void) const
 	return (haveContextException_);
 }
 
-bool
-RuleWizardHistory::addContextException(const wxString &bin)
+StringListModel *
+RuleWizardHistory::getContextExceptions(void) const
 {
-	contextExceptionBinaryList_.Add(bin);
-	return true;
-}
-
-bool
-RuleWizardHistory::delContextException(unsigned int idx)
-{
-	if (idx < contextExceptionBinaryList_.GetCount()) {
-		contextExceptionBinaryList_.RemoveAt(idx);
-		return true;
-	}
-	return false;
-}
-
-unsigned int
-RuleWizardHistory::getContextExceptionCount(void) const
-{
-	if (haveContextException_) {
-		return contextExceptionBinaryList_.GetCount();
-	}
-	return 0;
-}
-
-const wxString
-RuleWizardHistory::getContextExceptionBinary(unsigned int index) const
-{
-	if (haveContextException_
-	    && index < contextExceptionBinaryList_.GetCount()) {
-		return contextExceptionBinaryList_[index];
-	}
-	return wxT("");
+	return (contextExceptionList_);
 }
 
 bool
@@ -493,7 +465,7 @@ RuleWizardHistory::fillContextNavi(wxWindow *parent, wxSizer *naviSizer,
 
 	if (haveContextException_) {
 		text.Printf(_("exceptions (%d): yes"),
-		    contextExceptionBinaryList_.GetCount());
+		    contextExceptionList_->count());
 	} else {
 		text = _("exceptions: no");
 	}

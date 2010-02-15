@@ -171,7 +171,7 @@ testSuite_Policies_SOURCES = \
 #
 testSuite_Services_CPPFLAGS = $(AM_CPPFLAGS) -D_PATH_SERVICES=\"/tmp/foobar\"
 testSuite_Services_DEPENDENCIES = $(dependencies)
-testSuite_Services_LDADD = $(LDADD) -lGUIcomponents 
+testSuite_Services_LDADD = $(LDADD) -lGUIcomponents
 
 testSuite_Services_SOURCES = \
 	testrunner.cpp \

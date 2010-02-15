@@ -31,19 +31,66 @@
 #include <wx/arrstr.h>
 #include <wx/msgdlg.h>
 
+#include <AnListColumn.h>
+#include <AnListCtrl.h>
+#include <AnListProperty.h>
+
+#include <StringListModel.h>
+
 #include "RuleWizardContextExceptionPage.h"
 #include "PolicyUtils.h"
+
+/**
+ * Property for Exception-List.
+ */
+class ContextExceptionProperty : public AnListProperty
+{
+	public:
+		wxString getHeader(void) const
+		{
+			return (wxEmptyString);
+		}
+
+		wxString getText(AnListClass *obj) const
+		{
+			StringWrapper *wrapper =
+			    dynamic_cast<StringWrapper *>(obj);
+
+			if (wrapper != 0)
+				return (wrapper->str());
+			else
+				return _("(null)");
+		}
+
+		AnIconList::IconId getIcon(AnListClass *) const
+		{
+			return (AnIconList::ICON_NONE);
+		}
+};
 
 RuleWizardContextExceptionPage::RuleWizardContextExceptionPage(wxWindow *parent,
     RuleWizardHistory *history) : RuleWizardContextExceptionPageBase(parent)
 {
 	history_ = history;
 
+	/* List has one column, expanded over complete list */
+	AnListColumn *col = exceptionList->addColumn(
+	    new ContextExceptionProperty);
+	col->setWidth(exceptionList->GetSize().GetWidth());
+
+	/* Row-provider is context-exception-model */
+	exceptionList->setRowProvider(history->getContextExceptions());
+
 	parent->Connect(wxEVT_WIZARD_PAGE_CHANGING, wxWizardEventHandler(
 	    RuleWizardContextExceptionPage::onPageChanging), NULL, this);
 	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED,
 	    wxWizardEventHandler(RuleWizardContextExceptionPage::onPageChanged),
 	    NULL, this);
+}
+
+RuleWizardContextExceptionPage::~RuleWizardContextExceptionPage(void)
+{
+	exceptionList->setRowProvider(0);
 }
 
 void
@@ -57,52 +104,34 @@ void
 RuleWizardContextExceptionPage::onPageChanged(wxWizardEvent &)
 {
 	updateNavi();
-	if (!history_->haveContextException()) {
-		exceptionListBox->Clear();
-	}
 }
 
 void
 RuleWizardContextExceptionPage::onAddButton(wxCommandEvent &)
 {
-	int		selection;
-	wxArrayString	list;
-	wxFileDialog	fileDlg(this);
+	wxFileDialog *fileDlg = new wxFileDialog(this);
 
 	wxBeginBusyCursor();
-	fileDlg.SetDirectory(wxT("/usr/bin"));
-	fileDlg.SetFilename(wxEmptyString);
-	fileDlg.SetWildcard(wxT("*"));
+	fileDlg->SetDirectory(wxT("/usr/bin"));
+	fileDlg->SetFilename(wxEmptyString);
+	fileDlg->SetWildcard(wxT("*"));
 	wxEndBusyCursor();
 
-	if (fileDlg.ShowModal() == wxID_OK) {
-		wxString	path = fileDlg.GetPath();
-
-		wxBeginBusyCursor();
-
-		history_->addContextException(path);
-		selection = exceptionListBox->Append(path);
-		exceptionListBox->Select(selection);
+	if (fileDlg->ShowModal() == wxID_OK) {
+		history_->getContextExceptions()->add(fileDlg->GetPath());
 		updateNavi();
-		wxEndBusyCursor();
 	}
+
+	fileDlg->Destroy();
 }
 
 void
 RuleWizardContextExceptionPage::onDeleteButton(wxCommandEvent &)
 {
-	int selection;
+	int selection = exceptionList->getFirstSelection();
 
-	selection = exceptionListBox->GetSelection();
-	if (selection != wxNOT_FOUND) {
-		exceptionListBox->Delete(selection);
-		history_->delContextException(selection);
-		if (!exceptionListBox->IsEmpty() &&
-		    (selection >= (int)exceptionListBox->GetCount())) {
-			/* In case we deleted the last element, adjust index. */
-			selection--;
-		}
-		exceptionListBox->Select(selection);
+	if (selection != -1) {
+		history_->getContextExceptions()->remove(selection);
 		updateNavi();
 	}
 }

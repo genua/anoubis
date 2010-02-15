@@ -450,8 +450,8 @@ RuleWizardContextExceptionPageBase::RuleWizardContextExceptionPageBase( wxWindow
 	exceptionListLabel->Wrap( -1 );
 	mainSizer->Add( exceptionListLabel, 0, wxALL, 5 );
 	
-	exceptionListBox = new wxListBox( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, NULL, wxLB_ALWAYS_SB|wxLB_SINGLE ); 
-	mainSizer->Add( exceptionListBox, 1, wxALL|wxEXPAND, 5 );
+	exceptionList = new AnListCtrl( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_NO_HEADER|wxLC_REPORT|wxLC_SINGLE_SEL|wxLC_VIRTUAL );
+	mainSizer->Add( exceptionList, 1, wxALL|wxEXPAND, 5 );
 	
 	wxBoxSizer* buttonSizer;
 	buttonSizer = new wxBoxSizer( wxHORIZONTAL );

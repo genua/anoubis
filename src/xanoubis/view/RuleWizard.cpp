@@ -53,6 +53,7 @@
 #include "ServiceList.h"
 #include "SbEntry.h"
 #include "SbModel.h"
+#include "StringListModel.h"
 #include "DefaultFilterPolicy.h"
 #include "PolicyCtrl.h"
 #include "PolicyRuleSet.h"
@@ -462,13 +463,15 @@ RuleWizard::createContextPolicy(PolicyRuleSet *ruleSet) const
 		ctxFilter->setContextTypeNo(APN_CTX_NEW);
 	} else {
 		if (history_.haveContextException()) {
+			StringListModel *ctxModel =
+			    history_.getContextExceptions();
+
 			ctxFilter = new ContextFilterPolicy(ctxApp);
 			ctxApp->prependFilterPolicy(ctxFilter);
 			ctxFilter->setContextTypeNo(APN_CTX_NEW);
-			for (unsigned int i=0;
-			    i<history_.getContextExceptionCount(); ++i) {
-				ctxFilter->addBinary(
-				    history_.getContextExceptionBinary(i));
+
+			for (unsigned int i = 0; i < ctxModel->count(); i++) {
+				ctxFilter->addBinary(ctxModel->get(i));
 				ctxFilter->setSubjectNone(i);
 			}
 		}

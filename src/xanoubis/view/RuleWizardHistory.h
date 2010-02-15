@@ -37,6 +37,7 @@
 
 class SbModel;
 class ServiceList;
+class StringListModel;
 
 /**
  */
@@ -142,30 +143,13 @@ class RuleWizardHistory
 		bool haveContextException(void) const;
 
 		/**
-		 * Add a context exception.
-		 * @param[in] 1st The name of the application
-		 * @return True on success.
+		 * Returns the list of context-exceptions.
+		 *
+		 * The model contains path-information.
+		 *
+		 * @return List of context-exceptions.
 		 */
-		bool addContextException(const wxString &);
-
-		/**
-		 * Delete a context exception.
-		 * @param[in] The index of the exception in the exception list
-		 * @return True on success.
-		 */
-		bool delContextException(unsigned int);
-
-		/**
-		 * Return the total number of context exceptions
-		 */
-		unsigned int getContextExceptionCount(void) const;
-
-		/**
-		 * Return the context exception binary at a given index.
-		 * @param[in] 1st The index.
-		 * @return The binary.
-		 */
-		const wxString getContextExceptionBinary(unsigned int) const;
+		StringListModel *getContextExceptions(void) const;
 
 		/**
 		 * Returns the value of the nosfs-flag.
@@ -466,7 +450,7 @@ class RuleWizardHistory
 		/**
 		 * The list of context exceptions binaries.
 		 */
-		wxArrayString contextExceptionBinaryList_;
+		StringListModel *contextExceptionList_;
 
 		/**
 		 * Value of the nosfs-flag.

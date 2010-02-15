@@ -45,6 +45,11 @@ class RuleWizardContextExceptionPage
 		 */
 		RuleWizardContextExceptionPage(wxWindow *, RuleWizardHistory *);
 
+		/**
+		 * D'tor.
+		 */
+		~RuleWizardContextExceptionPage(void);
+
 	private:
 		/**
 		 * Store the input here.
