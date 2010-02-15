@@ -493,6 +493,22 @@ void pe_proc_exec(anoubis_cookie_t cookie, uid_t uid, pid_t pid,
 	}
 }
 
+int
+pe_proc_will_transition(anoubis_cookie_t cookie, uid_t uid,
+    const u_int8_t *csum, const char *pathhint)
+{
+	struct pe_proc		*proc = pe_proc_get(cookie);
+	struct pe_proc_ident	 pident = { NULL, NULL };
+	int			 ret;
+
+	if (!proc)
+		return 0;
+	pe_proc_ident_set(&pident, csum, pathhint);
+	ret = pe_context_will_transition(proc, uid, &pident);
+	pe_proc_ident_put(&pident);
+	return ret;
+}
+
 void
 pe_proc_update_db(struct pe_policy_db *newpdb)
 {

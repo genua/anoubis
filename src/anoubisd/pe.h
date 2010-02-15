@@ -115,6 +115,8 @@ void			 pe_proc_fork(uid_t, anoubis_cookie_t,
 void			 pe_proc_exec(anoubis_cookie_t, uid_t, pid_t,
 			     const u_int8_t *csum, const char *pathhint,
 			     int secure);
+int			 pe_proc_will_transition(anoubis_cookie_t, uid_t,
+			     const u_int8_t *csum, const char *pathhint);
 void			 pe_proc_exit(anoubis_cookie_t);
 void			 pe_proc_addinstance(anoubis_cookie_t);
 void			 pe_proc_add_thread(anoubis_cookie_t);
@@ -160,6 +162,8 @@ int			 pe_context_is_nosfs(struct pe_context *);
 void			 pe_context_refresh(struct pe_proc *, int,
 			     struct pe_policy_db *);
 void			 pe_context_exec(struct pe_proc *, uid_t,
+			     struct pe_proc_ident *);
+int			 pe_context_will_transition(struct pe_proc *, uid_t,
 			     struct pe_proc_ident *);
 void			 pe_context_fork(struct pe_proc *, struct pe_proc *);
 void			 pe_context_open(struct pe_proc *,

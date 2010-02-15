@@ -510,6 +510,43 @@ pe_context_exec(struct pe_proc *proc, uid_t uid, struct pe_proc_ident *pident)
 		pe_proc_set_uid(proc, uid);
 }
 
+int
+pe_context_will_transition(struct pe_proc *proc, uid_t uid,
+    struct pe_proc_ident *pident)
+{
+	int			 i;
+	struct apn_ruleset	*ruleset;
+	struct pe_context	*tmpctx, *curctx;
+
+	if (proc == NULL)
+		return  0;
+	for (i = 0; i < PE_PRIO_MAX; ++i) {
+		if (pe_context_decide(proc, APN_CTX_NEW, i, pident, uid) == 0)
+			continue;
+		ruleset = pe_user_get_ruleset(uid, i, NULL);
+		/* No need for secure exec if there is no ruleset. */
+		if (!ruleset)
+			continue;
+		curctx = pe_proc_get_context(proc, i);
+		tmpctx = pe_context_search(ruleset, pident, uid);
+		/* Both contexts NULL => no context switch */
+		if (!tmpctx && !curctx)
+			continue;
+		/*
+		 * If at least one of the rule blocks is different, we
+		 * have a context switch.
+		 */
+		if (!tmpctx || !curctx || tmpctx->alfrule != curctx->alfrule
+		    || tmpctx->sbrule != curctx->sbrule
+		    || tmpctx->ctxrule != curctx->ctxrule) {
+			pe_context_put(tmpctx);
+			return 1;
+		}
+		pe_context_put(tmpctx);
+	}
+	return 0;
+}
+
 /*
  * Change context on open(2):
  * - If pe_context_decide forbids changing the context, we don't.
