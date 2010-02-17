@@ -30,7 +30,6 @@ WANTLIB-main =		c m pthread stdc++ event glib-2.0 pixman-1 \
 			iconv intl pango-1.0 pangocairo-1.0 pangoft2-1.0 png z \
 			crypto ssl
 
-# XXX [ST]: this needs sane versioning of the pristine tarball to work
 MASTER_SITES =		${HOMEPAGE}downloads/files/
 
 ANOUBISDIR =		/etc/anoubis

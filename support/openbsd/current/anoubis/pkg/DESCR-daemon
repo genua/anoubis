@@ -1,1 +1,3 @@
-anoubisd is the backend daemon of the Anoubis Security Suite.
+The anoubisd is the userland daemon of the Anoubis Security Suite.
+Together with a customised kernel it implements an Application Level
+Firewall (ALF), Filesystem Signatures (SFS) and Sandboxing.

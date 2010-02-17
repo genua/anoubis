@@ -1,1 +1,4 @@
-xanoubis is the central GUI component of the Anoubis Security Suite.
+Graphical user interface of the Anoubis Security Suite.
+Users can use xanoubis to create rules and signatures for the
+Application Level Firewall (ALF), Filesystem Signatures (SFS)
+and Sandboxing.
