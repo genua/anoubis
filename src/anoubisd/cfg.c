@@ -496,7 +496,7 @@ static int
 cfg_parse_upgrade_trigger(const char *value, int lineno)
 {
 	struct anoubisd_upgrade_trigger	*trigger;
-	char				*s;
+	char				*s, *orig_s;
 
 	if (value == NULL) {
 		log_warnx("%s: line %d: Invalid argument",
@@ -512,6 +512,7 @@ cfg_parse_upgrade_trigger(const char *value, int lineno)
 		return (-ENOMEM);
 	}
 
+	orig_s = s;
 	while (1) {
 		/*
 		 * Also split at whitespaces to detect whitespaces around the
@@ -530,7 +531,7 @@ cfg_parse_upgrade_trigger(const char *value, int lineno)
 				log_warnx("%s: line %d: Out of memory",
 				    __FUNCTION__, lineno);
 
-				free(s);
+				free(orig_s);
 
 				return (-ENOMEM);
 			}
@@ -541,7 +542,7 @@ cfg_parse_upgrade_trigger(const char *value, int lineno)
 				    __FUNCTION__, lineno);
 
 				free(trigger);
-				free(s);
+				free(orig_s);
 
 				return (-ENOMEM);
 			}
@@ -551,7 +552,7 @@ cfg_parse_upgrade_trigger(const char *value, int lineno)
 		}
 	}
 
-	free(s);
+	free(orig_s);
 
 	return (0);
 }

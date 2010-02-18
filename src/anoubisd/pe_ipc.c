@@ -78,10 +78,13 @@ pe_ipc_connect(struct ac_ipc_message *msg)
 
 	if ((proc = pe_proc_get(msg->source)) == NULL)
 		return;
-	if ((procp = pe_proc_get(msg->dest)) == NULL)
+	if ((procp = pe_proc_get(msg->dest)) == NULL) {
+		pe_proc_put(proc);
 		return;
-
+	}
 	pe_context_borrow(proc, procp, msg->conn_cookie);
+	pe_proc_put(proc);
+	pe_proc_put(procp);
 }
 
 void
@@ -94,6 +97,6 @@ pe_ipc_destroy(struct ac_ipc_message *msg)
 
 	if ((proc = pe_proc_get(msg->source)) == NULL)
 		return;
-
 	pe_context_restore(proc, msg->conn_cookie);
+	pe_proc_put(proc);
 }

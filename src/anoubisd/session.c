@@ -1015,10 +1015,12 @@ dispatch_m2s(int fd, short sig __used, void *arg)
 			break;
 		if (msg->mtype == ANOUBISD_MSG_CHECKSUMREPLY) {
 			dispatch_m2s_checksum_reply(msg, ev_info);
+			free(msg);
 			continue;
 		}
 		if (msg->mtype == ANOUBISD_MSG_UPGRADE) {
 			dispatch_m2s_upgrade_notify(msg, ev_info);
+			free(msg);
 			continue;
 		}
 		if (msg->mtype == ANOUBISD_MSG_CONFIG) {
@@ -1045,6 +1047,7 @@ dispatch_m2s(int fd, short sig __used, void *arg)
 			    POLICY_FLAG_START | POLICY_FLAG_END);
 			if  (ret < 0)
 				log_warnx("Dropping unexpected auth challenge");
+			free(msg);
 			continue;
 		}
 		if (msg->mtype == ANOUBISD_MSG_AUTH_RESULT) {
@@ -1057,10 +1060,12 @@ dispatch_m2s(int fd, short sig __used, void *arg)
 			    POLICY_FLAG_START | POLICY_FLAG_END);
 			if (ret < 0)
 				log_warnx("Dropping unexpected auth result");
+			free(msg);
 			continue;
 		}
 		if (msg->mtype != ANOUBISD_MSG_EVENTDEV) {
 			log_warnx("dispatch_m2s: bad mtype %d", msg->mtype);
+			free(msg);
 			continue;
 		}
 
@@ -1451,6 +1456,7 @@ dispatch_p2s_pol_reply(anoubisd_msg_t *msg, struct event_info_session *ev_info)
 	DEBUG(DBG_TRACE, "<dispatch_p2s_pol_reply");
 }
 
+/* Does not free the message */
 static void
 dispatch_m2s_checksum_reply(anoubisd_msg_t *msg,
     struct event_info_session *ev_info)
@@ -1470,6 +1476,7 @@ dispatch_m2s_checksum_reply(anoubisd_msg_t *msg,
 }
 
 
+/* Does not free the message. */
 static void
 dispatch_m2s_upgrade_notify(anoubisd_msg_t *msg,
     struct event_info_session *ev_info)
@@ -1483,11 +1490,9 @@ dispatch_m2s_upgrade_notify(anoubisd_msg_t *msg,
 	if (umsg->upgradetype != ANOUBISD_UPGRADE_NOTIFY) {
 		log_warnx("Bad upgrade message type=%d in session engine",
 		    umsg->upgradetype);
-		free(msg);
 		return;
 	}
 	count = umsg->chunksize;
-	free(msg);
 	m = anoubis_msg_new(sizeof(Anoubis_StatusNotifyMessage));
 	if (!m) {
 		DEBUG(DBG_TRACE, "<dispatch_m2s_upgrade_notify (oom)");

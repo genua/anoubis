@@ -358,6 +358,7 @@ dispatch_timer(int sig __used, short event __used, void *arg)
 	DEBUG(DBG_TRACE, "<dispatch_timer");
 }
 
+/* Does not free the message */
 static void
 dispatch_sfscache_invalidate(anoubisd_msg_t *msg)
 {
@@ -388,7 +389,6 @@ dispatch_sfscache_invalidate(anoubisd_msg_t *msg)
 		DEBUG(DBG_SFSCACHE, " dispatch_sfscache_invalidate: path %s "
 		    "uid %d", invmsg->payload, invmsg->uid);
 	}
-	free(msg);
 }
 
 void
@@ -461,6 +461,7 @@ send_upgrade_chunk(struct event_info_policy *ev_info)
 	DEBUG(DBG_UPGRADE, "<send_upgrade_chunk");
 }
 
+/* Does not free the message */
 static void
 dispatch_upgrade(anoubisd_msg_t *msg, struct event_info_policy *ev_info)
 {
@@ -473,7 +474,6 @@ dispatch_upgrade(anoubisd_msg_t *msg, struct event_info_policy *ev_info)
 	total = sizeof(*msg) + sizeof(*upg);
 	if (msg->size < total) {
 		log_warnx("Short anoubisd_msg_upgrade message");
-		free(msg);
 		return;
 	}
 
@@ -517,7 +517,6 @@ dispatch_upgrade(anoubisd_msg_t *msg, struct event_info_policy *ev_info)
 		    upg->upgradetype);
 	}
 
-	free(msg);
 	DEBUG(DBG_UPGRADE, "<dispatch_upgrade");
 }
 
@@ -596,19 +595,19 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 			break;
 		hdr = (struct eventdev_hdr *)msg->msg;
 		DEBUG(DBG_QUEUE, " >m2p: %x", hdr->msg_token);
-
 		switch(msg->mtype) {
 		case ANOUBISD_MSG_SFSCACHE_INVALIDATE:
 			dispatch_sfscache_invalidate(msg);
+			free(msg);
 			continue;
 		case ANOUBISD_MSG_EVENTDEV:
 			hdr = (struct eventdev_hdr *)msg->msg;
 			break;
 		case ANOUBISD_MSG_UPGRADE:
 			dispatch_upgrade(msg, ev_info);
+			free(msg);
 			continue;
 		case ANOUBISD_MSG_CONFIG:
-			cert_reconfigure(1);
 			pe_reconfigure();
 			if (cfg_msg_parse(msg) == 0) {
 				log_info("policy: reconfigure");
@@ -664,6 +663,8 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 			nmsg = msg_factory(ANOUBISD_MSG_EVENTASK,
 			    sizeof(anoubisd_msg_eventask_t) + extra);
 			if (!nmsg) {
+				free(msg);
+				free(reply);
 				master_terminate(ENOMEM);
 				return;
 			}
@@ -681,12 +682,14 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 			    &eventask->ctxcsumoff, &eventask->ctxcsumlen,
 			    &eventask->ctxpathoff, &eventask->ctxpathlen);
 			hdr = (struct eventdev_hdr *)eventask->payload;
+
 			free(msg);
+
 			msg = nmsg;
 			if ((msg_wait = malloc(sizeof(struct reply_wait))) ==
 			    NULL) {
-				free(msg);
 				log_warn("dispatch_m2p: can't allocate memory");
+				free(reply);
 				master_terminate(ENOMEM);
 				continue;
 			}
@@ -694,6 +697,7 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 			msg_wait->token = hdr->msg_token;
 			if (time(&msg_wait->starttime) == -1) {
 				free(msg);
+				free(reply);
 				log_warn("dispatch_m2p: failed to get time");
 				master_terminate(EIO);
 				continue;
@@ -714,6 +718,8 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 			msg_reply = msg_factory(ANOUBISD_MSG_EVENTREPLY,
 			    sizeof(struct eventdev_reply));
 			if (!msg_reply) {
+				free(msg);
+				free(reply);
 				master_terminate(ENOMEM);
 				return;
 			}

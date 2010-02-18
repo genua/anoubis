@@ -333,8 +333,10 @@ pe_proc_fork(uid_t uid, anoubis_cookie_t child, anoubis_cookie_t parent_cookie)
 
 	parent = pe_proc_get(parent_cookie);
 	proc = pe_proc_alloc(uid, child, pe_proc_ident(parent));
-	if (!proc)
+	if (!proc) {
+		pe_proc_put(parent);
 		return;
+	}
 	pe_proc_track(proc);
 	pe_context_fork(proc, parent);
 
@@ -374,8 +376,10 @@ void pe_proc_exit(anoubis_cookie_t cookie)
 	proc = pe_proc_get(cookie);
 	if (!proc)
 		return;
-	if (--proc->instances)
+	if (--proc->instances) {
+		pe_proc_put(proc);
 		return;
+	}
 	pe_proc_untrack(proc);
 	pe_upgrade_end(proc);
 	DEBUG(DBG_PE_PROC, "pe_proc_exit: token 0x%08" PRIx64 " pid %d "
@@ -472,7 +476,6 @@ void pe_proc_exec(anoubis_cookie_t cookie, uid_t uid, pid_t pid,
 	    pe_context_get_alfrule(ctx0), pe_context_get_alfrule(ctx1),
 	    pe_context_get_sbrule(ctx0), pe_context_get_sbrule(ctx1),
 	    pathhint ? pathhint : "", csum ? htonl(*(unsigned long *)csum) : 0);
-	pe_proc_put(proc);
 
 	if (uid == 0 &&
 	    anoubisd_config.upgrade_mode == ANOUBISD_UPGRADE_MODE_PROCESS) {
@@ -491,6 +494,7 @@ void pe_proc_exec(anoubis_cookie_t cookie, uid_t uid, pid_t pid,
 			}
 		}
 	}
+	pe_proc_put(proc);
 }
 
 int
@@ -506,6 +510,7 @@ pe_proc_will_transition(anoubis_cookie_t cookie, uid_t uid,
 	pe_proc_ident_set(&pident, csum, pathhint);
 	ret = pe_context_will_transition(proc, uid, &pident);
 	pe_proc_ident_put(&pident);
+	pe_proc_put(proc);
 	return ret;
 }
 

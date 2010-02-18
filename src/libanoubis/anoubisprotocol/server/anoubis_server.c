@@ -111,6 +111,8 @@ static void channel_close(struct anoubis_server * server)
 
 void anoubis_server_destroy(struct anoubis_server * server)
 {
+	struct dispatcher		*disp;
+
 	if (server->auth) {
 		anoubis_auth_destroy(server->auth);
 		server->auth = NULL;
@@ -120,6 +122,10 @@ void anoubis_server_destroy(struct anoubis_server * server)
 		server->notify = NULL;
 	}
 	channel_close(server);
+	while ((disp = LIST_FIRST(&server->dispatch)) != NULL) {
+		LIST_REMOVE(disp, next);
+		free(disp);
+	}
 	free(server);
 }
 

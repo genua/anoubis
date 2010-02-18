@@ -279,15 +279,18 @@ version		: APNVERSION STRING nl {
 
 			if (sscanf($2, "%d.%d%c", &major, &minor, &ch) != 2) {
 				yyerror("Invalid version number %s", $2);
+				free($2);
 				YYERROR;
 			}
 			version = APN_PARSER_MKVERSION(major, minor);
 			if (APN_PARSER_MAJOR(version) != major) {
 				yyerror("Major number %d is invalid");
+				free($2);
 				YYERROR;
 			}
 			if (APN_PARSER_MINOR(version) != minor) {
 				yyerror("Minor number %d is invalid");
+				free($2);
 				YYERROR;
 			}
 			apnrsp->version = version;
@@ -297,7 +300,10 @@ version		: APNVERSION STRING nl {
 				    "by parser",
 				    APN_PARSER_MAJOR(apnrsp->version),
 				    APN_PARSER_MINOR(apnrsp->version));
+				free($2);
+				YYERROR;
 			}
+			free($2);
 		}
 		;
 

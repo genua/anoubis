@@ -323,6 +323,7 @@ cert_flush_db(struct cert_db *sc)
 		free(p->keyid);
 		free(p);
 	}
+	free(sc);
 }
 
 /**

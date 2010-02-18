@@ -283,25 +283,31 @@ version		: APNVERSION STRING nl {
 
 			if (sscanf($2, "%d.%d%c", &major, &minor, &ch) != 2) {
 				yyerror("Invalid version number %s", $2);
+				free($2);
 				YYERROR;
 			}
 			version = APN_PARSER_MKVERSION(major, minor);
 			if (APN_PARSER_MAJOR(version) != major) {
 				yyerror("Major number %d is invalid");
+				free($2);
 				YYERROR;
 			}
 			if (APN_PARSER_MINOR(version) != minor) {
 				yyerror("Minor number %d is invalid");
+				free($2);
 				YYERROR;
 			}
 			apnrsp->version = version;
 			if (version < PARSER_MINVERSION
 			    || version > PARSER_MAXVERSION) {
+				free($2);
 				yyerror("APN Version %d.%d not supported "
 				    "by parser",
 				    APN_PARSER_MAJOR(apnrsp->version),
 				    APN_PARSER_MINOR(apnrsp->version));
+				YYERROR;
 			}
+			free($2);
 		}
 		;
 
@@ -1075,9 +1081,9 @@ sbrwx		: STRING {
 					nm = APN_SBA_EXEC;
 					break;
 				default:
-					free($1);
 					yyerror("Bad character %c "
 					    "in permission string", $1[i]);
+					free($1);
 					YYERROR;
 				}
 				if ($$ & nm) {
