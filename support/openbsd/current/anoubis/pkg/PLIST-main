@@ -2,6 +2,7 @@
 @mode 2755
 @group _nosfs
 @bin bin/xanoubis
+@sample /usr/bin/xanoubis
 @mode
 @group
 @comment include/apn.h
