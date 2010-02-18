@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2010 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -34,6 +34,7 @@
 #ifndef __DlgRuleEditorBase__
 #define __DlgRuleEditorBase__
 
+class AnGrid;
 class AnPickFromFs;
 class AnPolicyNotebook;
 class DlgRuleEditorAppPage;
@@ -50,7 +51,7 @@ class DlgRuleEditorFilterSubjectPage;
 #include <wx/stattext.h>
 #include <wx/choice.h>
 #include <wx/button.h>
-#include <wx/listctrl.h>
+#include <wx/grid.h>
 #include <wx/notebook.h>
 #include <wx/panel.h>
 #include <wx/splitter.h>
@@ -83,7 +84,7 @@ class DlgRuleEditorBase : public wxFrame
 		wxButton* appListCreateButton;
 		
 		wxButton* appListColumnsButton;
-		wxListCtrl* appPolicyListCtrl;
+		AnGrid* appGrid;
 		
 		wxStaticText* appListPolicyLabel;
 		wxStaticText* appListPolicyText;
@@ -98,7 +99,7 @@ class DlgRuleEditorBase : public wxFrame
 		wxButton* filterListCreateButton;
 		
 		wxButton* filterListColumnsButton;
-		wxListCtrl* filterPolicyListCtrl;
+		AnGrid* filterGrid;
 		
 		wxStaticText* filterListPolicyLabel;
 		wxStaticText* filterListPolicyText;
@@ -127,15 +128,13 @@ class DlgRuleEditorBase : public wxFrame
 		virtual void onRbUserDefault( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAppListCreateButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAppListColumnsButtonClick( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onAppPolicyDeSelect( wxListEvent& event ){ event.Skip(); }
-		virtual void onAppPolicySelect( wxListEvent& event ){ event.Skip(); }
+		virtual void onAppGridCellSelect( wxGridEvent& event ){ event.Skip(); }
 		virtual void onAppListUpClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAppListDownClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAppListDeleteClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onFilterListCreateButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onFilterListColumnsButtonClick( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onFilterPolicyDeSelect( wxListEvent& event ){ event.Skip(); }
-		virtual void onFilterPolicySelect( wxListEvent& event ){ event.Skip(); }
+		virtual void onFilterGridCellSelect( wxGridEvent& event ){ event.Skip(); }
 		virtual void onFilterListUpClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onFilterListDownClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onFilterListDeleteClick( wxCommandEvent& event ){ event.Skip(); }

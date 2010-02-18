@@ -28,7 +28,7 @@
 #include "AnTable.h"
 
 
-AnTable::AnTable(wxString configPath)
+AnTable::AnTable(const wxString & configPath)
 {
 	configPath_  = configPath;
 	rowProvider_ = NULL;
@@ -125,22 +125,43 @@ AnTable::setColumnVisability(unsigned int idx, bool visibility)
 				return;
 			}
 		}
+		/* Didn't find matching element within list. Appending... */
+		it = visibilityList_.end();
+		visibilityList_.insert(it, idx);
+		fireColsInserted((*it), 1);
 	}
 }
 
 void
 AnTable::setRowProvider(AnRowProvider *rowProvider)
 {
-	bool isNew = false;
+	wxGrid	*grid;
+	int	 oldSize;
+	int	 newSize;
 
-	if (rowProvider_ != rowProvider) {
-		isNew = true;
-		fireRowsRemoved(0, GetNumberRows());
-	}
 	rowProvider_ = rowProvider;
-	if (isNew) {
-		fireRowsInserted(0, GetNumberRows());
+	grid = GetView();
+
+	if (grid == NULL) {
+		return;
 	}
+
+	oldSize = grid->GetNumberRows();
+	newSize = rowProvider_->getSize();
+
+	if (oldSize == newSize) {
+		/* Nothing to do. */
+		grid->ForceRefresh();
+		return;
+	}
+
+	if (oldSize < newSize) {
+		fireRowsInserted(0, (newSize - oldSize));
+	} else {
+		fireRowsRemoved(0, (oldSize - newSize));
+	}
+
+	grid->ForceRefresh();
 }
 
 AnRowProvider *
@@ -150,7 +171,7 @@ AnTable::getRowProvider(void) const
 }
 
 int
-AnTable::GetNumberRows(void) const
+AnTable::GetNumberRows(void)
 {
 	int	size;
 
@@ -164,7 +185,7 @@ AnTable::GetNumberRows(void) const
 }
 
 int
-AnTable::GetNumberCols(void) const
+AnTable::GetNumberCols(void)
 {
 	return (visibilityList_.size());
 }

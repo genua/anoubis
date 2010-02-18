@@ -32,10 +32,11 @@
 #include "config.h"
 #endif
 
-#include <wx/progdlg.h>
 #include <wx/config.h>
+#include <wx/string.h>
 
 #include "AnEvents.h"
+#include "AnTable.h"
 #include "DlgRuleEditorBase.h"
 #include "ListCtrlColumn.h"
 #include "Observer.h"
@@ -49,6 +50,7 @@
 #include "SfsDefaultFilterPolicy.h"
 #include "ContextFilterPolicy.h"
 #include "SbAccessFilterPolicy.h"
+#include "AnMultiRowProvider.h"
 
 /**
  * This is the anoubis rule editor.
@@ -83,181 +85,52 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		 */
 		virtual void updateDelete(Subject *);
 
-		/**
-		 * Add application policy.
-		 * A new row is created (by addListRow()) and filled by
-		 * updateListAppPolicy(). This should be used by
-		 * RuleEditorAddPolicyVisitor only.
-		 * @param[in] 1st Concerning app policy
-		 * @return Nothing.
-		 */
-		void addAppPolicy(AppPolicy *);
-
-		/**
-		 * Add alf filter policy.
-		 * A new row is created (by addListRow()) and filled by
-		 * updateListAlfFilterPolicy(). This should be used by
-		 * RuleEditorAddPolicyVisitor only.
-		 * @param[in] 1st Concerning app policy
-		 * @return Nothing.
-		 */
-		void addAlfFilterPolicy(AlfFilterPolicy *);
-
-		/**
-		 * Add alf capabiliyt filter policy.
-		 * A new row is created (by addListRow()) and filled by
-		 * updateListAlfCapabilityFilterPolicy(). This should be used
-		 * by RuleEditorAddPolicyVisitor only.
-		 * @param[in] 1st Concerning app policy
-		 * @return Nothing.
-		 */
-		void addAlfCapabilityFilterPolicy(AlfCapabilityFilterPolicy *);
-
-		/**
-		 * Add default filter policy.
-		 * A new row is created (by addListRow()) and filled by
-		 * updateListDefaultFilterPolicy(). This should be used
-		 * by RuleEditorAddPolicyVisitor only.
-		 * @param[in] 1st Concerning app policy
-		 * @return Nothing.
-		 */
-		void addDefaultFilterPolicy(DefaultFilterPolicy *);
-
-		/**
-		 * Add sfs filter policy.
-		 * A new row is created (by addListRow()) and filled by
-		 * updateListSfsFilterPolicy(). This should be used
-		 * by RuleEditorAddPolicyVisitor only.
-		 * @param[in] 1st Concerning app policy
-		 * @return Nothing.
-		 */
-		void addSfsFilterPolicy(SfsFilterPolicy *);
-
-		/**
-		 * Add sfs default filter policy.
-		 * A new row is created (by addListRow()) and filled by
-		 * updateListSfsDefaultFilterPolicy(). This should be used
-		 * by RuleEditorAddPolicyVisitor only.
-		 * @param[in] 1st Concerning app policy
-		 * @return Nothing.
-		 */
-		void addSfsDefaultFilterPolicy(SfsDefaultFilterPolicy *);
-
-		/**
-		 * Add context filter policy.
-		 * A new row is created (by addListRow()) and filled by
-		 * updateListContextFilterPolicy(). This should be used
-		 * by RuleEditorAddPolicyVisitor only.
-		 * @param[in] 1st Concerning app policy
-		 * @return Nothing.
-		 */
-		void addContextFilterPolicy(ContextFilterPolicy *);
-
-		/**
-		 * Add sandbox filter policy.
-		 * A new row is created (by addListRow()) and filled by
-		 * updateListSandboxFilterPolicy(). This should be used
-		 * by RuleEditorAddPolicyVisitor only.
-		 * @param[in] 1st Concerning app policy
-		 * @return Nothing.
-		 */
-		void addSbAccessFilterPolicy(SbAccessFilterPolicy *);
-
 	private:
 		/**
-		 * Use these indices to access the related column within the
-		 * list of application columns.
+		 * With this multi row provider we join two rule sets
+		 * (aka user and admin rule set) to be shown in one table.
 		 */
-		enum appColumnIndex {
-			APP_ID = 0,	/**< apn rule id. */
-			APP_TYPE,	/**< type of policy. */
-			APP_USER,	/**< user of ruleset. */
-			APP_NOSFS,	/**< NOSFS flag. */
-			APP_BINARY,	/**< name of concerning binary. */
-			APP_EOL		/**< End - Of - List */
-		};
+		AnMultiRowProvider multiRowProvider_;
 
 		/**
-		 * Use these indices to access the related column within the
-		 * list of alf filter columns.
+		 * Table of app policies. This also holds column properties.
 		 */
-		enum alfColumnIndex {
-			ALF_ID = 0,	/**< apn rule id. */
-			ALF_TYPE,	/**< type of context */
-			ALF_ACTION,	/**< action */
-			ALF_LOG,	/**< log */
-			ALF_SCOPE,	/**< scope of this policy */
-			ALF_CAP,	/**< capability type */
-			ALF_DIR,	/**< direction */
-			ALF_PROT,	/**< protocol */
-			ALF_FHOST,	/**< from host */
-			ALF_FPORT,	/**< from port */
-			ALF_THOST,	/**< to host */
-			ALF_TPORT,	/**< to port */
-			ALF_EOL		/**< End - Of - List */
-		};
+		AnTable *appTable_;
 
 		/**
-		 * Use these indices to access the related column within the
-		 * list of sfs filter columns.
+		 * Table of alf policies. This also holds column properties.
 		 */
-		enum sfsColumnIndex {
-			SFS_ID = 0,	/**< apn rule id. */
-			SFS_TYPE,	/**< type of sfs */
-			SFS_PATH,	/**< path (of subject) */
-			SFS_SUB,	/**< the subject */
-			SFS_SCOPE,	/**< scope of this policy */
-			SFS_VA,		/**< valid action */
-			SFS_VL,		/**< valid log */
-			SFS_IA,		/**< invalid action */
-			SFS_IL,		/**< invalid log */
-			SFS_UA,		/**< unknown action */
-			SFS_UL,		/**< unknown log */
-			SFS_EOL		/**< End - Of - List */
-		};
+		AnTable *alfTable_;
 
 		/**
-		 * Use these indices to access the related column within the
-		 * list of context filter columns.
+		 * Table of sfs policies. This also holds column properties.
 		 */
-		enum ctxColumnIndex {
-			CTX_ID = 0,	/**< apn rule id. */
-			CTX_TYPE,	/**< type of context */
-			CTX_BINARY,	/**< name of binary */
-			CTX_EOL		/**< End - Of - List */
-		};
+		AnTable *sfsTable_;
 
 		/**
-		 * Use these indices to access the related column within the
-		 * list of sandbox filter columns.
+		 * Table of ctx policies. This also holds column properties.
 		 */
-		enum sbColumnIndex {
-			SB_ID = 0,	/**< apn rule id. */
-			SB_TYPE,	/**< type of context */
-			SB_ACTION,	/**< action */
-			SB_LOG,		/**< log */
-			SB_SCOPE,	/**< scope of this policy */
-			SB_PATH,	/**< path (of subject) */
-			SB_SUB,		/**< the subject */
-			SB_MASK,	/**< the access mask */
-			SB_EOL		/**< End - Of - List */
-		};
+		AnTable *ctxTable_;
 
-		ListCtrlColumn *appColumns_[APP_EOL]; /**< @ appList */
-		ListCtrlColumn *alfColumns_[ALF_EOL]; /**< @ filterList */
-		ListCtrlColumn *sfsColumns_[SFS_EOL]; /**< @ filterList */
-		ListCtrlColumn *ctxColumns_[CTX_EOL]; /**< @ filterList */
-		ListCtrlColumn *sbColumns_[SB_EOL];   /**< @ filterList */
+		/**
+		 * Table of sb policies. This also holds column properties.
+		 */
+		AnTable *sbTable_;
 
-		long userRuleSetId_;  /**< Id of our ruleSet. */
-		long adminRuleSetId_; /**< Id of our admin ruleSet. */
+		/**
+		 * Id of our ruleSet.
+		 */
+		long userRuleSetId_;
 
-		bool isConnected_; /**< connectiion state of gui */
+		/**
+		 * Id of our admin ruleSet.
+		 */
+		long adminRuleSetId_;
 
-		int appPolicyLoadProgIdx_; /**< current progress position */
-		wxProgressDialog *appPolicyLoadProgDlg_; /**< progress bar */
-		int filterPolicyLoadProgIdx_; /**< current progress position */
-		wxProgressDialog *filterPolicyLoadProgDlg_; /**< progress bar */
+		/**
+		 * connectiion state of gui
+		 */
+		bool isConnected_;
 
 		/**
 		 * Handle show events.
@@ -326,40 +199,32 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		void onShowRule(wxCommandEvent& event);
 
 		/**
-		 * Handle AutoChecksumCheck Option.
-		 * @param[in] 1st The Show event.
-		 * @return Nothing
-		 * The Command member (SetInt) is true if the option is set.
-		 */
-		void onAutoCheck(wxCommandEvent & event);
-
-		/**
 		 * Handle selection of app policy.
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
-		virtual void onAppPolicySelect(wxListEvent &);
+		void onAppGridCellSelect(wxGridEvent &);
 
 		/**
-		 * Handle de-selection of app policy.
+		 * Handle selection of app policy by row label.
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
-		virtual void onAppPolicyDeSelect(wxListEvent &);
+		void onAppGridLabelClick(wxGridEvent &);
 
 		/**
 		 * Handle selection of filter policy.
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
-		virtual void onFilterPolicySelect(wxListEvent &);
+		void onFilterGridCellSelect(wxGridEvent &);
 
 		/**
-		 * Handle de-selection of filter policy.
+		 * Handle selection of filter policy by row label.
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
-		virtual void onFilterPolicyDeSelect(wxListEvent &);
+		void onFilterGridLabelClick(wxGridEvent &);
 
 		/**
 		 * Move selected application policy one row up.
@@ -478,93 +343,22 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		virtual void onFooterActivateButton(wxCommandEvent &);
 
 		/**
-		 * Add a row to a given list and assign the given policy.
-		 * @param[in] 1st The list where the new row is added.
-		 * @param[in] 2nd The concerning policy for the new row.
-		 * @return The index of the new row.
-		 */
-		long addListRow(wxListCtrl *, Policy *);
-
-		/**
-		 * Remove a given row from a given list.
-		 * @param[in] 1st The list the row is removed from.
-		 * @param[in] 2nd The index of the row in question.
-		 * @return Nothing.
-		 */
-		void removeListRow(wxListCtrl *, long);
-
-		/**
-		 * Find the row of a given policy.
-		 * @param[in] 1st The list to search in.
-		 * @param[in] 2nd The policy to search for.
-		 * @return The index of found row or -1.
-		 */
-		long findListRow(wxListCtrl *, Policy *);
-
-		/**
-		 * Get the index of the selected row.
-		 * @param[in] 1st The list to get the selected row from.
-		 * @return The index of the selected row or -1
-		 * @see getSelectedPolicy()
-		 */
-		long getSelectedIndex(wxListCtrl *);
-
-		/**
 		 * Get the policy of the selected row.
-		 * @param[in] 1st The list to get the selected row from.
+		 * @param[in] 1st The grid to get the selected row from.
 		 * @return The policy of the selected row or NULL.
-		 * @see getSelectedIndex()
 		 */
-		Policy *getSelectedPolicy(wxListCtrl *);
+		Policy *getSelectedPolicy(wxGrid *);
 
 		/**
-		 * Select the a row and make it visible. Try to scroll
-		 * away as few as possible from a previously visible
-		 * part of the list.
-		 * @param[in] 1st The list to select the row.
-		 * @param[in] 2nd The index of the first element that
-		 *    was previously visible.
-		 * @param[in] 3rd The index of the row to select.
+		 * Select row.
+		 * Selects the given row of the given grid by\n
+		 *	a) move the cursor to the given row (and column 0)\n
+		 *	b) select the whole row
+		 * @param[in] 1st The grid in question.
+		 * @param[in] 2nd The row to select.
 		 * @return Nothing.
 		 */
-		void selectFrame(wxListCtrl *, long, long);
-
-		/**
-		 * Deselect row.
-		 * This will deselect the selected row of the given list.
-		 * This will cause a deselect event.
-		 * @param[in] 1st The list to deselect the row.
-		 * @return Nothing.
-		 */
-		void deselect(wxListCtrl *);
-
-		/**
-		 * Clean the application list.
-		 * @param None.
-		 * @return Nothing.
-		 */
-		void wipeAppList(void);
-
-		/**
-		 * Clean the filter list.
-		 * @param None.
-		 * @return Nothing.
-		 */
-		void wipeFilterList(void);
-
-		/**
-		 * Add / visit ruleset for loading (app policies).
-		 * @param[in] 1st RuleSet to load.
-		 * @return Nothing.
-		 */
-		void addPolicyRuleSet(PolicyRuleSet *);
-
-		/**
-		 * Add /visit filter of app policy for
-		 * @param[in] 1st AppPolicy with filters.
-		 * @return Nothind.
-		 */
-		void addFilterPolicy(AppPolicy *);
+		void selectRow(wxGrid *, int) const;
 
 		/**
 		 * Load new ruleSet.
@@ -582,84 +376,6 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		PolicyRuleSet *createEmptyPolicyRuleSet(void);
 
 		/**
-		 * Update progress bar.
-		 * @param[in] 1st The progress bar dialog to be updated.
-		 * @param[in] 2nd The index of this progress bar.
-		 * @param[in] 3rd The policy caused the update.
-		 * @return Nothing.
-		 */
-		void updateProgDlg(wxProgressDialog *, int *, Policy *);
-
-		/**
-		 * Update columns.
-		 * Updates the columns of the given list. Only the visible
-		 * columns are created and the index of those is updated.
-		 * If the list has already columns, no action is performed.
-		 * @param[in] 1st The list showing the new columns.
-		 * @param[in] 2nd The array of columns.
-		 * @param[in] 3rd The size of that array.
-		 * @return Nothing.
-		 */
-		void updateListColumns(wxListCtrl *,ListCtrlColumn **, size_t);
-
-		/* XXX Dokumentation */
-		void updateColumnID(wxListCtrl *, long, ListCtrlColumn *,
-		    Policy *);
-
-		/* XXX Dokumentation */
-		void updateColumnText(wxListCtrl *, long, ListCtrlColumn *,
-		    wxString);
-
-		/**
-		 * Update row.
-		 * Updates the values of a row showing an application policy.
-		 * @param[in] 1st The index of row in question.
-		 * @return Nothing.
-		 */
-		void updateListAppPolicy(long);
-
-		/**
-		 * Update row.
-		 * Updates the values of a row showing an alf filter policy.
-		 * @param[in] 1st The index of row in question.
-		 * @return Nothing.
-		 */
-		void updateListAlfFilterPolicy(long);
-
-		/**
-		 * Update row.
-		 * Updates the values of a row showing an alf capability
-		 * filter policy.
-		 * @param[in] 1st The index of row in question.
-		 * @return Nothing.
-		 */
-		void updateListAlfCapabilityFilterPolicy(long);
-
-		/**
-		 * Update row.
-		 * Updates the values of a row showing a sfs filter policy.
-		 * @param[in] 1st The index of row in question.
-		 * @return Nothing.
-		 */
-		void updateListSfsFilterPolicy(long);
-
-		/**
-		 * Update row.
-		 * Updates the values of a row showing a context filter policy.
-		 * @param[in] 1st The index of row in question.
-		 * @return Nothing.
-		 */
-		void updateListContextFilterPolicy(long);
-
-		/**
-		 * Update row.
-		 * Updates the values of a row showing a sandbox filter policy.
-		 * @param[in] 1st The index of row in question.
-		 * @return Nothing.
-		 */
-		void updateListSbAccessFilterPolicy(long);
-
-		/**
 		 * Update footer status line and buttons.
 		 * Updates the widgets and status information related
 		 * to the ruleSet.
@@ -667,20 +383,6 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		 * @return Nothing.
 		 */
 		void updateFooter(void);
-
-		/**
-		 * Read settings for the visible column headers
-		 * @param None.
-		 * @return Nothing.
-		 */
-		void readOptions(void);
-
-		/**
-		 * Write settings for the visible column headers
-		 * @param None.
-		 * @return Nothing.
-		 */
-		void writeOptions(void);
 
 		/**
 		 * Display rules of the given user.
@@ -725,26 +427,6 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		 * @param None.
 		 */
 		void onUserSelectKillFocus(wxFocusEvent &);
-
-		/**
-		 * Save the column width of the columns that are
-		 * currently visible in a ListCtrl in the appropriate
-		 * column structure.
-		 * @param[in] 1st The ListCtrl
-		 * @param[in] 2nd The list of column data structures.
-		 *     Invisible columns are skipped.
-		 * @param[in] 3rd The number of columns in the column list.
-		 */
-		void saveColumnWidth(wxListCtrl *, ListCtrlColumn *c[], int);
-
-		/**
-		 * Save the columns widths of the filter list Ctrl. This
-		 * function automatically detects the columns to use from
-		 * the selection in the appListCtrl.
-		 * @param The line of the current AppPolicy. Minus 1 for
-		 *     auto detect.
-		 */
-		void saveFilterColumnWidth(int selection = -1);
 
 		/**
 		 * The ruleset user-ID that is currently displayed in

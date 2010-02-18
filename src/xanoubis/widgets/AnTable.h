@@ -52,7 +52,7 @@ class AnTable : public wxGridTableBase
 		 * Constructor.
 		 * @param[in] 1st The configuration path.
 		 */
-		AnTable(wxString);
+		AnTable(const wxString &);
 
 		/**
 		 * Destructor.
@@ -126,7 +126,7 @@ class AnTable : public wxGridTableBase
 		 * @param None.
 		 * @return Number of rows.
 		 */
-		int GetNumberRows(void) const;
+		int GetNumberRows(void);
 
 		/**
 		 * Returns the number of columns.
@@ -134,7 +134,7 @@ class AnTable : public wxGridTableBase
 		 * @param None.
 		 * @return Number of columns
 		 */
-		int GetNumberCols(void) const;
+		int GetNumberCols(void);
 
 		/**
 		 * Returns the headers of columns.

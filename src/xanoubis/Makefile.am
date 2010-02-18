@@ -303,6 +303,8 @@ xanoubis_SOURCES= \
 	view/DlgRuleEditorFilterSfsPage.h \
 	view/DlgRuleEditorFilterSubjectPage.cpp \
 	view/DlgRuleEditorFilterSubjectPage.h \
+	view/DlgRuleEditorListProperty.cpp \
+	view/DlgRuleEditorListProperty.h \
 	view/DlgRuleEditorPage.cpp \
 	view/DlgRuleEditorPage.h \
 	view/DlgUpgradeAsk.cpp \
@@ -409,8 +411,6 @@ xanoubis_SOURCES= \
 	control/Debug.cpp \
 	control/KeyCtrl.cpp \
 	control/KeyCtrl.h \
-	control/RuleEditorAddPolicyVisitor.cpp \
-	control/RuleEditorAddPolicyVisitor.h \
 	control/NotificationCtrl.cpp \
 	control/NotificationCtrl.h \
 	control/RuleSetClearModifiedVisitor.cpp \

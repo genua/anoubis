@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2010 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -31,6 +31,7 @@
 // PLEASE DO "NOT" EDIT THIS FILE!
 ///////////////////////////////////////////////////////////////////////////
 
+#include "AnGrid.h"
 #include "AnPickFromFs.h"
 #include "AnPolicyNotebook.h"
 #include "DlgRuleEditorAppPage.h"
@@ -93,15 +94,39 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	appListHeadSizer->Add( 0, 0, 1, wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
 	
 	appListColumnsButton = new wxButton( appPanel, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	appListColumnsButton->Enable( false );
 	appListColumnsButton->SetToolTip( _("customise columns of app-rules list") );
 	
 	appListHeadSizer->Add( appListColumnsButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
 	appMainSizer->Add( appListHeadSizer, 0, wxEXPAND, 5 );
 	
-	appPolicyListCtrl = new wxListCtrl( appPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_SINGLE_SEL );
-	appMainSizer->Add( appPolicyListCtrl, 1, wxALL|wxEXPAND, 5 );
+	appGrid = new AnGrid( appPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	
+	// Grid
+	appGrid->CreateGrid( 5, 5 );
+	appGrid->EnableEditing( false );
+	appGrid->EnableGridLines( true );
+	appGrid->EnableDragGridSize( false );
+	appGrid->SetMargins( 0, 0 );
+	
+	// Columns
+	appGrid->EnableDragColMove( false );
+	appGrid->EnableDragColSize( true );
+	appGrid->SetColLabelSize( 30 );
+	appGrid->SetColLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	
+	// Rows
+	appGrid->EnableDragRowSize( true );
+	appGrid->SetRowLabelSize( 1 );
+	appGrid->SetRowLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	
+	// Label Appearance
+	
+	// Cell Defaults
+	appGrid->SetDefaultCellAlignment( wxALIGN_LEFT, wxALIGN_TOP );
+	appGrid->SetToolTip( _("Select columns with right click on label.") );
+	
+	appMainSizer->Add( appGrid, 1, wxALL|wxEXPAND, 5 );
 	
 	wxBoxSizer* appListFoodSizer;
 	appListFoodSizer = new wxBoxSizer( wxHORIZONTAL );
@@ -174,15 +199,39 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	filterListHeadSizer->Add( 0, 0, 1, wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
 	
 	filterListColumnsButton = new wxButton( filterPanel, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
-	filterListColumnsButton->Enable( false );
 	filterListColumnsButton->SetToolTip( _("customise columns of filter-rules list") );
 	
 	filterListHeadSizer->Add( filterListColumnsButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
 	filterMainSizer->Add( filterListHeadSizer, 0, wxEXPAND, 5 );
 	
-	filterPolicyListCtrl = new wxListCtrl( filterPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_SINGLE_SEL );
-	filterMainSizer->Add( filterPolicyListCtrl, 1, wxALL|wxEXPAND, 5 );
+	filterGrid = new AnGrid( filterPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	
+	// Grid
+	filterGrid->CreateGrid( 5, 5 );
+	filterGrid->EnableEditing( false );
+	filterGrid->EnableGridLines( true );
+	filterGrid->EnableDragGridSize( false );
+	filterGrid->SetMargins( 0, 0 );
+	
+	// Columns
+	filterGrid->EnableDragColMove( false );
+	filterGrid->EnableDragColSize( true );
+	filterGrid->SetColLabelSize( 30 );
+	filterGrid->SetColLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	
+	// Rows
+	filterGrid->EnableDragRowSize( true );
+	filterGrid->SetRowLabelSize( 1 );
+	filterGrid->SetRowLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	
+	// Label Appearance
+	
+	// Cell Defaults
+	filterGrid->SetDefaultCellAlignment( wxALIGN_LEFT, wxALIGN_TOP );
+	filterGrid->SetToolTip( _("Select columns with right click on label.") );
+	
+	filterMainSizer->Add( filterGrid, 1, wxALL|wxEXPAND, 5 );
 	
 	wxBoxSizer* filterListFoodSizer;
 	filterListFoodSizer = new wxBoxSizer( wxHORIZONTAL );
@@ -297,15 +346,13 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	rb_userDefault->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorBase::onRbUserDefault ), NULL, this );
 	appListCreateButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onAppListCreateButton ), NULL, this );
 	appListColumnsButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onAppListColumnsButtonClick ), NULL, this );
-	appPolicyListCtrl->Connect( wxEVT_COMMAND_LIST_ITEM_DESELECTED, wxListEventHandler( DlgRuleEditorBase::onAppPolicyDeSelect ), NULL, this );
-	appPolicyListCtrl->Connect( wxEVT_COMMAND_LIST_ITEM_SELECTED, wxListEventHandler( DlgRuleEditorBase::onAppPolicySelect ), NULL, this );
+	appGrid->Connect( wxEVT_GRID_SELECT_CELL, wxGridEventHandler( DlgRuleEditorBase::onAppGridCellSelect ), NULL, this );
 	appListUpButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onAppListUpClick ), NULL, this );
 	appListDownButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onAppListDownClick ), NULL, this );
 	appListDeleteButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onAppListDeleteClick ), NULL, this );
 	filterListCreateButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onFilterListCreateButton ), NULL, this );
 	filterListColumnsButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onFilterListColumnsButtonClick ), NULL, this );
-	filterPolicyListCtrl->Connect( wxEVT_COMMAND_LIST_ITEM_DESELECTED, wxListEventHandler( DlgRuleEditorBase::onFilterPolicyDeSelect ), NULL, this );
-	filterPolicyListCtrl->Connect( wxEVT_COMMAND_LIST_ITEM_SELECTED, wxListEventHandler( DlgRuleEditorBase::onFilterPolicySelect ), NULL, this );
+	filterGrid->Connect( wxEVT_GRID_SELECT_CELL, wxGridEventHandler( DlgRuleEditorBase::onFilterGridCellSelect ), NULL, this );
 	filterListUpButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onFilterListUpClick ), NULL, this );
 	filterListDownButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onFilterListDownClick ), NULL, this );
 	filterListDeleteButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onFilterListDeleteClick ), NULL, this );
