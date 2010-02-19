@@ -263,8 +263,6 @@ xanoubis_SOURCES= \
 	model/PolicyChecks.h \
 	model/PolicyUtils.cpp \
 	model/PolicyUtils.h \
-	model/ListCtrlColumn.cpp \
-	model/ListCtrlColumn.h \
 	model/SfsOverviewTable.cpp \
 	model/SfsOverviewTable.h \
 	model/SimpleOverviewRow.cpp \

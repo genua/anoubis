@@ -38,7 +38,6 @@
 #include "AnEvents.h"
 #include "AnTable.h"
 #include "DlgRuleEditorBase.h"
-#include "ListCtrlColumn.h"
 #include "Observer.h"
 
 #include "Policy.h"
