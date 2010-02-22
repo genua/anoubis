@@ -72,6 +72,22 @@ class ModSfsMainPanelImpl : public ModSfsMainPanelBase, private Observer
 		bool comEnabled_; /**< Current communicator status. */
 
 		/**
+		 * Check if the private key and the certificate match together.
+		 * @param None.
+		 * @return true if keys match together, otherwise false.
+		 */
+		bool checkKeyPairMatch(void);
+
+		/**
+		 * Handle the event when the tab of the Sfs notebook is changed.
+		 * Checks if the keys are loaded before
+		 * changing to the keys tab.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		void onSfsTabChange(wxNotebookEvent&);
+
+		/**
 		 * Handle the event when main directory of Sfs tree is changed.
 		 * Sets show all and updates the view.
 		 * @param[in] 1st The event.

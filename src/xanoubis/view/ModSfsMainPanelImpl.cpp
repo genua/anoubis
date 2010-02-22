@@ -34,6 +34,7 @@
 #include "AnEvents.h"
 #include "AnPickFromFs.h"
 #include "AnMessageDialog.h"
+#include "AnIconList.h"
 #include "JobCtrl.h"
 #include "main.h"
 #include "ModSfsListCtrl.h"
@@ -49,6 +50,7 @@ ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent, wxWindowID id)
 {
 	wxSize		 indent;
 	wxSizerItem	*spacer;
+	wxIcon		 icon;
 
 	comEnabled_ = false;
 
@@ -97,6 +99,10 @@ ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent, wxWindowID id)
 	indent.DecBy(spacer->GetSize().GetWidth(), 0);
 	certFingerprintLabel->SetMinSize(indent);
 
+	/* Set icon for keyMismatch warning message */
+	icon = AnIconList::getInstance()->GetIcon(AnIconList::ICON_PROBLEM_48);
+	keyMismatchIcon->SetIcon(icon);
+
 	Layout();
 	Refresh();
 
@@ -111,6 +117,14 @@ ModSfsMainPanelImpl::~ModSfsMainPanelImpl(void)
 	   NULL, this);
 	AnEvents::getInstance()->Disconnect(anEVT_SFSBROWSER_SHOW,
 	    wxCommandEventHandler(ModSfsMainPanelImpl::onSfsBrowserShow),
+	    NULL, this);
+
+	/*
+	 * Disconnect page changing event from notebook to prevent segfault
+	 * on program close!
+	 */
+	note_MainSfs->Disconnect(wxEVT_COMMAND_NOTEBOOK_PAGE_CHANGING,
+	    wxNotebookEventHandler(ModSfsMainPanelImpl::onSfsTabChange),
 	    NULL, this);
 
 	saveSfsOptions();
@@ -143,11 +157,97 @@ ModSfsMainPanelImpl::update(Subject *subject)
 	} else {
 		/* Unknown subject type - do nothing */
 	}
+
+	if (subject == keyPicker || subject == certificatePicker) {
+
+		/* Show warning message on keyMismatch */
+		if (!checkKeyPairMatch()) {
+			keyMismatchPanel->Show();
+		} else {
+			keyMismatchPanel->Hide();
+		}
+		Layout();
+		Refresh();
+	}
 }
 
 void
 ModSfsMainPanelImpl::updateDelete(Subject *)
 {
+}
+
+bool
+ModSfsMainPanelImpl::checkKeyPairMatch(void)
+{
+	KeyCtrl *keyCtrl = KeyCtrl::getInstance();
+	PrivKey &privKey = keyCtrl->getPrivateKey();
+	LocalCertificate &localCert = keyCtrl->getLocalCertificate();
+	bool rv;
+
+	/* Load private key if not already loaded!
+	 * Remember if it was already loaded or not, so we can eventually
+	 * unload if afterwards
+	 */
+	bool privKeyLoadedBefore = privKey.isLoaded();
+	if (!privKeyLoadedBefore) {
+		if(!privKey.getFile().IsEmpty()) {
+			if(keyCtrl->loadPrivateKey() != KeyCtrl::RESULT_KEY_OK)
+			{
+				anMessageBox(
+				    _("Failed to load the private key!"),
+				    _("Load private key"), wxOK | wxICON_ERROR,
+				    this);
+				return true;
+			}
+		}
+	}
+
+	/* Load certificate if not already loaded! */
+	if (!localCert.isLoaded()) {
+		if(!localCert.getFile().IsEmpty()) {
+			if(!localCert.load()) {
+				anMessageBox(wxString::Format(
+				    _("Failed to load certificate from\n%ls."),
+				    localCert.getFile().c_str()),
+				    _("Load certificate"), wxOK | wxICON_ERROR,
+				    this);
+				return true;
+			}
+		}
+	}
+
+	/* Get the 'real' key data */
+	struct anoubis_sig *key = privKey.getKey();
+	struct anoubis_sig *cert = localCert.getCertificate();
+
+	/* Compare the keys */
+	if (anoubis_sig_keycmp(key, cert) != 0) {
+		rv = false;
+	} else {
+		rv = true;
+	}
+
+	/* Unload private key if it hadn't already been loaded before!!! */
+	if (!privKeyLoadedBefore) {
+		privKey.unload();
+	}
+
+	return rv;
+}
+
+void
+ModSfsMainPanelImpl::onSfsTabChange(wxNotebookEvent& event)
+{
+	/* Check for keyMismatch if target is KeysTab (== this) */
+	if (note_MainSfs->GetPage(event.GetSelection()) == this) {
+		if (!checkKeyPairMatch()) {
+			keyMismatchPanel->Show();
+		} else {
+			keyMismatchPanel->Hide();
+		}
+		Layout();
+		Refresh();
+	}
 }
 
 void
@@ -730,7 +830,7 @@ ModSfsMainPanelImpl::privKeyParamsUpdate(const wxString &path, bool sessionEnd,
 		privKey.unload();
 		if (keyCtrl->loadPrivateKey() != KeyCtrl::RESULT_KEY_OK) {
 			anMessageBox(
-			    _("Failed to load the private key!\n"),
+			    _("Failed to load the private key!"),
 			    _("Load private key"), wxOK | wxICON_ERROR, this);
 			privKey.setFile(oldPath);
 		}

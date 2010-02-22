@@ -59,8 +59,8 @@ class ModSfsListCtrl;
 #include <wx/spinctrl.h>
 #include <wx/statbox.h>
 #include <wx/statline.h>
-#include <wx/notebook.h>
 #include <wx/statbmp.h>
+#include <wx/notebook.h>
 #include <wx/dialog.h>
 #include <wx/datectrl.h>
 #include <wx/dateevt.h>
@@ -134,8 +134,12 @@ class ModSfsMainPanelBase : public wxPanel
 		wxStaticText* certEmailLabel;
 		wxStaticText* certEmailText;
 		wxButton* generateKeyPairButton;
+		wxPanel* keyMismatchPanel;
+		wxStaticBitmap* keyMismatchIcon;
+		wxStaticText* keyMismatchText;
 		
 		// Virtual event handlers, overide them in your derived class
+		virtual void onSfsTabChange( wxNotebookEvent& event ){ event.Skip(); }
 		virtual void OnGridCellLeftDClick( wxGridEvent& event ){ event.Skip(); }
 		virtual void OnSfsPathChanged( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnSfsMainDirCtrlSelChanged( wxTreeEvent& event ){ event.Skip(); }
