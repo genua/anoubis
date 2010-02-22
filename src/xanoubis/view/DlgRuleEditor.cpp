@@ -49,6 +49,7 @@
 #include "JobCtrl.h"
 #include "AnPolicyNotebook.h"
 #include "DlgRuleEditorListProperty.h"
+#include "DlgRuleEditorAttrProvider.h"
 
 
 #define ADD_PROPERTY(table, type) \
@@ -91,6 +92,7 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
 
 	/* Fill table for app polilcies with columns. */
 	appTable_ = new AnTable(wxT("/Options/Columns/App/"));
+	appTable_->SetAttrProvider(new DlgRuleEditorAttrProvider(appTable_));
 	ADD_PROPERTY(appTable_, PROPERTY_ID);
 	ADD_PROPERTY(appTable_, PROPERTY_TYPE);
 	ADD_PROPERTY(appTable_, PROPERTY_USER);
@@ -100,6 +102,7 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
 
 	/* Fill table for alf filter polilcies with columns. */
 	alfTable_ = new AnTable(wxT("/Options/Columns/Alf/"));
+	alfTable_->SetAttrProvider(new DlgRuleEditorAttrProvider(alfTable_));
 	ADD_PROPERTY(alfTable_, PROPERTY_ID);
 	ADD_PROPERTY(alfTable_, PROPERTY_TYPE);
 	ADD_PROPERTY(alfTable_, PROPERTY_ACTION);
@@ -116,6 +119,7 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
 
 	/* Fill table for sfs filter polilcies with columns. */
 	sfsTable_ = new AnTable(wxT("/Options/Columns/Sfs/"));
+	sfsTable_->SetAttrProvider(new DlgRuleEditorAttrProvider(sfsTable_));
 	ADD_PROPERTY(sfsTable_, PROPERTY_ID);
 	ADD_PROPERTY(sfsTable_, PROPERTY_TYPE);
 	ADD_PROPERTY(sfsTable_, PROPERTY_PATH);
@@ -130,12 +134,14 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
 
 	/* Fill table for context filter polilcies with columns. */
 	ctxTable_ = new AnTable(wxT("/Options/Columns/Ctx/"));
+	ctxTable_->SetAttrProvider(new DlgRuleEditorAttrProvider(ctxTable_));
 	ADD_PROPERTY(ctxTable_, PROPERTY_ID);
 	ADD_PROPERTY(ctxTable_, PROPERTY_TYPE);
 	ADD_PROPERTY(ctxTable_, PROPERTY_BINARY);
 
 	/* Fill table for sandbox filter polilcies with columns. */
 	sbTable_ = new AnTable(wxT("/Options/Columns/Sb/"));
+	sbTable_->SetAttrProvider(new DlgRuleEditorAttrProvider(sbTable_));
 	ADD_PROPERTY(sbTable_, PROPERTY_ID);
 	ADD_PROPERTY(sbTable_, PROPERTY_TYPE);
 	ADD_PROPERTY(sbTable_, PROPERTY_ACTION);
@@ -669,7 +675,7 @@ void
 DlgRuleEditor::onAppListColumnsButtonClick(wxCommandEvent &)
 {
 	wxGridEvent	event;
-	
+
 	event.SetEventType(wxEVT_GRID_LABEL_RIGHT_CLICK);
 	wxPostEvent(appGrid, event);
 }
@@ -678,7 +684,7 @@ void
 DlgRuleEditor::onFilterListColumnsButtonClick(wxCommandEvent &)
 {
 	wxGridEvent	event;
-	
+
 	event.SetEventType(wxEVT_GRID_LABEL_RIGHT_CLICK);
 	wxPostEvent(filterGrid, event);
 }

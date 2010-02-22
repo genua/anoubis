@@ -285,6 +285,8 @@ xanoubis_SOURCES= \
 	view/DlgRuleEditor.h \
 	view/DlgRuleEditorAppPage.cpp \
 	view/DlgRuleEditorAppPage.h \
+	view/DlgRuleEditorAttrProvider.cpp \
+	view/DlgRuleEditorAttrProvider.h \
 	view/DlgRuleEditorFilterActionPage.cpp \
 	view/DlgRuleEditorFilterActionPage.h \
 	view/DlgRuleEditorFilterAddressPage.cpp \
