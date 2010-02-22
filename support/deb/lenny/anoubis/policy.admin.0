@@ -20,6 +20,7 @@ sandbox {
 	/usr/sbin/ntpd
 	{
 		allow path /etc/ntp.conf r
+		allow path /etc/ntp.conf.dhcp r
 		allow path /var/run/ntpd.pid rw
 		allow path /var/lib/ntp rw
 		allow path /var/log/ntpstats rw
@@ -32,6 +33,8 @@ sandbox {
 		allow path /etc/hosts r
 		allow path /lib r
 		allow path /usr r
+
+		allow path /dev/log w
 
 		default log deny
 	}
