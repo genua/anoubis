@@ -305,10 +305,12 @@ DlgRuleEditor::onShowRule(wxCommandEvent& event)
 
 	filter = dynamic_cast<FilterPolicy*>((Policy*)apnrule->userdata);
 	if (!filter) {
-		return;
+		app = dynamic_cast<AppPolicy*>((Policy*)apnrule->userdata);
+		if (app == NULL)
+			return;
+	} else {
+		app = filter->getParentPolicy();
 	}
-
-	app = filter->getParentPolicy();
 	idx = rs->getIndexOfPolicy(app);
 	if (idx < 0) {
 		return;
@@ -322,9 +324,11 @@ DlgRuleEditor::onShowRule(wxCommandEvent& event)
 	this->Raise();
 
 	selectRow(appGrid, idx);
-	idx = app->getIndexOfFilterPolicy(filter);
-	if (idx >= 0) {
-		selectRow(filterGrid, idx);
+	if (filter) {
+		idx = app->getIndexOfFilterPolicy(filter);
+		if (idx >= 0) {
+			selectRow(filterGrid, idx);
+		}
 	}
 }
 

@@ -256,27 +256,24 @@ ModSfsMainPanelImpl::OnGridCellLeftDClick(wxGridEvent& event)
 	wxCommandEvent		showEvent(anEVT_SHOW_RULE);
 	SfsOverviewTable	*table;
 	SimpleOverviewRow	*tableRow;
-	FilterPolicy		*policy;
+	Policy			*policy;
 	PolicyRuleSet		*ruleset;
 
 	table = dynamic_cast<SfsOverviewTable *> (lst_Rules->GetTable());
-
-	if (table == NULL) {
+	if (table == NULL)
 		return;
-	}
 
-	tableRow	= table->getRowAt(event.GetRow());
-	policy		= tableRow->getFilterPolicy();
+	tableRow = table->getRowAt(event.GetRow());
 
-	if (policy == NULL) {
+	policy = tableRow->getFilterPolicy();
+	if (policy == NULL)
+		policy = tableRow->getApplicationPolicy();
+	if (policy == NULL)
 		return;
-	}
 
 	ruleset = policy->getParentRuleSet();
-
-	if (ruleset == NULL) {
+	if (ruleset == NULL)
 		return;
-	}
 
 	showEvent.SetInt(ruleset->isAdmin());
 	showEvent.SetExtraLong(policy->getApnRuleId());

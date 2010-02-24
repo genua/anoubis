@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <!--
- Copyright (c) 2009 GeNUA mbH <info@genua.de>
+ Copyright (c) 2010 GeNUA mbH <info@genua.de>
 
  All rights reserved.
 
@@ -150,12 +150,12 @@
                         <event name="OnListDeleteItem"></event>
                         <event name="OnListEndLabelEdit"></event>
                         <event name="OnListInsertItem"></event>
-                        <event name="OnListItemActivated"></event>
+                        <event name="OnListItemActivated">onLogSelect</event>
                         <event name="OnListItemDeselected"></event>
                         <event name="OnListItemFocused"></event>
                         <event name="OnListItemMiddleClick"></event>
                         <event name="OnListItemRightClick"></event>
-                        <event name="OnListItemSelected">onLogSelect</event>
+                        <event name="OnListItemSelected"></event>
                         <event name="OnListKeyDown"></event>
                         <event name="OnMiddleDClick"></event>
                         <event name="OnMiddleDown"></event>
