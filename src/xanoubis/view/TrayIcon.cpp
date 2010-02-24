@@ -123,8 +123,6 @@ TrayIcon::TrayIcon(void)
 	    wxCommandEventHandler(TrayIcon::OnOpenAlerts), NULL, this);
 	anEvents->Connect(anEVT_OPEN_ESCALATIONS,
 	    wxCommandEventHandler(TrayIcon::OnOpenEscalations), NULL, this);
-	anEvents->Connect(anEVT_LOGVIEWER_SHOW,
-	    wxCommandEventHandler(TrayIcon::OnLogViewerShow), NULL, this);
 	anEvents->Connect(anEVT_ESCALATIONNOTIFY_OPTIONS,
 	    wxCommandEventHandler(TrayIcon::OnEscalationSettingsChanged), NULL,
 	    this);
@@ -154,8 +152,6 @@ TrayIcon::~TrayIcon(void)
 	    wxCommandEventHandler(TrayIcon::OnOpenAlerts), NULL, this);
 	anEvents->Disconnect(anEVT_OPEN_ESCALATIONS,
 	    wxCommandEventHandler(TrayIcon::OnOpenEscalations), NULL, this);
-	anEvents->Disconnect(anEVT_LOGVIEWER_SHOW,
-	    wxCommandEventHandler(TrayIcon::OnLogViewerShow), NULL, this);
 	anEvents->Disconnect(anEVT_ESCALATIONNOTIFY_OPTIONS,
 	    wxCommandEventHandler(TrayIcon::OnEscalationSettingsChanged), NULL,
 	    this);
@@ -196,19 +192,6 @@ TrayIcon::OnOpenEscalations(wxCommandEvent& event)
 	messageEscalationCount_ = event.GetInt();
 	update();
 	wxGetApp().Yield(false);	/* Process pending libnotify events. */
-	event.Skip();
-}
-
-/*
- * [MPI] has decided that we clear Alerts on opening the LogViewer.
- */
-void
-TrayIcon::OnLogViewerShow(wxCommandEvent& event)
-{
-	if(event.GetInt()) {
-		messageAlertCount_ = 0;
-		update();
-	}
 	event.Skip();
 }
 
@@ -276,17 +259,28 @@ void
 TrayIcon::update(void)
 {
 	wxString tooltip;
+	wxString connection;
 	wxIcon *icon;
 	char message[MAX_MESSAGE];
 	tooltip = _("Messages: ");
+
+	/* connection to daemon established */
+	if (daemon_.IsEmpty()) {
+		connection = _("not connected");
+	} else {
+		connection = _("connected with ");
+		connection += daemon_;
+	}
 
 	/* escalations represent the highest priority */
 	if (messageEscalationCount_ > 0) {
 		tooltip += wxString::Format(wxT("%d\n"),
 		    messageEscalationCount_);
+		tooltip += connection;
 		icon = iconMsgQuestion_;
 		sprintf(message, "Received Escalations: %d\n",
 		    messageEscalationCount_);
+		SetIcon(*icon, tooltip);
 		if (sendEscalation_) {
 			if (!systemNotify("ESCALATION", message,
 			    NOTIFY_URGENCY_CRITICAL, escalationTimeout_))
@@ -296,34 +290,30 @@ TrayIcon::update(void)
 		if (messageAlertCount_ > 0) {
 			tooltip += wxString::Format(wxT("%d\n"),
 			    messageAlertCount_);
+			tooltip += connection;
 			icon = iconMsgProblem_;
 			sprintf(message, "Received Alerts: %d\n",
 			    messageAlertCount_);
+			SetIcon(*icon, tooltip);
 			if (sendAlert_) {
 				if (!systemNotify("ALERT", message,
 				    NOTIFY_URGENCY_NORMAL,
-				    alertTimeout_))
+				    alertTimeout_)){
 					Debug::err(_("Couldn't send Alert"));
+				}
 			}
 		} else {
 			tooltip = _("No messages\n");
+			tooltip += connection;
 			icon = iconNormal_;
+			SetIcon(*icon, tooltip);
 			/* enforce hiding of the system notifier popup */
 			notify_notification_close(notification, NULL);
 			/* Process pending libnotify events. */
-			wxGetApp().Yield(false);
 		}
 	}
 
-	/* connection to daemon established */
-	if (daemon_.IsEmpty()) {
-		tooltip += _("not connected");
-	} else {
-		tooltip += _("connected with ");
-		tooltip += daemon_;
-	}
-
-	SetIcon(*icon, tooltip);
+	wxGetApp().Yield(false);
 }
 
 static void

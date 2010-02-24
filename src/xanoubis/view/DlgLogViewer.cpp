@@ -83,7 +83,7 @@ public:
 
 		if (perspective_ == NULL)
 			return NULL;
- 		if ((int)idx < 0 || (int)idx >= perspective_->getSize())
+		if ((int)idx < 0 || (int)idx >= perspective_->getSize())
 			return NULL;
 		it = perspective_->begin();
 		it += idx;
@@ -161,6 +161,10 @@ DlgLogViewer::~DlgLogViewer(void)
 void
 DlgLogViewer::onShow(wxCommandEvent &event)
 {
+	wxCommandEvent	showEvent(anEVT_OPEN_ALERTS);
+	showEvent.SetInt(0);
+	wxPostEvent(AnEvents::getInstance(), showEvent);
+
 	this->Show(event.GetInt());
 	event.Skip();
 }

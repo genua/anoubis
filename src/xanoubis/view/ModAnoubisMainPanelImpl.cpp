@@ -615,6 +615,14 @@ ModAnoubisMainPanelImpl::update(void)
 	size_t			 elementNo;
 	EscalationNotify	*eNotify = NULL;
 	NotificationCtrl	*notifyCtrl = NotificationCtrl::instance();
+
+	if (tb_MainAnoubisNotify->GetCurrentPage()
+	   == tb_MainAnoubisNotification) {
+		wxCommandEvent	showEvent(anEVT_OPEN_ALERTS);
+		showEvent.SetInt(0);
+		wxPostEvent(AnEvents::getInstance(), showEvent);
+	}
+
 	if (currentNotify_) {
 		/*
 		 * A DaemonAnswerNotify can remove an Escalation from
@@ -1065,6 +1073,9 @@ ModAnoubisMainPanelImpl::OnEscalationsShow(wxCommandEvent& event)
 	}
 
 	if (event.GetString().Cmp(wxT("ALERTS")) == 0) {
+		wxCommandEvent	showEvent(anEVT_OPEN_ALERTS);
+		showEvent.SetInt(0);
+		wxPostEvent(AnEvents::getInstance(), showEvent);
 		/* select "current messages" */
 		ch_type->SetSelection(1);
 		setPerspective(NotificationCtrl::LIST_MESSAGES);
@@ -1118,6 +1129,13 @@ ModAnoubisMainPanelImpl::OnNotebookTabChanged(wxNotebookEvent&)
 		 * reload list of versions.
 		 */
 		versionListUpdate();
+	}
+
+	if (tb_MainAnoubisNotify->GetCurrentPage()
+	   == tb_MainAnoubisNotification) {
+		wxCommandEvent	showEvent(anEVT_OPEN_ALERTS);
+		showEvent.SetInt(0);
+		wxPostEvent(AnEvents::getInstance(), showEvent);
 	}
 }
 
