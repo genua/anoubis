@@ -30,7 +30,8 @@ noinst_PROGRAMS = test_libanoubiserrorcode
 
 include $(top_srcdir)/src/Makefile.include
 
-TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(test_ldpath) SRCDIR=$(top_srcdir)/src
+TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(test_ldpath) \
+		    CATALOG=$(top_srcdir)/po/de.gmo
 
 AM_CPPFLAGS = $(test_cppflags)
 AM_LDFLAGS = $(test_ldflags)

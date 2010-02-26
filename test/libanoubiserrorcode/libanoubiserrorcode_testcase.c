@@ -49,17 +49,17 @@ void
 libanoubiserrorcode_tc_setup(void)
 {
 	/*
-	 * create temporary directory here
+	* create temporary directory here
 	 * with: anoubis/de_DE/LC_MESSAGES/anoubis.mo
 	 * in it, this catalog-file will be used by
 	 * testcase_de
 	 */
-	char cmd[200], *tmp, *srcdir;
+	char cmd[200], *tmp, *catalog;
 	int errno;
 
-	srcdir = getenv("SRCDIR");
-	if (srcdir == NULL) {
-		srcdir = (char *) "src/anoubis/src";
+	catalog= getenv("CATALOG");
+	if (catalog == NULL)  {
+		catalog = (char *) "src/anoubis/po/de.gmo";
 	}
 
 	tmpdir = strdup("/tmp/tc_de_testXXXXXX");
@@ -68,8 +68,8 @@ libanoubiserrorcode_tc_setup(void)
 	snprintf(cmd, 200, "mkdir -p %s/%s/%s",
 		tmpdir, LOCALE, CATSTRING);
 	errno = system(cmd);
-	snprintf(cmd, 200, "cp %s/catalogs/de/anoubis.mo %s/%s/%s/anoubis.mo",
-		srcdir, tmpdir, LOCALE, CATSTRING);
+	snprintf(cmd, 200, "cp %s %s/%s/%s/anoubis.mo",
+		catalog, tmpdir, LOCALE, CATSTRING);
 	errno = system(cmd);
 }
 
@@ -153,11 +153,10 @@ START_TEST(testcase_de)
 	char *domain = textdomain(NULL);
 	char *dir;
 
-	dir = bindtextdomain("anoubis", tmpdir);
-
 	printf("testing german error codes\n");
 	printf("domain: %s\n", textdomain("anoubis"));
 
+	dir = bindtextdomain("anoubis", tmpdir);
 	#ifndef OPENBSD
 	printf("locale: %s\n", setlocale(CATEGORY, LOCALE));
 	#else

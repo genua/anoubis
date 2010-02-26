@@ -38,20 +38,8 @@ AM_MAINTAINER_MODE
 AC_CONFIG_HEADERS([src/config.h])
 AC_CONFIG_HEADERS([src/version.h])
 
-dnl texttext-tools
-AC_CHECK_PROG(XGETTEXT, [xgettext], [xgettext])
-AC_CHECK_PROG(MSGMERGE, [msgmerge], [msgmerge])
-AC_CHECK_PROG(MSGFMT, [msgfmt], [msgfmt])
-
-if [test "x$XGETTEXT" == "x"]; then
-	AC_MSG_ERROR([xgettext required.])
-fi
-if [test "x$MSGMERGE" == "x"]; then
-	AC_MSG_ERROR([msgmerge required.])
-fi
-if [test "x$MSGFMT" == "x"]; then
-	AC_MSG_ERROR([msgfmt required.])
-fi
+dnl needed by later used: 'AM_GNU_GETTEXT([external])'
+AC_GNU_SOURCE
 
 dnl os specific library replacements
 AC_SEARCH_LIBS([inet_net_pton], [resolv], \
@@ -164,6 +152,7 @@ AC_CONFIG_FILES([
 	lint/flawfinder
 	lint/splint
 	lint/lint
+	po/Makefile.in
 ])
 
 AC_CHECK_PROGS(LCOV, lcov, false)
@@ -394,6 +383,8 @@ prog_AM_CFLAGS="$AM_CFLAGS"
 prog_AM_CXXFLAGS="$AM_CXXFLAGS"
 prog_AM_LDFLAGS="$AM_LDFLAGS"
 
+dnl needed by automake gettext
+AM_GNU_GETTEXT([external])
 
 AC_SUBST(prog_AM_CFLAGS)
 AC_SUBST(prog_AM_CXXFLAGS)

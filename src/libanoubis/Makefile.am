@@ -26,6 +26,7 @@
 ##########################################################################
 
 lib_LIBRARIES = libanoubis.a
+noinst_DATA = potfiles.frag
 
 include $(top_srcdir)/src/Makefile.include
 
@@ -159,6 +160,11 @@ libanoubis_so_SOURCES = $(libanoubis_a_SOURCES)
 libanoubis_so_CFLAGS = $(shared_AM_CFLAGS)
 libanoubis_so_CPPFLAGS = $(libanoubis_a_CPPFLAGS)
 libanoubis_so_LDFLAGS = $(shared_AM_LDFLAGS) -lcrypto
-libanoubis_so_LDADD =
+libanoubis_so_LDADD = @LIBINTL@
+
+#$(top_srcdir)/src/libanoubis/potfiles.frag:
+potfiles.frag:
+	echo "src/libanoubis/anoubiserrorcode/anoubis_errno.c" \
+	    > potfiles.frag
 
 include $(top_srcdir)/lint/Makefile.lint

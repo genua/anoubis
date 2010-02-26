@@ -25,6 +25,7 @@
 #
 
 bin_PROGRAMS = xanoubis
+noinst_DATA = potfiles.frag
 
 include $(top_srcdir)/src/Makefile.include
 
@@ -537,6 +538,11 @@ libGUIcomponents_so_LDADD    = $(xanoubis_ldadd) $(libanoubis_so)
 libGUIcomponents_so_LINK     = $(CXX) $(libGUIcomponents_so_LDFLAGS) -o $@
 endif
 endif
+
+potfiles.frag:
+	echo $(xanoubis_SOURCES) > potfiles.frag
+	perl -pi -e 's/\s+/\n/gm' potfiles.frag
+	perl -pi -e 's/^/src\/xanoubis\//' potfiles.frag
 
 i18n-extract:
 	cd $(top_srcdir)/$(xanoubisdir) && \
