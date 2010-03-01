@@ -32,6 +32,7 @@
 #include <anoubisd.h>
 #include <anoubis_msg.h>
 #include <cert.h>
+#include <anoubis_alloc.h>
 
 #define ANOUBISD_CSUM_NONE	0
 #define ANOUBISD_CSUM_USER	1
@@ -53,21 +54,18 @@ struct sfs_checksumop {
 };
 
 struct sfs_data {
-	int		 siglen;
-	u_int8_t	*sigdata;
-	int		 cslen;
-	u_int8_t        *csdata;
-	int		 upgradecslen;
-	u_int8_t        *upgradecsdata;
+	struct abuf_buffer	sigdata;
+	struct abuf_buffer	csdata;
+	struct abuf_buffer	upgradecsdata;
 };
 
 int	 sfs_checksumop(const struct sfs_checksumop *csop,
-	     void **buftpr, int *buflen);
+	     struct abuf_buffer *buf);
 int	 sfs_checksumop_chroot(const struct sfs_checksumop *csop,
 	     struct sfs_data *data);
 void	 sfs_freesfsdata(struct sfs_data *);
 int	 sfs_haschecksum_chroot(const char *path);
-int	 sfs_update_all(const char *path, u_int8_t *md, int len);
+int	 sfs_update_all(const char *path, u_int8_t *md, unsigned int len);
 int	 sfs_update_signature(const char *path, struct cert *cert,
 	     u_int8_t *md, int len);
 int	 convert_user_path(const char *path, char **dir, int is_dir);

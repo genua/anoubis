@@ -89,6 +89,7 @@
 #include "sfs.h"
 #include "cert.h"
 #include "cfg.h"
+#include <anoubis_alloc.h>
 
 static int	terminate = 0;
 static int	eventfds[2];
@@ -1328,8 +1329,7 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 	struct anoubisd_msg_csumop	*msg_csum;
 	struct sfs_checksumop		 csop;
 	struct anoubisd_msg_csumreply	*reply;
-	void				*sigbuf = NULL;
-	int				 siglen = 0;
+	struct abuf_buffer		 sigbuf = ABUF_EMPTY;
 	int				 err = -EFAULT;
 
 	msg_csum = (struct anoubisd_msg_csumop *)msg->msg;
@@ -1355,7 +1355,7 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 	case ANOUBIS_CHECKSUM_OP_GET2:
 	case ANOUBIS_CHECKSUM_OP_DELSIG:
 	case ANOUBIS_CHECKSUM_OP_DEL:
-		err = sfs_checksumop(&csop, &sigbuf, &siglen);
+		err = sfs_checksumop(&csop, &sigbuf);
 		if (err < 0)
 			goto out;
 		break;
@@ -1375,14 +1375,14 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 		    csop.idlen, ev_info);
 	}
 out:
-	msg = create_checksumreply_msg(msg_csum->token, siglen);
+	msg = create_checksumreply_msg(msg_csum->token, abuf_length(sigbuf));
 	reply = (struct anoubisd_msg_csumreply *)msg->msg;
 	reply->reply = -err;
 	reply->flags = POLICY_FLAG_START | POLICY_FLAG_END;
-	if (siglen) {
-		memcpy(reply->data, sigbuf, siglen);
-		free(sigbuf);
+	if (abuf_length(sigbuf)) {
+		abuf_copy_frombuf(reply->data, sigbuf, abuf_length(sigbuf));
 	}
+	abuf_free(sigbuf);
 	enqueue(&eventq_m2s, msg);
 	DEBUG(DBG_QUEUE, " >eventq_m2s: %" PRIx64, reply->token);
 	event_add(ev_info->ev_m2s, NULL);

@@ -54,6 +54,7 @@
 
 #include "anoubisd.h"
 #include "pe.h"
+#include <anoubis_alloc.h>
 
 /*
  * The flag is true if we have seen at least one process create or
@@ -173,7 +174,7 @@ pe_proc_put(struct pe_proc *proc)
 		pe_context_put(proc->context[i]);
 		pe_context_put(proc->saved_ctx[i]);
 	}
-	free(proc);
+	abuf_free_type(proc, struct pe_proc);
 }
 
 static struct pe_proc *
@@ -181,7 +182,7 @@ pe_proc_alloc(uid_t uid, anoubis_cookie_t cookie, struct pe_proc_ident *pident)
 {
 	struct pe_proc	*proc;
 
-	if ((proc = calloc(1, sizeof(struct pe_proc))) == NULL)
+	if ((proc = abuf_zalloc_type(struct pe_proc)) == NULL)
 		goto oom;
 	proc->task_cookie = cookie;
 	proc->borrow_cookie = 0;

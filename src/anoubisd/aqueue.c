@@ -27,6 +27,8 @@
 
 #include "config.h"
 
+#include "anoubis_alloc.h"
+
 #include <stdlib.h>
 #ifdef UTEST
 #include <assert.h>
@@ -54,7 +56,7 @@ enqueue(Queuep queuep, void *msgp)
 		free(msgp);
 		return 0;
 	}
-	if ((qep = malloc(sizeof(struct queue_entry))) == NULL) {
+	if ((qep = abuf_alloc_type(Qentry)) == NULL) {
 		log_warn("enqueue: can't allocate memory");
 		free(msgp);
 		master_terminate(ENOMEM);
@@ -91,7 +93,7 @@ dequeue(Queuep queuep)
 	qep = queuep->head;
 	msgp = queuep->head->entry;
 	queuep->head = queuep->head->next;
-	free(qep);
+	abuf_free_type(qep, Qentry);
 	if (queuep->head == NULL)
 		queuep->tail = NULL;
 	return msgp;
@@ -171,7 +173,7 @@ queue_delete(Queuep queuep, void *msgp)
 				/*@i@*/queuep->head = qep->next;
 				if (queuep->head == NULL)
 					queuep->tail = NULL;
-				free(qep);
+				abuf_free_type(qep, Qentry);
 				return 1;
 			}
 			/*
@@ -184,7 +186,7 @@ queue_delete(Queuep queuep, void *msgp)
 			/*@i@*/lqep->next = qep->next;
 			if (queuep->tail == qep)
 				queuep->tail = lqep;
-			free(qep);
+			abuf_free_type(qep, Qentry);
 			/*
 			 * splint warns here that the parameter queuep
 			 * might indirectly point to deallocated storage

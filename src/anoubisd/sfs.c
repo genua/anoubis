@@ -67,6 +67,7 @@
 #include "anoubisd.h"
 #include "sfs.h"
 #include "cert.h"
+#include <anoubis_alloc.h>
 
 /*
  * sfsdata file format in sfs checksumroot:
@@ -93,25 +94,30 @@
 #define	NUM_SFSDATA_TYPES	4
 
 static int	 sfs_writesfsdata(const char *csum_file, const char *csum_path,
-		     const struct sfs_data *sfsdata);
+		     struct sfs_data *sfsdata);
 static int	 sfs_readsfsdata(const char *csum_file,
 		     struct sfs_data *sfsdata);
 static int	 sfs_deletechecksum(const char *csum_file);
 static int	 check_empty_dir(const char *path);
 
 void
+sfs_initsfsdata(struct sfs_data *sfsdata)
+{
+	sfsdata->csdata = ABUF_EMPTY;
+	sfsdata->sigdata = ABUF_EMPTY;
+	sfsdata->upgradecsdata = ABUF_EMPTY;
+}
+
+void
 sfs_freesfsdata(struct sfs_data *sfsdata) {
 	if (sfsdata == NULL)
 		return;
-	if (sfsdata->csdata)
-		free(sfsdata->csdata);
-	sfsdata->csdata = NULL;
-	if (sfsdata->sigdata)
-		free(sfsdata->sigdata);
-	sfsdata->sigdata = NULL;
-	if (sfsdata->upgradecsdata)
-		free(sfsdata->upgradecsdata);
-	sfsdata->upgradecsdata = NULL;
+	abuf_free(sfsdata->csdata);
+	sfsdata->csdata = ABUF_EMPTY;
+	abuf_free(sfsdata->sigdata);
+	sfsdata->sigdata = ABUF_EMPTY;
+	abuf_free(sfsdata->upgradecsdata);
+	sfsdata->upgradecsdata = ABUF_EMPTY;
 }
 
 static int
@@ -316,7 +322,7 @@ __sfs_checksumop(const struct sfs_checksumop *csop, struct sfs_data *data,
     int is_chroot)
 {
 	char		*csum_path = NULL, *csum_file, *keystring;
-	int		 realsiglen = 0;
+	unsigned int	 realsiglen = 0;
 	int		 error = -EINVAL;
 	struct cert	*cert = NULL;
 	struct sfs_data	 sfsdata;
@@ -341,7 +347,7 @@ __sfs_checksumop(const struct sfs_checksumop *csop, struct sfs_data *data,
 	if (error < 0)
 		return error;
 
-	memset(&sfsdata, 0, sizeof(sfsdata));
+	sfs_initsfsdata(&sfsdata);
 
 	switch(csop->op) {
 	case ANOUBIS_CHECKSUM_OP_ADDSUM:
@@ -378,7 +384,8 @@ __sfs_checksumop(const struct sfs_checksumop *csop, struct sfs_data *data,
 		error = -EINVAL;
 		if (csop->op == ANOUBIS_CHECKSUM_OP_ADDSIG) {
 			int ret;
-			if (realsiglen + ANOUBIS_CS_LEN != csop->siglen)
+			if (realsiglen + ANOUBIS_CS_LEN !=
+			    (unsigned int)csop->siglen)
 				goto err1;
 			ret = anoubisd_verify_csum(cert->pubkey, csop->sigdata,
 			    csop->sigdata + ANOUBIS_CS_LEN, realsiglen);
@@ -403,14 +410,26 @@ __sfs_checksumop(const struct sfs_checksumop *csop, struct sfs_data *data,
 	}
 	switch(csop->op) {
 	case ANOUBIS_CHECKSUM_OP_ADDSUM:
-		sfsdata.csdata = (u_int8_t *)csop->sigdata;
-		sfsdata.cslen  = csop->siglen;
-		error = sfs_writesfsdata(csum_file, csum_path, &sfsdata);
+		sfsdata.csdata = abuf_alloc(csop->siglen);
+		abuf_copy_tobuf(sfsdata.csdata, csop->sigdata, csop->siglen);
+		if (!abuf_empty(sfsdata.csdata)) {
+			error = sfs_writesfsdata(csum_file, csum_path,
+			    &sfsdata);
+		} else {
+			error = -ENOMEM;
+		}
+		sfs_freesfsdata(&sfsdata);
 		break;
 	case ANOUBIS_CHECKSUM_OP_ADDSIG:
-		sfsdata.sigdata = (u_int8_t *)csop->sigdata;
-		sfsdata.siglen  = csop->siglen;
-		error = sfs_writesfsdata(csum_file, csum_path, &sfsdata);
+		sfsdata.sigdata = abuf_alloc(csop->siglen);
+		abuf_copy_tobuf(sfsdata.sigdata, csop->sigdata, csop->siglen);
+		if (!abuf_empty(sfsdata.sigdata)) {
+			error = sfs_writesfsdata(csum_file, csum_path,
+			    &sfsdata);
+		} else {
+			error = -ENOMEM;
+		}
+		sfs_freesfsdata(&sfsdata);
 		break;
 	case _ANOUBIS_CHECKSUM_OP_GET_OLD:
 	case ANOUBIS_CHECKSUM_OP_GET2:
@@ -419,30 +438,31 @@ __sfs_checksumop(const struct sfs_checksumop *csop, struct sfs_data *data,
 		error = sfs_readsfsdata(csum_file, &sfsdata);
 		if (error < 0)
 			goto err2;
-		if (sfsdata.cslen && sfsdata.cslen != ANOUBIS_CS_LEN) {
+		if (abuf_length(sfsdata.csdata)
+		    && abuf_length(sfsdata.csdata) != ANOUBIS_CS_LEN) {
 			error = -EINVAL;
 			goto err3;
 		}
-		if (sfsdata.siglen && realsiglen && cert) {
-			int	ret;
+		if (abuf_length(sfsdata.sigdata) && realsiglen && cert) {
+			int		ret;
 
-			if (sfsdata.siglen != ANOUBIS_CS_LEN + realsiglen) {
+			if (abuf_length(sfsdata.sigdata) !=
+			    ANOUBIS_CS_LEN + realsiglen) {
 				error = -ENOENT;
 				goto err3;
 			}
 			ret = anoubisd_verify_csum(cert->pubkey,
-			    sfsdata.sigdata, sfsdata.sigdata + ANOUBIS_CS_LEN,
-			    realsiglen);
+			    abuf_toptr(sfsdata.sigdata, 0,
+			    ANOUBIS_CS_LEN),
+			    abuf_toptr(sfsdata.sigdata,
+			    ANOUBIS_CS_LEN, realsiglen), realsiglen);
 			if (ret != 1) {
 				error = -ENOENT;
 				goto err3;
 			}
 		} else {
-			if (sfsdata.sigdata) {
-				free(sfsdata.sigdata);
-				sfsdata.sigdata = NULL;
-				sfsdata.siglen = 0;
-			}
+			abuf_free(sfsdata.sigdata);
+			sfsdata.sigdata = ABUF_EMPTY;
 		}
 		if (data) {
 			(*data) = sfsdata;
@@ -471,29 +491,38 @@ err1:
 }
 
 static int
-sfs_copy_one_sig_type(void *dst, const void *src, int len, int type)
+sfs_copy_one_sig_type(struct abuf_buffer dst, unsigned int off,
+    const struct abuf_buffer src, int type)
 {
-	int	off = 0;
+	u32n			*intptr;
+	struct abuf_buffer	 tmpbuf;
 
-	if (!len)
+	if (type != ANOUBIS_SIG_TYPE_UPGRADECS && abuf_empty(src))
 		return 0;
-	set_value(*(u32n*)(dst + off), type);
+	tmpbuf = abuf_open(dst, off);
+	off = 0;
+	intptr = abuf_cast_off(tmpbuf, off, u32n);
+	set_value(*intptr, type);
 	off += sizeof(u32n);
-	set_value(*(u32n*)(dst + off), len);
+	intptr = abuf_cast_off(tmpbuf, off, u32n);
+	set_value(*intptr, abuf_length(src));
 	off += sizeof(u32n);
-	memcpy(dst + off, src, len);
-	off += len;
+	if (!abuf_empty(src)) {
+		tmpbuf = abuf_open(tmpbuf, off);
+		off += abuf_copy(tmpbuf, src);
+	}
 	return off;
 }
 
 int
-sfs_checksumop(const struct sfs_checksumop *csop, void **buf, int *buflen)
+sfs_checksumop(const struct sfs_checksumop *csop, struct abuf_buffer *buf)
 {
-	int		 ret, off;
-	struct sfs_data	 tmpdata;
-	int		 siglen;
-	void		*sigbuf;
+	int			ret, off;
+	struct sfs_data		tmpdata;
+	int			siglen;
+	struct abuf_buffer	sigbuf;
 
+	sfs_initsfsdata(&tmpdata);
 	switch(csop->op) {
 	case _ANOUBIS_CHECKSUM_OP_GET_OLD:
 	case ANOUBIS_CHECKSUM_OP_GET2:
@@ -508,61 +537,59 @@ sfs_checksumop(const struct sfs_checksumop *csop, void **buf, int *buflen)
 	}
 	switch(csop->op) {
 	case _ANOUBIS_CHECKSUM_OP_GET_OLD:
-		if (tmpdata.cslen == 0) {
+		if (abuf_empty(tmpdata.csdata)) {
 			sfs_freesfsdata(&tmpdata);
 			return -ENOENT;
 		}
-		(*buflen) = tmpdata.cslen;
 		(*buf) = tmpdata.csdata;
-		tmpdata.csdata = NULL;
+		tmpdata.csdata = ABUF_EMPTY;
 		break;
 	case _ANOUBIS_CHECKSUM_OP_GETSIG_OLD:
-		if (tmpdata.siglen == 0) {
+		if (abuf_empty(tmpdata.sigdata)) {
 			sfs_freesfsdata(&tmpdata);
 			return -ENOENT;
 		}
-		(*buflen) = tmpdata.siglen;
 		(*buf) = tmpdata.sigdata;
-		tmpdata.sigdata = NULL;
+		tmpdata.sigdata = ABUF_EMPTY;
 		break;
 	case ANOUBIS_CHECKSUM_OP_GET2:
 	case ANOUBIS_CHECKSUM_OP_GETSIG2:
-		if ((csop->op == ANOUBIS_CHECKSUM_OP_GET2 && tmpdata.cslen == 0)
+		if ((csop->op == ANOUBIS_CHECKSUM_OP_GET2
+		    && abuf_empty(tmpdata.csdata))
 		    || (csop->op == ANOUBIS_CHECKSUM_OP_GETSIG2
-		    && tmpdata.siglen == 0)) {
+		    && abuf_empty(tmpdata.sigdata))) {
 			sfs_freesfsdata(&tmpdata);
 			return -ENOENT;
 		}
 		siglen = 2 * sizeof(u32n);
-		if (tmpdata.cslen)
-			siglen += tmpdata.cslen + 2 * sizeof(u32n);
-		if (tmpdata.siglen)
-			siglen += tmpdata.siglen + 2 * sizeof(u32n);
-		if (tmpdata.upgradecslen)
-			siglen += tmpdata.upgradecslen + 2 * sizeof(u32n);
-		sigbuf = malloc(siglen);
-		if (!sigbuf) {
+		if (!abuf_empty(tmpdata.csdata))
+			siglen += abuf_length(tmpdata.csdata)
+			    + 2 * sizeof(u32n);
+		if (!abuf_empty(tmpdata.sigdata))
+			siglen += abuf_length(tmpdata.sigdata)
+			    + 2 * sizeof(u32n);
+		if (!abuf_empty(tmpdata.upgradecsdata))
+			siglen += abuf_length(tmpdata.upgradecsdata)
+			    + 2 * sizeof(u32n);
+		sigbuf = abuf_alloc(siglen);
+		if (abuf_empty(sigbuf)) {
 			sfs_freesfsdata(&tmpdata);
 			return -ENOMEM;
 		}
 		off = 0;
-		off += sfs_copy_one_sig_type(sigbuf+off,
-		    tmpdata.csdata, tmpdata.cslen, ANOUBIS_SIG_TYPE_CS);
-		off += sfs_copy_one_sig_type(sigbuf+off,
-		    tmpdata.sigdata, tmpdata.siglen, ANOUBIS_SIG_TYPE_SIG);
-		off += sfs_copy_one_sig_type(sigbuf+off,
-		    tmpdata.upgradecsdata, tmpdata.upgradecslen,
-		    ANOUBIS_SIG_TYPE_UPGRADECS);
-		set_value(*(u32n*)(sigbuf + off), ANOUBIS_SIG_TYPE_EOT);
-		off += sizeof(u32n);
-		set_value(*(u32n*)(sigbuf + off), 0);
+		off += sfs_copy_one_sig_type(sigbuf, off,
+		    tmpdata.csdata, ANOUBIS_SIG_TYPE_CS);
+		off += sfs_copy_one_sig_type(sigbuf, off,
+		    tmpdata.sigdata, ANOUBIS_SIG_TYPE_SIG);
+		off += sfs_copy_one_sig_type(sigbuf, off,
+		    tmpdata.upgradecsdata, ANOUBIS_SIG_TYPE_UPGRADECS);
+		off += sfs_copy_one_sig_type(sigbuf, off, ABUF_EMPTY,
+		    ANOUBIS_SIG_TYPE_EOT);
 		if (buf) {
 			(*buf) = sigbuf;
 		} else {
-			free(sigbuf);
+			abuf_free(sigbuf);
 		}
-		if (buflen)
-			(*buflen) = siglen;
 	}
 	sfs_freesfsdata(&tmpdata);
 	return 0;
@@ -575,10 +602,10 @@ sfs_checksumop_chroot(const struct sfs_checksumop *csop, struct sfs_data *data)
 }
 
 /*
- * We go through the dirctory looking for registered uids and update them.
+ * We go through the directory looking for registered uids and update them.
  */
 int
-sfs_update_all(const char *path, u_int8_t *md, int len)
+sfs_update_all(const char *path, u_int8_t *md, unsigned int len)
 {
 	DIR		*sfs_dir = NULL;
 	struct dirent	*sfs_ent = NULL;
@@ -605,7 +632,6 @@ sfs_update_all(const char *path, u_int8_t *md, int len)
 		return -ret;
 	}
 	while ((sfs_ent = readdir(sfs_dir)) != NULL) {
-		int		need_sfsfree;
 		/* since we updating checksums we skip keyid entries */
 		if (strcmp(sfs_ent->d_name, ".") == 0 ||
 		    strcmp(sfs_ent->d_name, "..") == 0)
@@ -616,13 +642,11 @@ sfs_update_all(const char *path, u_int8_t *md, int len)
 			free(sfs_path);
 			return -ENOMEM;
 		}
-		need_sfsfree = 0;
 		if (sscanf(sfs_ent->d_name, "%u%c", &uid, &testarg) == 1) {
-			memset(&sfsdata, 0, sizeof(sfsdata));
-			sfsdata.cslen = len;
-			sfsdata.csdata = md;
+			sfs_initsfsdata(&sfsdata);
+			sfsdata.csdata = abuf_alloc(len);
+			abuf_copy_tobuf(sfsdata.csdata, md, len);
 		} else if (sfs_ent->d_name[0] == 'k') {
-			memset(&sfsdata, 0, sizeof(sfsdata));
 			ret = sfs_readsfsdata(csum_file, &sfsdata);
 			if (ret < 0) {
 				log_warnx("Cannot update checksum for %s "
@@ -630,28 +654,29 @@ sfs_update_all(const char *path, u_int8_t *md, int len)
 				free(csum_file);
 				continue;
 			}
-			if (sfsdata.siglen == 0) {
+			if (abuf_empty(sfsdata.sigdata)) {
 				free(csum_file);
 				sfs_freesfsdata(&sfsdata);
 				continue;
 			}
-			need_sfsfree = 1;
-			if (sfsdata.upgradecsdata) {
-				free(sfsdata.upgradecsdata);
+			if (abuf_length(sfsdata.upgradecsdata) != len) {
+				abuf_free(sfsdata.upgradecsdata);
+				sfsdata.upgradecsdata = abuf_alloc(len);
+				if (abuf_empty(sfsdata.upgradecsdata)) {
+					free(csum_file);
+					sfs_freesfsdata(&sfsdata);
+					closedir(sfs_dir);
+					free(sfs_path);
+					return -ENOMEM;
+				}
 			}
-			sfsdata.upgradecslen = len;
-			sfsdata.upgradecsdata = md;
+			abuf_copy_tobuf(sfsdata.upgradecsdata, md, len);
 		} else {
 			free(csum_file);
 			continue;
 		}
-		ret = sfs_writesfsdata(csum_file,  sfs_path, &sfsdata);
-		if (need_sfsfree) {
-			/* The upgrade signature is not malloced */
-			sfsdata.upgradecslen = 0;
-			sfsdata.upgradecsdata = NULL;
-			sfs_freesfsdata(&sfsdata);
-		}
+		ret = sfs_writesfsdata(csum_file, sfs_path, &sfsdata);
+		sfs_freesfsdata(&sfsdata);
 		if (ret < 0)
 			log_warnx("Cannot update checksum for %s "
 			    "(file=%s, error=%d)", path, sfs_ent->d_name, ret);
@@ -702,14 +727,13 @@ sfs_update_signature(const char *path, struct cert *cert,
 			ret = 0;
 		goto out;
 	}
-	memset(&sfs_data, 0, sizeof(sfs_data));
+	sfs_initsfsdata(&sfs_data);
 	siglen = keylen = EVP_PKEY_size(cert->privkey);
-	sfs_data.siglen = len + keylen;
-	sfs_data.sigdata = malloc(sfs_data.siglen);
-	if (sfs_data.sigdata == NULL)
+	sfs_data.sigdata = abuf_alloc(len + keylen);
+	if (abuf_empty(sfs_data.sigdata))
 		goto out;
 	ret = -EINVAL;
-	memcpy(sfs_data.sigdata, md, len);
+	abuf_copy_tobuf(sfs_data.sigdata, md, len);
 	EVP_MD_CTX_init(&ctx);
 	if (EVP_SignInit(&ctx, ANOUBIS_SIG_HASH_DEFAULT) == 0) {
 		EVP_MD_CTX_cleanup(&ctx);
@@ -717,8 +741,8 @@ sfs_update_signature(const char *path, struct cert *cert,
 		goto out;
 	}
 	EVP_SignUpdate(&ctx, md, len);
-	if (EVP_SignFinal(&ctx, sfs_data.sigdata + len, &siglen,
-	    cert->privkey) == 0 || siglen != keylen) {
+	if (EVP_SignFinal(&ctx, abuf_toptr(sfs_data.sigdata, len,
+	    siglen), &siglen, cert->privkey) == 0 || siglen != keylen) {
 		EVP_MD_CTX_cleanup(&ctx);
 		sfs_freesfsdata(&sfs_data);
 		goto out;
@@ -757,6 +781,13 @@ write_bytes(int fd, void *buf, size_t bytes)
 	if (ret < 0)
 		return ret;
 	return bytes_written;
+}
+
+static int
+write_buffer(int fd, struct abuf_buffer buf)
+{
+	return write_bytes(fd, abuf_toptr(buf, 0, abuf_length(buf)),
+	    abuf_length(buf));
 }
 
 static int
@@ -818,63 +849,60 @@ sfs_create_upgradeindex(const char *csum_path, const char *csum_file)
 }
 
 static int
-sfs_need_upgrade_data(const void *updata, int uplen, const void *cmpdata,
-    int cmplen)
+sfs_need_upgrade_data(const struct abuf_buffer updata,
+    const struct abuf_buffer cmpdata)
 {
-	if (!updata || !cmpdata)
+	if (abuf_empty(updata) || abuf_empty(cmpdata))
 		return 0;
-	if (uplen > cmplen)
-		return 1;
-	if (memcmp(updata, cmpdata, uplen) != 0)
+	if (abuf_ncmp(updata, cmpdata, abuf_length(updata)) != 0)
 		return 1;
 	return 0;
 }
 
+/* NOTE: Might modify the contents of sfsdata (free upgradecsdata)! */
 static int
 sfs_writesfsdata(const char *csum_file, const char *csum_path,
-    const struct sfs_data *sfsdata)
+    struct sfs_data *sfsdata)
 {
-	int ret = 0;
-	int fd;
-	char *csum_tmp = NULL;
-	u_int32_t version = SFSDATA_FORMAT_VERSION;
-	u_int32_t toc_entry[3] = { 0, 0, 0 };
-	int offset = 0;
-	int num_entries = 0;
-	int write_upgrade_data = 0;
+	int		 ret = 0;
+	int		 fd;
+	char		*csum_tmp = NULL;
+	u_int32_t	 version = SFSDATA_FORMAT_VERSION;
+	u_int32_t	 toc_entry[3] = { 0, 0, 0 };
+	int		 offset = 0;
+	int		 num_entries = 0;
+	unsigned int	 len;
 
 	if (sfsdata == NULL || csum_file == NULL || csum_path == NULL)
 		return -EINVAL;
 
-	if (sfsdata->upgradecsdata) {
-		if (sfs_need_upgrade_data(sfsdata->upgradecsdata,
-		    sfsdata->upgradecslen, sfsdata->csdata, sfsdata->cslen)
-		    || sfs_need_upgrade_data(sfsdata->upgradecsdata,
-		    sfsdata->upgradecslen, sfsdata->sigdata, sfsdata->siglen))
-			write_upgrade_data = 1;
+	if (!sfs_need_upgrade_data(sfsdata->upgradecsdata, sfsdata->csdata)
+	    && !sfs_need_upgrade_data(sfsdata->upgradecsdata,
+	    sfsdata->sigdata)) {
+		abuf_free(sfsdata->upgradecsdata);
+		sfsdata->upgradecsdata = ABUF_EMPTY;
 	}
-	if (sfsdata->csdata != NULL) {
+	if (!abuf_empty(sfsdata->csdata)) {
 		num_entries++;
-		if (sfsdata->cslen == 0 ||
-		    sfsdata->cslen > SFSDATA_MAX_FIELD_LENGTH)
+		len = abuf_length(sfsdata->csdata);
+		if (len == 0 || len > SFSDATA_MAX_FIELD_LENGTH)
 			return -EINVAL;
 	}
-	if (sfsdata->sigdata != NULL) {
+	if (!abuf_empty(sfsdata->sigdata)) {
 		num_entries++;
-		if (sfsdata->siglen == 0 ||
-		    sfsdata->siglen > SFSDATA_MAX_FIELD_LENGTH)
+		len = abuf_length(sfsdata->sigdata);
+		if (len == 0 || len > SFSDATA_MAX_FIELD_LENGTH)
 			return -EINVAL;
 	}
-	if (write_upgrade_data && sfsdata->upgradecsdata != NULL) {
+	if (!abuf_empty(sfsdata->upgradecsdata)) {
 		num_entries++;
-		if (sfsdata->upgradecslen == 0 ||
-		    sfsdata->upgradecslen > SFSDATA_MAX_FIELD_LENGTH)
+		len = abuf_length(sfsdata->upgradecsdata);
+		if (len == 0 || len > SFSDATA_MAX_FIELD_LENGTH)
 			return -EINVAL;
 	}
 
 	if (num_entries == 0)
 		return -EINVAL;
-
 
 	ret = mkpath(csum_path);
 	if (ret < 0)
@@ -902,43 +930,31 @@ sfs_writesfsdata(const char *csum_file, const char *csum_path,
 		goto err;
 	offset = ret + (num_entries + 1) * sizeof(toc_entry);
 
-	if (sfsdata->csdata) {
-		if (sfsdata->cslen == 0) {
-			ret = -EINVAL;
-			goto err;
-		}
+	if (!abuf_empty(sfsdata->csdata)) {
 		toc_entry[0] = SFSDATA_TYPE_CS;
 		toc_entry[1] = offset;
-		toc_entry[2] = sfsdata->cslen;
-		offset += sfsdata->cslen;
+		toc_entry[2] = abuf_length(sfsdata->csdata);
+		offset += abuf_length(sfsdata->csdata);
 		ret = write_bytes(fd, toc_entry, sizeof(toc_entry));
 		if (ret < 0)
 			goto err;
 	}
 
-	if (sfsdata->sigdata) {
-		if (sfsdata->siglen == 0) {
-			ret = -EINVAL;
-			goto err;
-		}
+	if (!abuf_empty(sfsdata->sigdata)) {
 		toc_entry[0] = SFSDATA_TYPE_SIG;
 		toc_entry[1] = offset;
-		toc_entry[2] = sfsdata->siglen;
-		offset += sfsdata->siglen;
+		toc_entry[2] = abuf_length(sfsdata->sigdata);
+		offset += abuf_length(sfsdata->sigdata);
 		ret = write_bytes(fd, toc_entry, sizeof(toc_entry));
 		if (ret < 0)
 			goto err;
 	}
 
-	if (write_upgrade_data && sfsdata->upgradecsdata) {
-		if (sfsdata->upgradecslen == 0) {
-			ret = -EINVAL;
-			goto err;
-		}
+	if (!abuf_empty(sfsdata->upgradecsdata)) {
 		toc_entry[0] = SFSDATA_TYPE_UPGRADE_CS;
 		toc_entry[1] = offset;
-		toc_entry[2] = sfsdata->upgradecslen;
-		offset += sfsdata->upgradecslen;
+		toc_entry[2] = abuf_length(sfsdata->upgradecsdata);
+		offset += abuf_length(sfsdata->upgradecsdata);
 		ret = write_bytes(fd, toc_entry, sizeof(toc_entry));
 		if (ret < 0)
 			goto err;
@@ -950,21 +966,20 @@ sfs_writesfsdata(const char *csum_file, const char *csum_path,
 	if (ret < 0)
 		goto err;
 
-	if (sfsdata->csdata) {
-		ret = write_bytes(fd, sfsdata->csdata, sfsdata->cslen);
+	if (!abuf_empty(sfsdata->csdata)) {
+		ret = write_buffer(fd, sfsdata->csdata);
 		if (ret < 0)
 			goto err;
 	}
 
-	if (sfsdata->sigdata) {
-		ret = write_bytes(fd, sfsdata->sigdata, sfsdata->siglen);
+	if (!abuf_empty(sfsdata->sigdata)) {
+		ret = write_buffer(fd, sfsdata->sigdata);
 		if (ret < 0)
 			goto err;
 	}
 
-	if (sfsdata->upgradecsdata) {
-		ret = write_bytes(fd, sfsdata->upgradecsdata,
-		    sfsdata->upgradecslen);
+	if (!abuf_empty(sfsdata->upgradecsdata)) {
+		ret = write_buffer(fd, sfsdata->upgradecsdata);
 		if (ret < 0)
 			goto err;
 	}
@@ -973,7 +988,7 @@ sfs_writesfsdata(const char *csum_file, const char *csum_path,
 		ret = -errno;
 		goto err;
 	}
-	if (sfsdata->upgradecsdata) {
+	if (!abuf_empty(sfsdata->upgradecsdata)) {
 		ret = sfs_create_upgradeindex(csum_path, csum_file);
 		if (ret < 0)
 			goto err;
@@ -1018,13 +1033,11 @@ read_bytes(int fd, void *buf, size_t bytes) {
 	return bytes_read;
 }
 
-static void *
-memdup(const void *src, size_t size)
+static int
+read_buffer(int fd, struct abuf_buffer buf)
 {
-	void *buf = malloc(size);
-	if (buf == NULL)
-		return NULL;
-	return memcpy(buf, src, size);
+	return read_bytes(fd, abuf_toptr(buf, 0, abuf_length(buf)),
+	    abuf_length(buf));
 }
 
 static int
@@ -1032,17 +1045,16 @@ sfs_readsfsdata(const char *csum_file, struct sfs_data *sfsdata)
 {
 	int fd;
 	/* every toc entry consists of three values: type, offset, length */
-	u_int32_t toc[NUM_SFSDATA_TYPES][3];
-	int version, i, ret = 0;
-	unsigned int total_length = 0, offset = 0, data_size;
-	int last_entry;
-	u_int8_t *buf = NULL;
-
+	u_int32_t		toc[NUM_SFSDATA_TYPES][3];
+	int			version, i, ret = 0;
+	unsigned int		total_length = 0, offset = 0, data_size;
+	int			last_entry;
+	struct abuf_buffer	databuf;
 
 	if (csum_file == NULL || sfsdata == NULL)
 		return -EINVAL;
 
-	memset(sfsdata, 0, sizeof(*sfsdata));
+	sfs_initsfsdata(sfsdata);
 
 	fd = open(csum_file, O_RDONLY);
 	if (fd < 0)
@@ -1097,61 +1109,66 @@ sfs_readsfsdata(const char *csum_file, struct sfs_data *sfsdata)
 	last_entry = i - 1;
 	data_size = total_length - offset;
 
-	buf = malloc(data_size);
-	if (buf == NULL) {
-		ret = -ENOMEM;
-		goto err;
+	if (data_size) {
+		databuf = abuf_alloc(data_size);
+		if (abuf_empty(databuf)) {
+			ret = -ENOMEM;
+			goto err;
+		}
+	} else {
+		databuf = ABUF_EMPTY;
 	}
-	ret = read_bytes(fd, buf, data_size);
+	ret = read_buffer(fd, databuf);
 	if (ret < 0 )
 		goto err;
 
 	for (i = 0; i <= last_entry; i++) {
 		switch (toc[i][0]) {
 		case SFSDATA_TYPE_CS:
-			if (sfsdata->cslen != 0) {
+			if (toc[i][2] == 0 || !abuf_empty(sfsdata->csdata)) {
 				log_warnx("sfsdata %s: invalid cslen",
 				    csum_file);
 				ret = -EINVAL;
 				goto err;
 			}
-			sfsdata->cslen  = toc[i][2];
-			sfsdata->csdata = memdup(buf + toc[i][1] - offset,
-			    toc[i][2]);
-			if (sfsdata->csdata == NULL) {
+			sfsdata->csdata = abuf_alloc(toc[i][2]);
+			if (abuf_empty(sfsdata->csdata)) {
 				ret = -ENOMEM;
 				goto err;
 			}
+			abuf_copy_part(sfsdata->csdata, 0, databuf,
+			    toc[i][1] - offset, toc[i][2]);
 			break;
 		case SFSDATA_TYPE_SIG:
-			if (sfsdata->siglen != 0) {
+			if (toc[i][2] == 0 || !abuf_empty(sfsdata->sigdata)) {
 				log_warnx("sfsdata %s: invalid siglen",
 				    csum_file);
 				ret = -EINVAL;
 				goto err;
 			}
-			sfsdata->siglen  = toc[i][2];
-			sfsdata->sigdata = memdup(buf + toc[i][1] - offset,
-			    toc[i][2]);
-			if (sfsdata->sigdata == NULL) {
+			sfsdata->sigdata = abuf_alloc(toc[i][2]);
+			if (abuf_empty(sfsdata->sigdata)) {
 				ret = -ENOMEM;
 				goto err;
 			}
+			abuf_copy_part(sfsdata->sigdata, 0, databuf,
+			    toc[i][1] - offset, toc[i][2]);
 			break;
 		case SFSDATA_TYPE_UPGRADE_CS:
-			if (sfsdata->upgradecslen != 0) {
+			if (toc[i][2] == 0
+			    || !abuf_empty(sfsdata->upgradecsdata)) {
 				log_warnx("sfsdata %s: invalid upgradecdlen",
 				    csum_file);
 				ret = -EINVAL;
 				goto err;
 			}
-			sfsdata->upgradecslen  = toc[i][2];
-			sfsdata->upgradecsdata =
-			    memdup(buf + toc[i][1] - offset, toc[i][2]);
-			if (sfsdata->upgradecsdata == NULL) {
+			sfsdata->upgradecsdata = abuf_alloc(toc[i][2]);
+			if (abuf_empty(sfsdata->upgradecsdata)) {
 				ret = -ENOMEM;
 				goto err;
 			}
+			abuf_copy_part(sfsdata->upgradecsdata, 0, databuf,
+			    toc[i][1] - offset, toc[i][2]);
 			break;
 		default:
 			ret = -EINVAL;
@@ -1160,18 +1177,15 @@ sfs_readsfsdata(const char *csum_file, struct sfs_data *sfsdata)
 			goto err;
 		}
 	}
-
-
-	goto out;
-
-err:
-	sfs_freesfsdata(sfsdata);
 out:
-	free(buf);
+	abuf_free(databuf);
 	close(fd);
 	if (ret < 0)
 		return ret;
 	return 0;
+err:
+	sfs_freesfsdata(sfsdata);
+	goto out;
 }
 
 int
@@ -1277,13 +1291,13 @@ static int
 sfs_upgraded(const char *csum_file)
 {
 	struct sfs_data		sfsdata;
-	int			len;
+	int			ret;
 
 	if (sfs_readsfsdata(csum_file, &sfsdata) < 0)
 		return 0;
-	len = sfsdata.upgradecslen;
+	ret = !abuf_empty(sfsdata.upgradecsdata);
 	sfs_freesfsdata(&sfsdata);
-	return len != 0;
+	return ret;
 }
 
 /* If a message arrives regarding a signature the payload of the message

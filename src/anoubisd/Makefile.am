@@ -65,6 +65,7 @@ lint_sources = \
 	aqueue.c \
 	sfs.c \
 	cfg.c \
+	anoubis_alloc.c \
 	upgrade.c
 
 nolint_sources = amsg_verify.c
@@ -78,6 +79,7 @@ headers = \
 	pe_proc_internals.h \
 	cfg.h \
 	cert.h \
+	anoubis_alloc.h \
 	pe_filetree.h
 
 anoubisd_SOURCES = $(lint_sources) $(nolint_sources) $(headers)

@@ -63,6 +63,7 @@
 #include "pe.h"
 #include "pe_filetree.h"
 #include "cfg.h"
+#include <anoubis_alloc.h>
 
 #include <anoubis_protocol.h>
 
@@ -348,9 +349,8 @@ dispatch_timer(int sig __used, short event __used, void *arg)
 				    msg_wait->token);
 				break;
 			}
-			free(msg_wait);
+			abuf_free_type(msg_wait, struct reply_wait);
 		}
-
 	}
 	if (terminate < 3)
 		event_add(ev_info->ev_timer, ev_info->tv);
@@ -686,8 +686,8 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 			free(msg);
 
 			msg = nmsg;
-			if ((msg_wait = malloc(sizeof(struct reply_wait))) ==
-			    NULL) {
+			msg_wait = abuf_alloc_type(struct reply_wait);
+			if (msg_wait == NULL) {
 				log_warn("dispatch_m2p: can't allocate memory");
 				free(reply);
 				master_terminate(ENOMEM);
@@ -938,7 +938,7 @@ dispatch_s2p(int fd, short sig __used, void *arg)
 					    evrep->msg_token, evrep->reply);
 					break;
 				}
-				free(rep_wait);
+				abuf_free_type(rep_wait, struct reply_wait);
 				enqueue(&eventq_p2m, msg);
 				DEBUG(DBG_QUEUE, " >eventq_p2m: %x",
 					evrep->msg_token);

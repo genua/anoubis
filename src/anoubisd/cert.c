@@ -54,6 +54,8 @@
 
 #include <anoubis_sig.h>
 
+#include "anoubis_alloc.h"
+
 
 TAILQ_HEAD(cert_db, cert) *certs;
 
@@ -80,8 +82,8 @@ cert_init(int chroot)
 
 	if (chroot)
 		certdir = CERT_DIR_CHROOT;
-	if ((cdb = calloc(1, sizeof(struct cert_db))) == NULL) {
-		log_warn("%s: calloc", certdir);
+	if ((cdb = abuf_alloc_type(struct cert_db)) == NULL) {
+		log_warn("%s: abuf_alloc_type", certdir);
 		master_terminate(ENOMEM);
 	}
 	TAILQ_INIT(cdb);
@@ -102,27 +104,27 @@ cert_init(int chroot)
 void
 cert_reconfigure(int chroot)
 {
-	struct cert_db	*new, *old;
+	struct cert_db	*newdb, *old;
 	int			 count;
 	const char		*certdir = CERT_DIR;
 
 	if (chroot)
 		certdir = CERT_DIR_CHROOT;
-	if ((new = calloc(1, sizeof(struct cert_db))) == NULL) {
-		log_warn("calloc");
+	if ((newdb = abuf_alloc_type(struct cert_db)) == NULL) {
+		log_warn("abuf_alloc_type");
 		master_terminate(ENOMEM);
 	}
-	TAILQ_INIT(new);
+	TAILQ_INIT(newdb);
 
-	if ((count = cert_load_db(certdir, new)) == -1) {
+	if ((count = cert_load_db(certdir, newdb)) == -1) {
 		log_warnx("cert_reconfigure: could not load public keys");
-		free(new);
+		abuf_free_type(newdb, struct cert_db);
 		return;
 	}
 	log_info("%d certificates loaded from %s", count, certdir);
 
 	old = certs;
-	certs = new;
+	certs = newdb;
 	cert_flush_db(old);
 }
 
@@ -182,21 +184,21 @@ cert_load_db(const char *dirname, struct cert_db *certs)
 				continue;
 			}
 		}
-		if ((sc = calloc(1, sizeof(struct cert))) == NULL) {
-			log_warnx("calloc: Out of memory");
+		if ((sc = abuf_zalloc_type(struct cert)) == NULL) {
+			log_warnx("zalloc_type: Out of memory");
 			free(filename);
 			continue;
 		}
 		sc->privkey = NULL;
 		if ((fp = fopen(filename, "r")) == NULL) {
 			log_warn("fopen %s", filename);
-			free(sc);
+			abuf_free_type(sc, struct cert);
 			free(filename);
 			continue;
 		}
 		if((sc->req = PEM_read_X509(fp, NULL, NULL, NULL)) == NULL) {
 			log_warnx("PEM_read_X509: %s", filename);
-			free(sc);
+			abuf_free_type(sc, struct cert);
 			fclose(fp);
 			continue;
 		}
@@ -204,7 +206,7 @@ cert_load_db(const char *dirname, struct cert_db *certs)
 		if ((sc->pubkey = X509_get_pubkey(sc->req)) == NULL) {
 			log_warnx("X509_get_pubkey: %s", filename);
 			X509_free(sc->req);
-			free(sc);
+			abuf_free_type(sc, struct cert);
 			continue;
 		}
 		sc->uid = uid;
@@ -213,7 +215,7 @@ cert_load_db(const char *dirname, struct cert_db *certs)
 			log_warnx("Error while loading key from uid %d", uid);
 			X509_free(sc->req);
 			EVP_PKEY_free(sc->pubkey);
-			free(sc);
+			abuf_free_type(sc, struct cert);
 			free(filename);
 			continue;
 		}
@@ -321,9 +323,9 @@ cert_flush_db(struct cert_db *sc)
 			EVP_PKEY_free(p->privkey);
 		X509_free(p->req);
 		free(p->keyid);
-		free(p);
+		abuf_free_type(p, struct cert);
 	}
-	free(sc);
+	abuf_free_type(sc, struct cert_db);
 }
 
 /**

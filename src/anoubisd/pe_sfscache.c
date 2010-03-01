@@ -38,6 +38,7 @@
 #include <anoubisd.h>
 #include <sfs.h>
 #include <anoubis_protocol.h>
+#include <anoubis_alloc.h>
 
 struct sfshash_entry;
 
@@ -292,8 +293,8 @@ static int
 sfshash_readsum(const char *path, int cstype, const char *key, uid_t uid,
     u_int8_t csum[ANOUBIS_CS_LEN])
 {
-	int			 ret, siglen = 0;
-	void			*sigdata = NULL;
+	int			 ret;
+	struct abuf_buffer	 sigbuf = ABUF_EMPTY;
 	struct sfs_checksumop	 csop;
 	struct sfs_data		 tmpdata;
 	u_int8_t		*keybuf = NULL;
@@ -342,27 +343,24 @@ sfshash_readsum(const char *path, int cstype, const char *key, uid_t uid,
 	if (ret < 0)
 		return ret;
 	if (cstype == CSTYPE_UID) {
-		siglen = tmpdata.cslen;
-		sigdata = tmpdata.csdata;
-		tmpdata.csdata = NULL;
+		sigbuf = tmpdata.csdata;
+		tmpdata.csdata = ABUF_EMPTY;
 	} else {
 		/*
 		 * XXX CEH: Use upgrade signature if present and upgrade
 		 * XXX CEH: in progress?
 		 * XXX CEH: What if signature is cached?
 		 */
-		siglen = tmpdata.siglen;
-		sigdata = tmpdata.sigdata;
-		tmpdata.sigdata = NULL;
+		sigbuf = tmpdata.sigdata;
+		tmpdata.sigdata = ABUF_EMPTY;
 	}
 	sfs_freesfsdata(&tmpdata);
-	if (siglen < ANOUBIS_CS_LEN) {
-		if (sigdata)
-			free(sigdata);
+	if (abuf_length(sigbuf) < ANOUBIS_CS_LEN) {
+		abuf_free(sigbuf);
 		return -ENOENT;
 	}
-	memcpy(csum, sigdata, ANOUBIS_CS_LEN);
-	free(sigdata);
+	abuf_copy_frombuf(csum, sigbuf, ANOUBIS_CS_LEN);
+	abuf_free(sigbuf);
 
 	return 0;
 }
