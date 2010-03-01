@@ -26,7 +26,6 @@
 ##########################################################################
 
 lib_LIBRARIES = libanoubis.a
-noinst_DATA = potfiles.frag
 
 include $(top_srcdir)/src/Makefile.include
 

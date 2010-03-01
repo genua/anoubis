@@ -25,7 +25,6 @@
 #
 
 bin_PROGRAMS = xanoubis
-noinst_DATA = potfiles.frag
 
 include $(top_srcdir)/src/Makefile.include
 
