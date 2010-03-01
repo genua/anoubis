@@ -30,6 +30,7 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <stddef.h>
 #ifdef LINUX
 #include <bsdcompat.h>
 #endif
@@ -1046,7 +1047,7 @@ anoubis_client_csumrequest_start(struct anoubis_client *client,
 	if (client->flags & FLAG_POLICY_PENDING)
 		return NULL;
 
-	/* At first we check if the minimal conditions are done */
+	/* At first we check if the minimal conditions are met */
 	switch (op) {
 	case ANOUBIS_CHECKSUM_OP_ADDSIG:
 	case ANOUBIS_CHECKSUM_OP_DELSIG:
@@ -1134,6 +1135,422 @@ anoubis_client_csumrequest_start(struct anoubis_client *client,
 	else
 		anoubis_transaction_setopcodes(t, generalops);
 
+	LIST_INSERT_HEAD(&client->ops, t, next);
+	client->flags |= FLAG_POLICY_PENDING;
+	return t;
+}
+
+struct anoubis_csmulti_request *
+anoubis_csmulti_create(unsigned int op, uid_t uid, void *keyid, int idlen)
+{
+	struct anoubis_csmulti_request	*ret;
+
+	if (idlen < 0)
+		return NULL;
+	switch(op) {
+	case ANOUBIS_CHECKSUM_OP_ADDSIG:
+	case ANOUBIS_CHECKSUM_OP_GETSIG2:
+	case ANOUBIS_CHECKSUM_OP_DELSIG:
+		if (uid || !idlen || !keyid)
+			return NULL;
+		break;
+	case ANOUBIS_CHECKSUM_OP_ADDSUM:
+	case ANOUBIS_CHECKSUM_OP_GET2:
+	case ANOUBIS_CHECKSUM_OP_DEL:
+		if (idlen || keyid)
+			return NULL;
+		break;
+	default:
+		return NULL;
+	}
+
+	ret = malloc(sizeof(struct anoubis_csmulti_request) + idlen);
+	if (!ret)
+		return NULL;
+	ret->client = NULL;
+	ret->op = op;
+	ret->uid = uid;
+	ret->idlen = idlen;
+	ret->last = NULL;
+	if (idlen) {
+		ret->keyid = (void*)(ret + 1);
+		memcpy(ret->keyid, keyid, idlen);
+	} else {
+		ret->keyid = NULL;
+	}
+	ret->nreqs = 0;
+	ret->reply_msg = NULL;
+	TAILQ_INIT(&ret->reqs);
+	return ret;
+}
+
+/**
+ * Search for the request record with the given index in the request
+ * queue of the request req.
+ *
+ * @param req The request.
+ * @param idx The index.
+ * @return A pointer to the request record.
+ */
+static struct anoubis_csmulti_record *
+anoubis_csmulti_find(struct anoubis_csmulti_request *req, unsigned int idx)
+{
+	struct anoubis_csmulti_record	*record = req->last;
+
+	while(record) {
+		if (record->idx == idx) {
+			req->last = record;
+			return record;
+		}
+		record = TAILQ_NEXT(record, next);
+	}
+	while(record && record != req->last) {
+		if (record->idx == idx) {
+			req->last = record;
+			return record;
+		}
+		record = TAILQ_NEXT(record, next);
+	}
+	return NULL;
+}
+
+void
+anoubis_csmulti_destroy(struct anoubis_csmulti_request *request)
+{
+	struct anoubis_csmulti_record	*cur;
+	struct anoubis_msg		*tmp;
+
+	if (!request)
+		return;
+	request->last = NULL;
+	while ((cur = TAILQ_FIRST(&request->reqs)) != NULL) {
+		TAILQ_REMOVE(&request->reqs, cur, next);
+		free(cur);
+	}
+	while ((tmp = request->reply_msg) != NULL) {
+		request->reply_msg = tmp->next;
+		anoubis_msg_free(request->reply_msg);
+	}
+	free(request);
+}
+
+int
+anoubis_csmulti_add(struct anoubis_csmulti_request *request,
+    const char *path, void *csdata, unsigned int cslen)
+{
+	struct anoubis_csmulti_record	*record;
+	void				*data;
+	int				 plen;
+
+	if (!path)
+		return -EINVAL;
+	plen = strlen(path) + 1;
+	switch (request->op) {
+	case ANOUBIS_CHECKSUM_OP_ADDSIG:
+	case ANOUBIS_CHECKSUM_OP_ADDSUM:
+		if (!cslen || !csdata)
+			return -EINVAL;
+		break;
+	case ANOUBIS_CHECKSUM_OP_GETSIG2:
+	case ANOUBIS_CHECKSUM_OP_DELSIG:
+	case ANOUBIS_CHECKSUM_OP_GET2:
+	case ANOUBIS_CHECKSUM_OP_DEL:
+		if (cslen || csdata)
+			return -EINVAL;
+		break;
+	default:
+		return -EINVAL;
+	}
+	record = malloc(sizeof(struct anoubis_csmulti_record) + cslen + plen);
+	if (!record)
+		return -ENOMEM;
+	data = (void *)(record + 1);
+	record->path = data + cslen;
+	memcpy(record->path, path, plen);
+	record->error = EAGAIN;
+	record->idx = request->nreqs++;
+	record->length = sizeof(Anoubis_CSMultiRequestRecord) + cslen + plen;
+	/* Align */
+	if (record->length % 4)
+		record->length += 4 - record->length % 4;
+	switch (request->op) {
+	case ANOUBIS_CHECKSUM_OP_ADDSIG:
+	case ANOUBIS_CHECKSUM_OP_ADDSUM:
+		record->u.add.cslen = cslen;
+		record->u.add.csdata = (void*)(record+1);
+		memcpy(data, csdata, cslen);
+		break;
+	default:
+		record->u.get.csum = NULL;
+		record->u.get.sig = NULL;
+		record->u.get.upgrade = NULL;
+	}
+	TAILQ_INSERT_TAIL(&request->reqs, record, next);
+	return 0;
+}
+
+/**
+ * Callback handler for CSMULTI request. This handler gets called when
+ * the ANOUBIS_T_DONE flag on a CSMULTI request is set. It takes over
+ * responsibility for the reply message.
+ *
+ * @param t The transaction. The anoubis_csmulti_request associated with
+ *     the transaction can be found in the callback data.
+ * @return None.
+ */
+static void
+anoubis_client_csmulti_finish(struct anoubis_transaction *t)
+{
+	struct anoubis_csmulti_request	*request = t->cbdata;
+
+	request->client = NULL;
+	if (t->result == 0) {
+		/* In case of success,  the request owns the message. */
+		t->msg->next = request->reply_msg;
+		request->reply_msg = t->msg;
+		t->msg = NULL;
+	}
+}
+
+/**
+ * The methods processes the reply of a CSMULTI request and stores the
+ * data in the anoubis_csmulti_request associated with the transaction.
+ *
+ * @param t The transaction.
+ * @param m The reply message.
+ */
+static void
+anoubis_client_csmulti_steps(struct anoubis_transaction *t,
+    struct anoubis_msg *m)
+{
+	struct anoubis_csmulti_request	*request = t->cbdata;
+	struct anoubis_client		*client = request->client;
+	unsigned int			 off = 0;
+	int				 ret;
+
+	ret = -EPROTO;
+	if (!request || !client)
+		goto err;
+	if (!VERIFY_LENGTH(m, sizeof(Anoubis_CSMultiReplyMessage)))
+		goto err;
+	if (!get_value(m->u.csmultireply->operation) == request->op)
+		goto err;
+	ret = -get_value(m->u.csmultireply->error);
+	if (ret != 0)
+		goto err;
+
+	ret = -EFAULT;
+	while (1) {
+		Anoubis_CSMultiReplyRecord	*r;
+		unsigned int			 rlen;
+		unsigned int			 idx;
+		unsigned int			 off2;
+		struct anoubis_csmulti_record	*record;
+
+		if (!VERIFY_LENGTH(m, sizeof(Anoubis_CSMultiReplyMessage)
+		    + off + sizeof(Anoubis_CSMultiReplyRecord)))
+			goto err;
+		r = (Anoubis_CSMultiReplyRecord *)
+		    (m->u.csmultireply->payload + off);
+		rlen = get_value(r->length);
+		if (rlen < sizeof(Anoubis_CSMultiReplyRecord))
+			goto err;
+		if (off + rlen < off)
+			goto err;
+		off += rlen;
+		if (!VERIFY_LENGTH(m,
+		    sizeof(Anoubis_CSMultiReplyMessage) + off))
+			goto err;
+		idx = get_value(r->index);
+		record = anoubis_csmulti_find(request, idx);
+		if (!record)
+			continue;
+		record->error = get_value(r->error);
+		/* No payload data in case of an error. */
+		if (record->error)
+			continue;
+		/* No payload data if request type is not GET */
+		if (request->op != ANOUBIS_CHECKSUM_OP_GET2
+		    && request->op != ANOUBIS_CHECKSUM_OP_GETSIG2)
+			continue;
+		/*
+		 * Iterate through the checksum data and process it.
+		 * The checksum data remains stored in the message and
+		 * the result record only points into the message!
+		 */
+		rlen -= sizeof(Anoubis_CSMultiReplyRecord);
+		off2 = 0;
+		while (1) {
+			struct anoubis_csentry	*e;
+			unsigned int		 total;
+			unsigned int		 cstype;
+
+			if (rlen < sizeof(struct anoubis_csentry))
+				goto err;
+			e = (struct anoubis_csentry *)(r->payload + off2);
+			total = sizeof(struct anoubis_csentry)
+			    + get_value(e->cslen);
+			if (total > rlen)
+				goto err;
+			rlen -= total;
+			off2 += total;
+			cstype =  get_value(e->cstype);
+			if (cstype == ANOUBIS_SIG_TYPE_EOT)
+				break;
+			switch(cstype) {
+			case ANOUBIS_SIG_TYPE_CS:
+				record->u.get.csum = e;
+				break;
+			case ANOUBIS_SIG_TYPE_SIG:
+				record->u.get.sig = e;
+				break;
+			case ANOUBIS_SIG_TYPE_UPGRADECS:
+				record->u.get.upgrade = e;
+				break;
+			}
+		}
+	}
+	ret = 0;
+err:
+	/* Do not free the message because of ANOUBIS_T_WANTMESSAGE */
+	anoubis_transaction_done(t, -ret);
+	LIST_REMOVE(t, next);
+	client->flags &= ~FLAG_POLICY_PENDING;
+}
+
+struct anoubis_msg *
+anoubis_csmulti_msg(struct anoubis_csmulti_request *request)
+{
+	struct anoubis_msg		*m;
+	struct anoubis_csmulti_record	*record;
+	unsigned int			 length = 0, recoff;
+	int				 add = 0;
+	Anoubis_CSMultiRequestRecord	*r;
+
+	/* First we check if the minimal conditions are met */
+	switch (request->op) {
+	case ANOUBIS_CHECKSUM_OP_ADDSIG:
+		add = 1;
+		/* FALLTHROUGH */
+	case ANOUBIS_CHECKSUM_OP_DELSIG:
+	case ANOUBIS_CHECKSUM_OP_GETSIG2:
+		if (request->idlen == 0 || request->keyid == NULL)
+			return NULL;
+		break;
+	case ANOUBIS_CHECKSUM_OP_ADDSUM:
+		add = 1;
+		/* FALLTHROUGH */
+	case ANOUBIS_CHECKSUM_OP_DEL:
+	case ANOUBIS_CHECKSUM_OP_GET2:
+		if (request->idlen != 0)
+			return NULL;
+		break;
+	default:
+		return NULL;
+	}
+
+	/* Step 1: Calculate the total length of the message */
+
+	length = sizeof(Anoubis_CSMultiRequestMessage);
+	length += request->idlen;
+	/* Align request records on an 4 byte boundary. */
+	if (length % 4)
+		length += 4 - length % 4;
+	recoff = length - offsetof(Anoubis_CSMultiRequestMessage, payload);
+
+	TAILQ_FOREACH(record, &request->reqs, next) {
+		/* Only request records that have not yet been asked for. */
+		if (record->error != EAGAIN)
+			continue;
+		length += record->length;
+	}
+	/* Sentinel */
+	length += sizeof(Anoubis_CSMultiRequestRecord);
+
+	/* Step 2: Allocate and fill the message */
+
+	m = anoubis_msg_new(length);
+	if (!m)
+		return NULL;
+	set_value(m->u.csmultireq->type, ANOUBIS_P_CSMULTIREQUEST);
+	set_value(m->u.csmultireq->operation, request->op);
+	set_value(m->u.csmultireq->uid, request->uid);
+	set_value(m->u.csmultireq->idlen, request->idlen);
+	set_value(m->u.csmultireq->recoff, recoff);
+	if (request->idlen)
+		memcpy(m->u.csmultireq->payload, request->keyid,
+		    request->idlen);
+	TAILQ_FOREACH(record, &request->reqs, next) {
+		unsigned int	plen = strlen(record->path) + 1;
+
+		r = (Anoubis_CSMultiRequestRecord *)
+		    (m->u.csmultireq->payload + recoff);
+
+		/* Only request records that have not yet been asked for. */
+		if (record->error != EAGAIN)
+			continue;
+		set_value(r->length, record->length);
+		set_value(r->index, record->idx);
+		if (add) {
+			unsigned int	cslen = record->u.add.cslen;
+			set_value(r->cslen, record->u.add.cslen);
+			memcpy(r->payload, record->u.add.csdata,
+			    record->u.add.cslen);
+			memcpy(r->payload + cslen, record->path, plen);
+		} else {
+			set_value(r->cslen, 0);
+			memcpy(r->payload, record->path, plen);
+		}
+		recoff += record->length;
+	}
+	/* Sentinel */
+	r = (Anoubis_CSMultiRequestRecord *)(m->u.csmultireq->payload + recoff);
+	set_value(r->length, 0);
+	set_value(r->index, 0);
+	set_value(r->cslen, 0);
+
+	return m;
+}
+
+struct anoubis_transaction *
+anoubis_client_csmulti_start(struct anoubis_client *client,
+    struct anoubis_csmulti_request *request)
+{
+	static const u_int32_t ops[] = { ANOUBIS_P_CSMULTIREPLY, -1 };
+
+	struct anoubis_msg		*m;
+	struct anoubis_transaction	*t = NULL;
+
+	if ((client->proto & ANOUBIS_PROTO_POLICY) == 0)
+		return NULL;
+	if (client->state != ANOUBIS_STATE_CONNECTED)
+		return NULL;
+	if (client->flags & FLAG_POLICY_PENDING)
+		return NULL;
+	if (request->client)
+		return NULL;
+
+	m = anoubis_csmulti_msg(request);
+	if (!m)
+		return NULL;
+
+	request->client = client;
+	t = anoubis_transaction_create(0,
+	    ANOUBIS_T_INITSELF|ANOUBIS_T_DEQUEUE|ANOUBIS_T_WANTMESSAGE,
+	    &anoubis_client_csmulti_steps, &anoubis_client_csmulti_finish,
+	    request);
+	if (!t) {
+		request->client = NULL;
+		anoubis_msg_free(m);
+		return NULL;
+	}
+	if (anoubis_client_send(client, m) < 0) {
+		request->client = NULL;
+		anoubis_msg_free(m);
+		anoubis_transaction_destroy(t);
+		return NULL;
+	}
+	anoubis_transaction_setopcodes(t, ops);
 	LIST_INSERT_HEAD(&client->ops, t, next);
 	client->flags |= FLAG_POLICY_PENDING;
 	return t;

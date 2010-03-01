@@ -60,6 +60,8 @@ struct anoubis_msg {
 		Anoubis_PolicyReplyMessage * policyreply;
 		Anoubis_ChecksumRequestMessage * checksumrequest;
 		Anoubis_ChecksumAddMessage * checksumadd;
+		Anoubis_CSMultiRequestMessage * csmultireq;
+		Anoubis_CSMultiReplyMessage * csmultireply;
 		Anoubis_PolicyChangeMessage * policychange;
 		Anoubis_StatusNotifyMessage * statusnotify;
 		Anoubis_PassphraseMessage *passphrase;
@@ -94,13 +96,13 @@ struct anoubis_msg {
  * Returns true if all array elements can be safely accessed.
  */
 #define VERIFY_BUFFER(M, SEL, BASE, START, LEN) ({			\
-	int __t_soff = (START);						\
-	int __t_len = (LEN);						\
-	int __t_end = offsetof(typeof(*((M)->u.SEL)),			\
+	unsigned int __t_soff = (START);				\
+	unsigned int __t_len = (LEN);					\
+	unsigned int __t_end = offsetof(typeof(*((M)->u.SEL)),		\
 	    BASE[__t_soff+__t_len]);					\
-	(0 <= __t_soff && 0 <= __t_len					\
-	    && __t_soff <= __t_soff + __t_len				\
-	    && __t_soff + __t_len <= (int)ANOUBIS_MESSAGE_MAXLEN	\
+	(								\
+	    __t_soff <= __t_soff + __t_len				\
+	    && __t_soff + __t_len <= ANOUBIS_MESSAGE_MAXLEN		\
 	    && VERIFY_LENGTH((M), __t_end)				\
 	);								\
 })

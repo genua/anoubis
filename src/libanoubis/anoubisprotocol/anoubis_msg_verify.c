@@ -190,6 +190,178 @@ verify_csumrequest(const struct anoubis_msg *m)
 DEFINE_CHECK_FUNCTION(csumlist, Anoubis_ChecksumPayloadMessage)
 
 static int
+verify_csmultireq(const struct anoubis_msg *m)
+{
+	int				 add = 0;
+	unsigned int			 idlen;
+	unsigned int			 off = 0;
+	Anoubis_CSMultiRequestRecord	*r;
+
+	if (!VERIFY_LENGTH(m, sizeof(Anoubis_CSMultiRequestMessage)))
+		return 0;
+	switch(get_value(m->u.csmultireq->operation)) {
+	case ANOUBIS_CHECKSUM_OP_ADDSUM:
+	case ANOUBIS_CHECKSUM_OP_ADDSIG:
+		add = 1;
+		break;
+	case ANOUBIS_CHECKSUM_OP_GET2:
+	case ANOUBIS_CHECKSUM_OP_GETSIG2:
+	case ANOUBIS_CHECKSUM_OP_DEL:
+	case ANOUBIS_CHECKSUM_OP_DELSIG:
+		break;
+	default:
+		return 0;
+	}
+	idlen = get_value(m->u.csmultireq->idlen);
+	off = get_value(m->u.csmultireq->recoff);
+	if (off < idlen || off > idlen + 8)
+		return 0;
+	if (!VERIFY_BUFFER(m, csmultireq, payload, 0, off))
+		return 0;
+	while (1) {
+		unsigned int			 reclen;
+		unsigned int			 cslen;
+		unsigned int			 reallen;
+		char				*path;
+
+		if (!VERIFY_BUFFER(m, csmultireq, payload, off,
+		    sizeof(Anoubis_CSMultiRequestRecord)))
+			return 0;
+		r = (void *)(m->u.csmultireq->payload + off);
+		reclen = get_value(r->length);
+		if (reclen == 0)
+			break;
+		cslen = get_value(r->cslen);
+		if (reclen < sizeof(Anoubis_CSMultiRequestRecord)
+		    || !VERIFY_BUFFER(m, csmultireq, payload, off, reclen))
+			return 0;
+		off += reclen;
+		if (cslen > reclen)
+			return 0;
+		if (add) {
+			reallen = sizeof(Anoubis_CSMultiRequestRecord) + cslen;
+			path = r->payload + cslen;
+		} else {
+			if (cslen)
+				return 0;
+			reallen = sizeof(Anoubis_CSMultiRequestRecord);
+			path = r->payload;
+		}
+		if (reallen >= reclen)
+			return 0;
+		while (reallen < reclen) {
+			if ((*path) == 0) {
+				reallen++;
+				break;
+			}
+			reallen++;
+			path++;
+		}
+		if (reallen > reclen || reallen + 8 < reclen)
+			return 0;
+	}
+	if (get_value(r->length) || get_value(r->cslen))
+		return 0;
+	off += sizeof(Anoubis_CSMultiRequestRecord);
+	if (off + 8 < (unsigned int)PAYLOAD_LEN(m, csmultireq, payload))
+		return 0;
+	return 1;
+}
+
+static int
+verify_csmultireply(const struct anoubis_msg *m)
+{
+	int				 get = 0;
+	Anoubis_CSMultiReplyRecord	*r;
+	unsigned int			 plen;
+	unsigned int			 off = 0;
+
+	if (!VERIFY_LENGTH(m, sizeof(Anoubis_CSMultiReplyMessage)))
+		return 0;
+	plen = PAYLOAD_LEN(m, csmultireply, payload);
+
+	switch(get_value(m->u.csmultireply->operation)) {
+	case ANOUBIS_CHECKSUM_OP_GET2:
+	case ANOUBIS_CHECKSUM_OP_GETSIG2:
+		get = 1;
+		break;
+	case ANOUBIS_CHECKSUM_OP_ADDSUM:
+	case ANOUBIS_CHECKSUM_OP_ADDSIG:
+	case ANOUBIS_CHECKSUM_OP_DEL:
+	case ANOUBIS_CHECKSUM_OP_DELSIG:
+		break;
+	default:
+		return 0;
+	}
+	if (get_value(m->u.csmultireply->error))
+		return plen < 8;
+	while (1) {
+		unsigned int		 reclen;
+		unsigned int		 reallen;
+		unsigned int		 off2;
+		struct anoubis_csentry	*e;
+
+		if (VERIFY_BUFFER(m, csmultireply, payload, off,
+		    sizeof(Anoubis_CSMultiReplyRecord)))
+			return 0;
+		r = (void *)(m->u.csmultireply->payload + off);
+		reclen = get_value(r->length);
+		if (reclen == 0)
+			break;
+		if (reclen < sizeof(Anoubis_CSMultiReplyRecord)
+		    || !VERIFY_BUFFER(m, csmultireply, payload, off, reclen))
+			return 0;
+		off += reclen;
+		reallen = sizeof(Anoubis_CSMultiReplyRecord);
+		/* Only successful get requests can have a payload. */
+		if (!get || get_value(r->error)) {
+			if (reallen + 8 < reclen)
+				return 0;
+			continue;
+		}
+		/* The rest of the loop only deals with get requests. */
+		off2 = 0;
+		reclen -= sizeof(Anoubis_CSMultiReplyRecord);
+		while (1) {
+			unsigned int		cslen;
+
+			if (reclen < sizeof(struct anoubis_csentry))
+				return 0;
+			e = (struct anoubis_csentry *)(r->payload + off2);
+			reclen -= sizeof(struct anoubis_csentry);
+			off2 += sizeof(struct anoubis_csentry);
+			cslen = get_value(e->cstype);
+			if (cslen > reclen)
+				return 0;
+			off2 += cslen;
+			reclen -= cslen;
+			if (get_value(e->cstype) == ANOUBIS_SIG_TYPE_EOT) {
+				if (cslen)
+					return 0;
+				break;
+			}
+			switch(get_value(e->cstype)) {
+			case ANOUBIS_SIG_TYPE_CS:
+			case ANOUBIS_SIG_TYPE_SIG:
+			case ANOUBIS_SIG_TYPE_UPGRADECS:
+				break;
+			default:
+				return 0;
+			}
+		}
+		if (reclen > 8)
+			return 0;
+	}
+	/* Sentinel */
+	off += sizeof(Anoubis_CSMultiReplyRecord);
+	if (get_value(r->error) || get_value(r->index))
+		return 0;
+	if (off + 8 < (unsigned int)PAYLOAD_LEN(m, csmultireq, payload))
+		return 0;
+	return 1;
+}
+
+static int
 verify_passphrase(const struct anoubis_msg *m)
 {
 	int	len, plen;
@@ -281,6 +453,8 @@ anoubis_msg_verify(const struct anoubis_msg *m)
 	CASE(ANOUBIS_C_CLOSEACK, general);
 	CASE(ANOUBIS_P_CSUMREQUEST, csumrequest);
 	CASE(ANOUBIS_P_CSUM_LIST, csumlist);
+	CASE(ANOUBIS_P_CSMULTIREQUEST, csmultireq);
+	CASE(ANOUBIS_P_CSMULTIREPLY, csmultireply);
 	CASE(ANOUBIS_P_PASSPHRASE, passphrase);
 	CASE(ANOUBIS_P_REQUEST, polrequest);
 	CASE(ANOUBIS_P_REPLY, polreply);

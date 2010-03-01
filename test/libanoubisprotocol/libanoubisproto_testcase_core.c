@@ -48,6 +48,7 @@
 #include <anoubis_transaction.h>
 #include <anoubis_notify.h>
 #include <anoubis_policy.h>
+#include <anoubis_crc32.h>
 #include <anoubis_dump.h>
 
 #include <anoubis_chat.h>
@@ -387,12 +388,295 @@ START_TEST(tp_core_comm)
 }
 END_TEST
 
+static inline void
+fixup_crc(struct anoubis_msg *m)
+{
+	crc32_set(m->u.buf, m->length);
+}
+
+/* Test message generation for csmulti get requests. */
+START_TEST(tp_csmulti_get)
+{
+	struct anoubis_csmulti_request	*req;
+	struct anoubis_msg		*m;
+	int				 ret;
+
+	/* GET must not be used together with a key id */
+	req = anoubis_csmulti_create(ANOUBIS_CHECKSUM_OP_GET2, 0, "foo", 3);
+	fail_if(req != NULL);
+	req = anoubis_csmulti_create(ANOUBIS_CHECKSUM_OP_GET2, 0, NULL, 0);
+	fail_if(req == NULL);
+
+	m = anoubis_csmulti_msg(req);
+	fail_if(m == NULL);
+	/* Verification must succeed. */
+	fixup_crc(m);
+	anoubis_dump(m, "csmulti");
+	fail_unless(anoubis_msg_verify(m));
+
+	/* NULL path name must fail. */
+	ret = anoubis_csmulti_add(req, NULL, NULL, 0);
+	fail_if(ret == 0);
+	/* Non NULL checksum data for GET must fail. */
+	ret = anoubis_csmulti_add(req, "/foo/bar", "foo", 3);
+	fail_if(ret == 0);
+
+	ret = anoubis_csmulti_add(req, "/foo/bar", NULL, 0);
+	fail_if(ret != 0);
+	ret = anoubis_csmulti_add(req, "/bar/baz", NULL, 0);
+	fail_if(ret != 0);
+
+	m = anoubis_csmulti_msg(req);
+	fail_if(m == NULL);
+	/* Message must verify successfully */
+	fixup_crc(m);
+	anoubis_dump(m, "csmulti");
+	fail_unless(anoubis_msg_verify(m));
+
+	anoubis_msg_free(m);
+	anoubis_csmulti_destroy(req);
+}
+END_TEST
+
+/* Test message generation for csmulti getsig requests. */
+START_TEST(tp_csmulti_getsig)
+{
+	struct anoubis_csmulti_request	*req;
+	struct anoubis_msg		*m;
+	int				 ret;
+
+	/* GETSIG must insist on a key id and zero uid. */
+	req = anoubis_csmulti_create(ANOUBIS_CHECKSUM_OP_GETSIG2, 3, "foo", 3);
+	fail_if(req != NULL);
+	req = anoubis_csmulti_create(ANOUBIS_CHECKSUM_OP_GETSIG2, 3, NULL, 0);
+	fail_if(req != NULL);
+	req = anoubis_csmulti_create(ANOUBIS_CHECKSUM_OP_GETSIG2, 0, "foo", 3);
+	fail_if(req == NULL);
+
+	m = anoubis_csmulti_msg(req);
+	fail_if(m == NULL);
+	/* Verification must succeed. */
+	fixup_crc(m);
+	anoubis_dump(m, "csmulti");
+	fail_unless(anoubis_msg_verify(m));
+
+	/* NULL path name must fail. */
+	ret = anoubis_csmulti_add(req, NULL, NULL, 0);
+	fail_if(ret == 0);
+	/* Non NULL checksum data for GETSIG must fail. */
+	ret = anoubis_csmulti_add(req, "/foo/bar", "foo", 3);
+	fail_if(ret == 0);
+
+	ret = anoubis_csmulti_add(req, "/foo/bar", NULL, 0);
+	fail_if(ret != 0);
+	ret = anoubis_csmulti_add(req, "/bar/baz", NULL, 0);
+	fail_if(ret != 0);
+
+	m = anoubis_csmulti_msg(req);
+	fail_if(m == NULL);
+	/* Message must verify successfully */
+	fixup_crc(m);
+	anoubis_dump(m, "csmulti");
+	fail_unless(anoubis_msg_verify(m));
+
+	anoubis_msg_free(m);
+	anoubis_csmulti_destroy(req);
+}
+END_TEST
+
+/* Test message generation for csmulti add requests. */
+START_TEST(tp_csmulti_add)
+{
+	struct anoubis_csmulti_request	*req;
+	struct anoubis_msg		*m;
+	int				 ret;
+
+	/* ADD must not be used together with a key id */
+	req = anoubis_csmulti_create(ANOUBIS_CHECKSUM_OP_ADDSUM, 0, "foo", 3);
+	fail_if(req != NULL);
+	req = anoubis_csmulti_create(ANOUBIS_CHECKSUM_OP_ADDSUM, 0,
+	    NULL, 0);
+	fail_if(req == NULL);
+
+	m = anoubis_csmulti_msg(req);
+	fail_if(m == NULL);
+	/* Verification must succeed. */
+	fixup_crc(m);
+	anoubis_dump(m, "csmulti");
+	fail_unless(anoubis_msg_verify(m));
+
+	/* NULL path name must fail. */
+	ret = anoubis_csmulti_add(req, NULL, "foo", 3);
+	fail_if(ret == 0);
+	/* NULL checksum data for ADD must fail. */
+	ret = anoubis_csmulti_add(req, "/foo/bar", NULL, 0);
+	fail_if(ret == 0);
+
+	ret = anoubis_csmulti_add(req, "/foo/bar", "xx", 2);
+	fail_if(ret != 0);
+	ret = anoubis_csmulti_add(req, "/bar/baz", "yy", 2);
+	fail_if(ret != 0);
+
+	m = anoubis_csmulti_msg(req);
+	fail_if(m == NULL);
+	/* Message must verify successfully */
+	fixup_crc(m);
+	anoubis_dump(m, "csmulti");
+	fail_unless(anoubis_msg_verify(m));
+
+	anoubis_msg_free(m);
+	anoubis_csmulti_destroy(req);
+}
+END_TEST
+
+/* Test message generation for csmulti getsig request. */
+START_TEST(tp_csmulti_addsig)
+{
+	struct anoubis_csmulti_request	*req;
+	struct anoubis_msg		*m;
+	int				 ret;
+
+	/* ADDSIG must insist on a key id and zero uid. */
+	req = anoubis_csmulti_create(ANOUBIS_CHECKSUM_OP_ADDSIG, 3, "foo", 3);
+	fail_if(req != NULL);
+	req = anoubis_csmulti_create(ANOUBIS_CHECKSUM_OP_ADDSIG, 3, NULL, 0);
+	fail_if(req != NULL);
+	req = anoubis_csmulti_create(ANOUBIS_CHECKSUM_OP_ADDSIG, 0, "foo", 3);
+	fail_if(req == NULL);
+
+	m = anoubis_csmulti_msg(req);
+	fail_if(m == NULL);
+	/* Verification must succeed. */
+	fixup_crc(m);
+	anoubis_dump(m, "csmulti");
+	fail_unless(anoubis_msg_verify(m));
+
+	/* NULL path name must fail. */
+	ret = anoubis_csmulti_add(req, NULL, "foo", 3);
+	fail_if(ret == 0);
+	/* NULL checksum data for ADDSIG must fail. */
+	ret = anoubis_csmulti_add(req, "/foo/bar", NULL, 0);
+	fail_if(ret == 0);
+
+	ret = anoubis_csmulti_add(req, "/foo/bar", "xx", 2);
+	fail_if(ret != 0);
+	ret = anoubis_csmulti_add(req, "/bar/baz", "yy", 2);
+	fail_if(ret != 0);
+
+	m = anoubis_csmulti_msg(req);
+	fail_if(m == NULL);
+	/* Message must verify successfully */
+	fixup_crc(m);
+	anoubis_dump(m, "csmulti");
+	fail_unless(anoubis_msg_verify(m));
+
+	anoubis_msg_free(m);
+	anoubis_csmulti_destroy(req);
+}
+END_TEST
+
+/* Test message generation for csmulti del requests. */
+START_TEST(tp_csmulti_del)
+{
+	struct anoubis_csmulti_request	*req;
+	struct anoubis_msg		*m;
+	int				 ret;
+
+	/* GET must not be used together with a key id */
+	req = anoubis_csmulti_create(ANOUBIS_CHECKSUM_OP_DEL, 0, "foo", 3);
+	fail_if(req != NULL);
+	req = anoubis_csmulti_create(ANOUBIS_CHECKSUM_OP_DEL, 0, NULL, 0);
+	fail_if(req == NULL);
+
+	m = anoubis_csmulti_msg(req);
+	fail_if(m == NULL);
+	/* Verification must succeed. */
+	fixup_crc(m);
+	anoubis_dump(m, "csmulti");
+	fail_unless(anoubis_msg_verify(m));
+
+	/* NULL path name must fail. */
+	ret = anoubis_csmulti_add(req, NULL, NULL, 0);
+	fail_if(ret == 0);
+	/* Non NULL checksum data for DEL must fail. */
+	ret = anoubis_csmulti_add(req, "/foo/bar", "foo", 3);
+	fail_if(ret == 0);
+
+	ret = anoubis_csmulti_add(req, "/foo/bar", NULL, 0);
+	fail_if(ret != 0);
+	ret = anoubis_csmulti_add(req, "/bar/baz", NULL, 0);
+	fail_if(ret != 0);
+
+	m = anoubis_csmulti_msg(req);
+	fail_if(m == NULL);
+	/* Message must verify successfully */
+	fixup_crc(m);
+	anoubis_dump(m, "csmulti");
+	fail_unless(anoubis_msg_verify(m));
+
+	anoubis_msg_free(m);
+	anoubis_csmulti_destroy(req);
+}
+END_TEST
+
+/* Test message generation for csmulti delsig requests. */
+START_TEST(tp_csmulti_delsig)
+{
+	struct anoubis_csmulti_request	*req;
+	struct anoubis_msg		*m;
+	int				 ret;
+
+	/* DELSIG must insist on a key id and zero uid. */
+	req = anoubis_csmulti_create(ANOUBIS_CHECKSUM_OP_DELSIG, 3, "foo", 3);
+	fail_if(req != NULL);
+	req = anoubis_csmulti_create(ANOUBIS_CHECKSUM_OP_DELSIG, 3, NULL, 0);
+	fail_if(req != NULL);
+	req = anoubis_csmulti_create(ANOUBIS_CHECKSUM_OP_DELSIG, 0, "foo", 3);
+	fail_if(req == NULL);
+
+	m = anoubis_csmulti_msg(req);
+	fail_if(m == NULL);
+	/* Verification must succeed. */
+	fixup_crc(m);
+	anoubis_dump(m, "csmulti");
+	fail_unless(anoubis_msg_verify(m));
+
+	/* NULL path name must fail. */
+	ret = anoubis_csmulti_add(req, NULL, NULL, 0);
+	fail_if(ret == 0);
+	/* Non NULL checksum data for DELSIG must fail. */
+	ret = anoubis_csmulti_add(req, "/foo/bar", "foo", 3);
+	fail_if(ret == 0);
+
+	ret = anoubis_csmulti_add(req, "/foo/bar", NULL, 0);
+	fail_if(ret != 0);
+	ret = anoubis_csmulti_add(req, "/bar/baz", NULL, 0);
+	fail_if(ret != 0);
+
+	m = anoubis_csmulti_msg(req);
+	fail_if(m == NULL);
+	/* Message must verify successfully */
+	fixup_crc(m);
+	anoubis_dump(m, "csmulti");
+	fail_unless(anoubis_msg_verify(m));
+
+	anoubis_msg_free(m);
+	anoubis_csmulti_destroy(req);
+}
+END_TEST
+
 TCase *
 libanoubisproto_testcase_core(void)
 {
 	/* Core test case */
 	TCase *tp_core = tcase_create("Core");
 
+	tcase_add_test(tp_core, tp_csmulti_get);
+	tcase_add_test(tp_core, tp_csmulti_getsig);
+	tcase_add_test(tp_core, tp_csmulti_add);
+	tcase_add_test(tp_core, tp_csmulti_addsig);
+	tcase_add_test(tp_core, tp_csmulti_del);
+	tcase_add_test(tp_core, tp_csmulti_delsig);
 	tcase_add_test(tp_core, tp_core_comm);
 	tcase_set_timeout(tp_core, 30);
 

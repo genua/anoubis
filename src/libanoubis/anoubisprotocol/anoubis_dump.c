@@ -275,6 +275,75 @@ static void dump_checksumrequest(Anoubis_ChecksumRequestMessage * m,
 }
 
 static void
+dump_csmultireq(Anoubis_CSMultiRequestMessage *m, size_t len __used)
+{
+	unsigned int	off;
+
+	DUMP_NETX(m, operation);
+	DUMP_NETU(m, uid);
+	DUMP_NETU(m, idlen);
+	DUMP_DATA_LABEL(m->payload, get_value(m->idlen), "keyid");
+	off = get_value(m->recoff);
+	snprintf(DSTR, DLEN, " records:");
+	while (1) {
+		Anoubis_CSMultiRequestRecord	*r = (void*)(m->payload + off);
+
+		if (get_value(r->length) == 0)
+			break;
+		off += get_value(r->length);
+		snprintf(DSTR, DLEN, " {");
+		DUMP_NETU(r, index);
+		DUMP_NETU(r, cslen);
+		if (get_value(r->cslen)) {
+			DUMP_DATA_LABEL(r->payload, get_value(r->cslen),
+			    "csdata");
+		}
+		snprintf(DSTR, DLEN, " path = %s",
+		    r->payload + get_value(r->cslen));
+		snprintf(DSTR, DLEN, " }");
+	}
+}
+
+static void
+dump_csmultireply(Anoubis_CSMultiReplyMessage *m, size_t len __used)
+{
+	unsigned int	off = 0;
+	unsigned int	get = 0;
+
+	DUMP_NETX(m, operation);
+	DUMP_NETU(m, error);
+	if (get_value(m->error))
+		return;
+	if (get_value(m->operation) == ANOUBIS_CHECKSUM_OP_GET2
+	    || get_value(m->operation) == ANOUBIS_CHECKSUM_OP_GETSIG2)
+		get = 1;
+	snprintf(DSTR, DLEN, " records:");
+	while (1) {
+		Anoubis_CSMultiReplyRecord	*r = (void*)(m->payload + off);
+		unsigned int			 off2 = 0;
+
+		if (get_value(r->length) == 0)
+			break;
+		off += get_value(r->length);
+		snprintf(DSTR, DLEN, " { ");
+		DUMP_NETU(r, index);
+		DUMP_NETU(r, error);
+		while (get) {
+			struct anoubis_csentry	*e = (void*)(r->payload + off2);
+
+			if (get_value(e->cstype) == ANOUBIS_SIG_TYPE_EOT)
+				break;
+			off2 += sizeof(struct anoubis_csentry);
+			off2 += get_value(e->cslen);
+			DUMP_NETU(e, cstype);
+			DUMP_NETU(e, cslen);
+			DUMP_DATA_LABEL(e->csdata, get_value(e->cslen), "csum");
+		}
+		snprintf(DSTR, DLEN, " }");
+	}
+}
+
+static void
 dump_policychange(Anoubis_PolicyChangeMessage *m, size_t len __used)
 {
 	DUMP_NETU(m, uid);
@@ -328,6 +397,8 @@ void __anoubis_dump(struct anoubis_msg * m, const char * pre, char **pstr)
 	CASE(ANOUBIS_P_REPLY, policyreply)
 	CASE(ANOUBIS_P_CSUMREQUEST, checksumrequest)
 	CASE(ANOUBIS_P_CSUM_LIST, checksumpayload)
+	CASE(ANOUBIS_P_CSMULTIREQUEST, csmultireq)
+	CASE(ANOUBIS_P_CSMULTIREPLY, csmultireply)
 	CASE(ANOUBIS_P_VERSION, general)
 	CASE(ANOUBIS_P_VERSIONREPLY, version)
 	default:

@@ -30,9 +30,42 @@
 #include <anoubis_chat.h>
 #include <anoubis_protocol.h>
 
+#include <sys/queue.h>
+
 struct anoubis_client;
 struct anoubis_msg;
 struct anoubis_transaction;
+
+struct anoubis_csmulti_record {
+	TAILQ_ENTRY(anoubis_csmulti_record)		 next;
+	char						*path;
+	unsigned int					 error;
+	unsigned int					 idx;
+	unsigned int					 length;
+	union {
+		struct __csum_get {
+			struct anoubis_csentry		*csum;
+			struct anoubis_csentry		*sig;
+			struct anoubis_csentry		*upgrade;
+		} get;
+		struct __csum_add {
+			unsigned int			 cslen;
+			void				*csdata;
+		} add;
+	} u;
+};
+
+struct anoubis_csmulti_request {
+	unsigned int					 op;
+	unsigned int					 nreqs;
+	uid_t						 uid;
+	void						*keyid;
+	int						 idlen;
+	struct anoubis_msg				*reply_msg;
+	struct anoubis_client				*client;
+	struct anoubis_csmulti_record			*last;
+	TAILQ_HEAD(, anoubis_csmulti_record)		 reqs;
+};
 
 typedef int (*anoubis_client_auth_callback_t)(struct anoubis_client *,
     struct anoubis_msg *, struct anoubis_msg **);
@@ -74,6 +107,75 @@ struct anoubis_transaction *anoubis_client_passphrase_start(
     struct anoubis_client *client, const char *passphrase);
 struct anoubis_transaction *anoubis_client_version_start(
     struct anoubis_client *client);
+
+/**
+ * Create and initialize an anoubis_csmulti_request structure.
+ * This structure provides an easy to use interface to the multi
+ * request protocol messages.
+ *
+ * @param op The operation to perfom. Possible values are
+ *     ANOUBIS_CHECKSUM_OP_{ADDSUM,ADDSIG,GET2,GETSIG2,DEL,DELSIG}
+ * @param uid The user ID that all the requests apply to. This value
+ *     must be zero if keyid or idlen is non-zero.
+ * @param keyid The key ID that all the requests apply to.
+ * @param idlen The length of the key ID.
+ * @return A pointer to a new anobuis_csmulti_request structure or NULL
+ *     in case of errors.
+ */
+struct anoubis_csmulti_request *
+anoubis_csmulti_create(unsigned int op, uid_t uid, void *keyid, int idlen);
+
+/**
+ * Destroy an anoubis_csmulti_request structure previously allocated
+ * by anoubis_csmulti_create. This function frees all the memory
+ * associated with the request.
+ *
+ * @param requst The request.
+ * @return None.
+ */
+void
+anoubis_csmulti_destroy(struct anoubis_csmulti_request *request);
+
+/**
+ * Add an individual checksum requst to an anoubis_csmulti_request.
+ *
+ * @param request The anobuis_csmulti_request.
+ * @param path The pathname of the checksum request.
+ * @param csdata The checksum data. This value must be NULL if the
+ *     operation of the request is not an ADD request.
+ * @param cslen The length of the checksum data. This value must be zero
+ *     if the operation of the request is not an ADD request.
+ * @return Zero in case of success, a negative error code in case of
+ *     errors.
+ */
+int
+anoubis_csmulti_add(struct anoubis_csmulti_request *request,
+    const char *path, void *csdata, unsigned int cslen);
+
+/**
+ * Create the csmulti message that actually start an anoubis_csmulti_request.
+ * This function is mainly exported for testing. You normally want to use
+ * anoubis_client_csmulti_start instead.
+ *
+ * @param request The request.
+ * @return An anoubis_msg for the request.
+ */
+struct anoubis_msg *
+anoubis_csmulti_msg(struct anoubis_csmulti_request *request);
+
+/**
+ * Actually start a multi checksum request. The request data is
+ * taken from the anoubis_csmulti_request structure. This structure
+ * is owned by the transaction and must not be freed before the transaction
+ * is complete.
+ *
+ * @param client The protocol client object for the request.
+ * @param request The anoubis_csmulti_request structure.
+ * @return A transaction of NULL if an error occured.
+ */
+struct anoubis_transaction *
+anoubis_client_csmulti_start(struct anoubis_client *client,
+    struct anoubis_csmulti_request *request);
 
 __END_DECLS
 

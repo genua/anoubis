@@ -43,8 +43,9 @@
  *     Version 2: Added ANOUBIS_N_STATUSNOTIFY messages (Version 0.9.[12]).
  *     Version 3: Removed SFSDISABLE messages.
  *     Version 4: Add key based authentication.
+ *     Version 5: Add CSMULTI messages
  */
-#define ANOUBIS_PROTO_VERSION		4
+#define ANOUBIS_PROTO_VERSION		5
 #define ANOUBIS_PROTO_MINVERSION	3
 
 #define ANOUBIS_PROTO_CONNECT		0
@@ -160,6 +161,9 @@ static inline u_int64_t __ntohll(u_int64_t arg)
 
 #define		ANOUBIS_P_CSUMREQUEST	0x3100
 #define		ANOUBIS_P_CSUM_LIST	0x3101
+
+#define		ANOUBIS_P_CSMULTIREQUEST	0x3110
+#define		ANOUBIS_P_CSMULTIREPLY		0x3111
 
 #define		_ANOUBIS_P_SFSDISABLE	0x3200		/* Deprecated */
 #define		ANOUBIS_P_PASSPHRASE	0x3201
@@ -422,6 +426,117 @@ typedef struct {
 	u16n	idlen;
 	char	payload[0];
 } __attribute__((packed)) Anoubis_ChecksumRequestMessage;
+
+/**
+ * A Request to add/get/delete multiple checksums or signature.
+ *
+ * - type  must be set to ANOUBIS_P_CSMULTI_REQUEST
+ * - operation  can be one of ADDSUM, ADDSIG, GET2, GETSIG2, DEL or DELSIG.
+ * - uid  must be zero for ADDSIG, GETSIG2 and DELSIG.
+ *     For ADDSUM, GET2 and DEL it specifies the user ID for all requests.
+ * - idlen  must be zero for ADDSUM, GET2 and DEL.
+ *     For ADDSIG, GETSIG2 and DELSIG it specifies the key ID for all requests.
+ * - recoff  The offset of the first request record in the payload data.
+ *     Usually the same as idlen but may be slightly smaller to align records
+ *     on a suitable byte boundary.
+ * - payload  contains the keyid and an arbitrary number of
+ *     Anoubis_CSMultiRequestRecord structures. A request record of length
+ *     zero terminates the request list.
+ */
+typedef struct {
+	u32n	type;
+	u32n	operation;
+	u32n	uid;
+	u16n	idlen;
+	u16n	recoff;
+	char	payload[0];
+} __attribute__((packed)) Anoubis_CSMultiRequestMessage;
+
+/**
+ * A single checksum request within a CSMulti request.
+ *
+ * - length  The total length of this record.
+ * - index  An index assigned by the requester to the record. This
+ *     value is not interpreted by the server but it will be copied into
+ *     the reply record. This allows the client to associate individual
+ *     replies with requests.
+ * - cslen  The length of the checksum or signature data in the request.
+ *     This value is only non-zero for ADDSUM and ADDSIG requests.
+ * - payload:
+ *     - cslen bytes of checksum/signature data.
+ *     - A NUL-Terminated path name.
+ */
+typedef	struct {
+	u32n	length;		/* Total record length (including header). */
+	u16n	index;		/* Index of the record. */
+	u16n	cslen;		/* Length of the checksum in the record. */
+	char	payload[0];
+	/*
+	 * Format of payload:
+	 * - cslen bytes of checksum data.
+	 * - A NUL-Terminated path  name.
+	 */
+} __attribute__((packed)) Anoubis_CSMultiRequestRecord;
+
+/**
+ * A reply to a CSMulti request. This message contains the answer to
+ * one or more requests from the daemon. The daemon can answer a request
+ * with EAGAIN. In this case the client must retry the request. This
+ * can happen if the resulting message would otherwise be larger than
+ * the limit imposed by the daemon.
+ *
+ * - type  ANOUBIS_P_CSMULTI_REPLY
+ * - operation  Repeats the operation from the request.
+ * - error  An error for the whole request. If this value is non-zero
+ *     the request data does not contain any reply records.
+ * - payload  contains an arbitrary number of Anoubis_CSMultiReplyRecords.
+ *     The list is terminated by a record of length zero.
+ */
+typedef struct {
+	u32n	type;
+	u32n	operation;
+	u32n	error;
+	char	payload[0];
+} __attribute__((packed)) Anoubis_CSMultiReplyMessage;
+
+/**
+ * A single entry in a checksum Reply Message.
+ *
+ * - cstype  The checksum type (ANOUBIS_SIG_TYPE_*)
+ * - cslen  The length of the following checksum data.
+ * - payload  The actual checksum data.
+ */
+struct anoubis_csentry {
+	u32n		cstype;
+	u32n		cslen;
+	char		csdata[0];
+};
+
+/**
+ * A single reply record for a checksum request. In case of a GET request,
+ * it is possible that the reply record contains multiple checksum types.
+ * In particular there may be an upgrade checksum and a signature * record.
+ *
+ * length  The total length of the record.
+ * index  The index copied from the request record. This reply record
+ *    answers the request in the corresponding request record. The daemon
+ *    will answer replies in the order given by the client but the it
+ *    is possible that not all request are answered. The client must
+ *    resend those request.
+ * error  An error code for this request. If the error code is non-zero
+ *    the payload is empty.
+ * payload  Is empty if error is non-zero or if the operation in the reply
+ *    message is not a GET2 or GETSIG2 request.
+ *    For successful GET2 or GETSIG2 requests the payload contains an
+ *    arbitrary number of anobuis_csentry structures. A structure of type
+ *    ANOUBIS_SIG_TYPE_EOT terminates the list.
+ */
+typedef struct {
+	u16n	length;
+	u16n	index;
+	u32n	error;
+	char	payload[0];
+} __attribute__((packed)) Anoubis_CSMultiReplyRecord;
 
 /* Types of signatures in a GET message */
 #define ANOUBIS_SIG_TYPE_EOT		0	/* End of data */
