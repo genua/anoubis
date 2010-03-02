@@ -1,4 +1,8 @@
 ### anoubis RPM spec file ##################################
+##
+## http://en.opensuse.org/Packaging/RPM_Macros
+## http://www.rpm.org/wiki/Problems/Distributions
+##
 
 ### package definition #####################################
 Summary:	The Anoubis Security Suite
@@ -10,13 +14,7 @@ Group:		System Environment/Base
 URL:		http://www.genua.de
 Source0:	%{name}-%{version}.tar.gz
 Source1:	anoubisd.init
-Source10:	policy.admin.0
-Source11:	policy.user.0
-Source12:	policy.admin.default
-Source13:	policy.user.default
-Source20:	policy.profiles.admin
-Source21:	policy.profiles.medium
-Source22:	policy.profiles.high
+Source2:	anoubisd.conf
 Vendor:		GeNUA mbH
 BuildRoot:	%(mktemp -d %{_tmppath}/%{name}-%{version}-build.XXXX)
 
@@ -37,7 +35,10 @@ BuildRequires:	libstdc++-devel
 BuildRequires:	make
 BuildRequires:	wxGTK-devel >= 2.8
 
-%define rcdir %{_sysconfdir}/init.d
+%define daemon	%{name}d
+%define sbindir	/sbin
+%define policydir	/var/lib/%{name}
+%define rundir	/var/run/%{daemon}
 
 # long descpritive part of the packaged software goes here
 %description
@@ -82,23 +83,22 @@ export CFLAGS="$RPM_OPT_FLAGS"
  --enable-static-anoubisd \
  --infodir=%{_infodir} \
  --mandir=%{_mandir} \
- --sbindir=/sbin \
- --sysconfdir=/etc \
+ --sbindir=%{sbindir} \
+ --sysconfdir=%{_sysconfdir} \
  --disable-tests
 
 %install
 [ "$RPM_BUILD_ROOT" != "/" ] && [ -d $RPM_BUILD_ROOT ] \
   && rm -rf $RPM_BUILD_ROOT
 make install DESTDIR=$RPM_BUILD_ROOT
-mkdir -p $RPM_BUILD_ROOT%{rcdir}
-cp $RPM_SOURCE_DIR/anoubisd.init $RPM_BUILD_ROOT%{rcdir}/anoubisd
-chmod 755 $RPM_BUILD_ROOT%{rcdir}/anoubisd
+install -D -m 755 %{SOURCE1} %{buildroot}%{_initddir}/%{daemon}
+install -D -m 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/%{name}/%{daemon}.conf
 
 # install policy profiles
-DEF_POLICY_DIR=$RPM_BUILD_ROOT/usr/share/anoubisd/policy_templates
+DEF_POLICY_DIR=$RPM_BUILD_ROOT/%{_datadir}/%{daemon}/policy_templates
 mkdir -p $DEF_POLICY_DIR/admin $DEF_POLICY_DIR/user $DEF_POLICY_DIR/profiles
 for a in admin user profiles ; do
-    for f in $RPM_SOURCE_DIR//policy.$a.* ; do
+    for f in $RPM_SOURCE_DIR/policy.$a.* ; do
 	tgt=$DEF_POLICY_DIR/$a/${f##*/policy.$a.}
 	cp $f $tgt
 	perl -p -i -e s,/usr/lib/kde3,/opt/kde3/lib/kde3,g $tgt
@@ -106,23 +106,23 @@ for a in admin user profiles ; do
 done
 
 # install wizard templates of xanoubis
-DEF_WIZARD_DIR=$RPM_BUILD_ROOT/usr/share/xanoubis/policy_templates/wizard
+DEF_WIZARD_DIR=$RPM_BUILD_ROOT/%{_datadir}/xanoubis/policy_templates/wizard
 mkdir -p $DEF_WIZARD_DIR
 install -p $RPM_BUILD_ROOT/%{_datadir}/xanoubis/profiles/wizard/{alf,sandbox} \
 	$DEF_WIZARD_DIR
 
-rm -rf $RPM_BUILD_ROOT/usr/share/xanoubis/profiles
-mkdir -p $RPM_BUILD_ROOT/etc/anoubis/profiles/wizard
+rm -rf $RPM_BUILD_ROOT/%{_datadir}/xanoubis/profiles
+mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/%{name}/profiles/wizard
 
 # install symlink in /etc/anoubis
-mkdir -p $RPM_BUILD_ROOT/etc/anoubis
-mkdir -p $RPM_BUILD_ROOT/var/lib/anoubis/policy
-ln -s /var/lib/anoubis/policy $RPM_BUILD_ROOT/etc/anoubis/policy
+mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/%{name}
+mkdir -p $RPM_BUILD_ROOT/%{policydir}/policy
+ln -s %{policydir}/policy $RPM_BUILD_ROOT/%{_sysconfdir}/%{name}/policy
 
 # install udev rules of anoubis devices
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/udev/rules.d
 install -m 0644 support/udev.rules \
-	$RPM_BUILD_ROOT%{_sysconfdir}/udev/rules.d/06-anoubis.rules
+	$RPM_BUILD_ROOT%{_sysconfdir}/udev/rules.d/06-%{name}.rules
 
 # remove files that should not be part of the rpm
 rm -fr $RPM_BUILD_ROOT%{_includedir}
@@ -136,9 +136,6 @@ install -p $RPM_BUILD_ROOT%{_datadir}/xanoubis/icons/xanoubis.png \
 install -p $RPM_BUILD_ROOT%{_datadir}/xanoubis/xanoubis.desktop \
 	$RPM_BUILD_ROOT%{_datadir}/applications
 
-# add the anoubisd configuration files
-cp $RPM_SOURCE_DIR/anoubisd.conf $RPM_BUILD_ROOT/etc/anoubis
-
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && [ -d $RPM_BUILD_ROOT ] \
   && rm -rf $RPM_BUILD_ROOT
@@ -148,7 +145,7 @@ cp $RPM_SOURCE_DIR/anoubisd.conf $RPM_BUILD_ROOT/etc/anoubis
 # Do not stop anoubisd during an upgrade restart it after the upgrade
 if ! getent passwd _anoubisd >/dev/null; then
 	groupadd -f -r _anoubisd
-	useradd -M -r -s /sbin/nologin -d /var/run/anoubisd \
+	useradd -M -r -s /sbin/nologin -d %{rundir} \
 	    -g _anoubisd _anoubisd
 fi
 if ! getent group _nosfs >/dev/null; then
@@ -165,12 +162,12 @@ exit 0
 %posttrans -n xanoubis
 # remove profile directory from old rpms, and add symlink manually.
 # rpm will not replace a directory with a symlink on upgrades
-PROFDIR=/usr/share/xanoubis/profiles
+PROFDIR=%{_datadir}/xanoubis/profiles
 if [ ! -L $PROFDIR ] ; then
 	if [ -e $PROFDIR ] ; then
 		mv $PROFDIR $PROFDIR.rpm-bak.$$
 	fi
-	ln -s /etc/anoubis/profiles $PROFDIR
+	ln -s %{_sysconfdir}/%{name}/profiles $PROFDIR
 fi
 exit 0
 
@@ -178,55 +175,55 @@ exit 0
 # update xanoubis wizard profiles
 # we just overwrite the old files until we have a better mechanism
 # for updates
-rm -f /etc/anoubis/profiles/wizard/alf
-rm -f /etc/anoubis/profiles/wizard/sandbox
-cp /usr/share/xanoubis/policy_templates/wizard/* \
-	/etc/anoubis/profiles/wizard
-chmod 644 /etc/anoubis/profiles/wizard/*
+rm -f %{_sysconfdir}/%{name}/profiles/wizard/alf
+rm -f %{_sysconfdir}/%{name}/profiles/wizard/sandbox
+cp %{_datadir}/xanoubis/policy_templates/wizard/* \
+	%{_sysconfdir}/%{name}/profiles/wizard
+chmod 644 %{_sysconfdir}/%{name}/profiles/wizard/*
 
 if getent group _nosfs >/dev/null; then
-	chown root:_nosfs /usr/bin/xanoubis && \
-	chmod 2755 /usr/bin/xanoubis
+	chown root:_nosfs %{_bindir}/xanoubis && \
+	chmod 2755 %{_bindir}/xanoubis
 fi
 
 %post -n anoubisd
-chkconfig --add anoubisd
-chkconfig anoubisd on
-mkdir -p /var/lib/anoubis/policy/{admin,user,pubkeys}
-chmod -R 700 /var/lib/anoubis/policy
+chkconfig --add %{daemon}
+chkconfig %{daemon} on
+mkdir -p %{policydir}/policy/{admin,user,pubkeys}
+chmod -R 700 %{policydir}/policy
 
 if getent group _nosfs >/dev/null; then
-	chown root:_nosfs /sbin/sfssig /sbin/anoubisctl && \
-	chmod 2755 /sbin/sfssig /sbin/anoubisctl
+	chown root:_nosfs %{sbindir}/sfssig %{sbindir}/anoubisctl && \
+	chmod 2755 %{sbindir}/sfssig %{sbindir}/anoubisctl
 fi
 
 # update run dir permissions from old versions
-if [ -d /var/run/anoubisd ] ; then
-	chown root:_anoubisd /var/run/anoubisd
-	chmod 0770 /var/run/anoubisd
+if [ -d %{rundir} ] ; then
+	chown root:_anoubisd %{rundir}
+	chmod 0770 %{rundir}
 fi
 
 # copy new default policy
 export PATH=$PATH:/opt/kde3/bin
-/usr/share/anoubisd/install_policy -q\
-	/usr/share/anoubisd/policy_templates/admin \
-	/var/lib/anoubis/policy/admin
+%{_datadir}/%{daemon}/install_policy -q\
+	%{_datadir}/%{daemon}/policy_templates/admin \
+	%{policydir}/policy/admin
 
-/usr/share/anoubisd/install_policy -q\
-	/usr/share/anoubisd/policy_templates/user \
-	/var/lib/anoubis/policy/user
+%{_datadir}/%{daemon}/install_policy -q\
+	%{_datadir}/%{daemon}/policy_templates/user \
+	%{policydir}/policy/user
 
 # update xanoubis profiles
 # we just overwrite the old files until we have a better mechanism
 # for updates
-rm -f /etc/anoubis/profiles/admin
-rm -f /etc/anoubis/profiles/medium
-rm -f /etc/anoubis/profiles/high
-/usr/share/anoubisd/install_policy -q -n -o \
-	/usr/share/anoubisd/policy_templates/profiles \
-	/etc/anoubis/profiles
+rm -f %{_sysconfdir}/%{name}/profiles/admin
+rm -f %{_sysconfdir}/%{name}/profiles/medium
+rm -f %{_sysconfdir}/%{name}/profiles/high
+%{_datadir}/%{daemon}/install_policy -q -n -o \
+	%{_datadir}/%{daemon}/policy_templates/profiles \
+	%{_sysconfdir}/%{name}/profiles
 
-chown -R _anoubisd: /var/lib/anoubis/policy
+chown -R _anoubisd: %{policydir}/policy
 
 if [ ! -e /dev/eventdev ] ; then
 	mknod /dev/eventdev c 10 62
@@ -238,7 +235,7 @@ if [ -e /dev/anoubis ] ; then
 fi
 # execute only on new installs (i.e. exactly 1 version installed)
 if [ "$1" = 1 ]; then
-    %{rcdir}/anoubisd start
+    %{_initddir}/%{daemon} start
 fi
 exit 0
 
@@ -246,17 +243,17 @@ exit 0
 # execute only on package removal,
 # i.e. if last version is removed (0 versions left)
 if [ "$1" = 0 ] ; then
-    %{rcdir}/anoubisd stop
-    chkconfig --del anoubisd
-    rmdir /var/lib/anoubis/policy/{admin,user,pubkeys} 2>/dev/null || true
-    rmdir /var/lib/anoubis/policy /var/lib/anoubis 2>/dev/null || true
+    %{_initddir}/%{daemon} stop
+    chkconfig --del %{daemon}
+    rmdir %{policydir}/policy/{admin,user,pubkeys} 2>/dev/null || :
+    rmdir %{policydir}/policy %{policydir} 2>/dev/null || :
 fi
 exit 0
 
 %postun -n anoubisd
 # execute only on upgrades (i.e. at least 1 version left)
 if [ "$1" -ge 1 ]; then
-    %{rcdir}/anoubisd restart
+    %{_initddir}/%{daemon} restart
 fi
 exit 0
 
@@ -264,18 +261,18 @@ exit 0
 ### files of subpackage anoubisd ###########################
 %files -n anoubisd
 %defattr(-,root,root)
-%{rcdir}/*
-/etc/anoubis/anoubisd.conf
-/sbin/anoubisd
-/sbin/anoubisctl
-/sbin/sfssig
-%{_prefix}/bin/anoubis-keygen
-/sbin/anoubis-keyinstall
-/usr/share/anoubisd/*
-%{_sysconfdir}/udev/rules.d/06-anoubis.rules
-%{_sysconfdir}/anoubis
-%attr(0750,root,_anoubisd) %dir /var/lib/anoubis
-/var/lib/anoubis/*
+%{_initddir}/%{daemon}
+%{_sysconfdir}/%{name}
+%{_sysconfdir}/udev/rules.d/06-%{name}.rules
+%{sbindir}/%{daemon}
+%{sbindir}/anoubisctl
+%{sbindir}/sfssig
+%{sbindir}/anoubis-keyinstall
+%{_bindir}/anoubis-keygen
+%{_datadir}/%{daemon}/*
+%{_datadir}/locale/de/LC_MESSAGES/%{name}.mo
+%attr(0750,root,_anoubisd) %dir %{policydir}
+%{policydir}/*
 %{_mandir}/man1/anoubis-keygen.1.gz
 %{_mandir}/man1/anoubis-keyinstall.1.gz
 %{_mandir}/man4/*
@@ -287,16 +284,19 @@ exit 0
 %files -n xanoubis
 %defattr(-,root,root)
 %doc AUTHORS INSTALL NEWS README ChangeLog
-%{_prefix}/bin/xanoubis
+%{_bindir}/xanoubis
 %{_mandir}/man1/xanoubis*.1.gz
-%{_prefix}/share/xanoubis/*
-%attr(0644,root,root) %{_datadir}/xanoubis/xanoubis.desktop
+%{_datadir}/xanoubis/*
 %attr(0644,root,root) %{_datadir}/applications/xanoubis.desktop
 %attr(0644,root,root) %{_datadir}/pixmaps/xanoubis.png
 
 
 ### changelog ##############################################
 %changelog
+* Mon Mar 01 2010 Sten Spans
+- add new gettext translations
+- complete spring cleaning
+
 * Wed Jan 27 2010 Sebastian Trahm
 - add default policy file for user
 
