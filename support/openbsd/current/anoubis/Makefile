@@ -20,7 +20,7 @@ PERMIT_PACKAGE_FTP =	Yes
 PERMIT_DISTFILES_CDROM =Yes
 PERMIT_DISTFILES_FTP =	Yes
 
-WANTLIB-daemon +=	c crypto event ssl
+WANTLIB-daemon +=	c crypto event ssl iconv intl
 WANTLIB-main =		c m pthread stdc++ event glib-2.0 pixman-1 \
 			X11 Xau Xcursor Xdmcp Xext Xfixes Xi Xinerama \
 			Xrandr Xcomposite Xdamage Xrender atk-1.0 cairo \
@@ -39,6 +39,7 @@ SUBST_VARS =		ANOUBISDIR PROFILESDIR POLICYDIR
 
 MULTI_PACKAGES =	-main -daemon
 
+MODULES=		devel/gettext
 BUILD_DEPENDS =		::devel/check \
 			::devel/bison
 RUN_DEPENDS-main =	:notification-daemon->=0.3.7:sysutils/notification-daemon \

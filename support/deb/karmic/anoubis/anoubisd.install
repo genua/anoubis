@@ -6,3 +6,4 @@ usr/bin/anoubis-keygen
 sbin/anoubis-keyinstall
 etc/udev/*
 usr/share/anoubisd/*
+usr/share/locale/*/LC_MESSAGES/anoubis.mo

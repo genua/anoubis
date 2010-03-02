@@ -50,6 +50,7 @@ share/anoubisd/policy_templates/profiles/medium
 share/anoubisd/policy_templates/user/_dhcp
 share/anoubisd/policy_templates/user/_ntp
 share/anoubisd/policy_templates/user/root
+share/locale/de/LC_MESSAGES/anoubis.mo
 @mode 600
 @owner _anoubisd
 @group _anoubisd

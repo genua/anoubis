@@ -5,15 +5,8 @@
 @sample /usr/bin/xanoubis
 @mode
 @group
-@comment include/apn.h
-@comment include/anoubischat.h
 @comment include/splint-includes.h
-@comment lib/libanoubischat.a
-@comment lib/libanoubispc.a
-@comment lib/libanoubisps.a
-@comment lib/libanoubissig.a
-@comment lib/libanoubisui.a
-@comment lib/libapn.a
+@comment lib/libanoubis.a
 @man man/man1/xanoubis.1
 @comment @man man/man1/xanoubis_guessApp.1
 @comment share/xanoubis/utils/xanoubis_guessApp.sh
