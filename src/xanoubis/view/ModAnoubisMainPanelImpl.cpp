@@ -882,7 +882,7 @@ ModAnoubisMainPanelImpl::setAlfOptions(EscalationNotify *current,
 	int		proto;
 
 	proto = current->getProtocolNo();
-	if (proto == IPPROTO_TCP) {
+	if (proto == IPPROTO_TCP || proto == IPPROTO_SCTP) {
 		flags = 0;
 	} else  if (proto == IPPROTO_UDP) {
 		flags = ALF_EV_ALLDIR;

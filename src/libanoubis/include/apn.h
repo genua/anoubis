@@ -39,12 +39,13 @@
 #include "splint-includes.h"
 #endif
 
+#include <netinet/in.h>
+
 #include <stdio.h>	/* For FILE */
 #include <stdarg.h>
 #include <sys/cdefs.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
 #include <unistd.h>
 
 #include <sys/queue.h>
@@ -58,6 +59,10 @@
 #endif
 
 #include "anoubis_rbtree.h"
+
+#ifndef IPPROTO_SCTP
+#define IPPROTO_SCTP	132
+#endif
 
 #define APN_FLAG_VERBOSE	0x0001
 #define APN_FLAG_VERBOSE2	0x0002

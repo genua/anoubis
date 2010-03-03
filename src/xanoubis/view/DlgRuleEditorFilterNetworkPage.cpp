@@ -119,9 +119,13 @@ DlgRuleEditorFilterNetworkPage::showProtocol(void)
 	case IPPROTO_UDP:
 		udpRadioButton->SetValue(true);
 		break;
+	case IPPROTO_SCTP:
+		sctpRadioButton->SetValue(true);
+		break;
 	default:
 		tcpRadioButton->SetValue(false);
 		udpRadioButton->SetValue(false);
+		sctpRadioButton->SetValue(false);
 	}
 }
 
@@ -164,5 +168,13 @@ DlgRuleEditorFilterNetworkPage::onUdpRadioButton(wxCommandEvent &)
 {
 	if (filterPolicy_ != NULL) {
 		filterPolicy_->setProtocol(IPPROTO_UDP);
+	}
+}
+
+void
+DlgRuleEditorFilterNetworkPage::onSctpRadioButton(wxCommandEvent &)
+{
+	if (filterPolicy_ != NULL) {
+		filterPolicy_->setProtocol(IPPROTO_SCTP);
 	}
 }

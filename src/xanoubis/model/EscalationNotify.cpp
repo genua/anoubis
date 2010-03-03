@@ -278,6 +278,7 @@ EscalationNotify::allowOptions(void)
 		switch(getProtocolNo()) {
 		case IPPROTO_TCP:
 		case IPPROTO_UDP:
+		case IPPROTO_SCTP:
 			return true;
 		default:
 			return false;

@@ -147,6 +147,14 @@ class DlgRuleEditorFilterNetworkPage : public DlgRuleEditorPage,
 		 * @return Nothing.
 		 */
 		virtual void onUdpRadioButton(wxCommandEvent &);
+
+		/**
+		 * Handle events from sctpRadioButton.
+		 * This will set IPPROTO_SCTP to the policy.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onSctpRadioButton(wxCommandEvent &);
 };
 
 #endif	/* _DLGRULEEDITORFILTERNETWORKPAGE_H_ */

@@ -230,6 +230,7 @@ class DlgRuleEditorFilterNetworkPageBase : public wxPanel
 		wxStaticText* protocolLabel;
 		wxRadioButton* tcpRadioButton;
 		wxRadioButton* udpRadioButton;
+		wxRadioButton* sctpRadioButton;
 		
 		
 		// Virtual event handlers, overide them in your derived class
@@ -238,6 +239,7 @@ class DlgRuleEditorFilterNetworkPageBase : public wxPanel
 		virtual void onBothRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onTcpRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onUdpRadioButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onSctpRadioButton( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:

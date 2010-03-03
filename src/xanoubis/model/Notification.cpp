@@ -127,7 +127,8 @@ Notification::assembleAddress(bool isLocal)
 
 	inet_ntop(alf->family, address, ipAddrBuffer, sizeof(ipAddrBuffer));
 	localAddr += wxString::From8BitData(ipAddrBuffer);
-	if (alf->protocol == IPPROTO_TCP || alf->protocol == IPPROTO_UDP)
+	if (alf->protocol == IPPROTO_TCP || alf->protocol == IPPROTO_UDP
+	    || alf->protocol == IPPROTO_SCTP)
 		localAddr += wxString::Format(wxT(" Port %u"), port);
 
 	return (localAddr);
@@ -302,6 +303,9 @@ Notification::getOperation(void)
 			break;
 		case IPPROTO_ICMP:
 			operation += wxT(" (ICMP)");
+			break;
+		case IPPROTO_SCTP:
+			operation += wxT(" (SCTP)");
 			break;
 		default:
 			operation += wxT(" (unknown protocol)");

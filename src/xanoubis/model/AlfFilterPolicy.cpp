@@ -376,6 +376,9 @@ AlfFilterPolicy::getProtocolName(void) const
 	case IPPROTO_UDP:
 		protocol = wxT("udp");
 		break;
+	case IPPROTO_SCTP:
+		protocol = wxT("sctp");
+		break;
 	default:
 		protocol = _("(unknown)");
 		break;

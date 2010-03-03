@@ -57,10 +57,6 @@
 #include "apn.h"
 #include "apninternals.h"
 
-#ifndef IPPROTO_SCTP
-#define IPPROTO_SCTP	132
-#endif
-
 #define PARSER_MINVERSION		APN_PARSER_MKVERSION(1,0)
 #define PARSER_MAXVERSION		APN_PARSER_MKVERSION(1,2)
 

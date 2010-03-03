@@ -1408,6 +1408,9 @@ apn_print_proto(int proto, FILE *file)
 	case IPPROTO_UDP:
 		fprintf(file, "udp ");
 		break;
+	case IPPROTO_SCTP:
+		fprintf(file, "sctp ");
+		break;
 	default:
 		return (1);
 	}
