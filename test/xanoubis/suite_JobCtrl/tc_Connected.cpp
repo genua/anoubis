@@ -165,7 +165,7 @@ START_TEST(test_fetchversion)
 	fail_unless(task.getComTaskResult() == ComTask::RESULT_SUCCESS,
 	    "Failed to receive versionlist: %i\n", task.getComTaskResult());
 
-	fail_unless(task.getProtocolVersion() == 4,
+	fail_unless(task.getProtocolVersion() == 5,
 	    "Unexpected protocol version received (%i)\n",
 	    task.getProtocolVersion());
 	fail_unless(task.getApnVersion() == 65538,
