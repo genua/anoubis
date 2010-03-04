@@ -79,7 +79,7 @@ AnTable::addProperty(AnListProperty *property, int width)
 	columnList_.push_back(column);
 	if (column->isVisible()) {
 		visibilityList_.push_back(columnList_.size() - 1);
-		fireRowsInserted((*visibilityList_.end()), 1);
+		fireColsInserted(visibilityList_.size() - 1, 1);
 	}
 }
 
@@ -102,6 +102,7 @@ void
 AnTable::setColumnVisability(unsigned int idx, bool visibility)
 {
 	std::vector<int>::iterator	it;
+	int				col;
 
 	if (idx >= columnList_.size()) {
 		return;
@@ -114,32 +115,30 @@ AnTable::setColumnVisability(unsigned int idx, bool visibility)
 
 	if (!visibility) {
 		/* Visability turn off. Remove column. */
-		for (it=visibilityList_.begin();
-		     it!=visibilityList_.end();
-		     it++) {
+		for (col=0, it=visibilityList_.begin();
+		     it!=visibilityList_.end(); it++,col++) {
 			if ((*it) == (int)idx) {
 				columnList_[idx]->setVisibility(visibility);
 				visibilityList_.erase(it);
-				fireColsRemoved((*it), 1);
+				fireColsRemoved(col, 1);
 				return;
 			}
 		}
 	} else {
 		/* Visability turn on. Add column. */
 		columnList_[idx]->setVisibility(visibility);
-		for (it=visibilityList_.begin();
-		     it!=visibilityList_.end();
-		     it++) {
+		for (col=0, it=visibilityList_.begin();
+		     it!=visibilityList_.end(); it++,col++) {
 			if ((*it) > (int)idx) {
 				visibilityList_.insert(it, idx);
-				fireColsInserted((*it), 1);
+				fireColsInserted(col, 1);
 				return;
 			}
 		}
 		/* Didn't find matching element within list. Appending... */
 		it = visibilityList_.end();
 		visibilityList_.insert(it, idx);
-		fireColsInserted((*it), 1);
+		fireColsInserted(visibilityList_.size() - 1, 1);
 	}
 }
 
