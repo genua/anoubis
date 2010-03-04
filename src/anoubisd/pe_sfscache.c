@@ -300,8 +300,7 @@ sfshash_readsum(const char *path, int cstype, const char *key, uid_t uid,
 	u_int8_t		*keybuf = NULL;
 
 	csop.path = path;
-	csop.siglen = 0;
-	csop.sigdata = NULL;
+	csop.sigbuf = ABUF_EMPTY;
 	csop.listflags = 0;
 	csop.auth_uid = 0;
 

@@ -122,6 +122,9 @@ static int	dispatch_checksum_reply(void *cbdata, int error, void *data,
 		    int len, int end);
 static int	dispatch_checksum_list_reply(void *cbdata, int error,
 		    void *data, int len, int end);
+static void	dispatch_csmulti(struct anoubis_server *,
+		    struct anoubis_msg *, uid_t, void *);
+static int	dispatch_csmulti_reply(void *, int, void *, int, int);
 static void	dispatch_m2s(int, short, void *);
 static void	dispatch_s2m(int, short, void *);
 static void	dispatch_s2p(int, short, void *);
@@ -250,6 +253,8 @@ session_connect(int fd __used, short event __used, void *arg)
 	}
 	anoubis_dispatch_create(session->proto, ANOUBIS_P_CSUMREQUEST,
 	    &dispatch_checksum, info);
+	anoubis_dispatch_create(session->proto, ANOUBIS_P_CSMULTIREQUEST,
+	    &dispatch_csmulti, info);
 	anoubis_dispatch_create(session->proto, _ANOUBIS_P_SFSDISABLE,
 	    &dispatch_sfsdisable, info);
 	anoubis_dispatch_create(session->proto, ANOUBIS_P_PASSPHRASE,
@@ -297,8 +302,15 @@ session_rxclient(int fd __used, short event __used, void *arg)
 		if (ret < 0)
 			goto err;
 		/* Only incomplete message. Nothing to do */
-		if (!m)
+		if (!m) {
+			DEBUG(DBG_TRACE,
+			    " session_rxclient: Incomplete message");
 			break;
+		} else {
+			DEBUG(DBG_TRACE,
+			    " session_rxclient: got message (size=%d)",
+			    m->length);
+		}
 		/* At this point we actually got a message. */
 		if (!session->proto)
 			goto err;
@@ -540,6 +552,55 @@ __send_notify(struct anoubis_msg *m, struct event_info_session *ev_info)
 }
 
 static void
+dispatch_csmulti(struct anoubis_server *server, struct anoubis_msg *m,
+    uid_t uid, void *arg)
+{
+	struct event_info_session	*ev_info = arg;
+	struct anoubisd_msg		*s2m_msg;
+	struct anoubisd_msg_csumop	*csum_msg;
+	struct achat_channel		*chan;
+	int				 err, reallen;
+
+	DEBUG(DBG_TRACE, ">dispatch_csmulti");
+	reallen = amsg_sfs_checksumop_size(m->u.buf, m->length);
+	if (reallen < 0 || reallen > (int)m->length)
+		goto invalid;
+	if (reallen + 8 < (int)m->length)
+		goto invalid;
+	s2m_msg = msg_factory(ANOUBISD_MSG_CSMULTIREQUEST,
+	    sizeof(struct anoubisd_msg_csumop) + m->length);
+	if (!s2m_msg) {
+		master_terminate(ENOMEM);
+		return;
+	}
+	chan = anoubis_server_getchannel(server);
+	csum_msg = (struct anoubisd_msg_csumop *)(s2m_msg->msg),
+	csum_msg->uid = uid;
+	csum_msg->len = m->length;
+	memcpy(csum_msg->msg, m->u.buf, m->length);
+	err = anoubis_policy_comm_addrequest(ev_info->policy, chan,
+	    POLICY_FLAG_START | POLICY_FLAG_END,
+	    &dispatch_csmulti_reply, NULL, server,
+	    &csum_msg->token);
+	if (err < 0) {
+		log_warnx("Dropping checksum request (error %d)", err);
+		free(s2m_msg);
+		DEBUG(DBG_TRACE, "<dispatch_csmulti (error %d)", err);
+		return;
+	}
+	enqueue(&eventq_s2m, s2m_msg);
+	DEBUG(DBG_QUEUE, " >eventq_s2m");
+	event_add(ev_info->ev_s2m, NULL);
+	DEBUG(DBG_TRACE, "<dispatch_csmulti");
+	return;
+
+invalid:
+	dispatch_generic_reply(server, EINVAL, NULL, 0,
+	    ANOUBIS_P_CSMULTIREQUEST);
+	DEBUG(DBG_TRACE, "<dispatch_csmulti (EINVAL)");
+}
+
+static void
 dispatch_checksum(struct anoubis_server *server, struct anoubis_msg *m,
     uid_t uid, void *arg)
 {
@@ -548,7 +609,7 @@ dispatch_checksum(struct anoubis_server *server, struct anoubis_msg *m,
 	struct achat_channel		*chan;
 	int				 err, opp = 0, reallen;
 
-	struct event_info_session *ev_info = (struct event_info_session*)arg;
+	struct event_info_session *ev_info = arg;
 
 	DEBUG(DBG_TRACE, ">dispatch_checksum");
 	if (!VERIFY_FIELD(m, checksumrequest, operation))
@@ -931,9 +992,7 @@ dispatch_checksum_list_reply(void *cbdata, int error, void *data, int len,
 		memcpy(m->u.checksumpayload->payload, data, len);
 	ret = anoubis_msg_send(anoubis_server_getchannel(server), m);
 	anoubis_msg_free(m);
-	if (ret < 0)
-		return ret;
-	return 0;
+	return ret;
 }
 
 static int
@@ -943,6 +1002,30 @@ dispatch_checksum_reply(void *cbdata, int error, void *data, int len, int flags)
 		log_warnx("Wrong flags value in dispatch_checksum_reply");
 	return dispatch_generic_reply(cbdata, error, data, len,
 	    ANOUBIS_P_CSUMREQUEST);
+}
+
+static int
+dispatch_csmulti_reply(void *cbdata, int error, void *data, int len, int flags)
+{
+	struct anoubis_server		*server = cbdata;
+	struct anoubis_msg		*m;
+	int				 ret;
+
+	DEBUG(DBG_TRACE, ">dispatch_csmulti_reply");
+	if (flags != (POLICY_FLAG_START | POLICY_FLAG_END))
+		log_warnx("Wrong flags value in dispatch_csmulti_reply");
+	if (len < (int)sizeof(Anoubis_CSMultiReplyMessage))
+		return -EFAULT;
+	if (error)
+		return -error;
+	m = anoubis_msg_new(len);
+	if (!m)
+		return -ENOMEM;
+	memcpy(m->u.buf, data, len);
+	ret = anoubis_msg_send(anoubis_server_getchannel(server), m);
+	anoubis_msg_free(m);
+	DEBUG(DBG_TRACE, "<dispatch_csmulti_reply: error=%d", -ret);
+	return ret;
 }
 
 static int
@@ -1013,7 +1096,8 @@ dispatch_m2s(int fd, short sig __used, void *arg)
 		u_int64_t	task;
 		if ((msg = get_msg(fd)) == NULL)
 			break;
-		if (msg->mtype == ANOUBISD_MSG_CHECKSUMREPLY) {
+		if (msg->mtype == ANOUBISD_MSG_CHECKSUMREPLY
+		    || msg->mtype == ANOUBISD_MSG_CSMULTIREPLY) {
 			dispatch_m2s_checksum_reply(msg, ev_info);
 			free(msg);
 			continue;

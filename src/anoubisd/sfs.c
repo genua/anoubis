@@ -327,6 +327,8 @@ __sfs_checksumop(const struct sfs_checksumop *csop, struct sfs_data *data,
 	struct cert	*cert = NULL;
 	struct sfs_data	 sfsdata;
 
+	DEBUG(DBG_CSUM, " >sfs_checksumop: path=%s, op=%d", csop->path,
+	    csop->op);
 	switch(csop->op) {
 	case ANOUBIS_CHECKSUM_OP_GET2:
 	case _ANOUBIS_CHECKSUM_OP_GET_OLD:
@@ -359,8 +361,7 @@ __sfs_checksumop(const struct sfs_checksumop *csop, struct sfs_data *data,
 			goto err1;
 		error = -EINVAL;
 		if (csop->op == ANOUBIS_CHECKSUM_OP_ADDSUM) {
-			if (csop->sigdata == NULL
-			    || csop->siglen != ANOUBIS_CS_LEN)
+			if (abuf_length(csop->sigbuf) != ANOUBIS_CS_LEN)
 				goto err1;
 		}
 		error = -ENOMEM;
@@ -385,10 +386,13 @@ __sfs_checksumop(const struct sfs_checksumop *csop, struct sfs_data *data,
 		if (csop->op == ANOUBIS_CHECKSUM_OP_ADDSIG) {
 			int ret;
 			if (realsiglen + ANOUBIS_CS_LEN !=
-			    (unsigned int)csop->siglen)
+			    abuf_length(csop->sigbuf))
 				goto err1;
-			ret = anoubisd_verify_csum(cert->pubkey, csop->sigdata,
-			    csop->sigdata + ANOUBIS_CS_LEN, realsiglen);
+			ret = anoubisd_verify_csum(cert->pubkey,
+			    abuf_toptr(csop->sigbuf, 0, ANOUBIS_CS_LEN),
+			    abuf_toptr(csop->sigbuf, ANOUBIS_CS_LEN,
+				realsiglen),
+			    realsiglen);
 			if (ret != 1) {
 				error = -EPERM;
 				goto err1;
@@ -410,26 +414,22 @@ __sfs_checksumop(const struct sfs_checksumop *csop, struct sfs_data *data,
 	}
 	switch(csop->op) {
 	case ANOUBIS_CHECKSUM_OP_ADDSUM:
-		sfsdata.csdata = abuf_alloc(csop->siglen);
-		abuf_copy_tobuf(sfsdata.csdata, csop->sigdata, csop->siglen);
+		sfsdata.csdata = csop->sigbuf;
 		if (!abuf_empty(sfsdata.csdata)) {
 			error = sfs_writesfsdata(csum_file, csum_path,
 			    &sfsdata);
 		} else {
 			error = -ENOMEM;
 		}
-		sfs_freesfsdata(&sfsdata);
 		break;
 	case ANOUBIS_CHECKSUM_OP_ADDSIG:
-		sfsdata.sigdata = abuf_alloc(csop->siglen);
-		abuf_copy_tobuf(sfsdata.sigdata, csop->sigdata, csop->siglen);
+		sfsdata.sigdata = csop->sigbuf;
 		if (!abuf_empty(sfsdata.sigdata)) {
 			error = sfs_writesfsdata(csum_file, csum_path,
 			    &sfsdata);
 		} else {
 			error = -ENOMEM;
 		}
-		sfs_freesfsdata(&sfsdata);
 		break;
 	case _ANOUBIS_CHECKSUM_OP_GET_OLD:
 	case ANOUBIS_CHECKSUM_OP_GET2:
@@ -480,6 +480,9 @@ __sfs_checksumop(const struct sfs_checksumop *csop, struct sfs_data *data,
 		goto err2;
 	free(csum_file);
 	free(csum_path);
+	DEBUG(DBG_CSUM, " <sfs_checksumop: sucess path=%s op=%d", csop->path,
+	    csop->op);
+
 	return 0;
 err3:
 	sfs_freesfsdata(&sfsdata);
@@ -497,7 +500,7 @@ sfs_copy_one_sig_type(struct abuf_buffer dst, unsigned int off,
 	u32n			*intptr;
 	struct abuf_buffer	 tmpbuf;
 
-	if (type != ANOUBIS_SIG_TYPE_UPGRADECS && abuf_empty(src))
+	if (type != ANOUBIS_SIG_TYPE_EOT && abuf_empty(src))
 		return 0;
 	tmpbuf = abuf_open(dst, off);
 	off = 0;
@@ -859,7 +862,10 @@ sfs_need_upgrade_data(const struct abuf_buffer updata,
 	return 0;
 }
 
-/* NOTE: Might modify the contents of sfsdata (free upgradecsdata)! */
+/*
+ * NOTE: Might free the contents of sfsdata->upgradecsdata.
+ * NOTE: sfsdata->csdata and sfsdata->sigdata is not touched.
+ */
 static int
 sfs_writesfsdata(const char *csum_file, const char *csum_path,
     struct sfs_data *sfsdata)
@@ -1352,10 +1358,10 @@ sfs_validate_checksumop(struct sfs_checksumop *csop)
 		if (cert != NULL)
 			return -EINVAL;
 		if (csop->op == ANOUBIS_CHECKSUM_OP_ADDSUM) {
-			if (!csop->sigdata || csop->siglen != ANOUBIS_CS_LEN)
+			if (abuf_length(csop->sigbuf) != ANOUBIS_CS_LEN)
 				return -EINVAL;
 		} else {
-			if (csop->sigdata || csop->siglen)
+			if (abuf_length(csop->sigbuf))
 				return -EINVAL;
 		}
 		break;
@@ -1368,25 +1374,23 @@ sfs_validate_checksumop(struct sfs_checksumop *csop)
 		if (cert == NULL)
 			return -EPERM;
 		if (csop->op == ANOUBIS_CHECKSUM_OP_ADDSIG) {
-			if (!csop->sigdata || csop->siglen < ANOUBIS_CS_LEN)
+			if (abuf_length(csop->sigbuf) < ANOUBIS_CS_LEN)
 				return -EINVAL;
 		} else {
-			if (csop->sigdata)
+			if (!abuf_empty(csop->sigbuf))
 				return -EINVAL;
 		}
 		break;
 	case ANOUBIS_CHECKSUM_OP_GENERIC_LIST:
 		if (csop->listflags & ~(ANOUBIS_CSUM_FLAG_MASK))
 			return -EINVAL;
-		if (csop->sigdata || csop->siglen)
+		if (!abuf_empty(csop->sigbuf))
 			return -EINVAL;
 		if (csop->listflags & ANOUBIS_CSUM_UPGRADED) {
 			if (csop->listflags
 			    != (ANOUBIS_CSUM_UPGRADED | ANOUBIS_CSUM_KEY))
 				return -EINVAL;
 			if (csop->idlen == 0 || csop->keyid == NULL)
-				return -EINVAL;
-			if  (csop->sigdata || csop->siglen)
 				return -EINVAL;
 		} else if (csop->listflags & ANOUBIS_CSUM_WANTIDS) {
 			/* WANTIDS implies ALL */
@@ -1432,6 +1436,154 @@ sfs_op_is_add(int op)
 }
 
 int
+sfs_parse_csmulti(struct sfs_checksumop *dst, struct abuf_buffer mbuf,
+    uid_t auth_uid)
+{
+	Anoubis_CSMultiRequestMessage		*req;
+	unsigned int				 off, off2;
+	unsigned int				 i, nrec = 0;
+	int					 add = 0;
+
+	if ((req = abuf_cast(mbuf, Anoubis_CSMultiRequestMessage)) == NULL)
+		return -EFAULT;
+	memset(dst, 0, sizeof(struct sfs_checksumop));
+	dst->auth_uid = auth_uid;
+	off = sizeof(Anoubis_CSMultiRequestMessage);
+	if (get_value(req->type) != ANOUBIS_P_CSMULTIREQUEST)
+		return -EINVAL;
+	dst->op = get_value(req->operation);
+	switch(dst->op) {
+	case ANOUBIS_CHECKSUM_OP_ADDSUM:
+	case ANOUBIS_CHECKSUM_OP_ADDSIG:
+		add = 1;
+		break;
+	case ANOUBIS_CHECKSUM_OP_GET2:
+	case ANOUBIS_CHECKSUM_OP_GETSIG2:
+	case ANOUBIS_CHECKSUM_OP_DEL:
+	case ANOUBIS_CHECKSUM_OP_DELSIG:
+		break;
+	default:
+		return -EINVAL;
+	}
+	dst->listflags = 0;
+	dst->uid = get_value(req->uid);
+	dst->idlen = get_value(req->idlen);
+	if (dst->idlen && dst->uid)
+		return -EINVAL;
+	if (dst->idlen) {
+		dst->keyid = abuf_toptr(mbuf, off, dst->idlen);
+		if (dst->keyid == NULL)
+			return -EFAULT;
+		off += dst->idlen;
+	}
+	dst->sigbuf = ABUF_EMPTY;
+	dst->path = NULL;
+
+	/* Validation checks. */
+	if (dst->idlen) {
+		struct cert	*cert = NULL;
+
+		cert = cert_get_by_keyid(dst->keyid, dst->idlen);
+		if (cert == NULL)
+			return -EPERM;
+		/*
+		 * If the requesting user is not root, the certificate
+		 * must belong to the authenticated user.
+		 */
+		if (cert->uid != dst->auth_uid && dst->auth_uid != 0)
+			return -EPERM;
+	} else {
+		if (dst->uid != dst->auth_uid && dst->auth_uid != 0)
+			return -EPERM;
+	}
+	/* Count the records */
+	off2 = off;
+	while (1) {
+		struct abuf_buffer		 rbuf = abuf_open(mbuf, off2);
+		Anoubis_CSMultiRequestRecord	*r;
+		unsigned int			 len;
+
+		r = abuf_cast(rbuf, Anoubis_CSMultiRequestRecord);
+		if (!r)
+			return -EFAULT;
+		len = get_value(r->length);
+		if (len == 0)
+			break;
+		if (len > abuf_length(rbuf))
+			return -EFAULT;
+		off2 += len;
+		nrec++;
+	}
+	/* Allocate memory for the records */
+	dst->nrec = nrec;
+	dst->csmulti = malloc(nrec * sizeof(struct sfs_csmulti_record));
+	if (dst->csmulti == NULL)
+		return -EFAULT;
+	/* Fill the records one at a time. */
+	for (i=0; i<nrec; ++i) {
+		struct abuf_buffer		 rbuf = abuf_open(mbuf, off);
+		struct abuf_buffer		 pbuf;
+		Anoubis_CSMultiRequestRecord	*r;
+		unsigned int			 len, cslen;
+
+		r = abuf_cast(rbuf, Anoubis_CSMultiRequestRecord);
+		if (!r)
+			goto fault;
+
+		len = get_value(r->length);
+		if (len < sizeof(Anoubis_CSMultiRequestRecord))
+			goto fault;
+		if (abuf_limit(&rbuf, len) < len)
+			goto fault;
+		off += len;
+		off2 = offsetof(Anoubis_CSMultiRequestRecord, payload);
+
+		/*
+		 * If this is an add request, we expect cslen bytes of
+		 * checksum data.
+		 */
+		dst->csmulti[i].index = get_value(r->index);
+		cslen = get_value(r->cslen);
+		if (cslen) {
+			switch(dst->op) {
+			case ANOUBIS_CHECKSUM_OP_ADDSUM:
+				if (cslen != ANOUBIS_CS_LEN)
+					goto invalid;
+				break;
+			case ANOUBIS_CHECKSUM_OP_ADDSIG:
+				if (cslen < ANOUBIS_CS_LEN)
+					goto invalid;
+				break;
+			default:
+				goto invalid;
+			}
+			pbuf = abuf_open(rbuf, off2);
+			if (abuf_limit(&pbuf, cslen) != cslen)
+				goto fault;
+			dst->csmulti[i].csdata = pbuf;
+			off2 += cslen;
+		} else {
+			if (add)
+				goto invalid;
+			dst->csmulti[i].csdata = ABUF_EMPTY;
+		}
+		/* The rest of the payload is the path name. */
+		dst->csmulti[i].path = abuf_tostr(rbuf, off2);
+		if (dst->csmulti[i].path == NULL)
+			goto fault;
+	}
+	return 0;
+fault:
+	free(dst->csmulti);
+	dst->csmulti = NULL;
+	return -EFAULT;
+invalid:
+	free(dst->csmulti);
+	dst->csmulti = NULL;
+	return -EINVAL;
+}
+
+int
 sfs_parse_checksumop(struct sfs_checksumop *dst, struct anoubis_msg *m,
     uid_t auth_uid)
 {
@@ -1453,19 +1605,22 @@ sfs_parse_checksumop(struct sfs_checksumop *dst, struct anoubis_msg *m,
 	if (dst->idlen < 0)
 		return -EFAULT;
 	if (sfs_op_is_add(dst->op)) {
+		int	siglen;
+
 		if (!VERIFY_LENGTH(m, sizeof(Anoubis_ChecksumAddMessage)))
 			return -EINVAL;
 		payload = m->u.checksumadd->payload;
-		dst->siglen = get_value(m->u.checksumadd->cslen);
-		if (dst->siglen < 0)
+		siglen = get_value(m->u.checksumadd->cslen);
+		if (siglen < 0)
 			return -EFAULT;
-		dst->sigdata = (u_int8_t*)payload + dst->idlen;
+		dst->sigbuf =
+		    abuf_open_frommem((u_int8_t*)payload + dst->idlen, siglen);
 	} else {
 		payload = m->u.checksumrequest->payload;
 	}
 	if (dst->idlen)
 		dst->keyid = payload;
-	dst->path = payload + dst->idlen + dst->siglen;
+	dst->path = payload + dst->idlen + abuf_length(dst->sigbuf);
 	curlen = (char*)payload - (char*)m->u.buf;
 	if (curlen < 0 || curlen > (int)m->length - CSUM_LEN)
 		return -EFAULT;

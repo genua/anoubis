@@ -1204,6 +1204,7 @@ anoubis_csmulti_find(struct anoubis_csmulti_request *req, unsigned int idx)
 		}
 		record = TAILQ_NEXT(record, next);
 	}
+	record = TAILQ_FIRST(&req->reqs);
 	while(record && record != req->last) {
 		if (record->idx == idx) {
 			req->last = record;
@@ -1229,14 +1230,14 @@ anoubis_csmulti_destroy(struct anoubis_csmulti_request *request)
 	}
 	while ((tmp = request->reply_msg) != NULL) {
 		request->reply_msg = tmp->next;
-		anoubis_msg_free(request->reply_msg);
+		anoubis_msg_free(tmp);
 	}
 	free(request);
 }
 
 int
 anoubis_csmulti_add(struct anoubis_csmulti_request *request,
-    const char *path, void *csdata, unsigned int cslen)
+    const char *path, const void *csdata, unsigned int cslen)
 {
 	struct anoubis_csmulti_record	*record;
 	void				*data;
@@ -1353,6 +1354,8 @@ anoubis_client_csmulti_steps(struct anoubis_transaction *t,
 		r = (Anoubis_CSMultiReplyRecord *)
 		    (m->u.csmultireply->payload + off);
 		rlen = get_value(r->length);
+		if (rlen == 0)
+			break;
 		if (rlen < sizeof(Anoubis_CSMultiReplyRecord))
 			goto err;
 		if (off + rlen < off)
@@ -1425,6 +1428,7 @@ anoubis_csmulti_msg(struct anoubis_csmulti_request *request)
 	struct anoubis_csmulti_record	*record;
 	unsigned int			 length = 0, recoff;
 	int				 add = 0;
+	unsigned int			 nrec = 0;
 	Anoubis_CSMultiRequestRecord	*r;
 
 	/* First we check if the minimal conditions are met */
@@ -1462,7 +1466,11 @@ anoubis_csmulti_msg(struct anoubis_csmulti_request *request)
 		/* Only request records that have not yet been asked for. */
 		if (record->error != EAGAIN)
 			continue;
+		/* Limit message size (currently to 8000 bytes) */
+		if (length + record->length > 8000)
+			break;
 		length += record->length;
+		nrec++;
 	}
 	/* Sentinel */
 	length += sizeof(Anoubis_CSMultiRequestRecord);
@@ -1502,6 +1510,9 @@ anoubis_csmulti_msg(struct anoubis_csmulti_request *request)
 			memcpy(r->payload, record->path, plen);
 		}
 		recoff += record->length;
+		nrec--;
+		if (nrec == 0)
+			break;
 	}
 	/* Sentinel */
 	r = (Anoubis_CSMultiRequestRecord *)(m->u.csmultireq->payload + recoff);

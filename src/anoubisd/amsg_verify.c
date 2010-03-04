@@ -270,41 +270,92 @@ TYPE ## _size(const char *buf __attribute__((unused)), int buflen)	\
 }
 
 /*
- * Size of an sfs_checksumop payload.
+ * Logical size of a csmulti request record.
  */
-int
-amsg_sfs_checksumop_size(const char *buf, int buflen)
+static int
+amsg_csmulti_request_record_size(const char *buf, int buflen)
 {
-	Anoubis_ChecksumRequestMessage	*msg;
-	Anoubis_ChecksumAddMessage	*addmsg;
-	int				 idlen = 0, cslen = 0;
-	int				 op;
+	Anoubis_CSMultiRequestRecord	*r;
 	DECLARE_SIZE();
 
-	/* Space for the anoubis protocol Checksum message at the end. */
-	POP_CNT(CSUM_LEN, buflen);
-	CAST(msg, buf, buflen);
-	op = get_value(msg->operation);
-	if (op == ANOUBIS_CHECKSUM_OP_ADDSUM
-	    || op == ANOUBIS_CHECKSUM_OP_ADDSIG) {
-		CAST(addmsg, buf, buflen);
-		cslen = get_value(addmsg->cslen);
-		if (cslen < SHA256_DIGEST_LENGTH)
-			return -1;
-		SHIFT_FIELD(addmsg, payload, buf, buflen);
-	} else {
-		SHIFT_FIELD(msg, payload, buf, buflen);
-	}
-	idlen = get_value(msg->idlen);
-	SHIFT_CNT(idlen, buf, buflen);
-	SHIFT_CNT(cslen, buf, buflen);
+	CAST(r, buf, buflen);
+	SHIFT_FIELD(r, payload, buf, buflen);
+	SHIFT_CNT(get_value(r->cslen), buf,  buflen);
 	SHIFT_STRING(buf, buflen);
 
 	RETURN_SIZE();
 }
 
 /*
- * Size of an anobuisd_msg_csumreply structure.
+ * Size of an sfs_checksumop payload.
+ */
+int
+amsg_sfs_checksumop_size(const char *buf, int buflen)
+{
+	Anoubis_GeneralMessage		*gen;
+	int				 type;
+	DECLARE_SIZE();
+
+	/* Space for the anoubis protocol Checksum message at the end. */
+	POP_CNT(CSUM_LEN, buflen);
+	CAST(gen, buf, buflen);
+	type = get_value(gen->type);
+	if (type == ANOUBIS_P_CSMULTIREQUEST) {
+		Anoubis_CSMultiRequestMessage	*req;
+		Anoubis_CSMultiRequestRecord	*r;
+		int				 recoff;
+		int				 idlen;
+
+		CAST(req, buf, buflen);
+		recoff = get_value(req->recoff);
+		idlen = get_value(req->idlen);
+		SHIFT_FIELD(req, payload, buf, buflen);
+		if (recoff < idlen)
+			return -1;
+		SHIFT_CNT(recoff, buf, buflen);
+		while (1) {
+			int	reclen, reallen;
+
+			CAST(r, buf, buflen);
+			reclen = get_value(r->length);
+			if (reclen == 0)
+				break;
+			if (reclen > buflen)
+				return -1;
+			reallen = amsg_csmulti_request_record_size(buf, reclen);
+			if (reallen < 0 || reallen > reclen)
+				return -1;
+			SHIFT_CNT(reclen, buf, buflen);
+		}
+		SHIFT_CNT(sizeof(Anoubis_CSMultiRequestRecord), buf, buflen);
+	} else {
+		Anoubis_ChecksumRequestMessage	*msg;
+		Anoubis_ChecksumAddMessage	*addmsg;
+		int				 op, idlen = 0, cslen = 0;
+
+		CAST(msg, buf, buflen);
+		op = get_value(msg->operation);
+		if (op == ANOUBIS_CHECKSUM_OP_ADDSUM
+		    || op == ANOUBIS_CHECKSUM_OP_ADDSIG) {
+			CAST(addmsg, buf, buflen);
+			cslen = get_value(addmsg->cslen);
+			if (cslen < SHA256_DIGEST_LENGTH)
+				return -1;
+			SHIFT_FIELD(addmsg, payload, buf, buflen);
+		} else {
+			SHIFT_FIELD(msg, payload, buf, buflen);
+		}
+		idlen = get_value(msg->idlen);
+		SHIFT_CNT(idlen, buf, buflen);
+		SHIFT_CNT(cslen, buf, buflen);
+		SHIFT_STRING(buf, buflen);
+	}
+
+	RETURN_SIZE();
+}
+
+/*
+ * Size of an anoubisd_msg_csumreply structure.
  */
 static int
 anoubisd_msg_csumreply_size(const char *buf, int buflen)
@@ -767,6 +818,8 @@ anoubisd_msg_size(const char *buf, int buflen)
 	    buf, buflen);
 	VARIANT(ANOUBISD_MSG_AUTH_VERIFY, anoubisd_msg_authverify, buf, buflen);
 	VARIANT(ANOUBISD_MSG_AUTH_RESULT, anoubisd_msg_authresult, buf, buflen);
+	VARIANT(ANOUBISD_MSG_CSMULTIREQUEST, anoubisd_msg_csumop, buf, buflen);
+	VARIANT(ANOUBISD_MSG_CSMULTIREPLY, anoubisd_msg_csumreply, buf, buflen);
 	default:
 		log_warnx("anoubisd_msg_size: Bad message type %d",
 		    msg->mtype);

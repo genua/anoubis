@@ -30,7 +30,7 @@
 # Nethertheless the tests are useful and should be shipped.
 
 noinst_PROGRAMS = test_anoubisd test_peunit anoubisd_policy_dos \
-		  anoubisd_wblock anoubisd_rblock
+		  anoubisd_wblock anoubisd_rblock anoubisd_csmulti
 
 TESTS = test_peunit
 
@@ -96,4 +96,10 @@ anoubisd_rblock_DEPENDENCIES = $(test_dependencies)
 anoubisd_rblock_SOURCES = \
 	anoubisd_rblock.c \
 	protocol_utils.c\
+	protocol_utils.h
+
+anoubisd_csmulti_DEPENDENCIES = $(test_dependencies)
+anoubisd_csmulti_SOURCES = \
+	anoubisd_csmulti.c \
+	protocol_utils.c \
 	protocol_utils.h

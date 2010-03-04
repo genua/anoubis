@@ -180,6 +180,8 @@ enum anoubisd_msg_type {
 	ANOUBISD_MSG_AUTH_CHALLENGE,
 	ANOUBISD_MSG_AUTH_VERIFY,
 	ANOUBISD_MSG_AUTH_RESULT,
+	ANOUBISD_MSG_CSMULTIREQUEST,
+	ANOUBISD_MSG_CSMULTIREPLY,
 };
 
 /* format of ANOUBISD_MSG_EVENTDEV is struct eventdev_hdr */
@@ -447,5 +449,6 @@ extern unsigned long	version;
 #define DBG_SFSCACHE	0x8000
 #define DBG_PE_BORROW	0x10000
 #define DBG_UPGRADE	0x20000
+#define DBG_CSUM	0x40000
 
 #endif /* !_ANOUBISD_H */

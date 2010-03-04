@@ -228,14 +228,41 @@ extern void			abuf_free(struct abuf_buffer buf);
  * holds the data must be freed and this will invalidate the dependent
  * buffer returned from this function as well.
  *
- * @param BUF The buffer.
- * @param OFF The offset into th buffer where the memory area represented
+ * @param buf The buffer.
+ * @param off The offset into th buffer where the memory area represented
  *     by the new buffer starts.
  * @return A buffer that represents the memory area starting at offset
  *     OFF in the buffer. The memory area extends up to the end of the
  *     buffer.
  */
-extern struct abuf_buffer	abuf_open(struct abuf_buffer, unsigned int);
+extern struct abuf_buffer	abuf_open(struct abuf_buffer buf,
+				    unsigned int off);
+
+
+/**
+ * Limit the size of an existing buffer to the given number of bytes.
+ * This is mostly useful for dependent buffers that are not created by
+ * abuf_alloc.
+ *
+ * @param bufp A _pointer_ to the buffer.
+ * @param len The new length limit of the buffer.
+ * @return The actual length. This may be smaller than the length parameter
+ *    if the initial buffer size is smaller.
+ */
+extern unsigned int		abuf_limit(struct abuf_buffer *buf,
+				    unsigned int len);
+
+/**
+ * Creata new buffer that represents pre-allocated memory that is not
+ * under the control of this library. Obviously, such a buffer must not
+ * be passed bo abuf_free and it is invalidated if the underlying memory
+ * is freed.
+ *
+ * @param data A pointer to the memory area.
+ * @param len The length of the buffer.
+ * @return A buffer that represents the memory region.
+ */
+extern struct abuf_buffer	abuf_open_frommem(void *data, unsigned int len);
 
 /**
  * Compare the contents of two buffers using memcmp. At most cmplen
@@ -305,6 +332,17 @@ extern unsigned int	abuf_copy(struct abuf_buffer dst,
 extern unsigned int	abuf_copy_part(struct abuf_buffer dst,
 			    unsigned int dstoff, struct abuf_buffer src,
 			    unsigned int srcoff, unsigned int len);
+
+/**
+ * Return a pointer to a string within a buffer. This function verifies
+ * that the string is NUL-Terminated.
+ *
+ * @param buf The buffer.
+ * @param off The offset where the string starts.
+ * @return A pointer to the string or NULL if the string exceeds the
+ *     boundaries of the buffer.
+ */
+extern const char *	abuf_tostr(struct abuf_buffer buf, unsigned int off);
 
 /**
  * XXX CEH: Try to avoid the use of this function. It defeats the purpose

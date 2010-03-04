@@ -41,6 +41,12 @@
 #define SFSDATA_FORMAT_VERSION		1
 #define SFSDATA_MAX_FIELD_LENGTH	4096
 
+struct sfs_csmulti_record {
+	unsigned int		 index;
+	const char		*path;
+	struct abuf_buffer	 csdata;
+};
+
 struct sfs_checksumop {
 	int		 op;		/* Checksum Operation */
 	unsigned int	 listflags;	/* Flags for list operations */
@@ -48,9 +54,12 @@ struct sfs_checksumop {
 	uid_t		 auth_uid;	/* UID of requesting user */
 	int		 idlen;		/* Length of key id (if any) */
 	const u_int8_t	*keyid;		/* The Key ID in binary form */
-	int		 siglen;	/* Length of csum/signature data */
-	const u_int8_t	*sigdata;	/* Signature data */
+	/* Only used for non-csmulti requests */
+	struct abuf_buffer	sigbuf;	/* Signature data */
 	const char	*path;		/* NUL-terminated path name. */
+	/* Only used for cs-multi requests */
+	unsigned int	 nrec;		/* Number of recrods */
+	struct sfs_csmulti_record *csmulti;	/* The records. */
 };
 
 struct sfs_data {
@@ -75,6 +84,8 @@ int	 sfs_wantentry(const struct sfs_checksumop *, const char *sfs_path,
 	     const char *entryname);
 int	 sfs_parse_checksumop(struct sfs_checksumop *dst,
 	     struct anoubis_msg *m, uid_t auth_uid);
+int	 sfs_parse_csmulti(struct sfs_checksumop *dst,
+	     struct abuf_buffer msg, uid_t auth_uid);
 
 /* Public SFS-Cache functions */
 void	 sfshash_init(void);

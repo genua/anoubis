@@ -90,6 +90,25 @@ abuf_open(struct abuf_buffer buf, unsigned int off)
 }
 
 struct abuf_buffer
+abuf_open_frommem(void *data, unsigned int len)
+{
+	struct abuf_buffer	buf;
+
+	buf.data = data;
+	buf.length = len;
+
+	return buf;
+}
+
+unsigned int
+abuf_limit(struct abuf_buffer *bufp, unsigned int len)
+{
+	if (len < bufp->length)
+		bufp->length = len;
+	return bufp->length;
+}
+
+struct abuf_buffer
 abuf_zalloc(unsigned int length)
 {
 	struct abuf_buffer	buf = abuf_alloc(length);
@@ -190,4 +209,17 @@ abuf_copy_part(struct abuf_buffer dst, unsigned int dstoff,
 		return 0;
 	memmove(dst.data + dstoff, src.data + srcoff, len);
 	return len;
+}
+
+const char *
+abuf_tostr(struct abuf_buffer buf, unsigned int off)
+{
+	unsigned int	 i = off;
+	const char	*data = buf.data;
+
+	for (i=off; i<buf.length; ++i)
+		if (data[i] == 0)
+			return buf.data+off;
+
+	return NULL;
 }

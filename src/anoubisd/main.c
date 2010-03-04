@@ -1210,12 +1210,13 @@ init_root_key(char *passphrase, struct event_info_main *ev_info)
 }
 
 static anoubisd_msg_t *
-create_checksumreply_msg(u_int64_t token, int payloadlen)
+create_checksumreply_msg(int type, u_int64_t token, int payloadlen)
 {
 	anoubisd_msg_t			*msg;
 	struct anoubisd_msg_csumreply	*reply;
-	msg = msg_factory(ANOUBISD_MSG_CHECKSUMREPLY,
-	    sizeof(struct anoubisd_msg_csumreply) + payloadlen);
+
+	msg = msg_factory(type, sizeof(struct anoubisd_msg_csumreply)
+	    + payloadlen);
 	if (!msg) {
 		master_terminate(ENOMEM);
 		return 0;
@@ -1256,7 +1257,8 @@ sfs_checksumop_list(struct sfs_checksumop *csop, u_int64_t token,
 			error = 0;
 		goto out;
 	}
-	msg = create_checksumreply_msg(token, 8000);
+	msg = create_checksumreply_msg(ANOUBISD_MSG_CHECKSUMREPLY,
+	    token, 8000);
 	reply = (struct anoubisd_msg_csumreply *)msg->msg;
 	reply->flags |= POLICY_FLAG_START;
 	offset = 0;
@@ -1279,7 +1281,8 @@ sfs_checksumop_list(struct sfs_checksumop *csop, u_int64_t token,
 			    sizeof(struct anoubisd_msg_csumreply) + offset);
 			enqueue(&eventq_m2s, msg);
 			event_add(ev_info->ev_m2s, NULL);
-			msg = create_checksumreply_msg(token, 8000);
+			msg = create_checksumreply_msg(
+			    ANOUBISD_MSG_CHECKSUMREPLY, token, 8000);
 			reply = (struct anoubisd_msg_csumreply *)msg->msg;
 			offset = 0;
 		}
@@ -1313,13 +1316,167 @@ out:
 		reply->len = 0;
 		reply->flags |= POLICY_FLAG_END;
 	} else {
-		msg = create_checksumreply_msg(token, 0);
+		msg = create_checksumreply_msg(ANOUBISD_MSG_CHECKSUMREPLY,
+		    token, 0);
 		reply = (struct anoubisd_msg_csumreply *)msg->msg;
 		reply->flags = (POLICY_FLAG_START | POLICY_FLAG_END);
 	}
 	reply->reply = error;
 	enqueue(&eventq_m2s, msg);
 	event_add(ev_info->ev_m2s, NULL);
+}
+
+static void
+send_sfscache_invalidate(struct sfs_checksumop *csop,
+    struct event_info_main *ev_info)
+{
+	switch (csop->op) {
+	case ANOUBIS_CHECKSUM_OP_ADDSUM:
+	case ANOUBIS_CHECKSUM_OP_DEL:
+		send_sfscache_invalidate_uid(csop->path, csop->uid, ev_info);
+		break;
+	case ANOUBIS_CHECKSUM_OP_ADDSIG:
+	case ANOUBIS_CHECKSUM_OP_DELSIG:
+		send_sfscache_invalidate_key(csop->path, csop->keyid,
+		    csop->idlen, ev_info);
+	}
+}
+
+static int
+sfs_process_csmulti(struct sfs_checksumop *csop, u_int64_t token,
+    struct event_info_main *ev_info)
+{
+	int				 get = 0;
+	unsigned int			 totallen = 0;
+	int				*errors = NULL;
+	struct abuf_buffer		*sigbufs = NULL;
+	struct abuf_buffer		 rbuf;
+	unsigned int			 nrec = csop->nrec;
+	unsigned int			 i;
+	struct anoubisd_msg		*msg = NULL;
+	struct anoubisd_msg_csumreply	*reply;
+	Anoubis_CSMultiReplyMessage	*rep;
+	Anoubis_CSMultiReplyRecord	*r;
+	unsigned int			 off;
+
+	DEBUG(DBG_TRACE, " >sfs_process_csmulti");
+	if (csop->op == ANOUBIS_CHECKSUM_OP_GET2
+	    || csop->op == ANOUBIS_CHECKSUM_OP_GETSIG2)
+		get = 1;
+	if (nrec > 1000)
+		nrec = 1000;
+	errors = malloc(nrec * sizeof(int));
+	if (!errors) {
+		DEBUG(DBG_TRACE, " <sfs_process_csmulti (ENOMEM)");
+		return -ENOMEM;
+	}
+	if (get) {
+		sigbufs = malloc(nrec * sizeof(struct abuf_buffer));
+		if (sigbufs == NULL) {
+			free(errors);
+			DEBUG(DBG_TRACE, " <sfs_process_csmulti (ENOMEM)");
+			return -ENOMEM;
+		}
+		for (i=0; i<nrec; ++i)
+			sigbufs[i] = ABUF_EMPTY;
+	}
+	totallen = sizeof(Anoubis_CSMultiReplyMessage);
+	DEBUG(DBG_CSUM, " sfs_process_csmulti: nrec=%d", nrec);
+	for (i=0; i<nrec; ++i) {
+		csop->path = csop->csmulti[i].path;
+		csop->sigbuf = csop->csmulti[i].csdata;
+		if (get)
+			errors[i] = -sfs_checksumop(csop, &sigbufs[i]);
+		else
+			errors[i] = -sfs_checksumop(csop, NULL);
+		totallen += sizeof(Anoubis_CSMultiReplyRecord);
+		if (errors[i]) {
+			if (get) {
+				abuf_free(sigbufs[i]);
+				sigbufs[i] = ABUF_EMPTY;
+			}
+		} else {
+			if (get)
+				totallen += abuf_length(sigbufs[i]);
+			else
+				send_sfscache_invalidate(csop, ev_info);
+		}
+		if (totallen > 16000) {
+			nrec = i+1;
+			break;
+		}
+	}
+	totallen += sizeof(Anoubis_CSMultiReplyRecord);
+	msg = create_checksumreply_msg(ANOUBISD_MSG_CSMULTIREPLY, token,
+	    totallen);
+	if (!msg)
+		goto nomem;
+
+	reply = (struct anoubisd_msg_csumreply *)msg->msg;
+	reply->flags = POLICY_FLAG_START | POLICY_FLAG_END;
+	reply->reply = 0;
+	rbuf = abuf_open_frommem(reply->data, totallen);
+	rep = abuf_cast(rbuf, Anoubis_CSMultiReplyMessage);
+	set_value(rep->type, ANOUBIS_P_CSMULTIREPLY);
+	set_value(rep->operation, csop->op);
+	set_value(rep->error, 0);
+	off = offsetof(Anoubis_CSMultiReplyMessage, payload);
+	for (i=0; i<nrec; ++i) {
+		unsigned int			 length;
+
+		length = sizeof(Anoubis_CSMultiReplyRecord);
+		if (get)
+			length += abuf_length(sigbufs[i]);
+		r = abuf_cast_off(rbuf, off, Anoubis_CSMultiReplyRecord);
+		if (!r)
+			goto nomem;
+		set_value(r->length, length);
+		set_value(r->index, csop->csmulti[i].index);
+		set_value(r->error, errors[i]);
+		if (get && abuf_length(sigbufs[i])) {
+			unsigned int cp;
+			unsigned int off2;
+
+			off2 = off
+			    + offsetof(Anoubis_CSMultiReplyRecord, payload);
+			cp = abuf_copy_part(rbuf, off2, sigbufs[i], 0,
+			    abuf_length(sigbufs[i]));
+			if (cp != abuf_length(sigbufs[i]))
+				goto nomem;
+			abuf_free(sigbufs[i]);
+			sigbufs[i] = ABUF_EMPTY;
+		}
+		off += length;
+	}
+	r = abuf_cast_off(rbuf, off, Anoubis_CSMultiReplyRecord);
+	if (!r)
+		goto nomem;
+	set_value(r->length, 0);
+	set_value(r->index, 0);
+	set_value(r->error, 0);
+	free(errors);
+	if (sigbufs)
+		free(sigbufs);
+
+	enqueue(&eventq_m2s, msg);
+	DEBUG(DBG_QUEUE, " >eventq_m2s: %" PRIx64, reply->token);
+	event_add(ev_info->ev_m2s, NULL);
+	DEBUG(DBG_TRACE, " <sfs_process_csmulti (success)");
+
+	return 0;
+
+nomem:
+	if (msg)
+		free(msg);
+	if (errors)
+		free(errors);
+	if (sigbufs) {
+		for (i=0; i<nrec; ++i)
+			abuf_free(sigbufs[i]);
+		free(sigbufs);
+	}
+	DEBUG(DBG_TRACE, " <sfs_process_csmulti (error, ENOMEM)");
+	return -ENOMEM;
 }
 
 static void
@@ -1364,18 +1521,10 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 		goto out;
 	}
 
-	switch (csop.op) {
-	case ANOUBIS_CHECKSUM_OP_ADDSUM:
-	case ANOUBIS_CHECKSUM_OP_DEL:
-		send_sfscache_invalidate_uid(csop.path, csop.uid, ev_info);
-		break;
-	case ANOUBIS_CHECKSUM_OP_ADDSIG:
-	case ANOUBIS_CHECKSUM_OP_DELSIG:
-		send_sfscache_invalidate_key(csop.path, csop.keyid,
-		    csop.idlen, ev_info);
-	}
+	send_sfscache_invalidate(&csop, ev_info);
 out:
-	msg = create_checksumreply_msg(msg_csum->token, abuf_length(sigbuf));
+	msg = create_checksumreply_msg(ANOUBISD_MSG_CHECKSUMREPLY,
+	    msg_csum->token, abuf_length(sigbuf));
 	reply = (struct anoubisd_msg_csumreply *)msg->msg;
 	reply->reply = -err;
 	reply->flags = POLICY_FLAG_START | POLICY_FLAG_END;
@@ -1386,6 +1535,43 @@ out:
 	enqueue(&eventq_m2s, msg);
 	DEBUG(DBG_QUEUE, " >eventq_m2s: %" PRIx64, reply->token);
 	event_add(ev_info->ev_m2s, NULL);
+}
+
+static void
+dispatch_csmulti_request(anoubisd_msg_t *msg, struct event_info_main *ev_info)
+{
+	struct anoubisd_msg_csumop	*msg_csum;
+	struct sfs_checksumop		 csop;
+	struct anoubisd_msg_csumreply	*reply;
+	struct abuf_buffer		 mbuf;
+	int				 err;
+
+	DEBUG(DBG_TRACE, " >dispatch_csmulti_request");
+	msg_csum = (struct anoubisd_msg_csumop *)msg->msg;
+	mbuf = abuf_open_frommem(msg_csum->msg, msg_csum->len);
+	err = sfs_parse_csmulti(&csop, mbuf, msg_csum->uid);
+	if (err < 0)
+		goto err;
+	err = sfs_process_csmulti(&csop, msg_csum->token, ev_info);
+	if (csop.csmulti)
+		free(csop.csmulti);
+	if (err)
+		goto err;
+	DEBUG(DBG_TRACE, " <dispatch_csmulti_request (success)");
+	return;
+
+err:
+	if (csop.csmulti)
+		free(csop.csmulti);
+	msg = create_checksumreply_msg(ANOUBISD_MSG_CSMULTIREPLY,
+	    msg_csum->token, 0);
+	reply = (struct anoubisd_msg_csumreply *)msg->msg;
+	reply->reply = -err;
+	reply->flags = POLICY_FLAG_START | POLICY_FLAG_END;
+	enqueue(&eventq_m2s, msg);
+	DEBUG(DBG_QUEUE, " >eventq_m2s %" PRIx64, reply->token);
+	event_add(ev_info->ev_m2s, NULL);
+	DEBUG(DBG_TRACE, " <dispatch_csmulti_request (error)");
 }
 
 static void
@@ -1562,6 +1748,9 @@ dispatch_s2m(int fd, short event __used, void *arg)
 		switch(msg->mtype) {
 		case ANOUBISD_MSG_CHECKSUM_OP:
 			dispatch_checksumop(msg, ev_info);
+			break;
+		case ANOUBISD_MSG_CSMULTIREQUEST:
+			dispatch_csmulti_request(msg, ev_info);
 			break;
 		case ANOUBISD_MSG_PASSPHRASE:
 			dispatch_passphrase(msg, ev_info);

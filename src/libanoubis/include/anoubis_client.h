@@ -150,7 +150,7 @@ anoubis_csmulti_destroy(struct anoubis_csmulti_request *request);
  */
 int
 anoubis_csmulti_add(struct anoubis_csmulti_request *request,
-    const char *path, void *csdata, unsigned int cslen);
+    const char *path, const void *csdata, unsigned int cslen);
 
 /**
  * Create the csmulti message that actually start an anoubis_csmulti_request.

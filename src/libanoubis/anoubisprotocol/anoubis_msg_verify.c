@@ -297,11 +297,10 @@ verify_csmultireply(const struct anoubis_msg *m)
 		return plen < 8;
 	while (1) {
 		unsigned int		 reclen;
-		unsigned int		 reallen;
 		unsigned int		 off2;
 		struct anoubis_csentry	*e;
 
-		if (VERIFY_BUFFER(m, csmultireply, payload, off,
+		if (!VERIFY_BUFFER(m, csmultireply, payload, off,
 		    sizeof(Anoubis_CSMultiReplyRecord)))
 			return 0;
 		r = (void *)(m->u.csmultireply->payload + off);
@@ -312,10 +311,9 @@ verify_csmultireply(const struct anoubis_msg *m)
 		    || !VERIFY_BUFFER(m, csmultireply, payload, off, reclen))
 			return 0;
 		off += reclen;
-		reallen = sizeof(Anoubis_CSMultiReplyRecord);
 		/* Only successful get requests can have a payload. */
 		if (!get || get_value(r->error)) {
-			if (reallen + 8 < reclen)
+			if (reclen > sizeof(Anoubis_CSMultiReplyRecord) + 8)
 				return 0;
 			continue;
 		}
@@ -330,7 +328,7 @@ verify_csmultireply(const struct anoubis_msg *m)
 			e = (struct anoubis_csentry *)(r->payload + off2);
 			reclen -= sizeof(struct anoubis_csentry);
 			off2 += sizeof(struct anoubis_csentry);
-			cslen = get_value(e->cstype);
+			cslen = get_value(e->cslen);
 			if (cslen > reclen)
 				return 0;
 			off2 += cslen;
