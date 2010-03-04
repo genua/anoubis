@@ -52,9 +52,15 @@
 #include "DlgRuleEditorAttrProvider.h"
 
 
-#define ADD_PROPERTY(table, type) \
+#define ADD_PROPERTY(table, type, width) \
 	table->addProperty(new DlgRuleEditorListProperty( \
-	    DlgRuleEditorListProperty::type))
+	    DlgRuleEditorListProperty::type), width)
+
+#define SET_TABLE(grid, table) \
+	do { \
+		grid->SetTable(table, false, wxGrid::wxGridSelectRows); \
+		table->assignColumnWidth();\
+	} while(0)
 
 
 DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
@@ -91,65 +97,67 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
 	tx_userSelect->Disable();
 
 	/* Fill table for app polilcies with columns. */
-	appTable_ = new AnTable(wxT("/Options/Columns/App/"));
+	appTable_ = new AnTable(wxT("/State/DlgRuleEditor/Columns/App/"));
 	appTable_->SetAttrProvider(new DlgRuleEditorAttrProvider(appTable_));
-	ADD_PROPERTY(appTable_, PROPERTY_ID);
-	ADD_PROPERTY(appTable_, PROPERTY_TYPE);
-	ADD_PROPERTY(appTable_, PROPERTY_USER);
-	ADD_PROPERTY(appTable_, PROPERTY_NOSFS);
-	ADD_PROPERTY(appTable_, PROPERTY_BINARY);
-	appGrid->SetTable(appTable_);
+	ADD_PROPERTY(appTable_, PROPERTY_ID, 45);
+	ADD_PROPERTY(appTable_, PROPERTY_TYPE, 40);
+	ADD_PROPERTY(appTable_, PROPERTY_USER, 55);
+	ADD_PROPERTY(appTable_, PROPERTY_NOSFS, 55);
+	ADD_PROPERTY(appTable_, PROPERTY_BINARY, 255);
+	SET_TABLE(appGrid, appTable_);
+	appGrid->setCursorVisibility(false);
 
 	/* Fill table for alf filter polilcies with columns. */
-	alfTable_ = new AnTable(wxT("/Options/Columns/Alf/"));
+	alfTable_ = new AnTable(wxT("/State/DlgRuleEditor/Columns/Alf/"));
 	alfTable_->SetAttrProvider(new DlgRuleEditorAttrProvider(alfTable_));
-	ADD_PROPERTY(alfTable_, PROPERTY_ID);
-	ADD_PROPERTY(alfTable_, PROPERTY_TYPE);
-	ADD_PROPERTY(alfTable_, PROPERTY_ACTION);
-	ADD_PROPERTY(alfTable_, PROPERTY_LOG);
-	ADD_PROPERTY(alfTable_, PROPERTY_SCOPE);
-	ADD_PROPERTY(alfTable_, PROPERTY_CAP);
-	ADD_PROPERTY(alfTable_, PROPERTY_DIR);
-	ADD_PROPERTY(alfTable_, PROPERTY_PROT);
-	ADD_PROPERTY(alfTable_, PROPERTY_FHOST);
-	ADD_PROPERTY(alfTable_, PROPERTY_FPORT);
-	ADD_PROPERTY(alfTable_, PROPERTY_THOST);
-	ADD_PROPERTY(alfTable_, PROPERTY_TPORT);
-	filterGrid->SetTable(alfTable_);
+	ADD_PROPERTY(alfTable_, PROPERTY_ID, 45);
+	ADD_PROPERTY(alfTable_, PROPERTY_TYPE, 55);
+	ADD_PROPERTY(alfTable_, PROPERTY_ACTION, 50);
+	ADD_PROPERTY(alfTable_, PROPERTY_LOG, 55);
+	ADD_PROPERTY(alfTable_, PROPERTY_SCOPE, 55);
+	ADD_PROPERTY(alfTable_, PROPERTY_CAP, 72);
+	ADD_PROPERTY(alfTable_, PROPERTY_DIR, 70);
+	ADD_PROPERTY(alfTable_, PROPERTY_PROT, 65);
+	ADD_PROPERTY(alfTable_, PROPERTY_FHOST, 80);
+	ADD_PROPERTY(alfTable_, PROPERTY_FPORT, 80);
+	ADD_PROPERTY(alfTable_, PROPERTY_THOST, 80);
+	ADD_PROPERTY(alfTable_, PROPERTY_TPORT, 80);
+	SET_TABLE(filterGrid, alfTable_);
+	filterGrid->setCursorVisibility(false);
 
 	/* Fill table for sfs filter polilcies with columns. */
-	sfsTable_ = new AnTable(wxT("/Options/Columns/Sfs/"));
+	sfsTable_ = new AnTable(wxT("/State/DlgRuleEditor/Columns/Sfs/"));
 	sfsTable_->SetAttrProvider(new DlgRuleEditorAttrProvider(sfsTable_));
-	ADD_PROPERTY(sfsTable_, PROPERTY_ID);
-	ADD_PROPERTY(sfsTable_, PROPERTY_TYPE);
-	ADD_PROPERTY(sfsTable_, PROPERTY_PATH);
-	ADD_PROPERTY(sfsTable_, PROPERTY_SUB);
-	ADD_PROPERTY(sfsTable_, PROPERTY_SCOPE);
-	ADD_PROPERTY(sfsTable_, PROPERTY_VALACT);
-	ADD_PROPERTY(sfsTable_, PROPERTY_VALLOG);
-	ADD_PROPERTY(sfsTable_, PROPERTY_INVALACT);
-	ADD_PROPERTY(sfsTable_, PROPERTY_INVALLOG);
-	ADD_PROPERTY(sfsTable_, PROPERTY_UNKACT);
-	ADD_PROPERTY(sfsTable_, PROPERTY_UNKLOG);
+	ADD_PROPERTY(sfsTable_, PROPERTY_ID, 45);
+	ADD_PROPERTY(sfsTable_, PROPERTY_TYPE, 55);
+	ADD_PROPERTY(sfsTable_, PROPERTY_PATH, 80);
+	ADD_PROPERTY(sfsTable_, PROPERTY_SUB, 80);
+	ADD_PROPERTY(sfsTable_, PROPERTY_SCOPE, 50);
+	ADD_PROPERTY(sfsTable_, PROPERTY_VALACT, 85);
+	ADD_PROPERTY(sfsTable_, PROPERTY_VALLOG, 65);
+	ADD_PROPERTY(sfsTable_, PROPERTY_INVALACT, 95);
+	ADD_PROPERTY(sfsTable_, PROPERTY_INVALLOG, 75);
+	ADD_PROPERTY(sfsTable_, PROPERTY_UNKACT, 120);
+	ADD_PROPERTY(sfsTable_, PROPERTY_UNKLOG, 100);
 
 	/* Fill table for context filter polilcies with columns. */
-	ctxTable_ = new AnTable(wxT("/Options/Columns/Ctx/"));
+	ctxTable_ = new AnTable(wxT("/State/DlgRuleEditor/Columns/Ctx/"));
 	ctxTable_->SetAttrProvider(new DlgRuleEditorAttrProvider(ctxTable_));
-	ADD_PROPERTY(ctxTable_, PROPERTY_ID);
-	ADD_PROPERTY(ctxTable_, PROPERTY_TYPE);
-	ADD_PROPERTY(ctxTable_, PROPERTY_BINARY);
+	ADD_PROPERTY(ctxTable_, PROPERTY_ID, 45);
+	ADD_PROPERTY(ctxTable_, PROPERTY_TYPE, 55);
+	ADD_PROPERTY(ctxTable_, PROPERTY_BINARY, 300);
 
 	/* Fill table for sandbox filter polilcies with columns. */
-	sbTable_ = new AnTable(wxT("/Options/Columns/Sb/"));
+	sbTable_ = new AnTable(wxT("/State/DlgRuleEditor/Columns/Sb/"));
 	sbTable_->SetAttrProvider(new DlgRuleEditorAttrProvider(sbTable_));
-	ADD_PROPERTY(sbTable_, PROPERTY_ID);
-	ADD_PROPERTY(sbTable_, PROPERTY_TYPE);
-	ADD_PROPERTY(sbTable_, PROPERTY_ACTION);
-	ADD_PROPERTY(sbTable_, PROPERTY_LOG);
-	ADD_PROPERTY(sbTable_, PROPERTY_SCOPE);
-	ADD_PROPERTY(sbTable_, PROPERTY_PATH);
-	ADD_PROPERTY(sbTable_, PROPERTY_SUB);
-	ADD_PROPERTY(sbTable_, PROPERTY_MASK);
+	ADD_PROPERTY(sbTable_, PROPERTY_ID, 45);
+	ADD_PROPERTY(sbTable_, PROPERTY_TYPE, 55);
+	ADD_PROPERTY(sbTable_, PROPERTY_ACTION, 51);
+	ADD_PROPERTY(sbTable_, PROPERTY_LOG, 52);
+	ADD_PROPERTY(sbTable_, PROPERTY_SCOPE, 53);
+	ADD_PROPERTY(sbTable_, PROPERTY_PATH, 80);
+	ADD_PROPERTY(sbTable_, PROPERTY_SUB, 80);
+	ADD_PROPERTY(sbTable_, PROPERTY_MASK, 98);
 }
 
 DlgRuleEditor::~DlgRuleEditor(void)
@@ -170,6 +178,24 @@ DlgRuleEditor::~DlgRuleEditor(void)
 	JobCtrl::getInstance()->Disconnect(anEVT_COM_CONNECTION,
 	    wxCommandEventHandler(DlgRuleEditor::onConnectionStateChange),
 	    NULL, this);
+
+	appGrid->SetTable(NULL);
+	filterGrid->SetTable(NULL);
+	if (appTable_ != NULL) {
+		delete appTable_;
+	}
+	if (alfTable_ != NULL) {
+		delete alfTable_;
+	}
+	if (sfsTable_ != NULL) {
+		delete sfsTable_;
+	}
+	if (ctxTable_ != NULL) {
+		delete ctxTable_;
+	}
+	if (sbTable_ != NULL) {
+		delete sbTable_;
+	}
 }
 
 void
@@ -366,7 +392,7 @@ DlgRuleEditor::onAppGridCellSelect(wxGridEvent &event)
 	if (alfApp != NULL) {
 		rowProvider = alfApp->getRowProvider();
 		alfTable_->setRowProvider(rowProvider);
-		filterGrid->SetTable(alfTable_);
+		SET_TABLE(filterGrid, alfTable_);
 
 		filterListTypeChoice->Append(wxT("ALF"));
 		filterListTypeChoice->Append(wxT("Capability"));
@@ -374,20 +400,20 @@ DlgRuleEditor::onAppGridCellSelect(wxGridEvent &event)
 	} else if (sfsApp != NULL) {
 		rowProvider = sfsApp->getRowProvider();
 		sfsTable_->setRowProvider(rowProvider);
-		filterGrid->SetTable(sfsTable_);
+		SET_TABLE(filterGrid, sfsTable_);
 
 		filterListTypeChoice->Append(wxT("SFS"));
 		filterListTypeChoice->Append(wxT("Default"));
 	} else if (ctxApp != NULL) {
 		rowProvider = ctxApp->getRowProvider();
 		ctxTable_->setRowProvider(rowProvider);
-		filterGrid->SetTable(ctxTable_);
+		SET_TABLE(filterGrid, ctxTable_);
 
 		filterListTypeChoice->Append(wxT("CTX"));
 	} else if (sbApp != NULL) {
 		rowProvider = sbApp->getRowProvider();
 		sbTable_->setRowProvider(rowProvider);
-		filterGrid->SetTable(sbTable_);
+		SET_TABLE(filterGrid, sbTable_);
 
 		filterListTypeChoice->Append(wxT("SB"));
 		filterListTypeChoice->Append(wxT("Default"));
@@ -425,7 +451,7 @@ DlgRuleEditor::onAppGridCellSelect(wxGridEvent &event)
 	Layout();
 	Refresh();
 
-	/* Select the whole row and skip event to select cell. */
+	/* Select the whole row and skip event to be processed by grid. */
 	appGrid->SelectRow(event.GetRow());
 	event.Skip();
 }

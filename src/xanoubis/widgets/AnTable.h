@@ -73,9 +73,10 @@ class AnTable : public wxGridTableBase
 		 * list of properties. The order of added properties
 		 * represents the order in the grid.
 		 * @param[in] 1st The new property.
+		 * @param[in] 2nd The width of the concerning column.
 		 * @return Nothing.
 		 */
-		void addProperty(AnListProperty *);
+		void addProperty(AnListProperty *, int);
 
 		/**
 		 * Get column count.
@@ -102,6 +103,25 @@ class AnTable : public wxGridTableBase
 		 * @param[in] 2nd The new visibility.
 		 */
 		void setColumnVisability(unsigned int, bool);
+
+		/**
+		 * Set column width.
+		 * This method set the width of a specified column.
+		 * @param[in] 1st The index of the column in question.
+		 * @param[in] 2nd The new width.
+		 */
+		void setColumnWidth(unsigned int, int);
+
+		/**
+		 * Apply column width.
+		 * This method will iterate over all visible columns
+		 * and set its width. Use this method after assigning
+		 * this table to a grid (by grid->SetTable()).
+		 * @param None.
+		 * @return Nothing.
+		 * @see wxGrid::SetTable
+		 */
+		void assignColumnWidth(void) const;
 
 		/**
 		 * Set row provider.

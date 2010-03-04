@@ -36,16 +36,40 @@ AnGrid::AnGrid(wxWindow *parent, wxWindowID id, const wxPoint& pos,
     const wxSize& size, long style, const wxString& name) : wxGrid(
     parent, id, pos, size, style, name)
 {
+	isCursorVisible_ = true;
 
 	Connect(wxEVT_GRID_LABEL_RIGHT_CLICK, wxGridEventHandler(
 	    AnGrid::onLabelRightClick), NULL, this);
-
+	Connect(wxEVT_GRID_COL_SIZE, wxGridSizeEventHandler(
+	    AnGrid::onColumnSize), NULL, this);
 }
 
 AnGrid::~AnGrid(void)
 {
 	Disconnect(wxEVT_GRID_LABEL_RIGHT_CLICK, wxGridEventHandler(
 	    AnGrid::onLabelRightClick), NULL, this);
+	Disconnect(wxEVT_GRID_COL_SIZE, wxGridSizeEventHandler(
+	    AnGrid::onColumnSize), NULL, this);
+}
+
+void
+AnGrid::setCursorVisibility(bool isVisible)
+{
+	isCursorVisible_ = isVisible;
+}
+
+bool
+AnGrid::isCursorVisible(void) const
+{
+	return (isCursorVisible_);
+}
+
+void
+AnGrid::DrawCellHighlight(wxDC &dc, const wxGridCellAttr *attribute)
+{
+	if (isCursorVisible_) {
+		wxGrid::DrawCellHighlight(dc, attribute);
+	}
 }
 
 void
@@ -84,8 +108,26 @@ AnGrid::onLabelRightClick(wxGridEvent &)
 				table->setColumnVisability(i, true);
 			}
 		}
+		table->assignColumnWidth();
 		ForceRefresh();
 	}
 
 	multiChoiceDlg->Destroy();
+}
+
+void
+AnGrid::onColumnSize(wxGridSizeEvent & event)
+{
+	int	 idx;
+	AnTable	*table;
+
+	event.Skip();
+
+	idx = event.GetRowOrCol();
+	table = wxDynamicCast(GetTable(), AnTable);
+	if (table == NULL) {
+		return;
+	}
+
+	table->setColumnWidth(idx, GetColSize(idx));
 }

@@ -55,7 +55,27 @@ class AnGrid : public wxGrid
 		 */
 		~AnGrid(void);
 
+		/**
+		 * Set cursor visibility.
+		 * With this method the cursor showing the current cell
+		 * can be switched on and off.
+		 * @param[in] 1st Visibility of cursor: true=on false=off
+		 */
+		void setCursorVisibility(bool);
+
+		/**
+		 * Is cursor visible?
+		 * @param None.
+		 * @return True if visible.
+		 */
+		bool isCursorVisible(void) const;
+
 	private:
+		/**
+		 * Store cursor visibility.
+		 */
+		bool isCursorVisible_;
+
 		/**
 		 * Event handler for right mouse button clicks.
 		 * It will show a choice dialog and updates the columns.
@@ -63,6 +83,20 @@ class AnGrid : public wxGrid
 		 * @return Nothing.
 		 */
 		void onLabelRightClick(wxGridEvent &);
+
+		/**
+		 * Event handler for column size changes.
+		 * It will calculate the new width of a colunn and write
+		 * this width to column data model.
+		 * @param[in] 1st The grid size event.
+		 * @return Nothing.
+		 */
+		void onColumnSize(wxGridSizeEvent &);
+
+		/**
+		 * Overwrite method of wxGrid to intercept drawing of cursor.
+		 */
+		void DrawCellHighlight(wxDC &, const wxGridCellAttr *);
 };
 
 #endif	/* _ANGRID_H_ */

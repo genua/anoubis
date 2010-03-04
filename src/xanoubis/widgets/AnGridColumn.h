@@ -50,7 +50,7 @@ class AnGridColumn
 		/**
 		 * Shows/hides the column.
 		 * @param[in] 1st If set to true, the column is shown,
-		 * 	otherwise it is hidden.
+		 *	otherwise it is hidden.
 		 * @return Nothing.
 		 */
 		void setVisibility(bool);
@@ -63,6 +63,22 @@ class AnGridColumn
 		 */
 		AnListProperty *getProperty(void) const;
 
+		/**
+		 * Get column width.
+		 * Return the width of this column.
+		 * @param None.
+		 * @return The width of this column.
+		 */
+		int getWidth(void) const;
+
+		/**
+		 * Set column width.
+		 * Set the new width of this column.
+		 * @param[in] 1st The new width.
+		 * @return Nothing.
+		 */
+		void setWidth(int);
+
 	private:
 		/**
 		 * Constructor
@@ -71,8 +87,9 @@ class AnGridColumn
 		 * The visibility is stored within the config at config path.
 		 * @param[in] 1st The assigned property.
 		 * @param[in] 2nd The configuration path.
+		 * @param[in] 3rd The default width.
 		 */
-		AnGridColumn(AnListProperty *, const wxString &);
+		AnGridColumn(AnListProperty *, const wxString &, int);
 
 		/**
 		 * Destructor
@@ -85,6 +102,11 @@ class AnGridColumn
 		 * Store visibility.
 		 */
 		bool visibility_;
+
+		/**
+		 * Store width of this column.
+		 */
+		int width_;
 
 		/**
 		 * Store property.

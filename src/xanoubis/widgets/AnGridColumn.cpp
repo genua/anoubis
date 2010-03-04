@@ -47,8 +47,20 @@ AnGridColumn::getProperty(void) const
 	return (property_);
 }
 
+int
+AnGridColumn::getWidth(void) const
+{
+	return (width_);
+}
+
+void
+AnGridColumn::setWidth(int width)
+{
+	width_ = width;
+}
+
 AnGridColumn::AnGridColumn(AnListProperty *property,
-    const wxString &configPath)
+    const wxString & configPath, int width)
 {
 	wxString	key;
 
@@ -58,8 +70,12 @@ AnGridColumn::AnGridColumn(AnListProperty *property,
 	if (!configPath_.IsEmpty()) {
 		key = configPath_ + wxT("visibility");
 		wxConfig::Get()->Read(key, &visibility_, true);
+
+		key = configPath_ + wxT("width");
+		wxConfig::Get()->Read(key, &width_, width);
 	} else {
 		visibility_ = true;
+		width_ = width;
 	}
 }
 
@@ -70,6 +86,10 @@ AnGridColumn::~AnGridColumn(void)
 	if (!configPath_.IsEmpty()) {
 		key = configPath_ + wxT("visibility");
 		wxConfig::Get()->Write(key, visibility_);
+
+		key = configPath_ + wxT("width");
+		wxConfig::Get()->Write(key, width_);
+
 		wxConfig::Get()->Flush();
 	}
 }

@@ -36,8 +36,16 @@ AnTable::AnTable(const wxString & configPath)
 
 AnTable::~AnTable(void)
 {
+	AnGridColumn	*column = NULL;
+
+	rowProvider_ = NULL;
 	visibilityList_.clear();
-	columnList_.clear();
+	/* clear() does not destroy object, thus we do it by hand. */
+	while (!columnList_.empty()) {
+		column = columnList_.back();
+		columnList_.pop_back();
+		delete column;
+	}
 }
 
 wxArrayString
@@ -56,14 +64,17 @@ AnTable::getColumnName(void) const
 }
 
 void
-AnTable::addProperty(AnListProperty *property)
+AnTable::addProperty(AnListProperty *property, int width)
 {
 	wxString	 key;
 	AnGridColumn	*column;
 
-	key = wxString::Format(wxT("%ls/%d"), configPath_.c_str(),
+	if (!configPath_.EndsWith(wxT("/"))) {
+		configPath_.Append(wxT("/"));
+	}
+	key = wxString::Format(wxT("%ls%d/"), configPath_.c_str(),
 	    columnList_.size());
-	column = new AnGridColumn(property, key);
+	column = new AnGridColumn(property, key, width);
 
 	columnList_.push_back(column);
 	if (column->isVisible()) {
@@ -130,6 +141,34 @@ AnTable::setColumnVisability(unsigned int idx, bool visibility)
 		visibilityList_.insert(it, idx);
 		fireColsInserted((*it), 1);
 	}
+}
+
+void
+AnTable::setColumnWidth(unsigned int idx, int width)
+{
+	if (idx >= columnList_.size()) {
+		return;
+	}
+	columnList_[idx]->setWidth(width);
+}
+
+void
+AnTable::assignColumnWidth(void) const
+{
+	int	 width	= 0;
+	wxGrid	*grid	= NULL;
+
+	grid = GetView();
+	if (grid == NULL) {
+		return;
+	}
+
+	grid->BeginBatch();
+	for (unsigned int i=0; i<visibilityList_.size(); i++) {
+		width = columnList_[visibilityList_.at(i)]->getWidth();
+		grid->SetColSize(i, width);
+	}
+	grid->EndBatch();
 }
 
 void

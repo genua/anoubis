@@ -113,14 +113,15 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	appGrid->EnableDragColMove( false );
 	appGrid->EnableDragColSize( true );
 	appGrid->SetColLabelSize( 30 );
-	appGrid->SetColLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	appGrid->SetColLabelAlignment( wxALIGN_LEFT, wxALIGN_CENTRE );
 	
 	// Rows
 	appGrid->EnableDragRowSize( true );
-	appGrid->SetRowLabelSize( 1 );
+	appGrid->SetRowLabelSize( 0 );
 	appGrid->SetRowLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
 	
 	// Label Appearance
+	appGrid->SetLabelFont( wxFont( wxNORMAL_FONT->GetPointSize(), 70, 90, 90, false, wxEmptyString ) );
 	
 	// Cell Defaults
 	appGrid->SetDefaultCellAlignment( wxALIGN_LEFT, wxALIGN_TOP );
@@ -218,14 +219,15 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	filterGrid->EnableDragColMove( false );
 	filterGrid->EnableDragColSize( true );
 	filterGrid->SetColLabelSize( 30 );
-	filterGrid->SetColLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	filterGrid->SetColLabelAlignment( wxALIGN_LEFT, wxALIGN_CENTRE );
 	
 	// Rows
 	filterGrid->EnableDragRowSize( true );
-	filterGrid->SetRowLabelSize( 1 );
+	filterGrid->SetRowLabelSize( 0 );
 	filterGrid->SetRowLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
 	
 	// Label Appearance
+	filterGrid->SetLabelFont( wxFont( wxNORMAL_FONT->GetPointSize(), 70, 90, 90, false, wxEmptyString ) );
 	
 	// Cell Defaults
 	filterGrid->SetDefaultCellAlignment( wxALIGN_LEFT, wxALIGN_TOP );

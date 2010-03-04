@@ -668,7 +668,7 @@
                                             <property name="cell_horiz_alignment">wxALIGN_LEFT</property>
                                             <property name="cell_text"></property>
                                             <property name="cell_vert_alignment">wxALIGN_TOP</property>
-                                            <property name="col_label_horiz_alignment">wxALIGN_CENTRE</property>
+                                            <property name="col_label_horiz_alignment">wxALIGN_LEFT</property>
                                             <property name="col_label_size">30</property>
                                             <property name="col_label_values"></property>
                                             <property name="col_label_vert_alignment">wxALIGN_CENTRE</property>
@@ -688,7 +688,7 @@
                                             <property name="hidden">0</property>
                                             <property name="id">wxID_ANY</property>
                                             <property name="label_bg"></property>
-                                            <property name="label_font"></property>
+                                            <property name="label_font">,90,90,-1,70,0</property>
                                             <property name="label_text"></property>
                                             <property name="margin_height">0</property>
                                             <property name="margin_width">0</property>
@@ -698,7 +698,7 @@
                                             <property name="permission">protected</property>
                                             <property name="pos"></property>
                                             <property name="row_label_horiz_alignment">wxALIGN_CENTRE</property>
-                                            <property name="row_label_size">1</property>
+                                            <property name="row_label_size">0</property>
                                             <property name="row_label_values"></property>
                                             <property name="row_label_vert_alignment">wxALIGN_CENTRE</property>
                                             <property name="row_sizes"></property>
@@ -1397,7 +1397,7 @@
                                             <property name="cell_horiz_alignment">wxALIGN_LEFT</property>
                                             <property name="cell_text"></property>
                                             <property name="cell_vert_alignment">wxALIGN_TOP</property>
-                                            <property name="col_label_horiz_alignment">wxALIGN_CENTRE</property>
+                                            <property name="col_label_horiz_alignment">wxALIGN_LEFT</property>
                                             <property name="col_label_size">30</property>
                                             <property name="col_label_values"></property>
                                             <property name="col_label_vert_alignment">wxALIGN_CENTRE</property>
@@ -1417,7 +1417,7 @@
                                             <property name="hidden">0</property>
                                             <property name="id">wxID_ANY</property>
                                             <property name="label_bg"></property>
-                                            <property name="label_font"></property>
+                                            <property name="label_font">,90,90,-1,70,0</property>
                                             <property name="label_text"></property>
                                             <property name="margin_height">0</property>
                                             <property name="margin_width">0</property>
@@ -1427,7 +1427,7 @@
                                             <property name="permission">protected</property>
                                             <property name="pos"></property>
                                             <property name="row_label_horiz_alignment">wxALIGN_CENTRE</property>
-                                            <property name="row_label_size">1</property>
+                                            <property name="row_label_size">0</property>
                                             <property name="row_label_values"></property>
                                             <property name="row_label_vert_alignment">wxALIGN_CENTRE</property>
                                             <property name="row_sizes"></property>
