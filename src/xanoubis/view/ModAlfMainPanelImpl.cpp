@@ -29,6 +29,7 @@
 #include "config.h"
 #endif
 
+#include "AnGrid.h"
 #include "AlfOverviewTable.h"
 #include "ModAlfMainPanelImpl.h"
 #include "OverviewAttrProvider.h"
@@ -41,6 +42,7 @@ ModAlfMainPanelImpl::ModAlfMainPanelImpl(wxWindow* parent,
 	AlfOverviewTable *table = new AlfOverviewTable;
 	table->SetAttrProvider(new OverviewAttrProvider(table));
 	lst_Rules->SetTable(table, true, wxGrid::wxGridSelectRows);
+	lst_Rules->setCursorVisibility(false);
 
 	lst_Rules->SetColSize(0, 323);
 	lst_Rules->SetColSize(1, 170);

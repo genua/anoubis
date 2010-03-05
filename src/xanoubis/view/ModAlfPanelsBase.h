@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2010 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -34,6 +34,8 @@
 #ifndef __ModAlfPanelsBase__
 #define __ModAlfPanelsBase__
 
+class AnGrid;
+
 #include <wx/string.h>
 #include <wx/stattext.h>
 #include <wx/gdicmn.h>
@@ -63,7 +65,7 @@ class ModAlfMainPanelBase : public wxPanel
 		wxStaticText* tx_MainHeadline;
 		wxNotebook* note_MainAlf;
 		wxPanel* pan_Rules;
-		wxGrid* lst_Rules;
+		AnGrid* lst_Rules;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnGridCellLeftDClick( wxGridEvent& event ){ event.Skip(); }

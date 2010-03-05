@@ -32,6 +32,7 @@
 #include <wx/log.h>
 
 #include "AnEvents.h"
+#include "AnGrid.h"
 #include "AnPickFromFs.h"
 #include "AnMessageDialog.h"
 #include "AnIconList.h"
@@ -57,6 +58,7 @@ ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent, wxWindowID id)
 	SfsOverviewTable *table = new SfsOverviewTable;
 	table->SetAttrProvider(new SfsOverviewAttrProvider);
 	lst_Rules->SetTable(table, true, wxGrid::wxGridSelectRows);
+	lst_Rules->setCursorVisibility(false);
 
 	lst_Rules->SetColSize(0, 198);
 	lst_Rules->SetColSize(1, 95);

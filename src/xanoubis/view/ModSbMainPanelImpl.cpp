@@ -29,6 +29,7 @@
 #include "config.h"
 #endif
 
+#include "AnGrid.h"
 #include "ModSbMainPanelImpl.h"
 #include "OverviewAttrProvider.h"
 #include "PolicyRuleSet.h"
@@ -41,6 +42,7 @@ ModSbMainPanelImpl::ModSbMainPanelImpl(wxWindow* parent, wxWindowID id) :
 	SbOverviewTable *table = new SbOverviewTable;
 	table->SetAttrProvider(new OverviewAttrProvider(table));
 	lst_Rules->SetTable(table, true, wxGrid::wxGridSelectRows);
+	lst_Rules->setCursorVisibility(false);
 
 	lst_Rules->SetColSize(0, 204);
 	lst_Rules->SetColSize(1, 204);

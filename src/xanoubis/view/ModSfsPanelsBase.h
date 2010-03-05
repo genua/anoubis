@@ -35,6 +35,7 @@
 #define __ModSfsPanelsBase__
 
 class AnDetails;
+class AnGrid;
 class AnPickFromFs;
 class ModSfsListCtrl;
 
@@ -80,7 +81,7 @@ class ModSfsMainPanelBase : public wxPanel
 		wxStaticText* tx_MainHeadline;
 		wxNotebook* note_MainSfs;
 		wxPanel* pan_Rules;
-		wxGrid* lst_Rules;
+		AnGrid* lst_Rules;
 		wxPanel* pan_SfsMain;
 		wxStaticText* SfsMainDirectoryLabel;
 		wxTextCtrl* SfsMainPathCtrl;

@@ -32,6 +32,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #include "AnDetails.h"
+#include "AnGrid.h"
 #include "AnPickFromFs.h"
 #include "ModSfsListCtrl.h"
 
@@ -54,7 +55,7 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	wxBoxSizer* sz_SfsRules;
 	sz_SfsRules = new wxBoxSizer( wxHORIZONTAL );
 	
-	lst_Rules = new wxGrid( pan_Rules, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	lst_Rules = new AnGrid( pan_Rules, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
 	
 	// Grid
 	lst_Rules->CreateGrid( 5, 5 );

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2010 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -31,6 +31,8 @@
 // PLEASE DO "NOT" EDIT THIS FILE!
 ///////////////////////////////////////////////////////////////////////////
 
+#include "AnGrid.h"
+
 #include "ModAlfPanelsBase.h"
 
 ///////////////////////////////////////////////////////////////////////////
@@ -53,7 +55,7 @@ ModAlfMainPanelBase::ModAlfMainPanelBase( wxWindow* parent, wxWindowID id, const
 	wxBoxSizer* sz_Rules;
 	sz_Rules = new wxBoxSizer( wxVERTICAL );
 	
-	lst_Rules = new wxGrid( pan_Rules, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	lst_Rules = new AnGrid( pan_Rules, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
 	
 	// Grid
 	lst_Rules->CreateGrid( 5, 5 );
