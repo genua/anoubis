@@ -169,7 +169,7 @@ class AnTable : public wxGridTableBase
 		 * This method is part of the wxGridTableBase-interface.
 		 * @param[in] 1st The row of the cell.
 		 * @param[in] 2nd The column of the cell.
-		 * @return true if the given cell is empty.
+		 * @return Always returns false in this implementation.
 		 */
 		bool IsEmptyCell(int, int);
 

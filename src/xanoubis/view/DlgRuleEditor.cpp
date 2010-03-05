@@ -1183,6 +1183,7 @@ DlgRuleEditor::loadRuleSet(void)
 	}
 
 	appTable_->setRowProvider(&multiRowProvider_);
+	selectRow(appGrid, appGrid->GetGridCursorRow());
 	updateFooter();
 }
 

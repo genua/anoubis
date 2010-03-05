@@ -187,15 +187,9 @@ AnTable::setRowProvider(AnRowProvider *rowProvider)
 	oldSize = grid->GetNumberRows();
 	newSize = rowProvider_->getSize();
 
-	if (oldSize == newSize) {
-		/* Nothing to do. */
-		grid->ForceRefresh();
-		return;
-	}
-
 	if (oldSize < newSize) {
 		fireRowsInserted(0, (newSize - oldSize));
-	} else {
+	} else if (oldSize > newSize) {
 		fireRowsRemoved(0, (oldSize - newSize));
 	}
 
@@ -247,18 +241,14 @@ AnTable::GetColLabelValue(int i)
 	return (property->getHeader());
 }
 
+/*
+ * Always return false becaus an empty cell is used to display the
+ * next from the cell left to it if that cell is not wide enough.
+ */
 bool
-AnTable::IsEmptyCell(int row, int col)
+AnTable::IsEmptyCell(int, int)
 {
-	wxString cell;
-
-	cell = GetValue(row, col);
-
-	if ((cell == wxEmptyString) || (cell == _("???"))) {
-		return (true);
-	} else {
-		return (false);
-	}
+	return false;
 }
 
 wxString
