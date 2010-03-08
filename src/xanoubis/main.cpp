@@ -124,8 +124,7 @@ bool AnoubisGuiApp::OnInit()
 	hasLocale = language_.Init(wxLANGUAGE_DEFAULT, wxLOCALE_CONV_ENCODING);
 	if (hasLocale) {
 		language_.AddCatalog(wxT("wxstd"));
-		language_.AddCatalogLookupPathPrefix(getCatalogPath());
-		language_.AddCatalog(GetAppName());
+		language_.AddCatalog(wxT(PACKAGE_NAME));
 	}
 
 	/*
@@ -416,26 +415,6 @@ AnoubisGuiApp::calChecksum(const wxString &File)
 {
 	csumCalcTask_.setPath(File);
 	JobCtrl::getInstance()->addTask(&csumCalcTask_);
-}
-
-wxString
-AnoubisGuiApp::getCatalogPath(void)
-{
-	wxString catalogFileName;
-
-	catalogFileName = paths_.GetDataDir() + wxT("/catalogs/");
-	if (!::wxFileExists(catalogFileName)) {
-		/*
-		 * We didn't find our catalog (where --prefix told us)!
-		 * Try to take executable path into account. This should
-		 * fix a missing --prefix as the matter in our build and test
-		 * environment with aegis.
-		 */
-		catalogFileName  = ::wxPathOnly(paths_.GetExecutablePath()) +
-		    wxT("/../../..") + catalogFileName;
-	}
-
-	return catalogFileName;
 }
 
 wxString

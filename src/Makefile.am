@@ -29,13 +29,6 @@ if XANOUBIS
 GUI=xanoubis
 endif
 
-EXTRA_DIST = \
-	catalogs/anoubis.pot \
-	catalogs/de/anoubis.po \
-	catalogs/de/anoubis.mo
-
-
-
 dist_bin_SCRIPTS = anoubis_keygen/anoubis-keygen
 dist_sbin_SCRIPTS = anoubis_keyinstall/anoubis-keyinstall
 

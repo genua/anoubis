@@ -25,6 +25,9 @@
 #
 
 bin_PROGRAMS = xanoubis
+noinst_DATA = potfiles.frag
+
+CLEANFILES = $(noinst_DATA)
 
 include $(top_srcdir)/src/Makefile.include
 
@@ -71,11 +74,6 @@ icondir = $(datadir)/$(bin_PROGRAMS)/icons
 profiledir = $(datadir)/$(bin_PROGRAMS)/profiles
 wizarddir = $(profiledir)/wizard
 desktopdir = $(datadir)/$(bin_PROGRAMS)
-
-EXTRA_DIST = \
-	catalogs/xanoubis.pot \
-	catalogs/de/xanoubis.po \
-	catalogs/de/xanoubis.mo
 
 dist_util_SCRIPTS = utils/xanoubis_guessApp.sh
 dist_icon_DATA = \
@@ -168,7 +166,7 @@ install-data-hook:
 	-chmod 755 $(DESTDIR)/$(profiledir)/wizard
 	-chmod 444 $(DESTDIR)/$(profiledir)/wizard/*
 
-install-data-local: i18n-install
+install-data-local:
 
 xanoubis_SOURCES= \
 	model/AlertNotify.cpp \
@@ -542,60 +540,6 @@ potfiles.frag:
 	echo $(xanoubis_SOURCES) > potfiles.frag
 	perl -pi -e 's/\s+/\n/gm' potfiles.frag
 	perl -pi -e 's/^/src\/xanoubis\//' potfiles.frag
-
-i18n-extract:
-	cd $(top_srcdir)/$(xanoubisdir) && \
-	mkdir -p catalogs && \
-	$(XGETTEXT) -C -k_ -kwxPLURAL:1,2 -kwxTRANSLATE \
-	    -o catalogs/xanoubis.pot $(xanoubis_SOURCES)
-
-i18n-merge:
-	cd $(top_srcdir)/$(xanoubisdir) && \
-	for po in catalogs/*/*.po; do \
-	echo "Merging $$po"; \
-	$(MSGMERGE) -Uv --backup=off $$po catalogs/xanoubis.pot; \
-	done
-
-i18n-format:
-	cd $(top_srcdir)/$(xanoubisdir) && \
-	mkdir -p catalogs && \
-	for po in catalogs/*/*.po; do \
-	mo=`echo $$po | sed -e "s/\.po$\/\.mo/"`; \
-	echo "Compiling $$mo"; \
-	$(MSGFMT) -vc -o $$mo $$po; \
-	done
-
-i18n-install: i18n-check
-	cd $(top_srcdir)/$(xanoubisdir) && \
-	for mo in `ls -1 catalogs/*/xanoubis.mo 2>/dev/null`; do \
-	bn=`basename $$mo`; \
-	dn=`dirname $$mo`; \
-	dest=$(DESTDIR)$(programdir)/$$dn/$$bn; \
-	$(install_sh_DATA) $$mo $$dest; \
-	done
-
-i18n-info:
-	@echo "*** Targets ***"; \
-	echo "i18n-extract"; \
-	echo "     Scans sources and writes result (untranslated strings)"; \
-	echo "     into template (catalogs/xanoubis.pot)."; \
-	echo "i18n-merge"; \
-	echo "     Merges template with already existing translations."; \
-	echo "i18n-format"; \
-	echo "     Converts translations into binary format."; \
-	echo "*** Usage ***"; \
-	echo "You need to call all three targets to update the translation!"; \
-	echo "*** Creating new language ***"; \
-	echo "cd <xanoubis-src-dir>/catalogs"; \
-	echo "mkdir <lang-code>"; \
-	echo "msginit -o <lang-code>/xanoubis.po -l <lang-code>"
-
-i18n-check:
-	cd $(top_srcdir)/$(xanoubisdir) && \
-	for po in catalogs/*/*.po; do \
-	echo "Checking $$po"; \
-	[ "`msggrep -T -e ".*" -v -o- $$po;`xxx" = "xxx" ] || exit 1; \
-	done
 
 flawfinder_FLAGS=\
 	--dataonly \
