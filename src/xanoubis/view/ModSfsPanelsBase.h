@@ -135,9 +135,9 @@ class ModSfsMainPanelBase : public wxPanel
 		wxStaticText* certEmailLabel;
 		wxStaticText* certEmailText;
 		wxButton* generateKeyPairButton;
-		wxPanel* keyMismatchPanel;
-		wxStaticBitmap* keyMismatchIcon;
-		wxStaticText* keyMismatchText;
+		wxPanel* keyWarningPanel;
+		wxStaticBitmap* keyWarningIcon;
+		wxStaticText* keyWarningText;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void onSfsTabChange( wxNotebookEvent& event ){ event.Skip(); }

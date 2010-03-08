@@ -386,25 +386,25 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	generateKeyPairButton = new wxButton( keysTab, wxID_ANY, _("Generate Keypair"), wxDefaultPosition, wxDefaultSize, 0 );
 	keyTabMainSizer->Add( generateKeyPairButton, 0, wxALL, 5 );
 	
-	keyMismatchPanel = new wxPanel( keysTab, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSIMPLE_BORDER|wxTAB_TRAVERSAL );
-	keyMismatchPanel->SetBackgroundColour( wxColour( 255, 255, 166 ) );
+	keyWarningPanel = new wxPanel( keysTab, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSIMPLE_BORDER|wxTAB_TRAVERSAL );
+	keyWarningPanel->SetBackgroundColour( wxColour( 255, 255, 166 ) );
 	
-	wxBoxSizer* keyMismatchSizer;
-	keyMismatchSizer = new wxBoxSizer( wxHORIZONTAL );
+	wxBoxSizer* keyWarningSizer;
+	keyWarningSizer = new wxBoxSizer( wxHORIZONTAL );
 	
-	keyMismatchIcon = new wxStaticBitmap( keyMismatchPanel, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxDefaultSize, 0 );
-	keyMismatchSizer->Add( keyMismatchIcon, 0, wxALIGN_CENTER|wxALL, 5 );
+	keyWarningIcon = new wxStaticBitmap( keyWarningPanel, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxDefaultSize, 0 );
+	keyWarningSizer->Add( keyWarningIcon, 0, wxALIGN_CENTER|wxALL, 5 );
 	
-	keyMismatchText = new wxStaticText( keyMismatchPanel, wxID_ANY, _("Your private key and your certificate don't match! This may lead to unexpected problems!\nPlease be sure to correct this!"), wxDefaultPosition, wxDefaultSize, 0 );
-	keyMismatchText->Wrap( -1 );
-	keyMismatchText->SetFont( wxFont( wxNORMAL_FONT->GetPointSize(), 70, 90, 90, false, wxEmptyString ) );
+	keyWarningText = new wxStaticText( keyWarningPanel, wxID_ANY, _("Your private key and your certificate don't match! This may lead to unexpected problems!\nPlease be sure to correct this!"), wxDefaultPosition, wxDefaultSize, 0 );
+	keyWarningText->Wrap( -1 );
+	keyWarningText->SetFont( wxFont( wxNORMAL_FONT->GetPointSize(), 70, 90, 90, false, wxEmptyString ) );
 	
-	keyMismatchSizer->Add( keyMismatchText, 0, wxALIGN_CENTER|wxALL, 5 );
+	keyWarningSizer->Add( keyWarningText, 0, wxALIGN_CENTER|wxALL, 5 );
 	
-	keyMismatchPanel->SetSizer( keyMismatchSizer );
-	keyMismatchPanel->Layout();
-	keyMismatchSizer->Fit( keyMismatchPanel );
-	keyTabMainSizer->Add( keyMismatchPanel, 1, wxALL|wxEXPAND, 5 );
+	keyWarningPanel->SetSizer( keyWarningSizer );
+	keyWarningPanel->Layout();
+	keyWarningSizer->Fit( keyWarningPanel );
+	keyTabMainSizer->Add( keyWarningPanel, 1, wxALL|wxEXPAND, 5 );
 	
 	keysTab->SetSizer( keyTabMainSizer );
 	keysTab->Layout();

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: anoubis. 10.972.C388\n"
 "Report-Msgid-Bugs-To: anoubis@lists.anoubis.org\n"
-"POT-Creation-Date: 2010-02-25 14:13+0100\n"
+"POT-Creation-Date: 2010-03-05 15:13+0100\n"
 "PO-Revision-Date: 2010-02-11 16:23+0100\n"
 "Last-Translator: Martin Weber <mweber@anoubis.genua.de>\n"
 "Language-Team: German <translation-team-de@lists.sourceforge.net>\n"
@@ -51,9 +51,9 @@ msgstr "Rolle"
 
 #: src/xanoubis/model/AlfOverviewTable.cpp:64
 #: src/xanoubis/model/SbOverviewTable.cpp:66
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:801
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:830
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:859
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:809
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:838
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:867
 #: src/xanoubis/view/DlgRuleEditorListProperty.cpp:62
 msgid "Action"
 msgstr "Aktion"
@@ -98,8 +98,8 @@ msgstr "Benutzer"
 #: src/xanoubis/view/VersionListCtrl.cpp:113
 #: src/xanoubis/view/VersionListCtrl.cpp:130
 #: src/xanoubis/view/VersionListCtrl.cpp:147
-#: src/xanoubis/widgets/AnTable.cpp:219 src/xanoubis/widgets/AnTable.cpp:234
-#: src/xanoubis/widgets/AnTable.cpp:237 src/xanoubis/widgets/AnTable.cpp:240
+#: src/xanoubis/widgets/AnTable.cpp:262 src/xanoubis/widgets/AnTable.cpp:265
+#: src/xanoubis/widgets/AnTable.cpp:268
 msgid "???"
 msgstr "???"
 
@@ -115,27 +115,27 @@ msgid "was asked"
 msgstr "wurde gefragt"
 
 #: src/xanoubis/model/EscalationNotify.cpp:166
-#: src/xanoubis/model/Notification.cpp:250
+#: src/xanoubis/model/Notification.cpp:251
 msgid "was allowed"
 msgstr "wurde erlaubt"
 
 #: src/xanoubis/model/EscalationNotify.cpp:168
-#: src/xanoubis/model/Notification.cpp:252
+#: src/xanoubis/model/Notification.cpp:253
 msgid "was denied"
 msgstr "wurde verboten"
 
 #: src/xanoubis/model/Module.cpp:36 src/xanoubis/model/Module.cpp:37
-#: src/xanoubis/model/Module.cpp:38 src/xanoubis/model/Notification.cpp:293
-#: src/xanoubis/model/Notification.cpp:491
+#: src/xanoubis/model/Module.cpp:38 src/xanoubis/model/Notification.cpp:294
+#: src/xanoubis/model/Notification.cpp:495
 msgid "unknown"
 msgstr "unbekannt"
 
 #: src/xanoubis/model/Notification.cpp:95
-#: src/xanoubis/model/Notification.cpp:267
-#: src/xanoubis/model/Notification.cpp:374
-#: src/xanoubis/model/Notification.cpp:442
-#: src/xanoubis/model/Notification.cpp:470
-#: src/xanoubis/model/Notification.cpp:504
+#: src/xanoubis/model/Notification.cpp:268
+#: src/xanoubis/model/Notification.cpp:378
+#: src/xanoubis/model/Notification.cpp:446
+#: src/xanoubis/model/Notification.cpp:474
+#: src/xanoubis/model/Notification.cpp:508
 msgid "no notify data available"
 msgstr "keine Daten aus einer Benachrichtigung verfügbar"
 
@@ -143,12 +143,12 @@ msgstr "keine Daten aus einer Benachrichtigung verfügbar"
 msgid "unknown address type"
 msgstr "unbekannter Adresstyp"
 
-#: src/xanoubis/model/Notification.cpp:172
+#: src/xanoubis/model/Notification.cpp:173
 #: src/xanoubis/model/AlfCapabilityFilterPolicy.cpp:225
 #: src/xanoubis/model/AlfFilterPolicy.cpp:328
-#: src/xanoubis/model/AlfFilterPolicy.cpp:380
-#: src/xanoubis/model/AlfFilterPolicy.cpp:731
-#: src/xanoubis/model/AlfFilterPolicy.cpp:759
+#: src/xanoubis/model/AlfFilterPolicy.cpp:383
+#: src/xanoubis/model/AlfFilterPolicy.cpp:734
+#: src/xanoubis/model/AlfFilterPolicy.cpp:762
 #: src/xanoubis/model/ContextFilterPolicy.cpp:183
 #: src/xanoubis/model/FilterPolicy.cpp:95
 #: src/xanoubis/model/FilterPolicy.cpp:121
@@ -156,38 +156,38 @@ msgstr "unbekannter Adresstyp"
 msgid "(unknown)"
 msgstr "(unbekannt)"
 
-#: src/xanoubis/model/Notification.cpp:198
+#: src/xanoubis/model/Notification.cpp:199
 msgid "(A): "
 msgstr "(A): "
 
-#: src/xanoubis/model/Notification.cpp:202
+#: src/xanoubis/model/Notification.cpp:203
 #, c-format
 msgid "Rule %d: "
 msgstr "Regel %d: "
 
-#: src/xanoubis/model/Notification.cpp:324
+#: src/xanoubis/model/Notification.cpp:328
 msgid "unknown module"
 msgstr "unbekanntes Modul"
 
-#: src/xanoubis/model/Notification.cpp:397
+#: src/xanoubis/model/Notification.cpp:401
 msgid "no path information available"
 msgstr "keine Pfadinformation verfügbar"
 
-#: src/xanoubis/model/Notification.cpp:405
+#: src/xanoubis/model/Notification.cpp:409
 msgid "unable to extract path information"
 msgstr "kann keine Pfadinformation extrahieren"
 
-#: src/xanoubis/model/Notification.cpp:451
+#: src/xanoubis/model/Notification.cpp:455
 #, c-format
 msgid "%ls(Pid: %d, Uid: %ls/%d)"
 msgstr "%ls(Pid: %d, Uid: %ls/%d)"
 
-#: src/xanoubis/model/Notification.cpp:455
+#: src/xanoubis/model/Notification.cpp:459
 #, c-format
 msgid "Pid: %d, Uid: %ls/%d"
 msgstr "Pid: %d, Uid: %ls/%d"
 
-#: src/xanoubis/model/Notification.cpp:484
+#: src/xanoubis/model/Notification.cpp:488
 #, c-format
 msgid ""
 "%ls\n"
@@ -330,17 +330,17 @@ msgstr "Fehlgeschlagener Import der Regeldatei %hs"
 msgid "Unknown error during import of policy file %ls"
 msgstr "Unbekannter Fehler während des Importierens der Regeldatei %ls"
 
-#: src/xanoubis/model/AlfFilterPolicy.cpp:747
+#: src/xanoubis/model/AlfFilterPolicy.cpp:750
 #, c-format
 msgid "to %ls"
 msgstr "an %ls"
 
-#: src/xanoubis/model/AlfFilterPolicy.cpp:752
+#: src/xanoubis/model/AlfFilterPolicy.cpp:755
 #, c-format
 msgid "from %ls"
 msgstr "von %ls"
 
-#: src/xanoubis/model/AlfFilterPolicy.cpp:755
+#: src/xanoubis/model/AlfFilterPolicy.cpp:758
 #, c-format
 msgid "both from %ls to %ls"
 msgstr "sowohl von %ls als auch nach %ls"
@@ -361,42 +361,42 @@ msgid "until %ls for task %ls"
 msgstr "bis %ls für task %ls"
 
 #: src/xanoubis/model/SfsFilterPolicy.cpp:588
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:435
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:799
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:828
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:857
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:437
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:807
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:836
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:865
 msgid "allow"
 msgstr "erlauben"
 
 #: src/xanoubis/model/SfsFilterPolicy.cpp:590
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:440
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:799
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:828
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:857
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:442
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:807
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:836
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:865
 msgid "deny"
 msgstr "verbieten"
 
 #: src/xanoubis/model/SfsFilterPolicy.cpp:592
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:445
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:799
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:828
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:857
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:447
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:807
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:836
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:865
 msgid "ask"
 msgstr "nachfragen"
 
 #: src/xanoubis/model/SfsFilterPolicy.cpp:594
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:799
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:828
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:857
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:807
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:836
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:865
 msgid "continue"
 msgstr "fortführen"
 
 #: src/xanoubis/model/SfsFilterPolicy.cpp:603
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:290
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:454
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:807
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:836
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:865
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:292
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:456
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:815
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:844
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:873
 #: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:337
 #: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:342
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:435
@@ -405,18 +405,18 @@ msgid "none"
 msgstr "kein"
 
 #: src/xanoubis/model/SfsFilterPolicy.cpp:605
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:459
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:807
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:836
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:865
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:461
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:815
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:844
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:873
 msgid "normal"
 msgstr "normal"
 
 #: src/xanoubis/model/SfsFilterPolicy.cpp:607
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:464
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:807
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:836
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:865
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:466
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:815
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:844
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:873
 msgid "alert"
 msgstr "kritisch"
 
@@ -510,19 +510,19 @@ msgid "CTX"
 msgstr "CTX"
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:88
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:192
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:193
 msgid "create"
 msgstr "Erstelle"
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:89
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:194
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:195
 msgid "Creates a new rule"
 msgstr "Erzeugt eine neue Regel"
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:96
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:201
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:551
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:559
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:202
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:525
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:533
 msgid "..."
 msgstr "..."
 
@@ -530,38 +530,38 @@ msgstr "..."
 msgid "customise columns of app-rules list"
 msgstr "individualisieren der Spalten der App-Regeln Liste"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:127
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:232
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:128
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:234
 msgid "Select columns with right click on label."
 msgstr ""
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:137
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:138
 msgid "Rule:"
 msgstr "Regel:"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:145
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:250
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:146
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:252
 msgid "up"
 msgstr "Aufwärts"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:147
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:252
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:148
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:254
 msgid "Move up"
 msgstr "Verschiebe aufwärts"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:151
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:256
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:152
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:258
 msgid "down"
 msgstr "Abwärts"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:153
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:258
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:154
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:260
 msgid "Move down"
 msgstr "Verschiebe abwärts"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:160
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:265
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:392
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:161
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:267
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:394
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:561
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:467
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:629
@@ -569,75 +569,75 @@ msgstr "Verschiebe abwärts"
 msgid "delete"
 msgstr "Löschen"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:162
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:267
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:163
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:269
 msgid "Removes selected policy"
 msgstr "Entfernt die selektierte Regel"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:182
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:183
 msgid "Filter-Rules"
 msgstr "Filter-Regeln"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:202
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:203
 msgid "customise columns of filter-rules list"
 msgstr "individualisieren der Spalten der Filter-Regeln Liste"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:242
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:139
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:244
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:113
 msgid "Filter:"
 msgstr "Filter:"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:286
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:288
 msgid "RuleSet origin:"
 msgstr "Regelsatz Ursprung:"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:297
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:299
 msgid "Status:"
 msgstr "Status:"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:301
-#: src/xanoubis/view/DlgRuleEditor.cpp:1223
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:303
+#: src/xanoubis/view/DlgRuleEditor.cpp:1250
 msgid "not modified"
 msgstr "nicht verändert"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:310
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:312
 msgid "import..."
 msgstr "Importieren..."
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:311
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:313
 msgid "import ruleset from file"
 msgstr "importieren eines Regelsatzes aus Datei"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:315
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:317
 msgid "reload from daemon"
 msgstr "Neuladen vom Daemon"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:317
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:319
 msgid "reload ruleset from daemon"
 msgstr "Neuladen des Regelsatzes vom Daemon"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:324
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:326
 msgid "export..."
 msgstr "Export..."
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:325
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:327
 msgid "export ruleset to file (which has to be choosen)"
 msgstr "Exportieren des Regelsatzes in Datei (die gewählt wurde)"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:329
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:331
 msgid "activate"
 msgstr "Aktivieren"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:331
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:333
 msgid "send ruleset to daemon"
 msgstr "Sende Regelsatz an Daemon"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:378
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:380
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:392
 msgid "Disable SFS"
 msgstr "SFS deaktivieren"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:380
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:382
 msgid ""
 "Activate it, if SFS should be disabled for this policy (and all of it's "
 "binaries)."
@@ -645,283 +645,292 @@ msgstr ""
 "SFS soll für diese Regel (und allen verlinkten Anwendungen) deaktiviert "
 "werden."
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:387
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:389
 msgid "add"
 msgstr "Hinzufügen"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:388
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:390
 msgid "Appends the binary to the policy"
 msgstr "Fügt das Program zur Regel hinzu"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:393
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:395
 msgid "Removes the binary from the policy"
 msgstr "Entfernt das Programm von der Regel"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:431
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:433
 msgid "Action:"
 msgstr "Aktion:"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:436
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:438
 msgid "Allow connection"
 msgstr "Verbindung erlauben"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:441
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:443
 msgid "Deny connection"
 msgstr "Verbindung verbieten"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:446
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:448
 msgid "Ask user"
 msgstr "Benutzer fragen"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:450
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:452
 msgid "Log:"
 msgstr "Log:"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:455
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:457
 msgid "Disable logging"
 msgstr "Protokollierung deaktivieren"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:460
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:462
 msgid "Enable logging"
 msgstr "Protokollierung aktivieren"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:465
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:467
 msgid "Enable higher priority logging"
 msgstr "Protokollierung mit höherer Priorität aktivieren"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:503
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:505
 msgid "Direction:"
 msgstr "Richtung:"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:507
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:509
 msgid "accept"
 msgstr "eingehend"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:508
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:510
 msgid "Filter incoming connection-attempts"
 msgstr "Eintreffende Verbindungsversuche filtern"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:513
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:515
 msgid "connect"
 msgstr "ausgehend"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:514
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:516
 msgid "Filter outgoing connection-attempts"
 msgstr "Ausgehende Verbindungsversuche filtern"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:518
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:520
 msgid "both"
 msgstr "beide"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:519
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:521
 msgid "Allow any direction"
 msgstr "Alle Richtungen zulassen"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:523
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:525
 msgid "Protocol:"
 msgstr "Protokoll:"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:527
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:529
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:200
 msgid "tcp"
 msgstr "tcp"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:528
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:530
 msgid "Filter TCP streams"
 msgstr "TCP-Ströme filtern"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:532
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:534
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:203
 msgid "udp"
 msgstr "udp"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:533
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:535
 msgid "Filter UDP datagrams"
 msgstr "UDP-Datagramme filtern"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:568
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:539
+msgid "sctp"
+msgstr ""
+
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:540
+#, fuzzy
+msgid "Filter SCTP datagrams"
+msgstr "UDP-Datagramme filtern"
+
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:576
 msgid "Source address:"
 msgstr "Quelladresse:"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:577
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:585
 msgid "Source Port:"
 msgstr "Quellport:"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:584
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:592
 msgid "Destination address:"
 msgstr "Zieladresse:"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:591
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:599
 msgid "Destination Port:"
 msgstr "Zielport:"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:629
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:637
 msgid "Capability:"
 msgstr "Capability:"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:633
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:641
 msgid "raw"
 msgstr "raw"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:634
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:642
 msgid "Allow access to raw sockets"
 msgstr "Zugriff auf Raw-Sockets erlauben"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:638
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:646
 msgid "other"
 msgstr "other"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:639
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:647
 msgid "Allow access to other sockets"
 msgstr "Zugriff auf sonstige Sockets erlauben"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:643
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:651
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:64
 msgid "all"
 msgstr "Alle"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:644
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:652
 msgid "No capability limits"
 msgstr "Keine Einschränkung der Capability"
 
 # Absolut unklar. Was ist ein Subject genau in deutsch?
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:681
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:689
 #, fuzzy
 msgid "Subject:"
 msgstr "Subject:"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:685
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:693
 msgid "any"
 msgstr "unabhängig"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:687
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:695
 msgid "Not specified"
 msgstr "Kein Vertrauen angegeben"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:697
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:705
 msgid "self"
 msgstr "Prüfsumme"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:698
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:706
 msgid "Trust own checksum"
 msgstr "Traue der eigenen Prüfsumme"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:708
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:716
 msgid "self-signed"
 msgstr "Selbst signiert"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:709
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:717
 msgid "Trust own signature"
 msgstr "Traue der eigenen Signatur"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:722
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:730
 msgid "uid"
 msgstr "Uid"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:723
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:731
 msgid "Trust the specified user"
 msgstr "Traue dem angegebenen Benutzer"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:741
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:749
 msgid "key"
 msgstr "Schlüssel"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:742
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:750
 msgid "Trust certificate with specified keyid"
 msgstr "Traue Zertifikat "
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:792
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:800
 msgid "Valid:"
 msgstr "Gültig:"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:803
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:811
 msgid "Action if checksum matches"
 msgstr "Aktion falls die Prüfsumme passt"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:809
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:838
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:867
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:817
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:846
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:875
 #: src/xanoubis/view/DlgRuleEditorListProperty.cpp:63
 msgid "Log"
 msgstr "Log"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:811
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:819
 msgid "Logging configuration if checksum matches"
 msgstr "Protokollierung falls Prüfsumme passt"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:821
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:829
 msgid "Invalid:"
 msgstr "Ungültig:"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:832
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:840
 msgid "Action if checksum doesn't match"
 msgstr "Aktion falls Prüfsumme nicht passt"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:840
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:848
 msgid "Logging configuration if checksum doesn't match"
 msgstr "Protokollierung falls Prüfsumme nicht passt"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:850
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:858
 msgid "Unknown:"
 msgstr "Unbekannt:"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:861
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:869
 msgid "Action if checksum is missing"
 msgstr "Aktion falls keine Prüfsumme vorhanden"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:869
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:877
 msgid "Logging configuration if checksum is missing"
 msgstr "Protokollierung falls keine Prüfsumme vorhanden"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:909
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:917
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:60
 msgid "Type:"
 msgstr "Typ:"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:913
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:921
 msgid "new"
 msgstr "new"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:914
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:922
 msgid "Switch to context"
 msgstr "Kontext wechseln"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:918
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:926
 msgid "open"
 msgstr "open"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:919
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:927
 msgid "Switch to context on open"
 msgstr "Kontext wechseln (open)"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:954
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:962
 msgid "Permission:"
 msgstr "Berechtigung:"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:958
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:966
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:301
 msgid "read"
 msgstr "read"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:960
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:968
 msgid "Read permission"
 msgstr "Lese-Rechte"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:964
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:972
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:308
 msgid "write"
 msgstr "write"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:966
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:974
 msgid "Write permission"
 msgstr "Schreib-Rechte"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:970
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:978
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:315
 msgid "execute"
 msgstr "execute"
 
-#: src/xanoubis/view/DlgRuleEditorBase.cpp:972
+#: src/xanoubis/view/DlgRuleEditorBase.cpp:980
 msgid "Execute permission"
 msgstr "Ausführ-Rechte"
 
@@ -929,64 +938,64 @@ msgstr "Ausführ-Rechte"
 msgid "Anoubis Rule Editor"
 msgstr "Anoubis RuleEditor"
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:398
+#: src/xanoubis/view/DlgRuleEditor.cpp:424
 #, c-format
 msgid "%ls %ls"
 msgstr "%ls %ls"
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:617
-#: src/xanoubis/view/DlgRuleEditor.cpp:657
+#: src/xanoubis/view/DlgRuleEditor.cpp:643
+#: src/xanoubis/view/DlgRuleEditor.cpp:683
 #, c-format
 msgid "Delete rule %ld?"
 msgstr "Soll die Regel %ld gelöscht werden?"
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:618
-#: src/xanoubis/view/DlgRuleEditor.cpp:658 src/xanoubis/view/MainFrame.cpp:617
+#: src/xanoubis/view/DlgRuleEditor.cpp:644
+#: src/xanoubis/view/DlgRuleEditor.cpp:684 src/xanoubis/view/MainFrame.cpp:617
 msgid "Confirm"
 msgstr "Bestätigen"
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:741
+#: src/xanoubis/view/DlgRuleEditor.cpp:767
 msgid "Couldn't create new ruleset!"
 msgstr "Neuer Regelsatz kann nicht erzeugt werden!"
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:742
-#: src/xanoubis/view/DlgRuleEditor.cpp:747
-#: src/xanoubis/view/DlgRuleEditor.cpp:784
-#: src/xanoubis/view/DlgRuleEditor.cpp:868
+#: src/xanoubis/view/DlgRuleEditor.cpp:768
+#: src/xanoubis/view/DlgRuleEditor.cpp:773
+#: src/xanoubis/view/DlgRuleEditor.cpp:810
+#: src/xanoubis/view/DlgRuleEditor.cpp:894
 #: src/xanoubis/view/MainFrameBase.cpp:64
 msgid "Rule Editor"
 msgstr "RuleEditor"
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:746
+#: src/xanoubis/view/DlgRuleEditor.cpp:772
 msgid "Created new ruleset."
 msgstr "Neuer Regelsatz wurde erzeugt."
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:783
+#: src/xanoubis/view/DlgRuleEditor.cpp:809
 msgid "Error: Couldn't create new application rule."
 msgstr "Fehler: Konnte neue Anwendungsregel nicht erzeugen."
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:827
+#: src/xanoubis/view/DlgRuleEditor.cpp:853
 msgid "Cannot edit admin ruleset!"
 msgstr "Der Administrator Regelsatz kann nicht verändert werden!"
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:828
-#: src/xanoubis/view/DlgRuleEditor.cpp:1266
+#: src/xanoubis/view/DlgRuleEditor.cpp:854
+#: src/xanoubis/view/DlgRuleEditor.cpp:1293
 msgid "RuleEditor"
 msgstr "RuleEditor"
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:867
+#: src/xanoubis/view/DlgRuleEditor.cpp:893
 msgid "Error: Couldn't create new filter rule."
 msgstr "Fehler: Konnte neue Filterregel nicht erzeugen."
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:888
+#: src/xanoubis/view/DlgRuleEditor.cpp:914
 msgid "Import policy file"
 msgstr "Regeldatei importieren"
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:896 src/xanoubis/view/MainFrame.cpp:528
+#: src/xanoubis/view/DlgRuleEditor.cpp:922 src/xanoubis/view/MainFrame.cpp:528
 msgid "Couldn't import policy file: it has errors."
 msgstr "Konnte Regeldatei nicht importieren: Sie enthält Fehler."
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:897 src/xanoubis/view/MainFrame.cpp:529
+#: src/xanoubis/view/DlgRuleEditor.cpp:923 src/xanoubis/view/MainFrame.cpp:529
 #: src/xanoubis/view/MainFrame.cpp:790
 #: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1523
 #: src/xanoubis/view/ModSfsGenerateKeyDlg.cpp:191 src/xanoubis/main.cpp:137
@@ -994,52 +1003,54 @@ msgstr "Konnte Regeldatei nicht importieren: Sie enthält Fehler."
 msgid "Error"
 msgstr "Fehler"
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:965
+#: src/xanoubis/view/DlgRuleEditor.cpp:991
 msgid "Export ruleset..."
 msgstr "Schreibe Regelsatz..."
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:974 src/xanoubis/view/MainFrame.cpp:548
+#: src/xanoubis/view/DlgRuleEditor.cpp:1000
+#: src/xanoubis/view/MainFrame.cpp:548
 msgid "Failed to export the ruleset into a file."
 msgstr "Der Regelsatz konnte nicht exportiert werden."
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:975 src/xanoubis/view/MainFrame.cpp:549
+#: src/xanoubis/view/DlgRuleEditor.cpp:1001
+#: src/xanoubis/view/MainFrame.cpp:549
 msgid "Export ruleset"
 msgstr "Regelsatz exportieren"
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:1008
-#: src/xanoubis/view/DlgRuleEditor.cpp:1031
+#: src/xanoubis/view/DlgRuleEditor.cpp:1034
+#: src/xanoubis/view/DlgRuleEditor.cpp:1057
 #: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:454
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:512
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:551
 #: src/xanoubis/view/RuleWizard.cpp:408
 msgid "The entered password is incorrect."
 msgstr "Das eingegebene Passwort ist nicht korrekt."
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:1009
-#: src/xanoubis/view/DlgRuleEditor.cpp:1032
+#: src/xanoubis/view/DlgRuleEditor.cpp:1035
+#: src/xanoubis/view/DlgRuleEditor.cpp:1058
 #: src/xanoubis/view/RuleWizard.cpp:409
 msgid "Key Load Error"
 msgstr "Fehler beim Laden vom Privatenschlüssel"
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:1014
+#: src/xanoubis/view/DlgRuleEditor.cpp:1040
 msgid "An error occured while sending policy to daemon."
 msgstr "Fehler beim Senden der Regeln zum Daemon."
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:1016
-#: src/xanoubis/view/DlgRuleEditor.cpp:1039
+#: src/xanoubis/view/DlgRuleEditor.cpp:1042
+#: src/xanoubis/view/DlgRuleEditor.cpp:1065
 #: src/xanoubis/view/RuleWizard.cpp:416
 msgid "Policy Load Error"
 msgstr "Fehler beim Laden vom Privatenschlüssel"
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:1037
+#: src/xanoubis/view/DlgRuleEditor.cpp:1063
 #: src/xanoubis/view/RuleWizard.cpp:414
 msgid "An error occured while sending admin policy to the daemon."
 msgstr "Fehler beim Senden der Regeln zum Daemon."
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:1221
+#: src/xanoubis/view/DlgRuleEditor.cpp:1248
 msgid "modified"
 msgstr "verändert"
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:1265
+#: src/xanoubis/view/DlgRuleEditor.cpp:1292
 msgid "Invalid user Name"
 msgstr "Ungültiger Benutzername"
 
@@ -1051,7 +1062,7 @@ msgstr "Standard Pfad:"
 #: src/xanoubis/view/DlgRuleEditorFilterSubjectPage.cpp:103
 #: src/xanoubis/view/DlgRuleEditorFilterSubjectPage.cpp:111
 #: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:555
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:505
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:479
 msgid "Path:"
 msgstr "Pfad:"
 
@@ -1209,15 +1220,15 @@ msgid "Messages:"
 msgstr "Meldungen:"
 
 #: src/xanoubis/view/MainFrameBase.cpp:99
-#: src/xanoubis/view/ModAlfPanelsBase.cpp:137
+#: src/xanoubis/view/ModAlfPanelsBase.cpp:139
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:132
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:140
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:148
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:156
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:164
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:172
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:479
-#: src/xanoubis/view/ModSbPanelsBase.cpp:133
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:453
+#: src/xanoubis/view/ModSbPanelsBase.cpp:135
 msgid "0"
 msgstr "0"
 
@@ -1411,32 +1422,32 @@ msgstr "Nicht verbunden"
 msgid "not active"
 msgstr "Nicht aktiv"
 
-#: src/xanoubis/view/ModAlfPanelsBase.cpp:42
+#: src/xanoubis/view/ModAlfPanelsBase.cpp:44
 msgid "ALF - Application Level Firewall"
 msgstr "ALF - Application Level Firewall"
 
-#: src/xanoubis/view/ModAlfPanelsBase.cpp:88
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:87
-#: src/xanoubis/view/ModSbPanelsBase.cpp:84
+#: src/xanoubis/view/ModAlfPanelsBase.cpp:90
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:61
+#: src/xanoubis/view/ModSbPanelsBase.cpp:86
 msgid "Rules"
 msgstr "Regeln"
 
-#: src/xanoubis/view/ModAlfPanelsBase.cpp:101
+#: src/xanoubis/view/ModAlfPanelsBase.cpp:103
 msgid ""
 "Displays the status of the Application level Firewall (ALF) while connected."
 msgstr "Zeigt Status der Application level Firewall (ALF) solange verbunden."
 
-#: src/xanoubis/view/ModAlfPanelsBase.cpp:120
+#: src/xanoubis/view/ModAlfPanelsBase.cpp:122
 msgid "status (ALF):"
 msgstr "Status (ALF):"
 
-#: src/xanoubis/view/ModAlfPanelsBase.cpp:124
+#: src/xanoubis/view/ModAlfPanelsBase.cpp:126
 msgid "open requests (ALF):"
 msgstr "offene Anfragen (ALF):"
 
-#: src/xanoubis/view/ModAlfPanelsBase.cpp:133
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:475
-#: src/xanoubis/view/ModSbPanelsBase.cpp:129
+#: src/xanoubis/view/ModAlfPanelsBase.cpp:135
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:449
+#: src/xanoubis/view/ModSbPanelsBase.cpp:131
 msgid "everything OK"
 msgstr "alles OK"
 
@@ -2086,7 +2097,7 @@ msgstr "Signatur"
 msgid "(null)"
 msgstr "(null)"
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:148
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:149
 msgid ""
 "You have selected a new certificate. To be able to use the key, you need to "
 "activate it! Please inform your administrator."
@@ -2094,27 +2105,25 @@ msgstr ""
 "Sie haben ein neues Schlüsselpaar ausgewählt. Um es zu verwenden, ist eine "
 "Aktivierung notwendig. Bitte informieren sie Ihren Administrator."
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:151
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:619
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:629
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:152
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:658
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:668
 msgid "Certificate notice"
 msgstr "Information: Zertifikat"
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:197
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:830
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:191
 #, fuzzy
 msgid "Failed to load the private key!"
 msgstr "Fehler: Laden des privaten Schlüssels fehlgeschlagen.\n"
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:198
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:823
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:831
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:869
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:192
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:862
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:908
 msgid "Load private key"
 msgstr "Lade privaten Schlüssel"
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:210
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:875
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:208
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:914
 #, c-format
 msgid ""
 "Failed to load certificate from\n"
@@ -2123,22 +2132,61 @@ msgstr ""
 "Konnte Zertifikat nicht von\n"
 "%ls laden."
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:212
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:877
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:210
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:916
 msgid "Load certificate"
 msgstr "Lade Zertifikat"
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:302
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:260
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:371
+msgid ""
+"Your private key and your certificate don't match! This may lead to "
+"unexpected problems!\n"
+"Please be sure to correct this!"
+msgstr ""
+"Ihr privater Schlüssel und Ihr Zertifikat passen nicht zusammen! Dies kann "
+"zu unerwarteten Problemen führen!\n"
+"Bitte korrigieren Sie das!"
+
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:271
+msgid ""
+"You haven't configured a certificate! This may lead to unexpected problems!\n"
+"Please be sure to correct this!"
+msgstr ""
+"Sie haben kein Zertifikat konfiguriert! Dies kann zu unerwarteten Problemen "
+"führen!\n"
+"Bitte korrigieren Sie das!"
+
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:276
+msgid ""
+"You haven't configured a private key! This may lead to unexpected problems!\n"
+"Please be sure to correct this!"
+msgstr ""
+"Sie haben keinen privaten Schlüssel konfiguriert! Dies kann zu unerwarteten "
+"Problemen führen!\n"
+"Bitte korrigieren Sie das!"
+
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:281
+msgid ""
+"You haven't configured a private key or a certificate! This may lead to "
+"unexpected problems!\n"
+"Please be sure to correct this!"
+msgstr ""
+"Sie haben weder einen privaten Schlüssel noch ein Zertifikat konfiguriert! "
+"Dies kann zu unerwarteten Problemen führen!\n"
+"Bitte korrigieren Sie das!"
+
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:341
 msgid "The given path does not exist."
 msgstr "Der angegebene Pfad wurde nicht gefunden."
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:303
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:513
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:537
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:342
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:552
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:576
 msgid "SFS error"
 msgstr "SFS Fehler"
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:342
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:381
 msgid ""
 "The SFS Browser currently displays an invalid view because no daemon "
 "connection is established. The selection is switched back to the \"Standard "
@@ -2148,43 +2196,43 @@ msgstr ""
 "Verbindung vorhanden ist. Es wird nun in die \"Standard Dateiansicht\" "
 "gewechselt."
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:346
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:385
 msgid "SFS warning"
 msgstr "SFS Warnung"
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:398
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:437
 msgid "Multiple errors occured while processing the SFS request"
 msgstr "Bei der Verarbeitung der SFS-Anfrage sind mehrere Fehler aufgetreten"
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:450
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:489
 msgid "Choose the import-file"
 msgstr "Wähle die Importdatei"
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:472
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:511
 msgid "Choose the export-destination"
 msgstr "Wähle das Exportziel"
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:495
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:534
 msgid "Error: xanoubis is not connected to the daemon"
 msgstr "Fehler: xanoubis ist nicht mit dem Daemon verbunden"
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:499
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:538
 msgid "Error: Failed to load the private key."
 msgstr "Fehler: Laden des privaten Schlüssels fehlgeschlagen."
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:503
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:542
 msgid "Error: An invalid argument was supplied"
 msgstr "Fehler: Ein ungültiges Argument wurde übergeben"
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:507
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:546
 msgid "Error: Sfs is still busy with another operation."
 msgstr "Fehler: SFS ist noch mit einem anderen Vorgang beschäftigt."
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:511
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:550
 msgid "Wrong password!"
 msgstr "Falsches Passwort!"
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:531
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:570
 msgid ""
 "Failed to enable signed checksums.\n"
 "Please check the configuration of your certificate and private key!"
@@ -2192,11 +2240,11 @@ msgstr ""
 "Fehler beim Einschalten von signierten Prüfsummen.\n"
 "Bitte die Konfiguration des Zertifikats und des privaten Schlüssels prüfen!"
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:535
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:574
 msgid "Failed to disable signed checksums."
 msgstr "Fehler beim Abschalten von signierten Prüfsummen."
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:616
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:655
 msgid ""
 "You have created a new keypair. To be able to use it, you need to activate "
 "it! Please inform your administrator."
@@ -2204,7 +2252,7 @@ msgstr ""
 "Sie haben ein neues Schlüsselpaar erzeugt. Um es zu verwenden, muss es "
 "zunächst aktiviert werden. Bitte informieren sie Ihren Administrator."
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:625
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:664
 msgid ""
 "A keypair has already been configured. Would you like to use the newly "
 "generated keypair from now on?\n"
@@ -2217,7 +2265,7 @@ msgstr ""
 "Aktivierung des Zertifikats notwendig. Informieren Sie bitte Ihren "
 "Administrator."
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:821
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:860
 msgid ""
 "Cannot load the private key!\n"
 "The file you specified does not exist."
@@ -2225,7 +2273,7 @@ msgstr ""
 "Konnte privaten Schlüssel nicht laden!\n"
 "Die angegebene Datei existiert nicht."
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:867
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:906
 msgid ""
 "Cannot load the certificate!\n"
 "The file you specified does not exist."
@@ -2233,288 +2281,281 @@ msgstr ""
 "Konnte privaten Schlüssel nicht laden!\n"
 "Die angegebene Datei existiert nicht."
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:893
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:932
 msgid "[invalid date]"
 msgstr "[Ungültiges Datum]"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:46
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:20
 msgid "SFS - Secure File System"
 msgstr "SFS - Secure File System"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:95
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:69
 msgid "Directory:"
 msgstr "Verzeichnis:"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:99
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:73
 msgid "/usr/local/bin"
 msgstr "/usr/local/bin"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:122
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:96
 msgid "View:"
 msgstr "Ansicht:"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:126
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:100
 msgid "Standard file browsing"
 msgstr "Standard Dateiansicht"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:126
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:100
 msgid "Files with checksum"
 msgstr "Dateien mit Prüfsumme"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:126
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:100
 msgid "Changed files"
 msgstr "Veränderte Dateien"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:126
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:100
 msgid "Orphaned checksums"
 msgstr "Verwaiste Prüfsummen"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:126
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:100
 msgid "Upgraded files"
 msgstr "Durch ein Upgrade veränderte Dateien"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:133
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:107
 msgid "Recursive traversal"
 msgstr "Rekursiv"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:135
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:109
 msgid "Enables recursive traversal through filesystem"
 msgstr "Zeigt Dateien aller Unterverzeichnisse an"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:149
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:123
 msgid "Filter"
 msgstr "Filter"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:150
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:124
 msgid "Apply the filter"
 msgstr "Den Filter anwenden"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:156
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:130
 msgid "Invert"
 msgstr "Invertieren"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:158
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:132
 msgid "Invert the filter"
 msgstr "Den Filter umkehren"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:171
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:145
 msgid "Sign Files / Check Signatures"
 msgstr "Signiere Dateien / Überprüfe Signaturen"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:174
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:148
 msgid "Enables signature support"
 msgstr "Signaturen miteinbeziehen"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:181
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:155
 msgid "Import..."
 msgstr "Importieren..."
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:183
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:157
 msgid "Import from file"
 msgstr "Aus Datei importieren"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:187
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:161
 msgid "Export..."
 msgstr "Exportieren..."
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:189
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:163
 msgid "Export to file"
 msgstr "In Datei exportieren"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:201
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:175
 msgid "Current selection:"
 msgstr "Aktuelle Auswahl:"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:205
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:179
 msgid "Register"
 msgstr "Registrieren"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:205
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:179
 msgid "Unregister"
 msgstr "Registrierung aufheben"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:205
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:179
 msgid "Validate"
 msgstr "Überprüfen"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:212
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:186
 msgid "Apply"
 msgstr "Anwenden"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:214
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:188
 msgid "Executes the selected action"
 msgstr "Ausgewählte Aktion ausführen"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:221
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:195
 msgid "Validate all"
 msgstr "Überprüfen (alle)"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:223
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:197
 msgid "Validates all displayed files"
 msgstr "Alle angezeigten Dateien überprüfen"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:239
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:213
 msgid "Browser"
 msgstr "Browser"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:246
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:584
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:220
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:558
 msgid "Private Key"
 msgstr "Privater Schlüssel"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:254
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:228
 msgid "Passphrase validity:"
 msgstr "Gültigkeit Passwort:"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:258
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:232
 msgid "Until end of session"
 msgstr "Bis zum Ende der Sitzung"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:258
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:232
 msgid "Until specified time"
 msgstr "Bis zur angegebene Zeit"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:268
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:242
 msgid "Validity end in seconds"
 msgstr "Gültigkeit in Sekunden"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:279
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:633
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:253
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:607
 msgid "Certificate"
 msgstr "Zertifikat"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:287
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:641
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:261
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:615
 msgid "Details"
 msgstr "Details"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:307
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:281
 msgid "KeyID:"
 msgstr "KeyID:"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:315
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:661
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:289
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:635
 msgid "Validity:"
 msgstr "Gültigkeit:"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:323
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:668
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:297
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:642
 msgid "Country:"
 msgstr "Staat:"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:331
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:675
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:305
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:649
 msgid "State or Province:"
 msgstr "Bundesland:"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:339
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:684
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:313
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:658
 msgid "Locality:"
 msgstr "Ort:"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:347
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:693
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:321
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:667
 msgid "Organization:"
 msgstr "Institution:"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:355
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:702
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:329
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:676
 msgid "Organizational Unit:"
 msgstr "Organisationseinheit:"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:363
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:711
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:337
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:685
 msgid "Common Name:"
 msgstr "Name:"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:371
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:720
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:345
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:694
 msgid "Email Address:"
 msgstr "Email-Adresse:"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:385
-#: src/xanoubis/view/ModSfsPanelsBase.h:270
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:359
+#: src/xanoubis/view/ModSfsPanelsBase.h:244
 msgid "Generate Keypair"
 msgstr "Erzeuge Schlüsselpaar"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:397
-msgid ""
-"Your private key and your certificate don't match! This may lead to "
-"unexpected problems!\n"
-"Please be sure to correct this!"
-msgstr ""
-
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:411
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:385
 msgid "Keys"
 msgstr "Schlüssel"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:443
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:417
 msgid ""
 "Displays the status of the Secure File System Module (SFS) while connected."
 msgstr ""
 "Zeigt den Status des Secure File System Moduls (SFS) solange verbunden."
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:462
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:436
 msgid "status (SFS):"
 msgstr "Status (SFS):"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:466
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:440
 msgid "open requests (SFS):"
 msgstr "offene Anfragen (SFS):"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:512
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:486
 msgid "Link Target:"
 msgstr "Linkziel:"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:519
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:493
 msgid "Last modified:"
 msgstr "Zuletzt geändert:"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:526
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:500
 msgid "Checksum:"
 msgstr "Prüfsumme:"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:533
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:507
 msgid "Registered checksum:"
 msgstr "Registrierte Prüfsumme:"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:540
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:514
 msgid "Signature:"
 msgstr "Signatur:"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:547
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:521
 msgid "Checksum status:"
 msgstr "Prüfsummen-Status:"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:555
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:529
 msgid "Signature status:"
 msgstr "Signatur-Status:"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:595
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:569
 msgid "Passphrase:"
 msgstr "Passwort:"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:610
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:584
 msgid "Passphrase (repeat):"
 msgstr "Passwort (Wiederholung):"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:622
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:596
 msgid "Passphrase mismatch!"
 msgstr "Unterschiedliche Passworte!"
 
-#: src/xanoubis/view/ModSbPanelsBase.cpp:42
+#: src/xanoubis/view/ModSbPanelsBase.cpp:44
 msgid "SB - Sandbox"
 msgstr "SB - Sandbox"
 
-#: src/xanoubis/view/ModSbPanelsBase.cpp:97
+#: src/xanoubis/view/ModSbPanelsBase.cpp:99
 msgid "Displays the status of the Sandbox (SB) while connected."
 msgstr "Anzeige des Status der Sandbox (SB) solange verbunden."
 
-#: src/xanoubis/view/ModSbPanelsBase.cpp:116
+#: src/xanoubis/view/ModSbPanelsBase.cpp:118
 msgid "status (SB):"
 msgstr "Status (SB):"
 
-#: src/xanoubis/view/ModSbPanelsBase.cpp:120
+#: src/xanoubis/view/ModSbPanelsBase.cpp:122
 msgid "open requests (SB): "
 msgstr "offene Anfragen (SB):"
 
@@ -3689,11 +3730,11 @@ msgstr "Version wurde automatisch mit dem Speichern des Profils %ls erstellt."
 msgid "hide"
 msgstr "Verbergen"
 
-#: src/xanoubis/widgets/AnGrid.cpp:72
+#: src/xanoubis/widgets/AnGrid.cpp:96
 msgid "Table columns"
 msgstr "Tabellenspalten"
 
-#: src/xanoubis/widgets/AnGrid.cpp:73
+#: src/xanoubis/widgets/AnGrid.cpp:97
 msgid "Please select the columns to be shown"
 msgstr "Bitte die anzuzeigenden Spalten auswählen"
 

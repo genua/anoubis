@@ -101,9 +101,9 @@ ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent, wxWindowID id)
 	indent.DecBy(spacer->GetSize().GetWidth(), 0);
 	certFingerprintLabel->SetMinSize(indent);
 
-	/* Set icon for keyMismatch warning message */
+	/* Set icon for key warning message */
 	icon = AnIconList::getInstance()->GetIcon(AnIconList::ICON_PROBLEM_48);
-	keyMismatchIcon->SetIcon(icon);
+	keyWarningIcon->SetIcon(icon);
 
 	Layout();
 	Refresh();
@@ -160,16 +160,9 @@ ModSfsMainPanelImpl::update(Subject *subject)
 		/* Unknown subject type - do nothing */
 	}
 
+	/* Check key config after path changes */
 	if (subject == keyPicker || subject == certificatePicker) {
-
-		/* Show warning message on keyMismatch */
-		if (!checkKeyPairMatch()) {
-			keyMismatchPanel->Show();
-		} else {
-			keyMismatchPanel->Hide();
-		}
-		Layout();
-		Refresh();
+		checkKeyConfiguration();
 	}
 }
 
@@ -179,7 +172,7 @@ ModSfsMainPanelImpl::updateDelete(Subject *)
 }
 
 bool
-ModSfsMainPanelImpl::checkKeyPairMatch(void)
+ModSfsMainPanelImpl::compareKeyPair(void)
 {
 	KeyCtrl *keyCtrl = KeyCtrl::getInstance();
 	PrivKey &privKey = keyCtrl->getPrivateKey();
@@ -199,6 +192,10 @@ ModSfsMainPanelImpl::checkKeyPairMatch(void)
 				    _("Failed to load the private key!"),
 				    _("Load private key"), wxOK | wxICON_ERROR,
 				    this);
+
+				/* We return true, because we don't want a
+				 * false negative.
+				 */
 				return true;
 			}
 		}
@@ -213,6 +210,10 @@ ModSfsMainPanelImpl::checkKeyPairMatch(void)
 				    localCert.getFile().c_str()),
 				    _("Load certificate"), wxOK | wxICON_ERROR,
 				    this);
+
+				/* We return true, because we don't want a
+				 * false negative.
+				 */
 				return true;
 			}
 		}
@@ -240,16 +241,53 @@ ModSfsMainPanelImpl::checkKeyPairMatch(void)
 void
 ModSfsMainPanelImpl::onSfsTabChange(wxNotebookEvent& event)
 {
-	/* Check for keyMismatch if target is KeysTab (== this) */
-	if (note_MainSfs->GetPage(event.GetSelection()) == this) {
-		if (!checkKeyPairMatch()) {
-			keyMismatchPanel->Show();
-		} else {
-			keyMismatchPanel->Hide();
-		}
-		Layout();
-		Refresh();
+	/* Check key config if target is keysTab */
+	if (note_MainSfs->GetPage(event.GetSelection()) == keysTab) {
+		checkKeyConfiguration();
 	}
+}
+
+void
+ModSfsMainPanelImpl::checkKeyConfiguration(void)
+{
+	/* Only if both keys (private and public) are configured, try to
+	 * compare them!
+	 */
+	if (!keyPicker->getFileName().IsEmpty()
+	    && !certificatePicker->getFileName().IsEmpty())
+	{
+		/* compare the keys and show warning message on mismatch */
+		if (!compareKeyPair()) {
+			keyWarningText->SetLabel(_("Your private key and"
+			    " your certificate don't match! This may lead"
+			    " to unexpected problems!\nPlease be sure to"
+			    " correct this!"));
+			keyWarningPanel->Show();
+		} else {
+			keyWarningPanel->Hide();
+		}
+	} else {
+		if (!keyPicker->getFileName().IsEmpty()) {
+			/* This means the certificatePicker is empty */
+			keyWarningText->SetLabel(_("You haven't configured a"
+			    " certificate! This may lead to unexpected"
+			    " problems!\nPlease be sure to correct this!"));
+		} else if (!certificatePicker->getFileName().IsEmpty()) {
+			/* This means the keyPicker is empty */
+			keyWarningText->SetLabel(_("You haven't configured a"
+			    " private key! This may lead to unexpected"
+			    " problems!\nPlease be sure to correct this!"));
+		} else {
+			/* This means both are empty */
+			keyWarningText->SetLabel(_("You haven't configured a"
+			    " private key or a certificate! This may lead"
+			    " to unexpected problems!\nPlease be sure to"
+			    " correct this!"));
+		}
+		keyWarningPanel->Show();
+	}
+	Layout();
+	Refresh();
 }
 
 void
@@ -810,8 +848,6 @@ ModSfsMainPanelImpl::privKeyParamsUpdate(const wxString &path, bool sessionEnd,
 	PrivKey &privKey = keyCtrl->getPrivateKey();
 	wxString oldPath = privKey.getFile();
 
-	bool changed = oldPath != path;
-
 	privKey.setFile(path);
 	privKey.setValidity(validity);
 
@@ -824,15 +860,6 @@ ModSfsMainPanelImpl::privKeyParamsUpdate(const wxString &path, bool sessionEnd,
 		      "The file you specified does not exist."),
 		    _("Load private key"), wxOK | wxICON_ERROR, this);
 		privKey.setFile(oldPath);
-	} else if (changed) {
-		/* We can only validate the key by loading it */
-		privKey.unload();
-		if (keyCtrl->loadPrivateKey() != KeyCtrl::RESULT_KEY_OK) {
-			anMessageBox(
-			    _("Failed to load the private key!"),
-			    _("Load private key"), wxOK | wxICON_ERROR, this);
-			privKey.setFile(oldPath);
-		}
 	}
 
 	/* Update view */

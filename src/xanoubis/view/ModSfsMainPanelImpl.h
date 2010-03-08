@@ -76,16 +76,28 @@ class ModSfsMainPanelImpl : public ModSfsMainPanelBase, private Observer
 		 * @param None.
 		 * @return true if keys match together, otherwise false.
 		 */
-		bool checkKeyPairMatch(void);
+		bool compareKeyPair(void);
 
 		/**
 		 * Handle the event when the tab of the Sfs notebook is changed.
-		 * Checks if the keys are loaded before
-		 * changing to the keys tab.
+		 * Checks if the keys are loaded before changing to the keysTab.
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
 		void onSfsTabChange(wxNotebookEvent&);
+
+		/**
+		 * Check the configuration of private and public key for the
+		 * following problems:
+		 *   - missing private key
+		 *   - missing certificate
+		 *   - key mismatch
+		 * If a problem occurs, display a warning message at the bottom
+		 * of the windows.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void checkKeyConfiguration(void);
 
 		/**
 		 * Handle the event when main directory of Sfs tree is changed.
