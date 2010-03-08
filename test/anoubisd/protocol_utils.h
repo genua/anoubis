@@ -31,13 +31,45 @@
 #include <anoubis_chat.h>
 #include <anoubis_protocol.h>
 #include <anoubis_client.h>
+#include <anoubis_sig.h>
+#include <anoubis_auth.h>
 
 __BEGIN_DECLS
 
-extern void	create_channel(struct achat_channel **,
-		    struct anoubis_client **);
-extern void	destroy_channel(struct achat_channel *,
-		    struct anoubis_client *);
+/**
+ * Create a new channel. If the callback function is not NULL, it is
+ * used as the authentication callback for anoubis_client_create.
+ *
+ * @param 1st The channel for the client connection will be stored here.
+ * @param 2nd The anoubis_client protocol object will be stored here.
+ * @param 3rd If non-NULL this function is used as the callback funcion.
+ *     The authentication is set to ANOUBIS_AUTH_TRANSPORT if this value
+ *     is NULL.
+ * @return None. assert(3) is used to indicate errors.
+ */
+extern void create_channel(struct achat_channel **, struct anoubis_client **,
+    anoubis_client_auth_callback_t);
+
+/**
+ * Destroy a previously created channel.
+ *
+ * @param 1st The anoubis chat channel.
+ * @param 2nd The anoubis_client object associated with the channel.
+ * @return None. assert(3) is used to indicate errors.
+ */
+extern void destroy_channel(struct achat_channel *, struct anoubis_client *);
+
+/**
+ * Read private and public keys from ./xanoubis/default*. The private key
+ * must not be protected by a password.
+ *
+ * @param None.
+ * @return An anoubis_sig structure with the private and public key if
+ *     present. NULL in case of an error.
+ * NOTE: This function neither detects nor uses the home directory of the
+ * NOTE: current user.
+ */
+extern struct anoubis_sig *create_sig(void);
 
 __END_DECLS
 

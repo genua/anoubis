@@ -595,8 +595,8 @@ dispatch_csmulti(struct anoubis_server *server, struct anoubis_msg *m,
 	return;
 
 invalid:
-	dispatch_generic_reply(server, EINVAL, NULL, 0,
-	    ANOUBIS_P_CSMULTIREQUEST);
+	dispatch_csmulti_reply(server, EINVAL, NULL, 0,
+	    POLICY_FLAG_START | POLICY_FLAG_END);
 	DEBUG(DBG_TRACE, "<dispatch_csmulti (EINVAL)");
 }
 
@@ -1014,17 +1014,38 @@ dispatch_csmulti_reply(void *cbdata, int error, void *data, int len, int flags)
 	DEBUG(DBG_TRACE, ">dispatch_csmulti_reply");
 	if (flags != (POLICY_FLAG_START | POLICY_FLAG_END))
 		log_warnx("Wrong flags value in dispatch_csmulti_reply");
-	if (len < (int)sizeof(Anoubis_CSMultiReplyMessage))
-		return -EFAULT;
 	if (error)
-		return -error;
+		goto err;
+	if (len < (int)sizeof(Anoubis_CSMultiReplyMessage)) {
+		log_warnx(" dispatch_csmulti_reply: "
+		    "Short csmulti reply message: len=%d\n", len);
+		return -EFAULT;
+	}
 	m = anoubis_msg_new(len);
-	if (!m)
-		return -ENOMEM;
+	if (!m) {
+		error = ENOMEM;
+		goto err;
+	}
 	memcpy(m->u.buf, data, len);
 	ret = anoubis_msg_send(anoubis_server_getchannel(server), m);
 	anoubis_msg_free(m);
 	DEBUG(DBG_TRACE, "<dispatch_csmulti_reply: error=%d", -ret);
+	return ret;
+err:
+	m = anoubis_msg_new(sizeof(Anoubis_CSMultiReplyMessage));
+	if (!m)
+		return -ENOMEM;
+	set_value(m->u.csmultireply->type, ANOUBIS_P_CSMULTIREPLY);
+	/*
+	 * NOTE: This is a very rare error case and we don't know the
+	 * NOTE: original operation. Use one that is not totally bogus.
+	 */
+	set_value(m->u.csmultireply->operation, ANOUBIS_CHECKSUM_OP_DEL);
+	set_value(m->u.csmultireply->error, error);
+	ret = anoubis_msg_send(anoubis_server_getchannel(server), m);
+	anoubis_msg_free(m);
+	DEBUG(DBG_TRACE, "<dispatch_csmulti_reply: error=%d ret=%d",
+	    error, ret);
 	return ret;
 }
 

@@ -88,7 +88,7 @@ int main()
 {
 	int	i;
 
-	create_channel(&channel, &client);
+	create_channel(&channel, &client, NULL);
 	for (i=0; i<10000; ++i) {
 		printf("Iterations: %d\n", i);
 		create_policy_get_request();

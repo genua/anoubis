@@ -88,7 +88,7 @@ int main()
 	for (i=0; i<10000; ++i) {
 		if (i % 1000 == 0)
 			printf("Connections: %d\n", i);
-		create_channel(&channel, &client);
+		create_channel(&channel, &client, NULL);
 		create_dangling_policy_request();
 		destroy_channel(channel, client);
 	}

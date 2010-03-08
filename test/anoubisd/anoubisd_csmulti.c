@@ -63,6 +63,7 @@
 
 static struct achat_channel	*channel = NULL;
 struct anoubis_client		*client = NULL;
+struct anoubis_sig		*sigs = NULL;
 
 struct csfile {
 	char		*path;
@@ -71,7 +72,8 @@ struct csfile {
 
 #define NFILES	1024
 
-static struct csfile	csfiles[NFILES];
+static struct csfile	 csfiles[NFILES];
+
 
 static void
 init_files(void)
@@ -126,16 +128,39 @@ process_request(struct anoubis_csmulti_request *req)
 struct anoubis_csmulti_request *
 create_request(int op)
 {
-	struct anoubis_csmulti_request	*req;
-	int				 ret, i;
+	struct anoubis_csmulti_request	*req = NULL;
+	int				 ret, i, sign = 0;
 
-	req = anoubis_csmulti_create(op, geteuid(), NULL, 0);
+	switch(op) {
+	case ANOUBIS_CHECKSUM_OP_GET2:
+	case ANOUBIS_CHECKSUM_OP_ADDSUM:
+	case ANOUBIS_CHECKSUM_OP_DEL:
+		req = anoubis_csmulti_create(op, geteuid(), NULL, 0);
+		break;
+	case ANOUBIS_CHECKSUM_OP_GETSIG2:
+	case ANOUBIS_CHECKSUM_OP_ADDSIG:
+	case ANOUBIS_CHECKSUM_OP_DELSIG:
+		sign = 1;
+		req = anoubis_csmulti_create(op, 0, sigs->keyid, sigs->idlen);
+		break;
+	}
 	if (!req)
 		return NULL;
 	for (i=0; i<NFILES; ++i) {
-		if (op == ANOUBIS_CHECKSUM_OP_ADDSUM) {
-			ret = anoubis_csmulti_add(req, csfiles[i].path,
-			    csfiles[i].csdata, ANOUBIS_CS_LEN);
+		if (op == ANOUBIS_CHECKSUM_OP_ADDSUM
+		    || op == ANOUBIS_CHECKSUM_OP_ADDSIG) {
+			if (!sign) {
+				ret = anoubis_csmulti_add(req, csfiles[i].path,
+				    csfiles[i].csdata, ANOUBIS_CS_LEN);
+			} else {
+				void		*sig;
+				unsigned int	 siglen;
+
+				sig = anoubis_sign_csum(sigs,
+				    csfiles[i].csdata, &siglen);
+				ret = anoubis_csmulti_add(req, csfiles[i].path,
+				    sig, siglen);
+			}
 		} else {
 			ret = anoubis_csmulti_add(req, csfiles[i].path,
 			    NULL, 0);
@@ -167,7 +192,7 @@ verify_errors(struct anoubis_csmulti_request *req, int errs[])
 			ret = -EINVAL;
 		}
 	}
-	return 0;
+	return ret;
 }
 
 static int
@@ -201,9 +226,44 @@ verify_csums(struct anoubis_csmulti_request *req)
 	return ret;
 }
 
+static int
+verify_sigs(struct anoubis_csmulti_request *req)
+{
+	struct anoubis_csmulti_record	*r;
+	int				 ret = 0;
+
+	TAILQ_FOREACH(r, &req->reqs, next) {
+		if (r->error) {
+			fprintf(stderr, "Signature request error: %d idx=%d\n",
+			    r->error, r->idx);
+			ret = -EINVAL;
+			continue;
+		}
+		if (r->u.get.sig == NULL
+		    || get_value(r->u.get.sig->cstype) != ANOUBIS_SIG_TYPE_SIG
+		    || get_value(r->u.get.sig->cslen) < ANOUBIS_CS_LEN) {
+			fprintf(stderr, "No/Bad signature for index %d\n",
+			    r->idx);
+		}
+		if (memcmp(r->u.get.sig->csdata, csfiles[r->idx].csdata,
+		    ANOUBIS_CS_LEN) != 0) {
+			fprintf(stderr, "Wront signature data for index %d\n",
+			    r->idx);
+			ret = -EINVAL;
+		}
+	}
+	return ret;
+}
 
 static int	 err_noent[] = { 0, ENOENT, -1 };
 static int	 err_ok[] = { 0, -1 };
+
+static int
+auth_callback(struct anoubis_client *client __used, struct anoubis_msg *in,
+    struct anoubis_msg **outp)
+{
+	return anoubis_auth_callback(sigs, sigs, in, outp, 0);
+}
 
 int main()
 {
@@ -211,12 +271,14 @@ int main()
 	int					 ret;
 
 	init_files();
-	create_channel(&channel, &client);
+	sigs = create_sig();
+	assert(sigs && sigs->pkey && sigs->cert);
+	create_channel(&channel, &client, auth_callback);
 
 	/* First delete all entries. */
 	req = create_request(ANOUBIS_CHECKSUM_OP_DEL);
 	if (!req) {
-		perror("create_request");
+		fprintf(stderr, "create_request (DEL) failed\n");
 		return 1;
 	}
 	ret = process_request(req);
@@ -235,7 +297,7 @@ int main()
 	/* Add checksum for all files. */
 	req = create_request(ANOUBIS_CHECKSUM_OP_ADDSUM);
 	if (!req) {
-		perror("create_request");
+		fprintf(stderr, "create_request (ADDSUM) failed\n");
 		return 1;
 	}
 	ret = process_request(req);
@@ -254,7 +316,7 @@ int main()
 	/* Get and validate all checksums. */
 	req = create_request(ANOUBIS_CHECKSUM_OP_GET2);
 	if (!req) {
-		perror("create_request");
+		fprintf(stderr, "create_request (GET2) failed\n");
 		return 1;
 	}
 	ret = process_request(req);
@@ -265,6 +327,104 @@ int main()
 	}
 	if (verify_csums(req) < 0) {
 		fprintf(stderr, "Wrong checksums at line %s:%d\n",
+		    __FILE__, __LINE__);
+		return 1;
+	}
+	anoubis_csmulti_destroy(req);
+
+	/* No delete all checksums again. This time ENOENT is not an option. */
+	req = create_request(ANOUBIS_CHECKSUM_OP_DEL);
+	if (!req) {
+		fprintf(stderr, "create_request (DEL) failed\n");
+		return 1;
+	}
+	ret = process_request(req);
+	if (ret < 0) {
+		errno = -ret;
+		perror("process_request (DEL)");
+		return 1;
+	}
+	if (verify_errors(req, err_ok) < 0) {
+		fprintf(stderr, "Wrong error codes at line %s:%d\n",
+		    __FILE__, __LINE__);
+		return 1;
+	}
+	anoubis_csmulti_destroy(req);
+
+
+	/* Same thing for signatures */
+
+	/* First delete all entries. */
+	req = create_request(ANOUBIS_CHECKSUM_OP_DELSIG);
+	if (!req) {
+		fprintf(stderr, "create_request (DELSIG) failed\n");
+		return 1;
+	}
+	ret = process_request(req);
+	if (ret < 0) {
+		errno = -ret;
+		perror("process_request (DELSIG)");
+		return 1;
+	}
+	if (verify_errors(req, err_noent) < 0) {
+		fprintf(stderr, "Wrong error codes at line %s:%d\n",
+		    __FILE__, __LINE__);
+		return 1;
+	}
+	anoubis_csmulti_destroy(req);
+
+	/* Add signature for all files. */
+	req = create_request(ANOUBIS_CHECKSUM_OP_ADDSIG);
+	if (!req) {
+		fprintf(stderr, "create_request (ADDSIG) failed\n");
+		return 1;
+	}
+	ret = process_request(req);
+	if (ret < 0) {
+		errno = -ret;
+		perror("process_request (ADDSIG)");
+		return 1;
+	}
+	if (verify_errors(req, err_ok) < 0) {
+		fprintf(stderr, "Wrong error codes at line %s:%d\n",
+		    __FILE__, __LINE__);
+		return 1;
+	}
+	anoubis_csmulti_destroy(req);
+
+	/* Get and validate all signature. */
+	req = create_request(ANOUBIS_CHECKSUM_OP_GETSIG2);
+	if (!req) {
+		fprintf(stderr, "create_request (GETSIG2) failed\n");
+		return 1;
+	}
+	ret = process_request(req);
+	if (ret < 0) {
+		errno = -ret;
+		perror("process_request (GETSIG2)");
+		return 1;
+	}
+	if (verify_sigs(req) < 0) {
+		fprintf(stderr, "Wrong signatures at line %s:%d\n",
+		    __FILE__, __LINE__);
+		return 1;
+	}
+	anoubis_csmulti_destroy(req);
+
+	/* No delete all checksums again. This time ENOENT is not an option. */
+	req = create_request(ANOUBIS_CHECKSUM_OP_DELSIG);
+	if (!req) {
+		fprintf(stderr, "create_request (DELSIG) failed\n");
+		return 1;
+	}
+	ret = process_request(req);
+	if (ret < 0) {
+		errno = -ret;
+		perror("process_request (DELSIG)");
+		return 1;
+	}
+	if (verify_errors(req, err_ok) < 0) {
+		fprintf(stderr, "Wrong error codes at line %s:%d\n",
 		    __FILE__, __LINE__);
 		return 1;
 	}

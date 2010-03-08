@@ -60,13 +60,15 @@
 #include <protocol_utils.h>
 
 void
-create_channel(struct achat_channel **chanp, struct anoubis_client **clientp)
+create_channel(struct achat_channel **chanp, struct anoubis_client **clientp,
+    anoubis_client_auth_callback_t callback)
 {
 	int				 error = 0;
 	achat_rc			 rc;
 	struct sockaddr_un		 ss;
 	struct achat_channel		*channel = NULL;
 	struct anoubis_client		*client;
+	int				 auth_type = ANOUBIS_AUTH_TRANSPORT;
 
 	channel = acc_create();
 	assert(channel);
@@ -84,7 +86,9 @@ create_channel(struct achat_channel **chanp, struct anoubis_client **clientp)
 	assert(rc == ACHAT_RC_OK);
 	rc = acc_open(channel);
 	assert(rc == ACHAT_RC_OK);
-	client = anoubis_client_create(channel, ANOUBIS_AUTH_TRANSPORT, NULL);
+	if (callback)
+		auth_type = ANOUBIS_AUTH_TRANSPORTANDKEY;
+	client = anoubis_client_create(channel, auth_type, callback);
 	error = anoubis_client_connect(client, ANOUBIS_PROTO_BOTH);
 	assert(error == 0);
 	if (chanp)
@@ -100,4 +104,16 @@ destroy_channel(struct achat_channel *channel, struct anoubis_client *client)
 		anoubis_client_destroy(client);
 	if (channel)
 		acc_destroy(channel);
+}
+
+struct anoubis_sig *
+create_sig(void)
+{
+	static const char	 pubkey[] = "./.xanoubis/default.crt";
+	static const char	 privkey[] = "./.xanoubis/default.key";
+	struct anoubis_sig	*ret;
+
+	if (anoubis_sig_create(&ret, privkey, pubkey, pass_cb) < 0)
+		return NULL;
+	return ret;
 }

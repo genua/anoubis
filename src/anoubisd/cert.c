@@ -449,10 +449,11 @@ _cert_get_by_keyid(const unsigned char *keyid, int klen, int check_ignore,
 	TAILQ_FOREACH(p, certdb, entry) {
 		if (klen != p->kidlen)
 			continue;
-		if (check_ignore  && p->ignore)
-			return NULL;
-		if (memcmp(keyid, p->keyid, p->kidlen) == 0)
+		if (memcmp(keyid, p->keyid, p->kidlen) == 0) {
+			if (check_ignore  && p->ignore)
+				return NULL;
 			return p;
+		}
 	}
 
 	return NULL;

@@ -394,6 +394,7 @@ __sfs_checksumop(const struct sfs_checksumop *csop, struct sfs_data *data,
 				realsiglen),
 			    realsiglen);
 			if (ret != 1) {
+				DEBUG(DBG_CSUM, "Signature verifcation failed");
 				error = -EPERM;
 				goto err1;
 			}
@@ -1444,6 +1445,7 @@ sfs_parse_csmulti(struct sfs_checksumop *dst, struct abuf_buffer mbuf,
 	unsigned int				 i, nrec = 0;
 	int					 add = 0;
 
+	DEBUG(DBG_CSUM, ">sfs_parse_csmulti");
 	if ((req = abuf_cast(mbuf, Anoubis_CSMultiRequestMessage)) == NULL)
 		return -EFAULT;
 	memset(dst, 0, sizeof(struct sfs_checksumop));
@@ -1484,17 +1486,23 @@ sfs_parse_csmulti(struct sfs_checksumop *dst, struct abuf_buffer mbuf,
 		struct cert	*cert = NULL;
 
 		cert = cert_get_by_keyid(dst->keyid, dst->idlen);
-		if (cert == NULL)
+		if (cert == NULL) {
+			DEBUG(DBG_CSUM, "<sfs_parse_csmulti: no cert");
 			return -EPERM;
+		}
 		/*
 		 * If the requesting user is not root, the certificate
 		 * must belong to the authenticated user.
 		 */
-		if (cert->uid != dst->auth_uid && dst->auth_uid != 0)
+		if (cert->uid != dst->auth_uid && dst->auth_uid != 0) {
+			DEBUG(DBG_CSUM, "<sfs_parse_csmulti: bad cert");
 			return -EPERM;
+		}
 	} else {
-		if (dst->uid != dst->auth_uid && dst->auth_uid != 0)
+		if (dst->uid != dst->auth_uid && dst->auth_uid != 0) {
+			DEBUG(DBG_CSUM, "<sfs_parse_csmulti: bad uid");
 			return -EPERM;
+		}
 	}
 	/* Count the records */
 	off2 = off;
@@ -1518,7 +1526,7 @@ sfs_parse_csmulti(struct sfs_checksumop *dst, struct abuf_buffer mbuf,
 	dst->nrec = nrec;
 	dst->csmulti = malloc(nrec * sizeof(struct sfs_csmulti_record));
 	if (dst->csmulti == NULL)
-		return -EFAULT;
+		return -ENOMEM;
 	/* Fill the records one at a time. */
 	for (i=0; i<nrec; ++i) {
 		struct abuf_buffer		 rbuf = abuf_open(mbuf, off);
@@ -1572,14 +1580,17 @@ sfs_parse_csmulti(struct sfs_checksumop *dst, struct abuf_buffer mbuf,
 		if (dst->csmulti[i].path == NULL)
 			goto fault;
 	}
+	DEBUG(DBG_CSUM, "<sfs_parse_csmulti (success)");
 	return 0;
 fault:
 	free(dst->csmulti);
 	dst->csmulti = NULL;
+	DEBUG(DBG_CSUM, "<sfs_parse_csmulti (fault)");
 	return -EFAULT;
 invalid:
 	free(dst->csmulti);
 	dst->csmulti = NULL;
+	DEBUG(DBG_CSUM, "<sfs_parse_csmulti (invalid)");
 	return -EINVAL;
 }
 

@@ -1226,6 +1226,7 @@ create_checksumreply_msg(int type, u_int64_t token, int payloadlen)
 	reply->flags = 0;
 	reply->len = payloadlen;
 	reply->token = token;
+	reply->reply = 0;
 	return msg;
 }
 

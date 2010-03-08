@@ -82,7 +82,7 @@ int main()
 			for (j=0; j<20; ++j)
 				destroy_channel(ch[j], cl[j]);
 		}
-		create_channel(&ch[i%20], &cl[i%20]);
+		create_channel(&ch[i%20], &cl[i%20], NULL);
 		buf[0] = htonl(300);
 		ret = write(ch[i%20]->fd, buf, sizeof(buf));
 		assert(ret == sizeof(buf));
