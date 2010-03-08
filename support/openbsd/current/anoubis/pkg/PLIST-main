@@ -12,7 +12,6 @@
 @comment share/xanoubis/utils/xanoubis_guessApp.sh
 share/applications/xanoubis.desktop
 share/xanoubis/xanoubis.desktop
-share/xanoubis/catalogs/de/xanoubis.mo
 share/xanoubis/icons/General_alert_16.png
 share/xanoubis/icons/General_alert_48.png
 share/xanoubis/icons/General_error_16.png
