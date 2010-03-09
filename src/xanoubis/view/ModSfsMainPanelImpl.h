@@ -320,11 +320,10 @@ class ModSfsMainPanelImpl : public ModSfsMainPanelBase, private Observer
 		/**
 		 * Update the private key parameters.
 		 * @param[in] 1st The path to the private key file.
-		 * @param[in] 2nd Boolean which states validity til session
-		 *            end.
-		 * @param[in] 3rd Time period for validity.
+		 * @param[in] 2rd Time period for validity. Zero means
+		 *     till end of session.
 		 */
-		void privKeyParamsUpdate(const wxString &, bool, int);
+		void privKeyParamsUpdate(const wxString &, int);
 
 		/**
 		 * Update the certificate parameters.

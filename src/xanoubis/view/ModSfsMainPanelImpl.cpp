@@ -137,10 +137,11 @@ void
 ModSfsMainPanelImpl::update(Subject *subject)
 {
 	if (subject == keyPicker) {
-		privKeyParamsUpdate(
-		    keyPicker->getFileName(),
-		    privKeyValidityChoice->GetCurrentSelection() == 0,
-		    privKeyValiditySpinCtrl->GetValue());
+		int	validity = 0;
+
+		if (privKeyValidityChoice->GetCurrentSelection())
+			validity = privKeyValiditySpinCtrl->GetValue();
+		privKeyParamsUpdate(keyPicker->getFileName(), validity);
 	} else if (subject == certificatePicker) {
 		bool changed =
 		    certificateParamsUpdate(certificatePicker->getFileName());
@@ -564,20 +565,22 @@ void
 ModSfsMainPanelImpl::onPrivKeyValidityChanged(wxCommandEvent&)
 {
 	/* Test whether "Until session end" is selected */
-	bool sessionEnd = (privKeyValidityChoice->GetCurrentSelection() == 0);
-	int validity = !sessionEnd ? privKeyValiditySpinCtrl->GetValue() : 0;
+	int	validity = 0;
 
-	privKeyParamsUpdate(keyPicker->getFileName(), sessionEnd, validity);
+	if (privKeyValidityChoice->GetCurrentSelection() != 0)
+		validity = privKeyValiditySpinCtrl->GetValue();
+	privKeyParamsUpdate(keyPicker->getFileName(), validity);
 }
 
 void
 ModSfsMainPanelImpl::onPrivKeyValidityPeriodChanged(wxSpinEvent&)
 {
+	int	validity = 0;
+
 	/* Change validity settings of private key */
-	privKeyParamsUpdate(
-	    keyPicker->getFileName(),
-	    privKeyValidityChoice->GetCurrentSelection() == 0,
-	    privKeyValiditySpinCtrl->GetValue());
+	if (privKeyValidityChoice->GetCurrentSelection() != 0)
+		validity = privKeyValiditySpinCtrl->GetValue();
+	privKeyParamsUpdate(keyPicker->getFileName(), validity);
 }
 
 void
@@ -586,6 +589,7 @@ ModSfsMainPanelImpl::onGenerateKeyPairButton(wxCommandEvent&)
 	/* Display Generate-Keypair-Dialogue */
 	ModSfsGenerateKeyDlg *dlg = new ModSfsGenerateKeyDlg(this);
 	int result = dlg->ShowModal();
+	int validity = 0;
 
 	if (result != wxOK) {
 		/* Cancel button was used. */
@@ -593,12 +597,12 @@ ModSfsMainPanelImpl::onGenerateKeyPairButton(wxCommandEvent&)
 		return;
 	}
 
+	if (privKeyValidityChoice->GetCurrentSelection() != 0)
+		validity = privKeyValiditySpinCtrl->GetValue();
 	if (keyPicker->getFileName().IsEmpty() &&
 	    certificatePicker->getFileName().IsEmpty()) {
 		/* This is the first keypair, configure it */
-		privKeyParamsUpdate(dlg->getPathPrivateKey(),
-		    privKeyValidityChoice->GetCurrentSelection() == 0,
-		    privKeyValiditySpinCtrl->GetValue());
+		privKeyParamsUpdate(dlg->getPathPrivateKey(), validity);
 		certificateParamsUpdate(dlg->getPathCertificate());
 
 		AnMessageDialog *infoDlg = new AnMessageDialog(this,
@@ -619,9 +623,7 @@ ModSfsMainPanelImpl::onGenerateKeyPairButton(wxCommandEvent&)
 		    wxYES_NO | wxICON_QUESTION, this);
 
 		if (result == wxYES) {
-			privKeyParamsUpdate(dlg->getPathPrivateKey(),
-			    privKeyValidityChoice->GetCurrentSelection() == 0,
-			    privKeyValiditySpinCtrl->GetValue());
+			privKeyParamsUpdate(dlg->getPathPrivateKey(), validity);
 			certificateParamsUpdate(dlg->getPathCertificate());
 		}
 	}
@@ -749,7 +751,7 @@ ModSfsMainPanelImpl::initSfsOptions(void)
 	if (keyPath.IsEmpty()) {
 		keyPath = privKey.getFile();
 	}
-	privKeyParamsUpdate(keyPath, (validity == 0), validity);
+	privKeyParamsUpdate(keyPath, validity);
 
 	/* Certificate */
 	LocalCertificate &cert = keyCtrl->getLocalCertificate();
@@ -790,8 +792,7 @@ ModSfsMainPanelImpl::saveSfsOptions(void)
 }
 
 void
-ModSfsMainPanelImpl::privKeyParamsUpdate(const wxString &path, bool sessionEnd,
-    int validity)
+ModSfsMainPanelImpl::privKeyParamsUpdate(const wxString &path, int validity)
 {
 	KeyCtrl *keyCtrl = KeyCtrl::getInstance();
 	PrivKey &privKey = keyCtrl->getPrivateKey();
@@ -814,11 +815,12 @@ ModSfsMainPanelImpl::privKeyParamsUpdate(const wxString &path, bool sessionEnd,
 	/* Update view */
 	keyPicker->setFileName(privKey.getFile());
 
-	privKeyValiditySpinCtrl->Enable(!sessionEnd);
-	privKeyValidityText->Enable(!sessionEnd);
+	privKeyValiditySpinCtrl->Enable(validity != 0);
+	privKeyValidityText->Enable(validity != 0);
 
-	privKeyValidityChoice->SetSelection(sessionEnd ? 0 : 1);
-	privKeyValiditySpinCtrl->SetValue(validity);
+	privKeyValidityChoice->SetSelection(validity ? 1 : 0);
+	if (validity)
+		privKeyValiditySpinCtrl->SetValue(validity);
 
 	/* Inform any listener about change of key-configuration */
 	wxCommandEvent event(anEVT_LOAD_KEY);
