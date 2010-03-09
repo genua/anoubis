@@ -72,11 +72,14 @@ class ModSfsMainPanelImpl : public ModSfsMainPanelBase, private Observer
 		bool comEnabled_; /**< Current communicator status. */
 
 		/**
-		 * Check if the private key and the certificate match together.
+		 * Check if the private key and the certificate match.
+		 * Return an appropriate error message.
+		 *
 		 * @param None.
-		 * @return true if keys match together, otherwise false.
+		 * @return The error message. wxEmptyString if everything
+		 *     is ok.
 		 */
-		bool compareKeyPair(void);
+		wxString compareKeyPair(void);
 
 		/**
 		 * Handle the event when the tab of the Sfs notebook is changed.
@@ -248,14 +251,14 @@ class ModSfsMainPanelImpl : public ModSfsMainPanelBase, private Observer
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
-		void OnPrivKeyValidityChanged(wxCommandEvent&);
+		void onPrivKeyValidityChanged(wxCommandEvent&);
 
 		/**
 		 * Handle the event when private key validity period changed.
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
-		void OnPrivKeyValidityPeriodChanged(wxSpinEvent&);
+		void onPrivKeyValidityPeriodChanged(wxSpinEvent&);
 
 		/**
 		 * Handle the event when key-pair generation was requested.

@@ -261,7 +261,7 @@ ModSfsMainPanelBase::ModSfsMainPanelBase( wxWindow* parent, wxWindowID id, const
 	privKeyValidityChoice = new wxChoice( keysTab, wxID_ANY, wxDefaultPosition, wxDefaultSize, privKeyValidityChoiceNChoices, privKeyValidityChoiceChoices, 0 );
 	passphraseSizer->Add( privKeyValidityChoice, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
-	privKeyValiditySpinCtrl = new wxSpinCtrl( keysTab, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 86400, 0 );
+	privKeyValiditySpinCtrl = new wxSpinCtrl( keysTab, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 1, 86400, 3600 );
 	privKeyValiditySpinCtrl->Enable( false );
 	
 	passphraseSizer->Add( privKeyValiditySpinCtrl, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );

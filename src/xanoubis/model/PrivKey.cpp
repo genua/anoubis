@@ -90,6 +90,11 @@ void
 PrivKey::setValidity(int validity)
 {
 	this->validity_ = validity;
+	if (validity_) {
+		startTimer();
+	} else {
+		stopTimer();
+	}
 }
 
 bool

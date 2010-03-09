@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: anoubis 0.9.2.25.216.469\n"
+"Project-Id-Version: anoubis 0.9.2.25.222.483\n"
 "Report-Msgid-Bugs-To: anoubis@lists.anoubis.org\n"
-"POT-Creation-Date: 2010-03-05 15:13+0100\n"
+"POT-Creation-Date: 2010-03-08 18:31+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -518,8 +518,8 @@ msgstr ""
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:96
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:202
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:525
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:533
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:552
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:560
 msgid "..."
 msgstr ""
 
@@ -580,7 +580,7 @@ msgid "customise columns of filter-rules list"
 msgstr ""
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:244
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:113
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:140
 msgid "Filter:"
 msgstr ""
 
@@ -990,8 +990,8 @@ msgstr ""
 #: src/xanoubis/view/DlgRuleEditor.cpp:923 src/xanoubis/view/MainFrame.cpp:529
 #: src/xanoubis/view/MainFrame.cpp:790
 #: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1523
-#: src/xanoubis/view/ModSfsGenerateKeyDlg.cpp:191 src/xanoubis/main.cpp:137
-#: src/xanoubis/main.cpp:386 src/xanoubis/main.cpp:394
+#: src/xanoubis/view/ModSfsGenerateKeyDlg.cpp:191 src/xanoubis/main.cpp:136
+#: src/xanoubis/main.cpp:385 src/xanoubis/main.cpp:393
 msgid "Error"
 msgstr ""
 
@@ -1012,7 +1012,7 @@ msgstr ""
 #: src/xanoubis/view/DlgRuleEditor.cpp:1034
 #: src/xanoubis/view/DlgRuleEditor.cpp:1057
 #: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:454
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:551
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:501
 #: src/xanoubis/view/RuleWizard.cpp:408
 msgid "The entered password is incorrect."
 msgstr ""
@@ -1054,7 +1054,7 @@ msgstr ""
 #: src/xanoubis/view/DlgRuleEditorFilterSubjectPage.cpp:103
 #: src/xanoubis/view/DlgRuleEditorFilterSubjectPage.cpp:111
 #: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:555
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:479
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:506
 msgid "Path:"
 msgstr ""
 
@@ -1212,7 +1212,7 @@ msgstr ""
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:156
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:164
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:172
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:453
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:480
 #: src/xanoubis/view/ModSbPanelsBase.cpp:135
 msgid "0"
 msgstr ""
@@ -1384,7 +1384,7 @@ msgid "ALF - Application Level Firewall"
 msgstr ""
 
 #: src/xanoubis/view/ModAlfPanelsBase.cpp:90
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:61
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:88
 #: src/xanoubis/view/ModSbPanelsBase.cpp:86
 msgid "Rules"
 msgstr ""
@@ -1403,7 +1403,7 @@ msgid "open requests (ALF):"
 msgstr ""
 
 #: src/xanoubis/view/ModAlfPanelsBase.cpp:135
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:449
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:476
 #: src/xanoubis/view/ModSbPanelsBase.cpp:131
 msgid "everything OK"
 msgstr ""
@@ -1989,19 +1989,19 @@ msgid "upgraded"
 msgstr ""
 
 #: src/xanoubis/view/ModSfsGenerateKeyDlg.cpp:92
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:78
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:80
 msgid "Configure private key:"
 msgstr ""
 
 #: src/xanoubis/view/ModSfsGenerateKeyDlg.cpp:93
 #: src/xanoubis/view/ModSfsGenerateKeyDlg.cpp:99
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:79
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:85
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:81
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:87
 msgid "Browse ..."
 msgstr ""
 
 #: src/xanoubis/view/ModSfsGenerateKeyDlg.cpp:98
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:84
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:86
 msgid "Configure certificate:"
 msgstr ""
 
@@ -2046,138 +2046,116 @@ msgstr ""
 msgid "(null)"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:149
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:150
 msgid ""
 "You have selected a new certificate. To be able to use the key, you need to "
 "activate it! Please inform your administrator."
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:152
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:658
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:668
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:153
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:608
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:618
 msgid "Certificate notice"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:191
-msgid "Failed to load the private key!"
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:190
+msgid "No keys are configured. You will not be able to make use of signatures."
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:192
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:862
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:908
-msgid "Load private key"
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:194
+msgid "Failed to load private key"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:208
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:914
-#, c-format
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:196
 msgid ""
-"Failed to load certificate from\n"
-"%ls."
+"You have no private key configured. This may lead to unexpected problems."
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:210
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:916
-msgid "Load certificate"
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:201
+msgid "Failed too load certificate"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:260
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:371
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:203
 msgid ""
-"Your private key and your certificate don't match! This may lead to "
-"unexpected problems!\n"
-"Please be sure to correct this!"
+"You have no certificate configured. This may lead to unexpected problems."
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:271
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:213
 msgid ""
-"You haven't configured a certificate! This may lead to unexpected problems!\n"
-"Please be sure to correct this!"
+"Your private key and certificate do not match. This may lead to unexpected "
+"problems."
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:276
-msgid ""
-"You haven't configured a private key! This may lead to unexpected problems!\n"
-"Please be sure to correct this!"
-msgstr ""
-
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:281
-msgid ""
-"You haven't configured a private key or a certificate! This may lead to "
-"unexpected problems!\n"
-"Please be sure to correct this!"
-msgstr ""
-
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:341
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:291
 msgid "The given path does not exist."
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:342
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:552
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:576
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:292
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:502
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:526
 msgid "SFS error"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:381
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:331
 msgid ""
 "The SFS Browser currently displays an invalid view because no daemon "
 "connection is established. The selection is switched back to the \"Standard "
 "File Browsing\" view."
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:385
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:335
 msgid "SFS warning"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:437
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:387
 msgid "Multiple errors occured while processing the SFS request"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:489
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:439
 msgid "Choose the import-file"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:511
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:461
 msgid "Choose the export-destination"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:534
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:484
 msgid "Error: xanoubis is not connected to the daemon"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:538
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:488
 msgid "Error: Failed to load the private key."
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:542
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:492
 msgid "Error: An invalid argument was supplied"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:546
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:496
 msgid "Error: Sfs is still busy with another operation."
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:550
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:500
 msgid "Wrong password!"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:570
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:520
 msgid ""
 "Failed to enable signed checksums.\n"
 "Please check the configuration of your certificate and private key!"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:574
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:524
 msgid "Failed to disable signed checksums."
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:655
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:605
 msgid ""
 "You have created a new keypair. To be able to use it, you need to activate "
 "it! Please inform your administrator."
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:664
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:614
 msgid ""
 "A keypair has already been configured. Would you like to use the newly "
 "generated keypair from now on?\n"
@@ -2186,276 +2164,299 @@ msgid ""
 "administrator."
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:860
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:805
 msgid ""
 "Cannot load the private key!\n"
 "The file you specified does not exist."
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:906
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:807
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:847
+msgid "Load private key"
+msgstr ""
+
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:845
 msgid ""
 "Cannot load the certificate!\n"
 "The file you specified does not exist."
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:932
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:853
+#, c-format
+msgid ""
+"Failed to load certificate from\n"
+"%ls."
+msgstr ""
+
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:855
+msgid "Load certificate"
+msgstr ""
+
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:871
 msgid "[invalid date]"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:20
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:47
 msgid "SFS - Secure File System"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:69
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:96
 msgid "Directory:"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:73
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:100
 msgid "/usr/local/bin"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:96
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:123
 msgid "View:"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:100
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:127
 msgid "Standard file browsing"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:100
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:127
 msgid "Files with checksum"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:100
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:127
 msgid "Changed files"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:100
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:127
 msgid "Orphaned checksums"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:100
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:127
 msgid "Upgraded files"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:107
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:134
 msgid "Recursive traversal"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:109
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:136
 msgid "Enables recursive traversal through filesystem"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:123
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:150
 msgid "Filter"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:124
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:151
 msgid "Apply the filter"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:130
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:157
 msgid "Invert"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:132
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:159
 msgid "Invert the filter"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:145
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:172
 msgid "Sign Files / Check Signatures"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:148
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:175
 msgid "Enables signature support"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:155
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:182
 msgid "Import..."
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:157
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:184
 msgid "Import from file"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:161
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:188
 msgid "Export..."
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:163
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:190
 msgid "Export to file"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:175
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:202
 msgid "Current selection:"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:179
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:206
 msgid "Register"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:179
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:206
 msgid "Unregister"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:179
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:206
 msgid "Validate"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:186
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:213
 msgid "Apply"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:188
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:215
 msgid "Executes the selected action"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:195
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:222
 msgid "Validate all"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:197
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:224
 msgid "Validates all displayed files"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:213
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:240
 msgid "Browser"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:220
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:558
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:247
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:585
 msgid "Private Key"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:228
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:255
 msgid "Passphrase validity:"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:232
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:259
 msgid "Until end of session"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:232
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:259
 msgid "Until specified time"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:242
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:269
 msgid "Validity end in seconds"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:253
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:607
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:280
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:634
 msgid "Certificate"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:261
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:615
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:288
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:642
 msgid "Details"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:281
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:308
 msgid "KeyID:"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:289
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:635
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:316
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:662
 msgid "Validity:"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:297
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:642
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:324
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:669
 msgid "Country:"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:305
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:649
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:332
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:676
 msgid "State or Province:"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:313
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:658
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:340
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:685
 msgid "Locality:"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:321
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:667
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:348
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:694
 msgid "Organization:"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:329
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:676
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:356
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:703
 msgid "Organizational Unit:"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:337
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:685
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:364
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:712
 msgid "Common Name:"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:345
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:694
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:372
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:721
 msgid "Email Address:"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:359
-#: src/xanoubis/view/ModSfsPanelsBase.h:244
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:386
+#: src/xanoubis/view/ModSfsPanelsBase.h:271
 msgid "Generate Keypair"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:385
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:398
+msgid ""
+"Your private key and your certificate don't match! This may lead to "
+"unexpected problems!\n"
+"Please be sure to correct this!"
+msgstr ""
+
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:412
 msgid "Keys"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:417
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:444
 msgid ""
 "Displays the status of the Secure File System Module (SFS) while connected."
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:436
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:463
 msgid "status (SFS):"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:440
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:467
 msgid "open requests (SFS):"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:486
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:513
 msgid "Link Target:"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:493
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:520
 msgid "Last modified:"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:500
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:527
 msgid "Checksum:"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:507
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:534
 msgid "Registered checksum:"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:514
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:541
 msgid "Signature:"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:521
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:548
 msgid "Checksum status:"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:529
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:556
 msgid "Signature status:"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:569
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:596
 msgid "Passphrase:"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:584
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:611
 msgid "Passphrase (repeat):"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:596
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:623
 msgid "Passphrase mismatch!"
 msgstr ""
 
@@ -3610,64 +3611,64 @@ msgstr ""
 msgid "Unkown status message key=%x value=%d"
 msgstr ""
 
-#: src/xanoubis/main.cpp:136
+#: src/xanoubis/main.cpp:135
 msgid "Error while initialising anoubis_ui"
 msgstr ""
 
-#: src/xanoubis/main.cpp:141
+#: src/xanoubis/main.cpp:140
 #, c-format
 msgid ""
 "Unsupported version (%d) found of HOME/.xanoubis\n"
 "Xanoubis will terminate now.\n"
 msgstr ""
 
-#: src/xanoubis/main.cpp:144 src/xanoubis/main.cpp:234
+#: src/xanoubis/main.cpp:143 src/xanoubis/main.cpp:233
 msgid "Warning"
 msgstr ""
 
-#: src/xanoubis/main.cpp:203
+#: src/xanoubis/main.cpp:202
 msgid "Language setting: "
 msgstr ""
 
-#: src/xanoubis/main.cpp:231
+#: src/xanoubis/main.cpp:230
 msgid ""
 "The Boot Loader configuration has been updated. Please make sure to boot an "
 "Anoubis Kernel."
 msgstr ""
 
-#: src/xanoubis/main.cpp:281
+#: src/xanoubis/main.cpp:280
 msgid "this help"
 msgstr ""
 
-#: src/xanoubis/main.cpp:288
+#: src/xanoubis/main.cpp:287
 msgid "communication socket of anoubis daemon"
 msgstr ""
 
-#: src/xanoubis/main.cpp:295
+#: src/xanoubis/main.cpp:294
 msgid "Debug output with 'num' als level"
 msgstr ""
 
-#: src/xanoubis/main.cpp:302
+#: src/xanoubis/main.cpp:301
 msgid "Disable TrayIcon"
 msgstr ""
 
-#: src/xanoubis/main.cpp:384 src/xanoubis/main.cpp:392
+#: src/xanoubis/main.cpp:383 src/xanoubis/main.cpp:391
 #, c-format
 msgid "Couldn't remove Autostart file: %ls"
 msgstr ""
 
-#: src/xanoubis/main.cpp:608
+#: src/xanoubis/main.cpp:587
 #, c-format
 msgid ""
 "Enter the passphrase of your private key:\n"
 "%ls"
 msgstr ""
 
-#: src/xanoubis/main.cpp:610 src/xanoubis/main.cpp:615
+#: src/xanoubis/main.cpp:589 src/xanoubis/main.cpp:594
 msgid "Enter passphrase for: "
 msgstr ""
 
-#: src/xanoubis/main.cpp:613
+#: src/xanoubis/main.cpp:592
 #, c-format
 msgid ""
 "The entered passphrase was wrong!\n"

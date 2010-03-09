@@ -171,52 +171,37 @@ ModSfsMainPanelImpl::updateDelete(Subject *)
 {
 }
 
-bool
+wxString
 ModSfsMainPanelImpl::compareKeyPair(void)
 {
 	KeyCtrl *keyCtrl = KeyCtrl::getInstance();
 	PrivKey &privKey = keyCtrl->getPrivateKey();
 	LocalCertificate &localCert = keyCtrl->getLocalCertificate();
-	bool rv;
 
-	/* Load private key if not already loaded!
-	 * Remember if it was already loaded or not, so we can eventually
-	 * unload if afterwards
-	 */
-	bool privKeyLoadedBefore = privKey.isLoaded();
-	if (!privKeyLoadedBefore) {
-		if(!privKey.getFile().IsEmpty()) {
-			if(keyCtrl->loadPrivateKey() != KeyCtrl::RESULT_KEY_OK)
-			{
-				anMessageBox(
-				    _("Failed to load the private key!"),
-				    _("Load private key"), wxOK | wxICON_ERROR,
-				    this);
-
-				/* We return true, because we don't want a
-				 * false negative.
-				 */
-				return true;
-			}
-		}
-	}
+	/* Load private key if not already loaded! */
+	if (!privKey.isLoaded() && privKey.canLoad())
+		keyCtrl->loadPrivateKey();
 
 	/* Load certificate if not already loaded! */
-	if (!localCert.isLoaded()) {
-		if(!localCert.getFile().IsEmpty()) {
-			if(!localCert.load()) {
-				anMessageBox(wxString::Format(
-				    _("Failed to load certificate from\n%ls."),
-				    localCert.getFile().c_str()),
-				    _("Load certificate"), wxOK | wxICON_ERROR,
-				    this);
+	if (!localCert.isLoaded() && localCert.canLoad())
+		localCert.load();
 
-				/* We return true, because we don't want a
-				 * false negative.
-				 */
-				return true;
-			}
-		}
+	if (!localCert.canLoad() && !privKey.canLoad())
+		return _("No keys are configured. "
+		    "You will not be able to make use of signatures.");
+	if (!privKey.isLoaded()) {
+		if (privKey.canLoad())
+			return _("Failed to load private key");
+		else
+			return _("You have no private key configured. "
+			    "This may lead to unexpected problems.");
+	}
+	if (!localCert.isLoaded()) {
+		if (localCert.canLoad())
+			return _("Failed too load certificate");
+		else
+			return _("You have no certificate configured. "
+			    "This may lead to unexpected problems.");
 	}
 
 	/* Get the 'real' key data */
@@ -224,18 +209,10 @@ ModSfsMainPanelImpl::compareKeyPair(void)
 	struct anoubis_sig *cert = localCert.getCertificate();
 
 	/* Compare the keys */
-	if (anoubis_sig_keycmp(key, cert) != 0) {
-		rv = false;
-	} else {
-		rv = true;
-	}
-
-	/* Unload private key if it hadn't already been loaded before!!! */
-	if (!privKeyLoadedBefore) {
-		privKey.unload();
-	}
-
-	return rv;
+	if (anoubis_sig_keycmp(key, cert) != 0)
+		return _("Your private key and certificate do not match. "
+		    "This may lead to unexpected problems.");
+	return wxEmptyString;
 }
 
 void
@@ -250,40 +227,12 @@ ModSfsMainPanelImpl::onSfsTabChange(wxNotebookEvent& event)
 void
 ModSfsMainPanelImpl::checkKeyConfiguration(void)
 {
-	/* Only if both keys (private and public) are configured, try to
-	 * compare them!
-	 */
-	if (!keyPicker->getFileName().IsEmpty()
-	    && !certificatePicker->getFileName().IsEmpty())
-	{
-		/* compare the keys and show warning message on mismatch */
-		if (!compareKeyPair()) {
-			keyWarningText->SetLabel(_("Your private key and"
-			    " your certificate don't match! This may lead"
-			    " to unexpected problems!\nPlease be sure to"
-			    " correct this!"));
-			keyWarningPanel->Show();
-		} else {
-			keyWarningPanel->Hide();
-		}
+	wxString	msg = compareKeyPair();
+
+	if (msg == wxEmptyString) {
+		keyWarningPanel->Hide();
 	} else {
-		if (!keyPicker->getFileName().IsEmpty()) {
-			/* This means the certificatePicker is empty */
-			keyWarningText->SetLabel(_("You haven't configured a"
-			    " certificate! This may lead to unexpected"
-			    " problems!\nPlease be sure to correct this!"));
-		} else if (!certificatePicker->getFileName().IsEmpty()) {
-			/* This means the keyPicker is empty */
-			keyWarningText->SetLabel(_("You haven't configured a"
-			    " private key! This may lead to unexpected"
-			    " problems!\nPlease be sure to correct this!"));
-		} else {
-			/* This means both are empty */
-			keyWarningText->SetLabel(_("You haven't configured a"
-			    " private key or a certificate! This may lead"
-			    " to unexpected problems!\nPlease be sure to"
-			    " correct this!"));
-		}
+		keyWarningText->SetLabel(msg);
 		keyWarningPanel->Show();
 	}
 	Layout();
@@ -612,7 +561,7 @@ ModSfsMainPanelImpl::OnSfsMainKeyLoaded(wxCommandEvent&)
 }
 
 void
-ModSfsMainPanelImpl::OnPrivKeyValidityChanged(wxCommandEvent&)
+ModSfsMainPanelImpl::onPrivKeyValidityChanged(wxCommandEvent&)
 {
 	/* Test whether "Until session end" is selected */
 	bool sessionEnd = (privKeyValidityChoice->GetCurrentSelection() == 0);
@@ -622,7 +571,7 @@ ModSfsMainPanelImpl::OnPrivKeyValidityChanged(wxCommandEvent&)
 }
 
 void
-ModSfsMainPanelImpl::OnPrivKeyValidityPeriodChanged(wxSpinEvent&)
+ModSfsMainPanelImpl::onPrivKeyValidityPeriodChanged(wxSpinEvent&)
 {
 	/* Change validity settings of private key */
 	privKeyParamsUpdate(
@@ -851,15 +800,15 @@ ModSfsMainPanelImpl::privKeyParamsUpdate(const wxString &path, bool sessionEnd,
 	privKey.setFile(path);
 	privKey.setValidity(validity);
 
-	if (path.IsEmpty()) {
-		/* clear key */
-		privKey.unload();
-	} else if (!privKey.canLoad()) {
+	if (!path.IsEmpty() && !privKey.canLoad()) {
 		anMessageBox(
 		    _("Cannot load the private key!\n"
 		      "The file you specified does not exist."),
 		    _("Load private key"), wxOK | wxICON_ERROR, this);
 		privKey.setFile(oldPath);
+	} else {
+		/* The path changed. Forget about the old key. */
+		privKey.unload();
 	}
 
 	/* Update view */
