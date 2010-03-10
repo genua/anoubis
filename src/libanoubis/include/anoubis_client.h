@@ -119,7 +119,7 @@ struct anoubis_transaction *anoubis_client_version_start(
  *     must be zero if keyid or idlen is non-zero.
  * @param keyid The key ID that all the requests apply to.
  * @param idlen The length of the key ID.
- * @return A pointer to a new anobuis_csmulti_request structure or NULL
+ * @return A pointer to a new anoubis_csmulti_request structure or NULL
  *     in case of errors.
  */
 struct anoubis_csmulti_request *
@@ -139,7 +139,7 @@ anoubis_csmulti_destroy(struct anoubis_csmulti_request *request);
 /**
  * Add an individual checksum requst to an anoubis_csmulti_request.
  *
- * @param request The anobuis_csmulti_request.
+ * @param request The anoubis_csmulti_request.
  * @param path The pathname of the checksum request.
  * @param csdata The checksum data. This value must be NULL if the
  *     operation of the request is not an ADD request.

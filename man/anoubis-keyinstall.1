@@ -42,15 +42,18 @@ The
 .Nm
 command installs the public key
 .Ar certificate
-and makes sure that the anoubis daemon will use the key after the next
-restart.
-The command makes sure that all signed policies affected by the key
-have an appropriate signature and refuses to install the key if these
-signatures are not present and cannot be generated.
+and makes sure that the anoubis daemon will be able to use the key after the
+next restart.
+.Nm
+makes sure that all signed policies affected by the certificate
+have an appropriate signature and refuses to install the certificate
+if these signatures are not present and cannot be generated.
 
-If a private key is given with the
+If a private key is supplied via the
 .Fl k
-option, the command tries to generate any missing or invalid signatures.
+option,
+.Nm
+will try to update any incorrect/missing signatures.
 .Pp
 Options:
 .Pp

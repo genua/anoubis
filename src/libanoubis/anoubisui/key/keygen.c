@@ -252,7 +252,7 @@ anoubis_keysubject_tostring(const struct anoubis_keysubject *subject)
 }
 
 /**
- * Free the contents of an anobuis_keysubject structure.
+ * Free the contents of an anoubis_keysubject structure.
  * @param subject The subject.
  * @return None.
  */

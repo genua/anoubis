@@ -528,7 +528,7 @@ struct anoubis_csentry {
  * payload  Is empty if error is non-zero or if the operation in the reply
  *    message is not a GET2 or GETSIG2 request.
  *    For successful GET2 or GETSIG2 requests the payload contains an
- *    arbitrary number of anobuis_csentry structures. A structure of type
+ *    arbitrary number of anoubis_csentry structures. A structure of type
  *    ANOUBIS_SIG_TYPE_EOT terminates the list.
  */
 typedef struct {

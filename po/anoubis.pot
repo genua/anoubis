@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: anoubis 0.9.2.25.222.483\n"
+"Project-Id-Version: anoubis 0.9.2.25.226.490\n"
 "Report-Msgid-Bugs-To: anoubis@lists.anoubis.org\n"
-"POT-Creation-Date: 2010-03-08 18:31+0100\n"
+"POT-Creation-Date: 2010-03-10 13:23+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1012,7 +1012,7 @@ msgstr ""
 #: src/xanoubis/view/DlgRuleEditor.cpp:1034
 #: src/xanoubis/view/DlgRuleEditor.cpp:1057
 #: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:454
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:501
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:502
 #: src/xanoubis/view/RuleWizard.cpp:408
 msgid "The entered password is incorrect."
 msgstr ""
@@ -2046,116 +2046,116 @@ msgstr ""
 msgid "(null)"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:150
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:151
 msgid ""
 "You have selected a new certificate. To be able to use the key, you need to "
 "activate it! Please inform your administrator."
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:153
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:608
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:618
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:154
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:612
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:622
 msgid "Certificate notice"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:190
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:191
 msgid "No keys are configured. You will not be able to make use of signatures."
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:194
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:195
 msgid "Failed to load private key"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:196
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:197
 msgid ""
 "You have no private key configured. This may lead to unexpected problems."
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:201
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:202
 msgid "Failed too load certificate"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:203
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:204
 msgid ""
 "You have no certificate configured. This may lead to unexpected problems."
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:213
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:214
 msgid ""
 "Your private key and certificate do not match. This may lead to unexpected "
 "problems."
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:291
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:292
 msgid "The given path does not exist."
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:292
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:502
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:526
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:293
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:503
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:527
 msgid "SFS error"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:331
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:332
 msgid ""
 "The SFS Browser currently displays an invalid view because no daemon "
 "connection is established. The selection is switched back to the \"Standard "
 "File Browsing\" view."
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:335
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:336
 msgid "SFS warning"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:387
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:388
 msgid "Multiple errors occured while processing the SFS request"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:439
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:440
 msgid "Choose the import-file"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:461
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:462
 msgid "Choose the export-destination"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:484
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:485
 msgid "Error: xanoubis is not connected to the daemon"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:488
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:489
 msgid "Error: Failed to load the private key."
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:492
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:493
 msgid "Error: An invalid argument was supplied"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:496
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:497
 msgid "Error: Sfs is still busy with another operation."
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:500
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:501
 msgid "Wrong password!"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:520
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:521
 msgid ""
 "Failed to enable signed checksums.\n"
 "Please check the configuration of your certificate and private key!"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:524
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:525
 msgid "Failed to disable signed checksums."
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:605
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:609
 msgid ""
 "You have created a new keypair. To be able to use it, you need to activate "
 "it! Please inform your administrator."
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:614
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:618
 msgid ""
 "A keypair has already been configured. Would you like to use the newly "
 "generated keypair from now on?\n"
@@ -2164,35 +2164,35 @@ msgid ""
 "administrator."
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:805
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:806
 msgid ""
 "Cannot load the private key!\n"
 "The file you specified does not exist."
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:807
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:847
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:808
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:849
 msgid "Load private key"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:845
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:847
 msgid ""
 "Cannot load the certificate!\n"
 "The file you specified does not exist."
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:853
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:855
 #, c-format
 msgid ""
 "Failed to load certificate from\n"
 "%ls."
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:855
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:857
 msgid "Load certificate"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:871
+#: src/xanoubis/view/ModSfsMainPanelImpl.cpp:873
 msgid "[invalid date]"
 msgstr ""
 
@@ -2602,7 +2602,7 @@ msgstr ""
 
 #: src/xanoubis/view/RuleWizardSandboxOverwritePage.cpp:45
 msgid ""
-"Sanbox polices already exists and you have to choose between two options: "
+"Sandbox policies already exist and you have to choose between two options: "
 "keep or overwrite.\n"
 "\n"
 "Choose \"No\" if you don't want to alter the existing policies. You'll skip "
@@ -2615,8 +2615,8 @@ msgstr ""
 #: src/xanoubis/view/RuleWizardSandboxOverwritePage.cpp:56
 msgid ""
 "For this application\n"
-"sanbox policies\n"
-"already exists."
+"sandbox policies\n"
+"already exist."
 msgstr ""
 
 #: src/xanoubis/view/RuleWizardSandboxExecutePage.cpp:64

@@ -42,7 +42,7 @@ RuleWizardSandboxOverwritePage::RuleWizardSandboxOverwritePage(wxWindow *parent,
 	text = wxT("Sandbox settings:");
 	headLineLabel->SetLabel(text);
 
-	text = _("Sanbox polices already exists and you have to choose"
+	text = _("Sandbox policies already exist and you have to choose"
 	    " between two options: keep or overwrite.\n\n"
 	    "Choose \"No\" if you don't want to alter the existing policies."
 	    " You'll skip the sandbox section and proceed to final page.\n\n"
@@ -53,7 +53,7 @@ RuleWizardSandboxOverwritePage::RuleWizardSandboxOverwritePage(wxWindow *parent,
 	icon = wxGetApp().loadIcon(wxT("General_problem_48.png"));
 	alertIcon->SetIcon(*icon);
 
-	text = _("For this application\nsanbox policies\nalready exists.");
+	text = _("For this application\nsandbox policies\nalready exist.");
 	alertLabel->SetLabel(text);
 
 	if (history_->shallOverwriteSandboxPolicy() ==
