@@ -45,6 +45,10 @@ CsumCalcThread::Entry(void)
 			continue;
 
 		task->exec();
+		if (task->getType() != Task::TYPE_CSUMCALC) {
+			JobCtrl::getInstance()->addTask(task);
+			continue;
+		}
 
 		TaskEvent event(task, wxID_ANY);
 		sendEvent(event);

@@ -88,13 +88,6 @@ class ComCsumAddTask : public ComTask, public ComCsumHandler
 		~ComCsumAddTask(void);
 
 		/**
-		 * Tests whether a private key is assigned to the task.
-		 * @return true is returned, if a private key is assigned,
-		 *         false otherwise.
-		 */
-		bool havePrivateKey(void) const;
-
-		/**
 		 * Configures a private-key.
 		 *
 		 * The key is used to sign the checksum of the file. As soon as
@@ -112,29 +105,13 @@ class ComCsumAddTask : public ComTask, public ComCsumHandler
 		void setPrivateKey(struct anoubis_sig *);
 
 		/**
-		 * Tests whether a sfs_entry is assigned to the task.
-		 *
-		 * If such a structure is assigned, the checksum/signature is
-		 * copied from there, rather than calculating it.
-		 *
-		 * @return true is returned, if a sfs_entry-structure is
-		 *         assigned to the task.
-		 */
-		bool haveSfsEntry(void) const;
-
-		/**
-		 * Assignes a sfs_entry-structure to the task.
-		 *
-		 * If such a structure is assigned, the task does not calculate
-		 * the checksum/signature. The information are taken from the
-		 * structure.
+		 * Assignes the contents of an sfs_entry-structure to the task.
+		 * This function can be used to add pre-calculated checksums
+		 * and/or signatures instead of caculating them on the fly.
 		 *
 		 * @param entry The sfs_entry to by assigned
-		 * @param sendCsum If set to true, the checksum is taken from
-		 *                 the structure and then send to the daemon.
-		 *                 If set to false, the signature is used.
 		 */
-		void setSfsEntry(struct sfs_entry *, bool);
+		void setSfsEntry(const struct sfs_entry *);
 
 		/**
 		 * Implementation of Task::getEventType().
@@ -149,20 +126,31 @@ class ComCsumAddTask : public ComTask, public ComCsumHandler
 		/**
 		 * Returns the calculated checksum.
 		 *
-		 * The checksum was calculated during the runtime of the task
-		 * and sent to anoubisd.
+		 * The checksum that was calculated during the runtime
+		 * of the task and sent to the anoubis daemon is returned.
 		 *
 		 * @param csum Destination buffer, where the resulting checksum
 		 *             is written.
 		 * @param size Size of destination buffer <code>csum</code>.
-		 * @return On success, <code>ANOUBIS_CS_LEN</code> is returned.
-		 *         <code>ANOUBIS_CS_LEN</code>. A return-code of 0
-		 *         means, that nothing was written. It might happen,
-		 *         if the result of the task is not success or the
-		 *         destination buffer is not large enough to hold the
-		 *         whole checksum.
+		 * @return On success, the length of the checksum is returned.
+		 *     A return-code of 0 means, that nothing was written.
+		 *     This might happen, if the result of the task is
+		 *     not success or the destination buffer is not large
+		 *     enough to hold the whole checksum.
 		 */
 		size_t getCsum(u_int8_t *, size_t) const;
+
+		/**
+		 * Return true if the checksum was sent successfully.
+		 * @return True if the checksum was sent successfully.
+		 */
+		bool checksumOk(void);
+
+		/**
+		 * Return true if the signature was sent successfully.
+		 * @return True if the signature was sent successfully.
+		 */
+		bool signatureOk(void);
 
 	protected:
 		/**
@@ -177,47 +165,13 @@ class ComCsumAddTask : public ComTask, public ComCsumHandler
 
 	private:
 		struct anoubis_sig	*privKey_;
-		struct sfs_entry	*sfsEntry_;
-		bool			forceSendCsum_;
-		u_int8_t		cs_[ANOUBIS_CS_LEN];
-
-		/**
-		 * Creates the payload sent to anoubisd in case a
-		 * sfs_entry-structure is assigned to the task.
-		 *
-		 * The checksum/signature is taken from there.
-		 *
-		 * @param payload_len Length of returned payload-buffer is
-		 *                    written into this argument.
-		 * @param req_op The operation sent to anoubisd is written into
-		 *               this argument.
-		 */
-		u_int8_t *createSfsMsg(int *, int *);
-
-		/**
-		 * Creates the payload sent to anoubisd in case of unsigned
-		 * checksums.
-		 *
-		 * The checksum is calculated and assigned to the payload.
-		 *
-		 * @param payload_len Length of returned payload-buffer is
-		 *                    written into this argument.
-		 */
-		u_int8_t *createCsMsg(int *);
-
-		/**
-		 * Creates the payload sent to anoubisd in case of signed
-		 * checksums.
-		 *
-		 * The checksum is calculated and signed. Together with the
-		 * key-id, there are appended to the payload.
-		 *
-		 * @param payload_len Length of returned payload-buffer is
-		 *                    written into this argument.
-		 */
-		u_int8_t *createSigMsg(int *);
-
+		u_int8_t		 cs_[ANOUBIS_CS_LEN];
 		struct anoubis_transaction	*ta_;
+		u_int8_t		*sig_;
+		unsigned int		 sigLen_, csLen_;
+		bool			 sigSent_, csumSent_;
+		bool			 sigSentOk_, csumSentOk_;
+		bool			 realCsumCalculated_;
 };
 
 #endif	/* _COMCSUMADDTASK_H_ */

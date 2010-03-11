@@ -300,15 +300,8 @@ SfsCtrl::registerChecksum(const IndexArray &arr)
 			SfsEntry *entry = sfsDir_.getEntry(idx);
 
 			/* Send checksum to anoubisd */
-			createComCsumAddTasks(entry->getPath());
+			createComCsumAddTask(entry->getPath(), doSig);
 
-			if (!entry->haveLocalCsum()) {
-				/*
-				 * You also need a local checksum to be able to
-				 * compare it with the remote one
-				 */
-				createCsumCalcTask(entry->getPath());
-			}
 			if (!updateSfsOp(1))
 				break;
 		}
@@ -412,7 +405,7 @@ SfsCtrl::importChecksums(const wxString &path)
 		entry = entries;
 		startSfsOp(total);
 		while (entry != 0) {
-			createComCsumAddTasks(entry);
+			createComCsumAddTask(entry);
 
 			int idx = sfsDir_.getIndexOf(
 			    wxString::FromAscii(entry->name));
@@ -841,91 +834,62 @@ SfsCtrl::OnCsumAdd(TaskEvent &event)
 
 	event.Skip(false); /* "My" task -> stop propagating */
 
-	/* Search for SfsEntry */
-	int idx = sfsDir_.getIndexOf(task->getPath());
-	if (idx == -1) {
-		wxString message = wxString::Format(
-		    _("%ls not found in file-list!"), task->getPath().c_str());
-		errorList_.Add(message);
-
-		return;
-	}
-
-	SfsEntry::ChecksumType type = task->haveKeyId() ?
-	    SfsEntry::SFSENTRY_SIGNATURE : SfsEntry::SFSENTRY_CHECKSUM;
-
 	if (task->getComTaskResult() == ComTask::RESULT_LOCAL_ERROR) {
 		wxString message;
 
-		if (type == SfsEntry::SFSENTRY_CHECKSUM)
-			message.Printf(_("Failed to calculate the checksum "
-			    "for %ls: %hs"), task->getPath().c_str(),
-			    strerror(task->getResultDetails()));
-		else
-			message.Printf(_("Failed to calculate the signature "
-			    "for %ls: %hs"), task->getPath().c_str(),
-			    strerror(task->getResultDetails()));
-
+		message.Printf(_("Failed to add the checksum/signature "
+		    "for %ls: %hs"), task->getPath().c_str(),
+		    strerror(task->getResultDetails()));
 		errorList_.Add(message);
-		return;
 	} else if (task->getComTaskResult() == ComTask::RESULT_COM_ERROR) {
 		wxString message;
 
-		if (type == SfsEntry::SFSENTRY_CHECKSUM)
-			message = wxString::Format(_("Communication error "
-			    "while register the checksum for %ls."),
-			    task->getPath().c_str());
-		else
-			message = wxString::Format(_("Communication error "
-			    "while register the signature for %ls."),
-			    task->getPath().c_str());
-
+		message = wxString::Format(_("Communication error "
+		    "while register the checksum/signature for %ls."),
+		    task->getPath().c_str());
 		errorList_.Add(message);
-		return;
 	} else if (task->getComTaskResult() == ComTask::RESULT_REMOTE_ERROR) {
 		wxString message;
 
-		if (type == SfsEntry::SFSENTRY_CHECKSUM)
-			message = wxString::Format(_("Got error from daemon "
-			    "(%hs) while register the checksum for %ls."),
-			    strerror(task->getResultDetails()),
-			    task->getPath().c_str());
-		else
-			message = wxString::Format(_("Got error from daemon "
-			    "(%hs) while register the signature for %ls."),
-			    strerror(task->getResultDetails()),
-			    task->getPath().c_str());
-
+		message = wxString::Format(_("Got error from daemon "
+		    "(%hs) while register the checksum/signautre for %ls."),
+		    strerror(task->getResultDetails()),
+		    task->getPath().c_str());
 		errorList_.Add(message);
-		return;
 	} else if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
 		wxString message;
 
-		if (type == SfsEntry::SFSENTRY_CHECKSUM)
-			message = wxString::Format(_("An unexpected error "
-			    "occured (%hs) while register the checksum for "
-			    "%ls."), strerror(task->getComTaskResult()),
-			    task->getPath().c_str());
-		else
-			message = wxString::Format(_("An unexpected error "
-			    "occured (%hs) while register the signature for "
-			    "%ls."), strerror(task->getComTaskResult()),
-			    task->getPath().c_str());
-
+		message = wxString::Format(_("An unexpected error "
+		    "occured (%hs) while registering the checksum/signature "
+		    "for %ls."), strerror(task->getComTaskResult()),
+		    task->getPath().c_str());
 		errorList_.Add(message);
-		return;
 	}
 
-	/* Update model */
+	/*
+	 * Search for SfsEntry. Do _not_ report an error if the index is
+	 * not found. It may be from an import.
+	 */
+	int idx = sfsDir_.getIndexOf(task->getPath());
+	if (idx == -1)
+		return;
+
+	/*
+	 * Add the data we got to the model, even in case of (partial)
+	 * errors.
+	 */
 	SfsEntry *entry = sfsDir_.getEntry(idx);
 	u_int8_t cs[ANOUBIS_CS_LEN];
 
-	if (task->getCsum(cs, sizeof(cs)) != ANOUBIS_CS_LEN) {
-		/* TODO */
+	if (task->getCsum(cs, sizeof(cs)) != ANOUBIS_CS_LEN)
 		return;
-	}
-
-	entry->setChecksum(type, cs, ANOUBIS_CS_LEN);
+	entry->setLocalCsum(cs);
+	if (task->signatureOk())
+		entry->setChecksum(SfsEntry::SFSENTRY_SIGNATURE,
+		    cs, ANOUBIS_CS_LEN);
+	if (task->checksumOk())
+		entry->setChecksum(SfsEntry::SFSENTRY_CHECKSUM, cs,
+		    ANOUBIS_CS_LEN);
 }
 
 void
@@ -1109,54 +1073,37 @@ SfsCtrl::createComCsumGetTasks(const wxString &path, bool createCsum,
 }
 
 void
-SfsCtrl::createComCsumAddTasks(const wxString &path)
+SfsCtrl::createComCsumAddTask(const wxString &path, bool doSig)
 {
-	ComCsumAddTask *csTask = new ComCsumAddTask;
-	csTask->setPath(path);
-	csTask->setCalcLink(true);
+	ComCsumAddTask *addTask = new ComCsumAddTask;
 
-	pushTask(csTask);
-	JobCtrl::getInstance()->addTask(csTask);
-
-	if (isSignatureEnabled()) {
+	addTask->setPath(path);
+	addTask->setCalcLink(true);
+	if (doSig) {
 		KeyCtrl *keyCtrl = KeyCtrl::getInstance();
 		LocalCertificate &cert = keyCtrl->getLocalCertificate();
 		PrivKey &privKey = keyCtrl->getPrivateKey();
 		struct anoubis_sig *raw_cert = cert.getCertificate();
 
-		ComCsumAddTask *sigTask = new ComCsumAddTask;
-		sigTask->setPath(path);
-		sigTask->setCalcLink(true);
-		sigTask->setKeyId(raw_cert->keyid, raw_cert->idlen);
-		sigTask->setPrivateKey(privKey.getKey());
-
-		pushTask(sigTask);
-		JobCtrl::getInstance()->addTask(sigTask);
+		addTask->setKeyId(raw_cert->keyid, raw_cert->idlen);
+		addTask->setPrivateKey(privKey.getKey());
 	}
+
+	pushTask(addTask);
+	JobCtrl::getInstance()->addTask(addTask);
 }
 
 void
-SfsCtrl::createComCsumAddTasks(struct sfs_entry *entry)
+SfsCtrl::createComCsumAddTask(struct sfs_entry *entry)
 {
-	if (entry->checksum != 0) {
-		ComCsumAddTask *csTask = new ComCsumAddTask;
-		csTask->setPath(wxString::FromAscii(entry->name));
+	if (entry->checksum || entry->signature) {
+		ComCsumAddTask	*csTask = new ComCsumAddTask;
+
 		csTask->setCalcLink(true);
-		csTask->setSfsEntry(entry, true);
+		csTask->setSfsEntry(entry);
 
 		pushTask(csTask);
 		JobCtrl::getInstance()->addTask(csTask);
-	}
-
-	if (entry->signature != 0) {
-		/* Additionally send signature to daemon */
-		ComCsumAddTask *sigTask = new ComCsumAddTask;
-		sigTask->setPath(wxString::FromAscii(entry->name));
-		sigTask->setCalcLink(true);
-		sigTask->setSfsEntry(entry, false);
-
-		pushTask(sigTask);
-		JobCtrl::getInstance()->addTask(sigTask);
 	}
 }
 

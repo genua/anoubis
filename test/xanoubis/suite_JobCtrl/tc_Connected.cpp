@@ -275,9 +275,6 @@ START_TEST(test_csum)
 	fail_unless(add_task.getResultDetails() == 0,
 	    "ResultDetails: %s (%i)\n", strerror(add_task.getResultDetails()),
 	    add_task.getResultDetails());
-	fail_unless(add_task.haveKeyId() == false, "A key-id is assigned");
-	fail_unless(add_task.havePrivateKey() == false,
-	    "A private key is assigned");
 
 	/* Receive checksum: Success */
 	TaskEventSpy get_spy(jobCtrl, anTASKEVT_CSUM_GET);
@@ -405,8 +402,6 @@ START_TEST(test_csum_orphaned)
 	    "ResultDetails: %s (%i)\n", strerror(add_task.getResultDetails()),
 	    add_task.getResultDetails());
 	fail_unless(add_task.haveKeyId() == false, "A key-id is assigned");
-	fail_unless(add_task.havePrivateKey() == false,
-	    "A private key is assigned");
 
 	/* Remove file -> orphaned */
 	fail_unless(wxRemoveFile(fileName), "Failed to remove file");
@@ -466,8 +461,6 @@ START_TEST(test_csum_symlink)
 	    "ResultDetails: %s (%i)\n", strerror(add_task.getResultDetails()),
 	    add_task.getResultDetails());
 	fail_unless(add_task.haveKeyId() == false, "A key-id is assigned");
-	fail_unless(add_task.havePrivateKey() == false,
-	    "A private key is assigned");
 
 	/* Symlink the file */
 	wxString symlinkName = wxFileName::GetTempDir() + wxT("/csumsymlink");
@@ -541,8 +534,6 @@ START_TEST(test_csum_symlink_link)
 	    "ResultDetails: %s (%i)\n", strerror(add_task.getResultDetails()),
 	    add_task.getResultDetails());
 	fail_unless(add_task.haveKeyId() == false, "A key-id is assigned");
-	fail_unless(add_task.havePrivateKey() == false,
-	    "A private key is assigned");
 
 	/* Receive from daemon: success */
 	TaskEventSpy get_spy(jobCtrl, anTASKEVT_CSUM_GET);

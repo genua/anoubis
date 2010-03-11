@@ -518,8 +518,24 @@ class SfsCtrl : public wxEvtHandler
 		void disableCommunication(void);
 
 		void createComCsumGetTasks(const wxString &, bool, bool);
-		void createComCsumAddTasks(const wxString &);
-		void createComCsumAddTasks(struct sfs_entry *);
+
+		/**
+		 * Create a task that calculates the checksum and
+		 * potentially the signature for a given file. The task
+		 * sends the result to the anoubis daemon.
+		 *
+		 * @param 1st The absolute path name of the file.
+		 * @param 2nd True if signatures should be calculated, too.
+		 */
+		void createComCsumAddTask(const wxString &, bool);
+
+		/**
+		 * Create a task that send the contents of the sfs_entry
+		 * structure to the daemon.
+		 *
+		 * @param 1st The sfs_entry structure.
+		 */
+		void createComCsumAddTask(struct sfs_entry *);
 
 		/**
 		 * Schedules ComCsumDelTasks for the specified SfsEntry.

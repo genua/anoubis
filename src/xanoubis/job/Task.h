@@ -86,8 +86,6 @@ class Task
 
 	protected:
 		Task(Type);
-
-	private:
 		Type type_;
 };
 

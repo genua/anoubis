@@ -51,28 +51,29 @@
 
 ComCsumAddTask::ComCsumAddTask(void)
 {
-	this->privKey_ = 0;
-	this->sfsEntry_ = 0;
-	this->forceSendCsum_ = false;
+	privKey_ = 0;
+	sig_ = 0;
+	sigLen_ = 0;
+	csLen_ = 0;
+	resetComTaskResult();
+	csumSent_ = false;
+	csumSentOk_ = false;
+	sigSent_ = false;
+	sigSentOk_ = false;
+	type_ = Task::TYPE_CSUMCALC;
+	realCsumCalculated_ = false;
 }
 
 ComCsumAddTask::ComCsumAddTask(const wxString &file)
 {
-	this->privKey_ = 0;
-	this->sfsEntry_ = 0;
-	this->forceSendCsum_ = false;
-
+	privKey_ = 0;
 	setPath(file);
 }
 
 ComCsumAddTask::~ComCsumAddTask(void)
 {
-}
-
-bool
-ComCsumAddTask::havePrivateKey(void) const
-{
-	return (this->privKey_ != 0);
+	if (sig_)
+		free(sig_);
 }
 
 void
@@ -81,129 +82,122 @@ ComCsumAddTask::setPrivateKey(struct anoubis_sig *privKey)
 	this->privKey_ = privKey;
 }
 
-bool
-ComCsumAddTask::haveSfsEntry(void) const
-{
-	return (this->sfsEntry_ != 0);
-}
-
-void
-ComCsumAddTask::setSfsEntry(struct sfs_entry *entry, bool sendCsum)
-{
-	this->sfsEntry_ = entry;
-	this->forceSendCsum_ = sendCsum;
-
-	if (!sendCsum && sfsEntry_->keyid != 0) {
-		/* Setup keyid, used later for communication */
-		setKeyId(sfsEntry_->keyid, sfsEntry_->keylen);
-	}
-}
-
 wxEventType
 ComCsumAddTask::getEventType(void) const
 {
-	return (anTASKEVT_CSUM_ADD);
+	return anTASKEVT_CSUM_ADD;
 }
 
 void
 ComCsumAddTask::exec(void)
 {
-	/* Request to add a checksum for a file */
-	int				req_op;
-	u_int8_t			*payload;
-	int				payloadLen;
-	char				path[PATH_MAX];
+	int				 result;
 
-	resetComTaskResult();
-	ta_ = NULL;
-
-	/*
-	 * Receive path to be send to anoubisd
-	 * false := abort if the requested file does not exist
-	 */
-	if (!resolvePath(path, false)) {
-		setComTaskResult(RESULT_LOCAL_ERROR);
-		setResultDetails(errno);
+	/* Checksum calculation is done in the checksum thread. */
+	if (type_ == Task::TYPE_CSUMCALC) {
+		type_ = Task::TYPE_COM;
+		if (csLen_ == 0) {
+			int	tmplen = ANOUBIS_CS_LEN;
+			result = csumCalc(cs_, &tmplen);
+			if (result) {
+				csLen_ = 0;
+				setComTaskResult(RESULT_LOCAL_ERROR);
+				setResultDetails(result);
+				return;
+			}
+			csLen_ = tmplen;
+			realCsumCalculated_ = true;
+		}
+		if(privKey_) {
+			sig_ = anoubis_sign_csum(privKey_, cs_, &sigLen_);
+			privKey_ = NULL;
+			if (!sig_) {
+				sigLen_ = 0;
+				setComTaskResult(RESULT_LOCAL_ERROR);
+				setResultDetails(ENOMEM);
+				return;
+			}
+		}
 		return;
 	}
 
-	if (haveSfsEntry()) {
-		payload = createSfsMsg(&payloadLen, &req_op);
+	/* Some earlier error occured. We're done. */
+	if (getComTaskResult() != RESULT_INIT)
+		return;
 
-		if (payload == 0) {
-			setComTaskResult(RESULT_LOCAL_ERROR);
-			setResultDetails(errno);
-
-			return;
-		}
-	} else if (haveKeyId() && (privKey_ != 0)) {
-		payload = createSigMsg(&payloadLen);
-
-		/* Reset private key, don't need it anymore */
-		privKey_ = 0;
-
-		if (payload == 0) {
-			setComTaskResult(RESULT_LOCAL_ERROR);
-			setResultDetails(errno);
-
-			return;
-		}
-
-		req_op = ANOUBIS_CHECKSUM_OP_ADDSIG;
-	} else {
-		payload = createCsMsg(&payloadLen);
-		if (payload == 0) {
-			setComTaskResult(RESULT_LOCAL_ERROR);
-			setResultDetails(errno);
-
-			return;
-		}
-
-		req_op = ANOUBIS_CHECKSUM_OP_ADDSUM;
-	}
-
-	/* Send request to daemon */
-	ta_ =  anoubis_client_csumrequest_start(getClient(), req_op, path,
-	    payload, payloadLen - getKeyIdLen(), getKeyIdLen(), 0,
-	    ANOUBIS_CSUM_NONE);
-
-	free(payload);
-
-	if(!ta_) {
-		setComTaskResult(RESULT_COM_ERROR);
-	}
+	ta_ = NULL;
+	done();
 }
 
 bool
-ComCsumAddTask::done(void) {
-	if (ta_ == NULL)
-		return (true);
-	if (ta_->flags & ANOUBIS_T_DONE) {
-		/* Result */
+ComCsumAddTask::done(void)
+{
+	/* An error occured. We are done. */
+	if (getComTaskResult() != RESULT_INIT)
+		return true;
+	if (ta_ && (ta_->flags & ANOUBIS_T_DONE) == 0) {
+		return false;
+	} else if (ta_) {
 		if (ta_->result) {
 			setComTaskResult(RESULT_REMOTE_ERROR);
 			setResultDetails(ta_->result);
-		} else
-			setComTaskResult(RESULT_SUCCESS);
-
+			anoubis_transaction_destroy(ta_);
+			ta_ = NULL;
+			return true;
+		}
+		if (sigSent_)
+			sigSentOk_ = true;
+		else
+			csumSentOk_ = true;
 		anoubis_transaction_destroy(ta_);
 		ta_ = NULL;
-		return true;
-	} else {
+	}
+	if (csLen_ != 0 && !csumSent_) {
+		ta_ = anoubis_client_csumrequest_start(getClient(),
+		    ANOUBIS_CHECKSUM_OP_ADDSUM, getPath().fn_str(),
+		    cs_, csLen_, 0, 0, 0);
+		if (ta_ == NULL)
+			goto nomem;
+		csumSent_ = true;
 		return false;
 	}
+	if (sigLen_ != 0 && getKeyIdLen() != 0 && !sigSent_) {
+		u_int8_t		*payload;
+
+		payload = (u_int8_t*)malloc(sigLen_ + getKeyIdLen());
+		if (payload == NULL)
+			goto nomem;
+		memcpy(payload, getKeyId(), getKeyIdLen());
+		memcpy(payload + getKeyIdLen(), sig_, sigLen_);
+		ta_ = anoubis_client_csumrequest_start(getClient(),
+		    ANOUBIS_CHECKSUM_OP_ADDSIG, getPath().fn_str(),
+		    payload, sigLen_, getKeyIdLen(), 0, 0);
+		free(payload);
+		if (ta_ == NULL)
+			goto nomem;
+		sigSent_ = true;
+		return false;
+	}
+	setComTaskResult(RESULT_SUCCESS);
+	return true;
+
+nomem:
+	setComTaskResult(RESULT_LOCAL_ERROR);
+	setResultDetails(ENOMEM);
+	return true;
 }
 
 size_t
 ComCsumAddTask::getCsum(u_int8_t *csum, size_t size) const
 {
+	if (!realCsumCalculated_)
+		return 0;
 	if (getComTaskResult() == RESULT_SUCCESS && getResultDetails() == 0) {
 		if (size >= ANOUBIS_CS_LEN) {
 			memcpy(csum, this->cs_, ANOUBIS_CS_LEN);
 			return (ANOUBIS_CS_LEN);
 		}
 	}
-
 	/*
 	 * No checksumk received from anoubisd or destination-buffer not large
 	 * enough.
@@ -215,118 +209,37 @@ void
 ComCsumAddTask::resetComTaskResult(void)
 {
 	ComTask::resetComTaskResult();
-
-	for (int i = 0; i < ANOUBIS_CS_LEN; i++)
-		this->cs_[i] = 0;
 }
 
-u_int8_t *
-ComCsumAddTask::createSfsMsg(int *payload_len, int *req_op)
+bool
+ComCsumAddTask::checksumOk(void)
 {
-	u_int8_t *payload;
-
-	if (forceSendCsum_ && (sfsEntry_->checksum != 0)) {
-		/* Requested to send the checksum */
-		*payload_len = ANOUBIS_CS_LEN;
-		payload = (u_int8_t *)malloc(*payload_len);
-
-		if (payload != 0)
-			memcpy(payload, sfsEntry_->checksum, *payload_len);
-
-		*req_op = ANOUBIS_CHECKSUM_OP_ADDSUM;
-	} else if (!forceSendCsum_ && (sfsEntry_->signature != 0)) {
-		/* Requested to send the signature */
-		*payload_len = sfsEntry_->siglen + sfsEntry_->keylen;
-		payload = (u_int8_t *)malloc(
-		    sfsEntry_->siglen + sfsEntry_->keylen);
-
-		if (payload != 0) {
-			memcpy(payload, sfsEntry_->keyid, sfsEntry_->keylen);
-			memcpy(payload + sfsEntry_->keylen,
-			    sfsEntry_->signature, sfsEntry_->siglen);
-		}
-
-		*req_op = ANOUBIS_CHECKSUM_OP_ADDSIG;
-	} else {
-		/* Invalid combination */
-		errno = EINVAL;
-		payload = 0;
-	}
-
-	return (payload);
+	return csumSentOk_;
 }
 
-u_int8_t *
-ComCsumAddTask::createCsMsg(int *payload_len)
+bool
+ComCsumAddTask::signatureOk(void)
 {
-	u_int8_t	*payload;
-	int		result;
-
-	if (payload_len == 0) {
-		errno = EINVAL;
-		return (0);
-	}
-
-	/* Need a message, which can hold the checksum */
-	*payload_len = ANOUBIS_CS_LEN;
-	payload = (u_int8_t *)malloc(*payload_len);
-	if (payload == 0)
-		return (0);
-
-	/* Calculate checksum */
-	result = csumCalc(cs_, payload_len);
-	if (result != 0) {
-		errno = result;
-		free(payload);
-		return (0);
-	}
-
-	/* Copy checksum into payload */
-	memcpy(payload, cs_, *payload_len);
-
-	/* Success */
-	return (payload);
+	return sigSentOk_;
 }
 
-u_int8_t *
-ComCsumAddTask::createSigMsg(int *payload_len)
+void
+ComCsumAddTask::setSfsEntry(const struct sfs_entry *entry)
 {
-	u_int8_t	*sig, *payload;
-	int		cs_len;
-	unsigned int	sig_len;
-	int		result;
-
-	if ((privKey_ == 0) || !haveKeyId() || (payload_len == 0)) {
-		errno = EINVAL;
-		return (0);
+	/*
+	 * If we get our data from an sfs_entry there is no need to
+	 * calculate the checksum.
+	 */
+	type_ = Task::TYPE_COM;
+	setPath(wxString::FromAscii(entry->name));
+	if (entry->checksum) {
+		csLen_ = ANOUBIS_CS_LEN;
+		memcpy(cs_, entry->checksum, ANOUBIS_CS_LEN);
 	}
-
-	/* Calculate the checksum of the file */
-	cs_len = ANOUBIS_CS_LEN;
-	result = csumCalc(cs_, &cs_len);
-	if (result != 0) {
-		errno = result;
-		return (0);
+	if (entry->signature && entry->keyid && entry->siglen) {
+		setKeyId(entry->keyid, entry->keylen);
+		sig_ = (u_int8_t *)malloc(entry->siglen);
+		sigLen_ = entry->siglen;
+		memcpy(sig_, entry->signature, sigLen_);
 	}
-
-	/* Sign the checksum */
-	sig = anoubis_sign_csum(privKey_, cs_, &sig_len);
-	if (sig == 0)
-		return (0);
-
-	/* Need a message, which can hold key-id and signature */
-	*payload_len = getKeyIdLen() + sig_len;
-	payload = (u_int8_t *)malloc(*payload_len);
-	if (payload == 0) {
-		free(sig);
-		return (0);
-	}
-
-	/* Build the message: keyid followed by signature */
-	memcpy(payload, getKeyId(), getKeyIdLen());
-	memcpy(payload + getKeyIdLen(), sig, sig_len);
-	free(sig);
-
-	/* Success */
-	return (payload);
 }
