@@ -63,6 +63,7 @@
 #include <anoubis_sig.h>
 #include <anoubis_protocol.h>
 #include <anoubis_msg.h>
+#include <anoubis_errno.h>
 
 #include "anoubisd.h"
 #include "sfs.h"
@@ -375,12 +376,15 @@ __sfs_checksumop(const struct sfs_checksumop *csop, struct sfs_data *data,
 		error = -EINVAL;
 		if (csop->keyid == NULL)
 			goto err1;
-		error = -EPERM;
 		cert = cert_get_by_keyid(csop->keyid, csop->idlen);
-		if (cert == NULL)
+		if (cert == NULL) {
+			error = -A_EPERM_NO_CERTIFICATE;
 			goto err1;
-		if (cert->uid != csop->auth_uid && csop->auth_uid != 0)
+		}
+		if (cert->uid != csop->auth_uid && csop->auth_uid != 0) {
+			error = -A_EPERM_UID_MISMATCH;
 			goto err1;
+		}
 		realsiglen = EVP_PKEY_size(cert->pubkey);
 		error = -EINVAL;
 		if (csop->op == ANOUBIS_CHECKSUM_OP_ADDSIG) {
@@ -1334,19 +1338,19 @@ sfs_validate_checksumop(struct sfs_checksumop *csop)
 	if (csop->keyid) {
 		cert = cert_get_by_keyid(csop->keyid, csop->idlen);
 		if (cert == NULL)
-			return -EPERM;
+			return -A_EPERM_NO_CERTIFICATE;
 		/*
 		 * If the requesting user is not root, the certificate
 		 * must belong to the authenticated user.
 		 */
 		if (cert->uid != csop->auth_uid && csop->auth_uid != 0)
-			return -EPERM;
+			return -A_EPERM_UID_MISMATCH;
 		/*
 		 * If the requested uid is different from the authenticated
 		 * user it must be the same as the uid in the cert.
 		 */
 		if (csop->auth_uid != csop->uid && csop->uid != cert->uid)
-			return -EPERM;
+			return -A_EPERM_UID_MISMATCH;
 	}
 
 	switch(csop->op) {
@@ -1488,7 +1492,7 @@ sfs_parse_csmulti(struct sfs_checksumop *dst, struct abuf_buffer mbuf,
 		cert = cert_get_by_keyid(dst->keyid, dst->idlen);
 		if (cert == NULL) {
 			DEBUG(DBG_CSUM, "<sfs_parse_csmulti: no cert");
-			return -EPERM;
+			return -A_EPERM_NO_CERTIFICATE;
 		}
 		/*
 		 * If the requesting user is not root, the certificate
@@ -1496,7 +1500,7 @@ sfs_parse_csmulti(struct sfs_checksumop *dst, struct abuf_buffer mbuf,
 		 */
 		if (cert->uid != dst->auth_uid && dst->auth_uid != 0) {
 			DEBUG(DBG_CSUM, "<sfs_parse_csmulti: bad cert");
-			return -EPERM;
+			return -A_EPERM_UID_MISMATCH;
 		}
 	} else {
 		if (dst->uid != dst->auth_uid && dst->auth_uid != 0) {

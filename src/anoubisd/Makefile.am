@@ -40,7 +40,7 @@ include $(top_srcdir)/src/Makefile.include
 AM_CPPFLAGS = $(anoubis_cppflags) \
 	   -I$(top_srcdir)/src/anoubisd
 
-LDADD = $(libanoubis)
+LDADD = $(libanoubis) $(intl_ldadd)
 AM_LDFLAGS += $(STATIC)
 
 lint_sources = \

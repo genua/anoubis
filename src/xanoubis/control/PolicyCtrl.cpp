@@ -29,6 +29,8 @@
 #include "config.h"
 #endif
 
+#include <anoubis_errno.h>
+
 #include <wx/dir.h>
 #include <wx/stdpaths.h>
 
@@ -474,17 +476,17 @@ PolicyCtrl::OnPolicyRequest(TaskEvent &event)
 		if (isAdmin && (task->getPriority() == 0))
 			message.Printf(_("Got error (%hs) from daemon\n"
 			    "after receiving admin-policy of %ls."),
-			    strerror(task->getResultDetails()),
+			    anoubis_strerror(task->getResultDetails()),
 			    user.c_str());
 		else if (isAdmin && (task->getPriority() > 0))
 			message.Printf(_("Got error (%hs) from daemon\n"
 			    "after receiving user-policy of %ls."),
-			    strerror(task->getResultDetails()),
+			    anoubis_strerror(task->getResultDetails()),
 			    user.c_str());
 		else
 			message.Printf(_("Got error (%hs) from daemon\n"
 			    "after receiving policy."),
-			    strerror(task->getResultDetails()));
+			    anoubis_strerror(task->getResultDetails()));
 	} else if (taskResult != ComTask::RESULT_SUCCESS) {
 		message.Printf(_("An unexpected error occured.\n"
 		    "Error code: %i"), taskResult);
@@ -554,30 +556,32 @@ PolicyCtrl::OnPolicySend(TaskEvent &event)
 		if (isAdmin && (task->getPriority() == 0))
 			message.Printf(_("Got error (%hs) from daemon\n"
 			    "after sending admin-policy of %ls."),
-			    strerror(task->getResultDetails()),
+			    anoubis_strerror(task->getResultDetails()),
 			    user.c_str());
 		else if (isAdmin && (task->getPriority() > 0))
 			message.Printf(_("Got error (%hs) from daemon\n"
 			    "after sending user-policy of %ls."),
-			    strerror(task->getResultDetails()),
+			    anoubis_strerror(task->getResultDetails()),
 			    user.c_str());
 		else
 			message.Printf(_("Got error (%hs) from daemon\n"
 			    "after sending policy."),
-			    strerror(task->getResultDetails()));
+			    anoubis_strerror(task->getResultDetails()));
 	} else if (taskResult == ComTask::RESULT_LOCAL_ERROR) {
 		if (isAdmin && (task->getPriority() == 0))
 			message.Printf(
 			    _("Failed to sign the admin-policy of %ls: %hs."),
-			    user.c_str(), strerror(task->getResultDetails()));
+			    user.c_str(), anoubis_strerror(
+					task->getResultDetails()));
 		else if (isAdmin && (task->getPriority() > 0))
 			message.Printf(
 			    _("Failed to sign the user-policy of %ls: %hs."),
-			    user.c_str(), strerror(task->getResultDetails()));
+			    user.c_str(), anoubis_strerror(
+					task->getResultDetails()));
 		else
 			message.Printf(
 			    _("Failed to sign the policy: %hs."),
-			    strerror(task->getResultDetails()));
+			    anoubis_strerror(task->getResultDetails()));
 	} else if (taskResult != ComTask::RESULT_SUCCESS) {
 		message.Printf(_("An unexpected error occured.\n"
 		    "Error code: %i"), taskResult);

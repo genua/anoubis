@@ -131,7 +131,7 @@ START_TEST(testcase_en)
 		"No such file or directory",
 		"undefined anoubis error code",
 		"undefined anoubis error code",
-		"error code 1"
+		"Operation not permitted: no certificate found"
 	};
 
 	printf("testing english error codes\n");
@@ -146,7 +146,7 @@ START_TEST(testcase_de)
 		"Datei oder Verzeichnis nicht gefunden",
 		"Unbekannte Anoubis-Fehlernummer",
 		"Unbekannte Anoubis-Fehlernummer",
-		"Fehler Code 1"
+		"Operation nicht erlaubt: Kein Zertifikat gefunden"
 	};
 
 	char *locale = setlocale(CATEGORY, NULL);

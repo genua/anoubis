@@ -30,6 +30,8 @@
 #include <wx/filedlg.h>
 #include <wx/filename.h>
 
+#include <anoubis_errno.h>
+
 #include "AnMessageDialog.h"
 #include "AnPickFromFs.h"
 #include "JobCtrl.h"
@@ -173,7 +175,8 @@ RuleWizardProgramPage::onCsumGet(TaskEvent &event)
 
 		wxString message;
 		wxString path = csumGetTask_.getPath();
-		const char *err = strerror(csumGetTask_.getResultDetails());
+		const char *err = anoubis_strerror(
+					csumGetTask_.getResultDetails());
 
 		switch (result) {
 		case ComTask::RESULT_REMOTE_ERROR:
@@ -229,7 +232,8 @@ RuleWizardProgramPage::onCsumAdd(TaskEvent &event)
 
 		wxString message;
 		wxString path = csumAddTask_.getPath();
-		const char *err = strerror(csumAddTask_.getResultDetails());
+		const char *err = anoubis_strerror(
+					csumAddTask_.getResultDetails());
 
 		switch (result) {
 		case ComTask::RESULT_LOCAL_ERROR:
@@ -275,7 +279,7 @@ RuleWizardProgramPage::onCsumCalc(TaskEvent &event)
 		wxString message = wxString::Format(
 		    _("Failed to calculate the checksum for %ls: %hs"),
 		    csumCalcTask_.getPath().c_str(),
-		    strerror(csumCalcTask_.getResult()));
+		    anoubis_strerror(csumCalcTask_.getResult()));
 
 		anMessageBox(message, _("Rule Wizard"), wxOK | wxICON_ERROR,
 		    this);

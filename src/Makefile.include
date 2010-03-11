@@ -46,7 +46,7 @@ check_ldadd = @CHECK_LIBS@
 endif
 
 if OPENBSD
-intl_ldadd	= -lintl -liconv
+intl_ldadd	= -L/usr/local/lib -lintl -liconv
 intl_include	= -I/usr/local/include
 else
 intl_ldadd	=

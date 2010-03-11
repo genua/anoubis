@@ -32,6 +32,7 @@
 #include <cstdlib>
 
 #include <anoubis_keygen.h>
+#include <anoubis_errno.h>
 #include <wx/stdpaths.h>
 #include <wx/string.h>
 #include <AnMessageDialog.h>
@@ -186,7 +187,7 @@ ModSfsGenerateKeyDlg::onOkButton(wxCommandEvent &)
 		wxString	errmsg;
 
 		errmsg = wxString::Format(_("Failed to create keypair (%hs)"),
-		    strerror(-error));
+		    anoubis_strerror(-error));
 
 		anMessageBox(errmsg, _("Error"), wxICON_ERROR, this);
 	} else {

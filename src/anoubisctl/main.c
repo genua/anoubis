@@ -48,7 +48,6 @@
 #include <arpa/inet.h>
 
 #include <err.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -337,7 +336,8 @@ main(int argc, char *argv[])
 		}
 		if (error < 0) {
 			syslog(LOG_WARNING, "Error reading %s/" ANOUBIS_UI_DIR
-			    " version: %s\n", homepath, strerror(-error));
+			    " version: %s\n", homepath,
+			    anoubis_strerror(-error));
 			return 1;
 		}
 
@@ -485,7 +485,7 @@ daemon_start(void)
 
 	if ((err = system(command))) {
 		syslog(LOG_ERR, "%s: %s", command,
-		    strerror(errno));
+		    anoubis_strerror(errno));
 		error = 2;
 	}
 
@@ -500,7 +500,7 @@ daemon_stop(void)
 
 	if (!fp) {
 		fprintf(stderr, "Couldn't open " PACKAGE_PIDFILE ": %s\n",
-			strerror(errno));
+			anoubis_strerror(errno));
 		return 2;
 	}
 	if (flock(fileno(fp), LOCK_EX|LOCK_NB) != -1) {
@@ -512,7 +512,8 @@ daemon_stop(void)
 		return 2;
 	}
 	if (kill(pid, SIGTERM) != 0) {
-		fprintf(stderr, "Couldn't send signal: %s\n", strerror(errno));
+		fprintf(stderr, "Couldn't send signal: %s\n",
+				anoubis_strerror(errno));
 		return 2;
 	}
 	/* Wait at most 10 seconds for termination. */
@@ -548,7 +549,7 @@ daemon_reload(void)
 
 	if (!fp) {
 		fprintf(stderr, "Couldn't open " PACKAGE_PIDFILE ": %s\n",
-			strerror(errno));
+			anoubis_strerror(errno));
 		return 2;
 	}
 	if (flock(fileno(fp), LOCK_EX|LOCK_NB) != -1) {
@@ -560,7 +561,8 @@ daemon_reload(void)
 		return 2;
 	}
 	if (kill(pid, SIGHUP) != 0) {
-		fprintf(stderr, "Couldn't send signal: %s\n", strerror(errno));
+		fprintf(stderr, "Couldn't send signal: %s\n",
+				anoubis_strerror(errno));
 		return 2;
 	}
 	return 0;
@@ -575,7 +577,7 @@ daemon_restart(void)
 
 	if (!fp) {
 		fprintf(stderr, "Couldn't open " PACKAGE_PIDFILE ": %s. "
-		    "Starting a new daemon\n", strerror(errno));
+		    "Starting a new daemon\n", anoubis_strerror(errno));
 		return daemon_start();
 	} else {
 		fcntl(fileno(fp), F_SETFD, FD_CLOEXEC);
@@ -625,7 +627,8 @@ daemon_restart(void)
 kill:
 	if (kill(pid, SIGTERM) != 0) {
 		syslog(LOG_CRIT,
-		    "Couldn't send signal to anoubisd: %s\n", strerror(errno));
+		    "Couldn't send signal to anoubisd: %s\n",
+		    anoubis_strerror(errno));
 		return 2;
 	}
 	/* Make sure the the new anoubisd does not inherit this fd! */
@@ -682,7 +685,7 @@ fetch_versions(int * apn_version, int * prot_version)
 
 	if (t->result) {
 		fprintf(stderr, "Version Request failed: %d (%s)\n",
-		    t->result, strerror(t->result));
+		    t->result, anoubis_strerror(t->result));
 		anoubis_transaction_destroy(t);
 		return (3);
 	}
@@ -810,7 +813,7 @@ dump(char *file, uid_t uid, unsigned int prio)
 	}
 	if (t->result) {
 		fprintf(stderr, "Policy Request failed: %d (%s)\n",
-		    t->result, strerror(t->result));
+		    t->result, anoubis_strerror(t->result));
 		anoubis_transaction_destroy(t);
 		return 3;
 	}
@@ -1083,7 +1086,7 @@ load(char *rulesopt, uid_t uid, unsigned int prio)
 	}
 	if (t->result) {
 		fprintf(stderr, "Policy Request failed: %d (%s)\n", t->result,
-		    strerror(t->result));
+		    anoubis_strerror(t->result));
 		anoubis_transaction_destroy(t);
 		return 3;
 	}
@@ -1167,7 +1170,7 @@ static int monitor(int argc, char **argv)
 	}
 	if (t->result) {
 		fprintf(stderr, "Notify registration failed with %d (%s)\n",
-		    t->result, strerror(t->result));
+		    t->result, anoubis_strerror(t->result));
 		anoubis_transaction_destroy(t);
 		destroy_channel();
 		return 5;

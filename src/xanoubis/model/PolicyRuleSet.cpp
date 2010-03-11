@@ -32,6 +32,8 @@
 #include <wx/ffile.h>
 #include <wx/string.h>
 
+#include <anoubis_errno.h>
+
 #include "main.h"
 #include "PolicyCtrl.h"
 #include "PolicyRowProvider.h"
@@ -640,7 +642,7 @@ PolicyRuleSet::create(wxString fileName)
 	case -1:
 		logEntry = wxString::Format(_("System error during import of "
 		    "policy file %ls: %hs"),
-		    fileName.c_str(), strerror(errno));
+		    fileName.c_str(), anoubis_strerror(errno));
 		Debug::err(logEntry);
 		status(logEntry);
 		hasErrors_ = true;

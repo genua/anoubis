@@ -37,6 +37,7 @@
 #include <anoubis_msg.h>
 #include <anoubis_apnvm.h>
 #include <anoubis_auth.h>
+#include <anoubis_errno.h>
 
 /* These are the functions to the sfs commandos */
 static int	 sfs_add(char *, uid_t);
@@ -403,7 +404,7 @@ main(int argc, char *argv[])
 	}
 	if (error < 0) {
 		fprintf(stderr, "Error occurred while reading version: %s\n",
-		    strerror(-error));
+		    anoubis_strerror(-error));
 		return 1;
 	}
 
@@ -658,7 +659,7 @@ request_uids(const char *file, uid_t **uidp)
 		return -ENOMEM;
 	if (t->result) {
 		fprintf(stderr, "%s Checksum Request failed: %d (%s)\n", file,
-		    t->result, strerror(t->result));
+		    t->result, anoubis_strerror(t->result));
 		anoubis_transaction_destroy(t);
 		return -t->result;
 	}
@@ -670,7 +671,7 @@ request_uids(const char *file, uid_t **uidp)
 	} else if (cnt < 0) {
 		if (opts & SFSSIG_OPT_DEBUG2)
 			fprintf(stderr, "anoubis_csum_list error: %s\n",
-			    strerror(-cnt));
+			    anoubis_strerror(-cnt));
 		return cnt;
 	}
 	uids = calloc(cnt,  sizeof(uid_t));
@@ -755,7 +756,7 @@ request_keyids(const char *file, unsigned char *** keyidp, int **lenp)
 	if (t->result) {
 		int ret = -t->result;
 		fprintf(stderr, "%s Checksum Request failed: %d (%s)\n", file,
-		    t->result, strerror(t->result));
+		    t->result, anoubis_strerror(t->result));
 		anoubis_transaction_destroy(t);
 		return ret;
 	}
@@ -967,7 +968,7 @@ sfs_csumop_alluid(const char *file, int operation, u_int8_t *cs, int cslen,
 	count = request_uids(file, &uids);
 	if (count < 0) {
 		fprintf(stderr, "Failed to list uids for %s: %s\n",
-		    file, strerror(-count));
+		    file, anoubis_strerror(-count));
 		return -EIO;
 	} else if (count == 0) {
 		/* No uids found at all. Return ENOENT. */
@@ -1059,7 +1060,7 @@ sfs_sigop_allkeys(const char *file, int operation, sumop_callback_t callback)
 		return -ENOENT;
 	} else if (count < 0) {
 		fprintf(stderr, "Failed to list keyids for %s: %s\n",
-		    file, strerror(-count));
+		    file, anoubis_strerror(-count));
 		return -EIO;
 	}
 	for (i=0; i<count; ++i) {
@@ -1116,7 +1117,7 @@ sfs_generic_op(const char *file, int operation, uid_t sfs_uid,
 		}
 		if (ret < 0) {
 			fprintf(stderr, "Checksum calculation for "
-			    "%s failed: %s\n", file, strerror(-ret));
+			    "%s failed: %s\n", file, anoubis_strerror(-ret));
 			return 1;
 		}
 		if (opts & SFSSIG_OPT_SIG) {
@@ -1172,7 +1173,8 @@ sfs_generic_op(const char *file, int operation, uid_t sfs_uid,
 			fprintf(stderr, "No entry found for %s\n", file);
 		return 1;
 	}
-	fprintf(stderr, "Checksum request failed: %s\n", strerror(-ret));
+	fprintf(stderr, "Checksum request failed: %s\n",
+			anoubis_strerror(-ret));
 	return 1;
 }
 
@@ -1329,8 +1331,8 @@ list(char *arg, uid_t sfs_uid)
 			anoubis_transaction_destroy(t);
 			return 0;
 		}
-		fprintf(stderr, "%s: Checksum Request failed: %d "
-			    "(%s)\n", arg, t->result, strerror(t->result));
+		fprintf(stderr, "%s: Checksum Request failed: %d (%s)\n",
+				arg, t->result, anoubis_strerror(t->result));
 		anoubis_transaction_destroy(t);
 		return 1;
 	}
@@ -1536,8 +1538,9 @@ sfs_tree(char *path, int op, uid_t sfs_uid)
 			if (t->result == ENOENT && (opts & SFSSIG_OPT_TREE))
 				return 1;
 
-			fprintf(stderr, "%s: Checksum Request failed: %d "
-			    "(%s)\n", tmp, t->result, strerror(t->result));
+			fprintf(stderr,
+				"%s: Checksum Request failed: %d (%s)\n",
+				tmp, t->result, anoubis_strerror(t->result));
 			anoubis_transaction_destroy(t);
 			return 1;
 		}
@@ -1725,7 +1728,7 @@ _export(char *arg, FILE *out_fd, int rec, uid_t sfs_uid)
 		if (t->result != ENOENT) {
 			if (opts & SFSSIG_OPT_DEBUG)
 				fprintf(stderr, "Error while transaction: %s\n",
-				    strerror(t->result));
+				    anoubis_strerror(t->result));
 			anoubis_transaction_destroy(t);
 			return 1;
 		}
@@ -1811,7 +1814,7 @@ _export(char *arg, FILE *out_fd, int rec, uid_t sfs_uid)
 	if (export) {
 		if ((ret = anoubis_print_entries(out_fd, export, cnt)) != 0) {
 			fprintf(stderr, "Error in export entries: %s\n",
-			    strerror(ret));
+			    anoubis_strerror(ret));
 			goto err;
 		}
 		for (i = 0; i < cnt; i++)
@@ -1924,7 +1927,8 @@ add_entry(struct sfs_entry *entry)
 			if (cserr) {
 				fprintf(stderr, "Checksum request for "
 				    "file=%s uid=%d failed: %s\n",
-				    entry->name, entry->uid, strerror(-cserr));
+				    entry->name, entry->uid,
+				    anoubis_strerror(-cserr));
 			}
 		}
 	}
@@ -1940,7 +1944,7 @@ add_entry(struct sfs_entry *entry)
 			if (sigerr) {
 				fprintf(stderr, "Signature request for "
 				    "file=%s failed: %s\n", entry->name,
-				    strerror(-sigerr));
+				    anoubis_strerror(-sigerr));
 			}
 		}
 	}
@@ -1991,7 +1995,7 @@ get_entry(char *file, unsigned char *keyid_p, int idlen_p, uid_t sfs_uid)
 			}
 			if (opts & SFSSIG_OPT_DEBUG)
 				fprintf(stderr, "Checksum Request failed: %s\n",
-				    strerror(t_sig->result));
+				    anoubis_strerror(t_sig->result));
 		} else {
 			const void	*sigdata = NULL;
 
@@ -2026,7 +2030,7 @@ get_entry(char *file, unsigned char *keyid_p, int idlen_p, uid_t sfs_uid)
 			goto out;
 		}
 		fprintf(stderr, "Checksum Request failed: %s\n",
-		    strerror(t_sum->result));
+		    anoubis_strerror(t_sum->result));
 		goto out;
 	} else {
 		int		 cslen;

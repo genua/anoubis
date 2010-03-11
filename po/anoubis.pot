@@ -6,7 +6,7 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: anoubis 0.9.2.25.226.490\n"
+"Project-Id-Version: anoubis 0.9.2.25.226.482\n"
 "Report-Msgid-Bugs-To: anoubis@lists.anoubis.org\n"
 "POT-Creation-Date: 2010-03-10 13:23+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
@@ -17,23 +17,19 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
-#: src/libanoubis/anoubiserrorcode/anoubis_errno.c:36
-msgid "error code 1"
-msgstr ""
-
 #: src/libanoubis/anoubiserrorcode/anoubis_errno.c:37
-msgid "error code 2"
+msgid "Operation not permitted: no certificate found"
 msgstr ""
 
-#: src/libanoubis/anoubiserrorcode/anoubis_errno.c:38
-msgid "error code 3"
+#: src/libanoubis/anoubiserrorcode/anoubis_errno.c:39
+msgid "Operation not permitted: User ID and certificates User ID do not match"
 msgstr ""
 
-#: src/libanoubis/anoubiserrorcode/anoubis_errno.c:53
+#: src/libanoubis/anoubiserrorcode/anoubis_errno.c:54
 msgid "invalid error code"
 msgstr ""
 
-#: src/libanoubis/anoubiserrorcode/anoubis_errno.c:69
+#: src/libanoubis/anoubiserrorcode/anoubis_errno.c:70
 msgid "undefined anoubis error code"
 msgstr ""
 
@@ -302,27 +298,27 @@ msgstr ""
 msgid "Mask"
 msgstr ""
 
-#: src/xanoubis/model/PolicyRuleSet.cpp:641
+#: src/xanoubis/model/PolicyRuleSet.cpp:643
 #, c-format
 msgid "System error during import of policy file %ls: %hs"
 msgstr ""
 
-#: src/xanoubis/model/PolicyRuleSet.cpp:650
+#: src/xanoubis/model/PolicyRuleSet.cpp:652
 #, c-format
 msgid "Successfully imported policy file %ls"
 msgstr ""
 
-#: src/xanoubis/model/PolicyRuleSet.cpp:659
+#: src/xanoubis/model/PolicyRuleSet.cpp:661
 #, c-format
 msgid "Failed import of policy file %ls"
 msgstr ""
 
-#: src/xanoubis/model/PolicyRuleSet.cpp:667
+#: src/xanoubis/model/PolicyRuleSet.cpp:669
 #, c-format
 msgid "Failed import of policy file %hs"
 msgstr ""
 
-#: src/xanoubis/model/PolicyRuleSet.cpp:676
+#: src/xanoubis/model/PolicyRuleSet.cpp:678
 #, c-format
 msgid "Unknown error during import of policy file %ls"
 msgstr ""
@@ -990,7 +986,7 @@ msgstr ""
 #: src/xanoubis/view/DlgRuleEditor.cpp:923 src/xanoubis/view/MainFrame.cpp:529
 #: src/xanoubis/view/MainFrame.cpp:790
 #: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1523
-#: src/xanoubis/view/ModSfsGenerateKeyDlg.cpp:191 src/xanoubis/main.cpp:136
+#: src/xanoubis/view/ModSfsGenerateKeyDlg.cpp:192 src/xanoubis/main.cpp:136
 #: src/xanoubis/main.cpp:385 src/xanoubis/main.cpp:393
 msgid "Error"
 msgstr ""
@@ -1988,24 +1984,24 @@ msgstr ""
 msgid "upgraded"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsGenerateKeyDlg.cpp:92
+#: src/xanoubis/view/ModSfsGenerateKeyDlg.cpp:93
 #: src/xanoubis/view/ModSfsMainPanelImpl.cpp:80
 msgid "Configure private key:"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsGenerateKeyDlg.cpp:93
-#: src/xanoubis/view/ModSfsGenerateKeyDlg.cpp:99
+#: src/xanoubis/view/ModSfsGenerateKeyDlg.cpp:94
+#: src/xanoubis/view/ModSfsGenerateKeyDlg.cpp:100
 #: src/xanoubis/view/ModSfsMainPanelImpl.cpp:81
 #: src/xanoubis/view/ModSfsMainPanelImpl.cpp:87
 msgid "Browse ..."
 msgstr ""
 
-#: src/xanoubis/view/ModSfsGenerateKeyDlg.cpp:98
+#: src/xanoubis/view/ModSfsGenerateKeyDlg.cpp:99
 #: src/xanoubis/view/ModSfsMainPanelImpl.cpp:86
 msgid "Configure certificate:"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsGenerateKeyDlg.cpp:188
+#: src/xanoubis/view/ModSfsGenerateKeyDlg.cpp:189
 #, c-format
 msgid "Failed to create keypair (%hs)"
 msgstr ""
@@ -2488,71 +2484,71 @@ msgstr ""
 msgid "policy sent to daemon"
 msgstr ""
 
-#: src/xanoubis/view/RuleWizardProgramPage.cpp:121
+#: src/xanoubis/view/RuleWizardProgramPage.cpp:123
 msgid "Please choose a program first."
 msgstr ""
 
-#: src/xanoubis/view/RuleWizardProgramPage.cpp:125
-#: src/xanoubis/view/RuleWizardProgramPage.cpp:308
+#: src/xanoubis/view/RuleWizardProgramPage.cpp:127
+#: src/xanoubis/view/RuleWizardProgramPage.cpp:310
 #, c-format
 msgid ""
 "The checksum for %ls does not match! Please go to the SFS Browser and update "
 "the checksum."
 msgstr ""
 
-#: src/xanoubis/view/RuleWizardProgramPage.cpp:130
-#: src/xanoubis/view/RuleWizardProgramPage.cpp:199
-#: src/xanoubis/view/RuleWizardProgramPage.cpp:255
-#: src/xanoubis/view/RuleWizardProgramPage.cpp:280
-#: src/xanoubis/view/RuleWizardProgramPage.cpp:312
+#: src/xanoubis/view/RuleWizardProgramPage.cpp:132
+#: src/xanoubis/view/RuleWizardProgramPage.cpp:201
+#: src/xanoubis/view/RuleWizardProgramPage.cpp:257
+#: src/xanoubis/view/RuleWizardProgramPage.cpp:282
+#: src/xanoubis/view/RuleWizardProgramPage.cpp:314
 msgid "Rule Wizard"
 msgstr ""
 
-#: src/xanoubis/view/RuleWizardProgramPage.cpp:180
-#: src/xanoubis/control/SfsCtrl.cpp:740
+#: src/xanoubis/view/RuleWizardProgramPage.cpp:182
+#: src/xanoubis/control/SfsCtrl.cpp:741
 #, c-format
 msgid "Got error from daemon (%hs) while fetching the checksum for %ls."
 msgstr ""
 
-#: src/xanoubis/view/RuleWizardProgramPage.cpp:185
-#: src/xanoubis/control/SfsCtrl.cpp:757
+#: src/xanoubis/view/RuleWizardProgramPage.cpp:187
+#: src/xanoubis/control/SfsCtrl.cpp:758
 #, c-format
 msgid "Communication error while fetching the checksum for %ls."
 msgstr ""
 
-#: src/xanoubis/view/RuleWizardProgramPage.cpp:189
-#: src/xanoubis/control/SfsCtrl.cpp:769
+#: src/xanoubis/view/RuleWizardProgramPage.cpp:191
+#: src/xanoubis/control/SfsCtrl.cpp:770
 #, c-format
 msgid "Failed to resolve %ls"
 msgstr ""
 
-#: src/xanoubis/view/RuleWizardProgramPage.cpp:193
-#: src/xanoubis/control/SfsCtrl.cpp:777
+#: src/xanoubis/view/RuleWizardProgramPage.cpp:195
+#: src/xanoubis/control/SfsCtrl.cpp:778
 #, c-format
 msgid "An unexpected error occured (%hs) while fetching the checksum for %ls."
 msgstr ""
 
-#: src/xanoubis/view/RuleWizardProgramPage.cpp:236
-#: src/xanoubis/view/RuleWizardProgramPage.cpp:276
-#: src/xanoubis/control/SfsCtrl.cpp:678 src/xanoubis/control/SfsCtrl.cpp:861
+#: src/xanoubis/view/RuleWizardProgramPage.cpp:238
+#: src/xanoubis/view/RuleWizardProgramPage.cpp:278
+#: src/xanoubis/control/SfsCtrl.cpp:679 src/xanoubis/control/SfsCtrl.cpp:862
 #, c-format
 msgid "Failed to calculate the checksum for %ls: %hs"
 msgstr ""
 
-#: src/xanoubis/view/RuleWizardProgramPage.cpp:240
-#: src/xanoubis/control/SfsCtrl.cpp:875
+#: src/xanoubis/view/RuleWizardProgramPage.cpp:242
+#: src/xanoubis/control/SfsCtrl.cpp:876
 #, c-format
 msgid "Communication error while register the checksum for %ls."
 msgstr ""
 
-#: src/xanoubis/view/RuleWizardProgramPage.cpp:244
-#: src/xanoubis/control/SfsCtrl.cpp:889
+#: src/xanoubis/view/RuleWizardProgramPage.cpp:246
+#: src/xanoubis/control/SfsCtrl.cpp:890
 #, c-format
 msgid "Got error from daemon (%hs) while register the checksum for %ls."
 msgstr ""
 
-#: src/xanoubis/view/RuleWizardProgramPage.cpp:249
-#: src/xanoubis/control/SfsCtrl.cpp:905
+#: src/xanoubis/view/RuleWizardProgramPage.cpp:251
+#: src/xanoubis/control/SfsCtrl.cpp:906
 #, c-format
 msgid "An unexpected error occured (%hs) while register the checksum for %ls."
 msgstr ""
@@ -3251,273 +3247,273 @@ msgstr ""
 msgid "Version"
 msgstr ""
 
-#: src/xanoubis/control/SfsCtrl.cpp:390
+#: src/xanoubis/control/SfsCtrl.cpp:391
 #, c-format
 msgid "Failed to open %ls for reading: %hs"
 msgstr ""
 
-#: src/xanoubis/control/SfsCtrl.cpp:399
+#: src/xanoubis/control/SfsCtrl.cpp:400
 #, c-format
 msgid "Failed to parse %ls!"
 msgstr ""
 
-#: src/xanoubis/control/SfsCtrl.cpp:557
+#: src/xanoubis/control/SfsCtrl.cpp:558
 #, c-format
 msgid "Communication error while fetching list of checksumed files of %ls."
 msgstr ""
 
-#: src/xanoubis/control/SfsCtrl.cpp:562
+#: src/xanoubis/control/SfsCtrl.cpp:563
 #, c-format
 msgid "Communication error while fetching list of signed files of %ls."
 msgstr ""
 
-#: src/xanoubis/control/SfsCtrl.cpp:570
+#: src/xanoubis/control/SfsCtrl.cpp:571
 #, c-format
 msgid ""
 "Got error from daemon (%hs) while fetching the list of checksumed files of %"
 "ls."
 msgstr ""
 
-#: src/xanoubis/control/SfsCtrl.cpp:575
+#: src/xanoubis/control/SfsCtrl.cpp:576
 #, c-format
 msgid ""
 "Got error from daemon (%hs) while fetching the list of signed files of %ls."
 msgstr ""
 
-#: src/xanoubis/control/SfsCtrl.cpp:581
+#: src/xanoubis/control/SfsCtrl.cpp:582
 #, c-format
 msgid ""
 "An unexpected error occured (%i) while fetching the list of checksumed files "
 "of %ls."
 msgstr ""
 
-#: src/xanoubis/control/SfsCtrl.cpp:587
+#: src/xanoubis/control/SfsCtrl.cpp:588
 #, c-format
 msgid ""
 "An unexpected error occured (%i) while fetching the list of signed files of %"
 "ls."
 msgstr ""
 
-#: src/xanoubis/control/SfsCtrl.cpp:669 src/xanoubis/control/SfsCtrl.cpp:715
-#: src/xanoubis/control/SfsCtrl.cpp:848 src/xanoubis/control/SfsCtrl.cpp:955
+#: src/xanoubis/control/SfsCtrl.cpp:670 src/xanoubis/control/SfsCtrl.cpp:716
+#: src/xanoubis/control/SfsCtrl.cpp:849 src/xanoubis/control/SfsCtrl.cpp:956
 #, c-format
 msgid "%ls not found in file-list!"
 msgstr ""
 
-#: src/xanoubis/control/SfsCtrl.cpp:744
+#: src/xanoubis/control/SfsCtrl.cpp:745
 #, c-format
 msgid "Got error from daemon (%hs) while fetching the signature for %ls."
 msgstr ""
 
-#: src/xanoubis/control/SfsCtrl.cpp:761
+#: src/xanoubis/control/SfsCtrl.cpp:762
 #, c-format
 msgid "Communication error while fetching the signature for %ls."
 msgstr ""
 
-#: src/xanoubis/control/SfsCtrl.cpp:782
+#: src/xanoubis/control/SfsCtrl.cpp:783
 #, c-format
 msgid "An unexpected error occured (%hs) while fetching the signature for %ls."
 msgstr ""
 
-#: src/xanoubis/control/SfsCtrl.cpp:816
+#: src/xanoubis/control/SfsCtrl.cpp:817
 msgid "An unexpected checksum was fetched."
 msgstr ""
 
-#: src/xanoubis/control/SfsCtrl.cpp:818
+#: src/xanoubis/control/SfsCtrl.cpp:819
 msgid "An unexpected signature was fetched."
 msgstr ""
 
-#: src/xanoubis/control/SfsCtrl.cpp:865
+#: src/xanoubis/control/SfsCtrl.cpp:866
 #, c-format
 msgid "Failed to calculate the signature for %ls: %hs"
 msgstr ""
 
-#: src/xanoubis/control/SfsCtrl.cpp:879
+#: src/xanoubis/control/SfsCtrl.cpp:880
 #, c-format
 msgid "Communication error while register the signature for %ls."
 msgstr ""
 
-#: src/xanoubis/control/SfsCtrl.cpp:894
+#: src/xanoubis/control/SfsCtrl.cpp:895
 #, c-format
 msgid "Got error from daemon (%hs) while register the signature for %ls."
 msgstr ""
 
-#: src/xanoubis/control/SfsCtrl.cpp:910
+#: src/xanoubis/control/SfsCtrl.cpp:911
 #, c-format
 msgid "An unexpected error occured (%hs) while register the signature for %ls."
 msgstr ""
 
-#: src/xanoubis/control/SfsCtrl.cpp:968
+#: src/xanoubis/control/SfsCtrl.cpp:969
 #, c-format
 msgid "Communication error while removing the checksum for %ls."
 msgstr ""
 
-#: src/xanoubis/control/SfsCtrl.cpp:972
+#: src/xanoubis/control/SfsCtrl.cpp:973
 #, c-format
 msgid "Communication error while removing the signature for %ls."
 msgstr ""
 
-#: src/xanoubis/control/SfsCtrl.cpp:981
+#: src/xanoubis/control/SfsCtrl.cpp:982
 #, c-format
 msgid "Got error from daemon (%hs) while removing the checksum for %ls."
 msgstr ""
 
-#: src/xanoubis/control/SfsCtrl.cpp:986
+#: src/xanoubis/control/SfsCtrl.cpp:987
 #, c-format
 msgid "Got error from daemon (%hs) while removing the signature for %ls."
 msgstr ""
 
-#: src/xanoubis/control/SfsCtrl.cpp:996
+#: src/xanoubis/control/SfsCtrl.cpp:997
 #, c-format
 msgid "An unexpected error occured (%hs) while removing the checksum for %ls."
 msgstr ""
 
-#: src/xanoubis/control/SfsCtrl.cpp:1001
+#: src/xanoubis/control/SfsCtrl.cpp:1002
 #, c-format
 msgid "An unexpected error occured (%hs) while removing the signature for %ls."
 msgstr ""
 
-#: src/xanoubis/control/SfsCtrl.cpp:1290
+#: src/xanoubis/control/SfsCtrl.cpp:1291
 #, c-format
 msgid "Failed to open %ls for writing: %hs"
 msgstr ""
 
-#: src/xanoubis/control/SfsCtrl.cpp:1299
+#: src/xanoubis/control/SfsCtrl.cpp:1300
 #, c-format
 msgid "Failed to flush the content of %ls: %hs"
 msgstr ""
 
-#: src/xanoubis/control/SfsCtrl.cpp:1457
+#: src/xanoubis/control/SfsCtrl.cpp:1458
 msgid "SFS operation"
 msgstr ""
 
-#: src/xanoubis/control/SfsCtrl.cpp:1458
+#: src/xanoubis/control/SfsCtrl.cpp:1459
 msgid "SFS operation in Progress. Please wait ..."
 msgstr ""
 
-#: src/xanoubis/control/PolicyCtrl.cpp:466
+#: src/xanoubis/control/PolicyCtrl.cpp:468
 #, c-format
 msgid ""
 "Communication error while receiving\n"
 "admin-policy of %ls."
 msgstr ""
 
-#: src/xanoubis/control/PolicyCtrl.cpp:469
+#: src/xanoubis/control/PolicyCtrl.cpp:471
 #, c-format
 msgid ""
 "Communication error while receiving\n"
 "user-policy of %ls."
 msgstr ""
 
-#: src/xanoubis/control/PolicyCtrl.cpp:472
+#: src/xanoubis/control/PolicyCtrl.cpp:474
 msgid "Error while receiving policy."
 msgstr ""
 
-#: src/xanoubis/control/PolicyCtrl.cpp:475
+#: src/xanoubis/control/PolicyCtrl.cpp:477
 #, c-format
 msgid ""
 "Got error (%hs) from daemon\n"
 "after receiving admin-policy of %ls."
 msgstr ""
 
-#: src/xanoubis/control/PolicyCtrl.cpp:480
+#: src/xanoubis/control/PolicyCtrl.cpp:482
 #, c-format
 msgid ""
 "Got error (%hs) from daemon\n"
 "after receiving user-policy of %ls."
 msgstr ""
 
-#: src/xanoubis/control/PolicyCtrl.cpp:485
+#: src/xanoubis/control/PolicyCtrl.cpp:487
 #, c-format
 msgid ""
 "Got error (%hs) from daemon\n"
 "after receiving policy."
 msgstr ""
 
-#: src/xanoubis/control/PolicyCtrl.cpp:489
-#: src/xanoubis/control/PolicyCtrl.cpp:582
+#: src/xanoubis/control/PolicyCtrl.cpp:491
+#: src/xanoubis/control/PolicyCtrl.cpp:584
 #, c-format
 msgid ""
 "An unexpected error occured.\n"
 "Error code: %i"
 msgstr ""
 
-#: src/xanoubis/control/PolicyCtrl.cpp:495
+#: src/xanoubis/control/PolicyCtrl.cpp:497
 msgid "Error while receiving policy"
 msgstr ""
 
-#: src/xanoubis/control/PolicyCtrl.cpp:540
+#: src/xanoubis/control/PolicyCtrl.cpp:542
 msgid "The task was not executed."
 msgstr ""
 
-#: src/xanoubis/control/PolicyCtrl.cpp:542
+#: src/xanoubis/control/PolicyCtrl.cpp:544
 msgid "Out of memory."
 msgstr ""
 
-#: src/xanoubis/control/PolicyCtrl.cpp:546
+#: src/xanoubis/control/PolicyCtrl.cpp:548
 #, c-format
 msgid ""
 "Communication error while sending admin-policy\n"
 "of %ls to daemon."
 msgstr ""
 
-#: src/xanoubis/control/PolicyCtrl.cpp:549
+#: src/xanoubis/control/PolicyCtrl.cpp:551
 #, c-format
 msgid ""
 "Communication error while sending user-policy\n"
 "of %ls to daemon."
 msgstr ""
 
-#: src/xanoubis/control/PolicyCtrl.cpp:552
+#: src/xanoubis/control/PolicyCtrl.cpp:554
 msgid "Error while sending policy to daemon."
 msgstr ""
 
-#: src/xanoubis/control/PolicyCtrl.cpp:555
+#: src/xanoubis/control/PolicyCtrl.cpp:557
 #, c-format
 msgid ""
 "Got error (%hs) from daemon\n"
 "after sending admin-policy of %ls."
 msgstr ""
 
-#: src/xanoubis/control/PolicyCtrl.cpp:560
+#: src/xanoubis/control/PolicyCtrl.cpp:562
 #, c-format
 msgid ""
 "Got error (%hs) from daemon\n"
 "after sending user-policy of %ls."
 msgstr ""
 
-#: src/xanoubis/control/PolicyCtrl.cpp:565
+#: src/xanoubis/control/PolicyCtrl.cpp:567
 #, c-format
 msgid ""
 "Got error (%hs) from daemon\n"
 "after sending policy."
 msgstr ""
 
-#: src/xanoubis/control/PolicyCtrl.cpp:571
+#: src/xanoubis/control/PolicyCtrl.cpp:573
 #, c-format
 msgid "Failed to sign the admin-policy of %ls: %hs."
 msgstr ""
 
-#: src/xanoubis/control/PolicyCtrl.cpp:575
+#: src/xanoubis/control/PolicyCtrl.cpp:577
 #, c-format
 msgid "Failed to sign the user-policy of %ls: %hs."
 msgstr ""
 
-#: src/xanoubis/control/PolicyCtrl.cpp:579
+#: src/xanoubis/control/PolicyCtrl.cpp:581
 #, c-format
 msgid "Failed to sign the policy: %hs."
 msgstr ""
 
-#: src/xanoubis/control/PolicyCtrl.cpp:588
-#: src/xanoubis/control/PolicyCtrl.cpp:595
+#: src/xanoubis/control/PolicyCtrl.cpp:590
+#: src/xanoubis/control/PolicyCtrl.cpp:597
 msgid "Error while sending policy"
 msgstr ""
 
-#: src/xanoubis/control/PolicyCtrl.cpp:594
+#: src/xanoubis/control/PolicyCtrl.cpp:596
 msgid "Failed to make a backup of the policy."
 msgstr ""
 
-#: src/xanoubis/control/PolicyCtrl.cpp:670
+#: src/xanoubis/control/PolicyCtrl.cpp:672
 #, c-format
 msgid "Automatically created version while saving the %ls profile"
 msgstr ""

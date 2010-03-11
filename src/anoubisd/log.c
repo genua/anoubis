@@ -22,7 +22,6 @@
 #endif
 
 #include <err.h>
-#include <errno.h>
 #include <netdb.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -40,6 +39,7 @@
 #include <bsdcompat.h>
 #endif
 
+#include <anoubis_errno.h>
 #include "anoubisd.h"
 #include "amsg.h"
 #include "aqueue.h"
@@ -172,14 +172,15 @@ log_warn(const char *emsg, ...)
 
 	/* best effort to even work in out of memory situations */
 	if (emsg == NULL)
-		logit(LOG_CRIT, "%s", strerror(errno));
+		logit(LOG_CRIT, "%s", anoubis_strerror(errno));
 	else {
 		va_start(ap, emsg);
 
-		if (asprintf(&nfmt, "%s: %s", emsg, strerror(errno)) == -1) {
+		if (asprintf(&nfmt, "%s: %s", emsg,
+			anoubis_strerror(errno)) == -1) {
 			/* we tried it... */
 			vlog(LOG_CRIT, emsg, ap);
-			logit(LOG_CRIT, "%s", strerror(errno));
+			logit(LOG_CRIT, "%s", anoubis_strerror(errno));
 		} else {
 			vlog(LOG_CRIT, nfmt, ap);
 			free(nfmt);
@@ -223,11 +224,12 @@ fatal(const char *emsg)
 {
 	if (emsg == NULL)
 		logit(LOG_CRIT, "fatal in %s: %s", procnames[anoubisd_process],
-		    strerror(errno));
+		    anoubis_strerror(errno));
 	else
 		if (errno)
 			logit(LOG_CRIT, "fatal in %s: %s: %s",
-			    procnames[anoubisd_process], emsg, strerror(errno));
+			    procnames[anoubisd_process], emsg,
+			    anoubis_strerror(errno));
 		else
 			logit(LOG_CRIT, "fatal in %s: %s",
 			    procnames[anoubisd_process], emsg);
@@ -249,11 +251,11 @@ void
 early_err(int eval, const char *emsg)
 {
 	if (emsg == NULL) {
-		fprintf(stderr, "%s: %s\n", logname, strerror(errno));
+		fprintf(stderr, "%s: %s\n", logname, anoubis_strerror(errno));
 	 } else {
 		if (errno) {
 			fprintf(stderr, "%s: %s: %s\n", logname, emsg,
-			    strerror(errno));
+			    anoubis_strerror(errno));
 		} else {
 			fprintf(stderr, "%s: %s\n", logname, emsg);
 		}

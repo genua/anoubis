@@ -38,7 +38,7 @@ INCLUDES = $(anoubis_cppflags)
 
 anoubisctl_DEPENDENCIES = $(libanoubis)
 
-anoubisctl_LDADD = $(anoubisctl_DEPENDENCIES)
+anoubisctl_LDADD = $(anoubisctl_DEPENDENCIES) $(intl_ldadd)
 
 anoubisctl_LDFLAGS= $(AM_LDFLAGS) $(STATIC)
 

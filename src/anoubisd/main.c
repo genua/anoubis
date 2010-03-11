@@ -43,7 +43,6 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
-#include <errno.h>
 #include <fcntl.h>
 #include <pwd.h>
 #include <signal.h>
@@ -83,6 +82,7 @@
 #include <event.h>
 #include <anoubis_msg.h>
 #include <anoubis_sig.h>
+#include <anoubis_errno.h>
 #include "anoubisd.h"
 #include "aqueue.h"
 #include "amsg.h"
@@ -938,7 +938,8 @@ dazukofs_ignore(void)
 
 	fd = open(_PATH_DEV "dazukofs.ign", O_RDONLY);
 	if ((fd == -1) && (errno != ENOENT))
-		log_warn("Could not open dazukofs: %s", strerror(errno));
+		log_warn("Could not open dazukofs: %s",
+				anoubis_strerror(errno));
 	return(fd);
 }
 #endif

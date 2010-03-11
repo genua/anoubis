@@ -28,6 +28,8 @@
 #ifndef _ANOUBIS_ERRNO_H_
 #define _ANOUBIS_ERRNO_H_
 
+#include <sys/cdefs.h>
+
 #include <errno.h>
 #include <libintl.h>
 #include <string.h>
@@ -81,9 +83,8 @@
 /*
  * some macros to define anoubis_errorcodes
  */
-#define A_TEST_ERRORCODE1 1024
-#define A_TEST_ERRORCODE2 1025
-#define A_TEST_ERRORCODE3 1027
+#define A_EPERM_NO_CERTIFICATE 1024
+#define A_EPERM_UID_MISMATCH 1025
 
 /*
  * Get Anoubis error code string.
@@ -96,6 +97,11 @@
  *		If errnum < A_ERROR_CODE_BASE, systems strerror will
  *		be called and its error text will be returned.
  */
+
+__BEGIN_DECLS
+
 char *anoubis_strerror(int errnum);
+
+__END_DECLS
 
 #endif /*_ANOUBIS_ERRNO_H_*/

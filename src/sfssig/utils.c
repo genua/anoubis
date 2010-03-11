@@ -28,6 +28,7 @@
 #include "config.h"
 
 #include "sfssig.h"
+#include <anoubis_errno.h>
 
 int
 str2hash(const char * s, unsigned char dest[SHA256_DIGEST_LENGTH])
@@ -338,7 +339,7 @@ load_keys(int priv_key, int show_err, char *cert, char *keyfile)
 	if (error < 0) {
 		if (show_err)
 			fprintf(stderr, "Error while loading keyfile/certfile "
-			    "%s\n", strerror(-error));
+			    "%s\n", anoubis_strerror(-error));
 		return NULL;
 	}
 	return ast;

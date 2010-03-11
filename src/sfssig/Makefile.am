@@ -35,7 +35,7 @@ include $(top_srcdir)/src/Makefile.include
 INCLUDES = $(anoubis_cppflags)
 
 sfssig_DEPENDENCIES = $(libanoubis)
-sfssig_LDADD = $(sfssig_DEPENDENCIES)
+sfssig_LDADD = $(sfssig_DEPENDENCIES) $(intl_ldadd)
 
 CFLAGS += $(SSL_CFLAGS)
 

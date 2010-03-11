@@ -30,6 +30,7 @@
 
 #include <anoubis_sig.h>
 #include <anoubis_csum.h>
+#include <anoubis_errno.h>
 
 #include "AnEvents.h"
 #include "ComCsumAddTask.h"
@@ -381,7 +382,7 @@ SfsCtrl::importChecksums(const wxString &path)
 		if ((fh = fopen(path.fn_str(), "r")) == 0) {
 			errorList_.Add(wxString::Format(
 			    _("Failed to open %ls for reading: %hs"),
-			    path.c_str(), strerror(errno)));
+			    path.c_str(), anoubis_strerror(errno)));
 			sendErrorEvent();
 			endSfsOp();
 			return (RESULT_INVALIDARG);
@@ -557,7 +558,8 @@ SfsCtrl::OnSfsListArrived(TaskEvent &event)
 				    "files of %ls."),
 				    task->getDirectory().c_str());
 		} else if (comResult == ComTask::RESULT_REMOTE_ERROR) {
-			const char *err = strerror(task->getResultDetails());
+			const char *err =
+				anoubis_strerror(task->getResultDetails());
 
 			if (type == SfsEntry::SFSENTRY_CHECKSUM)
 				message = wxString::Format(_("Got error from "
@@ -670,7 +672,7 @@ SfsCtrl::OnCsumCalc(TaskEvent &event)
 		wxString message = wxString::Format(
 		    _("Failed to calculate the checksum for %ls: %hs"),
 		    task->getPath().c_str(),
-		    strerror(task->getResult()));
+		    anoubis_strerror(task->getResult()));
 		errorList_.Add(message);
 
 		return;
@@ -726,7 +728,8 @@ SfsCtrl::OnCsumGet(TaskEvent &event)
 		} else if (err == EINVAL) {
 			entry->setChecksumInvalid(type);
 		} else {
-			const char *err = strerror(task->getResultDetails());
+			const char *err =
+				anoubis_strerror(task->getResultDetails());
 			wxString message;
 
 			if (type == SfsEntry::SFSENTRY_CHECKSUM)
@@ -769,12 +772,12 @@ SfsCtrl::OnCsumGet(TaskEvent &event)
 		if (type == SfsEntry::SFSENTRY_CHECKSUM)
 			message = wxString::Format(_("An unexpected error "
 			    "occured (%hs) while fetching the checksum for "
-			    "%ls."), strerror(task->getComTaskResult()),
+			    "%ls."), anoubis_strerror(task->getComTaskResult()),
 			    task->getPath().c_str());
 		else
 			message = wxString::Format(_("An unexpected error "
 			    "occured (%hs) while fetching the signature for "
-			    "%ls."), strerror(task->getComTaskResult()),
+			    "%ls."), anoubis_strerror(task->getComTaskResult()),
 			    task->getPath().c_str());
 
 		errorList_.Add(message);
@@ -839,7 +842,7 @@ SfsCtrl::OnCsumAdd(TaskEvent &event)
 
 		message.Printf(_("Failed to add the checksum/signature "
 		    "for %ls: %hs"), task->getPath().c_str(),
-		    strerror(task->getResultDetails()));
+		    anoubis_strerror(task->getResultDetails()));
 		errorList_.Add(message);
 	} else if (task->getComTaskResult() == ComTask::RESULT_COM_ERROR) {
 		wxString message;
@@ -853,7 +856,7 @@ SfsCtrl::OnCsumAdd(TaskEvent &event)
 
 		message = wxString::Format(_("Got error from daemon "
 		    "(%hs) while register the checksum/signautre for %ls."),
-		    strerror(task->getResultDetails()),
+		    anoubis_strerror(task->getResultDetails()),
 		    task->getPath().c_str());
 		errorList_.Add(message);
 	} else if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
@@ -861,7 +864,7 @@ SfsCtrl::OnCsumAdd(TaskEvent &event)
 
 		message = wxString::Format(_("An unexpected error "
 		    "occured (%hs) while registering the checksum/signature "
-		    "for %ls."), strerror(task->getComTaskResult()),
+		    "for %ls."), anoubis_strerror(task->getComTaskResult()),
 		    task->getPath().c_str());
 		errorList_.Add(message);
 	}
@@ -944,12 +947,12 @@ SfsCtrl::OnCsumDel(TaskEvent &event)
 		if (type == SfsEntry::SFSENTRY_CHECKSUM)
 			message = wxString::Format(_("Got error from daemon "
 			    "(%hs) while removing the checksum for %ls."),
-			    strerror(task->getResultDetails()),
+			    anoubis_strerror(task->getResultDetails()),
 			    task->getPath().c_str());
 		else
 			message = wxString::Format(_("Got error from daemon "
 			    "(%hs) while removing the signature for %ls."),
-			    strerror(task->getResultDetails()),
+			    anoubis_strerror(task->getResultDetails()),
 			    task->getPath().c_str());
 
 		errorList_.Add(message);
@@ -959,12 +962,12 @@ SfsCtrl::OnCsumDel(TaskEvent &event)
 		if (type == SfsEntry::SFSENTRY_CHECKSUM)
 			message = wxString::Format(_("An unexpected error "
 			    "occured (%hs) while removing the checksum for "
-			    "%ls."), strerror(task->getComTaskResult()),
+			    "%ls."), anoubis_strerror(task->getComTaskResult()),
 			    task->getPath().c_str());
 		else
 			message = wxString::Format(_("An unexpected error "
 			    "occured (%hs) while removing the signature for "
-			    "%ls."), strerror(task->getComTaskResult()),
+			    "%ls."), anoubis_strerror(task->getComTaskResult()),
 			    task->getPath().c_str());
 
 		errorList_.Add(message);
@@ -1235,7 +1238,7 @@ SfsCtrl::dumpExportEntries(void)
 	if (fh == 0) {
 		errorList_.Add(wxString::Format(
 		    _("Failed to open %ls for writing: %hs"),
-		    exportFile_.c_str(), strerror(errno)));
+		    exportFile_.c_str(), anoubis_strerror(errno)));
 		return;
 	}
 
@@ -1244,7 +1247,7 @@ SfsCtrl::dumpExportEntries(void)
 	if (fflush(fh) != 0) {
 		errorList_.Add(wxString::Format(
 		    _("Failed to flush the content of %ls: %hs"),
-		    exportFile_.c_str(), strerror(errno)));
+		    exportFile_.c_str(), anoubis_strerror(errno)));
 	}
 
 	fclose(fh);

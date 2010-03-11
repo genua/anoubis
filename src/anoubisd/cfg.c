@@ -30,11 +30,11 @@
 #endif
 
 #include <ctype.h>
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include <anoubis_errno.h>
 #include "anoubisd.h"
 #include "amsg.h"
 #include "cfg.h"
@@ -210,7 +210,7 @@ cfg_param_addvalue(struct cfg_param *param, const char *value, int lineno)
 	if (value == NULL) {
 		/* Nothing to append */
 		log_warnx("%s: line %d: %s", __FUNCTION__, lineno,
-		    strerror(EINVAL));
+		    anoubis_strerror(EINVAL));
 
 		return (-EINVAL);
 	}
