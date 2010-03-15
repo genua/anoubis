@@ -344,7 +344,7 @@ SfsCtrl::unregisterChecksum(const IndexArray &arr)
 			SfsEntry *entry = sfsDir_.getEntry(idx);
 
 			/* Remove checksum from anoubisd */
-			numScheduled += createComCsumDelTasks(entry);
+			numScheduled += createComCsumDelTasks(entry, doSig);
 
 			if (!doSig) {
 				/* Reset signed checksums in model */
@@ -1111,7 +1111,7 @@ SfsCtrl::createComCsumAddTask(struct sfs_entry *entry)
 }
 
 int
-SfsCtrl::createComCsumDelTasks(SfsEntry *entry)
+SfsCtrl::createComCsumDelTasks(SfsEntry *entry, bool doSig)
 {
 	int count = 0;
 
@@ -1130,7 +1130,7 @@ SfsCtrl::createComCsumDelTasks(SfsEntry *entry)
 
 	SfsEntry::ChecksumState sigState =
 	    entry->getChecksumState(SfsEntry::SFSENTRY_SIGNATURE);
-	if ((sigState != SfsEntry::SFSENTRY_MISSING) && isSignatureEnabled()) {
+	if ((sigState != SfsEntry::SFSENTRY_MISSING) && doSig) {
 		KeyCtrl *keyCtrl = KeyCtrl::getInstance();
 		LocalCertificate &cert = keyCtrl->getLocalCertificate();
 		struct anoubis_sig *raw_cert = cert.getCertificate();
@@ -1277,20 +1277,6 @@ SfsCtrl::clearImportEntries(void)
 	}
 
 	this->importList_ = 0;
-}
-
-bool
-SfsCtrl::setChecksumMissing(SfsEntry *entry)
-{
-	bool ret = false;
-
-	ret |= entry->setChecksumMissing(SfsEntry::SFSENTRY_CHECKSUM);
-
-	if (isSignatureEnabled()) {
-		ret |= entry->setChecksumMissing(SfsEntry::SFSENTRY_SIGNATURE);
-	}
-
-	return (ret);
 }
 
 void

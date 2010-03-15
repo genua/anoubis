@@ -38,6 +38,7 @@
 #include "SfsDirectory.h"
 #include "Task.h"
 #include "TaskEvent.h"
+#include "ComCsumAddTask.h"
 
 /**
  * Array is a list of indexes.
@@ -545,13 +546,23 @@ class SfsCtrl : public wxEvtHandler
 		 *
 		 * @param entry The SfsEntry, where the checksum/signature
 		 *              should be removed.
+		 * @param doSig Generate signature tasks, too.
 		 * @return Number of scheduled tasks. Might be 0 (nothing was
 		 *         scheduled), 1 or 2 (task for checksum and/or
 		 *         signature).
 		 */
-		int createComCsumDelTasks(SfsEntry *);
+		int createComCsumDelTasks(SfsEntry *entry, bool doSig);
 
+		/**
+		 * Create checksum and signature list tasks for a uid
+		 * and path.
+		 *
+		 * @param 1st The User ID for the checksum list task.
+		 * @param 2nd The Path name.
+		 * @param 3rd Generate signature list tasks, too.
+		 */
 		void createSfsListTasks(uid_t, const wxString &);
+
 		void createCsumCalcTask(const wxString &);
 
 		/**
@@ -586,8 +597,6 @@ class SfsCtrl : public wxEvtHandler
 		 * sfs_entry-structures.
 		 */
 		void clearImportEntries(void);
-
-		bool setChecksumMissing(SfsEntry *);
 
 		void pushTask(Task *);
 		void popTask(Task *);

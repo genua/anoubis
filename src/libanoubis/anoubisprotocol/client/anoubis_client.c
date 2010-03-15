@@ -1179,6 +1179,7 @@ anoubis_csmulti_create(unsigned int op, uid_t uid, void *keyid, int idlen)
 		ret->keyid = NULL;
 	}
 	ret->nreqs = 0;
+	ret->openreqs = 0;
 	ret->reply_msg = NULL;
 	TAILQ_INIT(&ret->reqs);
 	return ret;
@@ -1192,7 +1193,7 @@ anoubis_csmulti_create(unsigned int op, uid_t uid, void *keyid, int idlen)
  * @param idx The index.
  * @return A pointer to the request record.
  */
-static struct anoubis_csmulti_record *
+struct anoubis_csmulti_record *
 anoubis_csmulti_find(struct anoubis_csmulti_request *req, unsigned int idx)
 {
 	struct anoubis_csmulti_record	*record = req->last;
@@ -1271,6 +1272,7 @@ anoubis_csmulti_add(struct anoubis_csmulti_request *request,
 	record->error = EAGAIN;
 	record->idx = request->nreqs++;
 	record->length = sizeof(Anoubis_CSMultiRequestRecord) + cslen + plen;
+	request->openreqs++;
 	/* Align */
 	if (record->length % 4)
 		record->length += 4 - record->length % 4;
@@ -1286,6 +1288,35 @@ anoubis_csmulti_add(struct anoubis_csmulti_request *request,
 		record->u.get.sig = NULL;
 		record->u.get.upgrade = NULL;
 	}
+	TAILQ_INSERT_TAIL(&request->reqs, record, next);
+	return 0;
+}
+
+int
+anoubis_csmulti_add_error(struct anoubis_csmulti_request *request,
+    const char *path, int error)
+{
+	struct anoubis_csmulti_record	*record;
+	int				 plen = 1;
+	void				*data;
+
+	if (error == EAGAIN)
+		return -EINVAL;
+	if (path)
+		plen = strlen(path) + 1;
+	record = malloc(sizeof(struct anoubis_csmulti_record) + plen);
+	if (!record)
+		return -ENOMEM;
+	data = (void *)(record + 1);
+	record->path = data;
+	if (path)
+		memcpy(record->path, path, plen);
+	else
+		record->path[0] = 0;
+	record->error = error;
+	record->idx = request->nreqs++;
+	record->length = 0;
+	request->openreqs++;
 	TAILQ_INSERT_TAIL(&request->reqs, record, next);
 	return 0;
 }
@@ -1368,6 +1399,8 @@ anoubis_client_csmulti_steps(struct anoubis_transaction *t,
 		record = anoubis_csmulti_find(request, idx);
 		if (!record)
 			continue;
+		if (record->error == EAGAIN)
+			request->openreqs--;
 		record->error = get_value(r->error);
 		/* No payload data in case of an error. */
 		if (record->error)

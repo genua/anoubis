@@ -53,13 +53,10 @@
 #include <list>
 
 #include "ctassert.h"
-#include "ComCsumAddTask.h"
-#include "ComCsumGetTask.h"
 #include "ComPolicyRequestTask.h"
 #include "ComPolicySendTask.h"
 #include "DlgLogViewer.h"
 #include "DlgRuleEditor.h"
-#include "CsumCalcTask.h"
 #include "KeyCtrl.h"
 #include "MainFrame.h"
 #include "Module.h"
@@ -95,10 +92,6 @@ class AnoubisGuiApp : public wxApp, private PassphraseReader
 
 		wxString readPassphrase(bool *);
 
-		ComCsumAddTask		csumAddTask_;
-		ComCsumGetTask		csumGetTask_;
-		CsumCalcTask		csumCalcTask_;
-
 	protected:
 		void OnAnswerEscalation(wxCommandEvent &);
 
@@ -115,9 +108,6 @@ class AnoubisGuiApp : public wxApp, private PassphraseReader
 		bool	OnCmdLineParsed(wxCmdLineParser&);
 
 		bool		 connectCommunicator(bool);
-		void		 sendChecksum(const wxString &);
-		void		 getChecksum(const wxString &);
-		void		 calChecksum(const wxString &);
 		wxString	 getCatalogPath(void);
 		wxString	 getWizardPath(void);
 		wxString	 getIconPath(wxString);

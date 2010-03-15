@@ -58,6 +58,7 @@ struct anoubis_csmulti_record {
 struct anoubis_csmulti_request {
 	unsigned int					 op;
 	unsigned int					 nreqs;
+	unsigned int					 openreqs;
 	uid_t						 uid;
 	void						*keyid;
 	int						 idlen;
@@ -153,7 +154,31 @@ anoubis_csmulti_add(struct anoubis_csmulti_request *request,
     const char *path, const void *csdata, unsigned int cslen);
 
 /**
- * Create the csmulti message that actually start an anoubis_csmulti_request.
+ * Add an individual entry to the request with a pre-set error code.
+ *
+ * @param request The request.
+ * @param path The path for the entry.
+ * @param error The error number to use.
+ * @return  Zero in case of success, a negative error code (probably ENOMEM)
+ *     in case of errors.
+ */
+int
+anoubis_csmulti_add_error(struct anoubis_csmulti_request *request,
+    const char *path, int error);
+
+/**
+ * Find the request record with a given index in a csmulti request.
+ *
+ * @param request The csmulti request.
+ * @param index The index of the record.
+ * @return A pointer to the record or NULL if the index was not found.
+ */
+struct anoubis_csmulti_record *
+anoubis_csmulti_find(struct anoubis_csmulti_request *request,
+    unsigned int index);
+
+/**
+ * Create the csmulti message that actually starts an anoubis_csmulti_request.
  * This function is mainly exported for testing. You normally want to use
  * anoubis_client_csmulti_start instead.
  *

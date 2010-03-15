@@ -396,27 +396,6 @@ AnoubisGuiApp::autoStart(bool autostart)
 	}
 }
 
-void
-AnoubisGuiApp::sendChecksum(const wxString &File)
-{
-	csumAddTask_.setPath(File);
-	JobCtrl::getInstance()->addTask(&csumAddTask_);
-}
-
-void
-AnoubisGuiApp::getChecksum(const wxString &File)
-{
-	csumGetTask_.setPath(File);
-	JobCtrl::getInstance()->addTask(&csumGetTask_);
-}
-
-void
-AnoubisGuiApp::calChecksum(const wxString &File)
-{
-	csumCalcTask_.setPath(File);
-	JobCtrl::getInstance()->addTask(&csumCalcTask_);
-}
-
 wxString
 AnoubisGuiApp::getWizardPath(void)
 {
