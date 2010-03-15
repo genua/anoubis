@@ -995,10 +995,6 @@ sfs_writesfsdata(const char *csum_file, const char *csum_path,
 			goto err;
 	}
 
-	if (fsync(fd) < 0) {
-		ret = -errno;
-		goto err;
-	}
 	if (!abuf_empty(sfsdata->upgradecsdata)) {
 		ret = sfs_create_upgradeindex(csum_path, csum_file);
 		if (ret < 0)
