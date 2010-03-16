@@ -85,17 +85,17 @@ class RuleWizardProgramPage : public Observer, public RuleWizardProgramPageBase
 		/**
 		 * Tasks fetches a checksum from the daemon.
 		 */
-		ComCsumGetTask csumGetTask_;
+		ComCsumGetTask	*csumGetTask_;
 
 		/**
 		 * Task registers a checksum at the daemon.
 		 */
-		ComCsumAddTask csumAddTask_;
+		ComCsumAddTask	*csumAddTask_;
 
 		/**
 		 * Task calculates a checksum.
 		 */
-		CsumCalcTask csumCalcTask_;
+		CsumCalcTask	*csumCalcTask_;
 
 		/**
 		 * Handle events from wizard.

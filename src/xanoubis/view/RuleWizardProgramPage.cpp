@@ -60,6 +60,9 @@ RuleWizardProgramPage::RuleWizardProgramPage(wxWindow *parent,
 
 	/* Disabled until a valid program was selected */
 	page->setNextEnabled(false);
+	csumGetTask_ = NULL;
+	csumAddTask_ = NULL;
+	csumCalcTask_ = NULL;
 
 	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_GET,
 	    wxTaskEventHandler(RuleWizardProgramPage::onCsumGet), NULL, this);
@@ -77,6 +80,12 @@ RuleWizardProgramPage::~RuleWizardProgramPage(void)
 	    wxTaskEventHandler(RuleWizardProgramPage::onCsumAdd), NULL, this);
 	JobCtrl::getInstance()->Disconnect(anTASKEVT_CSUMCALC,
 	    wxTaskEventHandler(RuleWizardProgramPage::onCsumCalc), NULL, this);
+	if (csumGetTask_)
+		delete csumGetTask_;
+	if (csumAddTask_)
+		delete csumAddTask_;
+	if (csumCalcTask_)
+		delete csumCalcTask_;
 }
 
 void
@@ -94,8 +103,9 @@ RuleWizardProgramPage::update(Subject *subject)
 			 * the selected binary.
 			 */
 			if (JobCtrl::getInstance()->isConnected()) {
-				csumGetTask_.setPath(path);
-				JobCtrl::getInstance()->addTask(&csumGetTask_);
+				csumGetTask_ = new ComCsumGetTask();
+				csumGetTask_->setPath(path);
+				JobCtrl::getInstance()->addTask(csumGetTask_);
 			} else {
 				getWizardPage()->setNextEnabled(true);
 			}
@@ -144,7 +154,7 @@ RuleWizardProgramPage::onPageChanged(wxWizardEvent &)
 void
 RuleWizardProgramPage::onCsumGet(TaskEvent &event)
 {
-	if (event.getTask() != &csumGetTask_) {
+	if (event.getTask() != csumGetTask_) {
 		/* Not "my" task, skip it */
 		event.Skip();
 		return;
@@ -152,31 +162,33 @@ RuleWizardProgramPage::onCsumGet(TaskEvent &event)
 
 	event.Skip(false); /* "My" task -> stop propagating */
 
-	ComTask::ComTaskResult result = csumGetTask_.getComTaskResult();
+	ComTask::ComTaskResult result = csumGetTask_->getComTaskResult();
 
 	if (result == ComTask::RESULT_SUCCESS) {
 		/*
 		 * A checksum is registered. Next, compare with local checksum.
 		 * If the checksums does not match, the rule is useable.
 		 */
-		csumCalcTask_.setPath(programPicker->getFileName());
-		JobCtrl::getInstance()->addTask(&csumCalcTask_);
+		csumCalcTask_->setPath(programPicker->getFileName());
+		JobCtrl::getInstance()->addTask(csumCalcTask_);
 	} else if (result == ComTask::RESULT_REMOTE_ERROR &&
-	    csumGetTask_.getResultDetails() == ENOENT) {
+	    csumGetTask_->getResultDetails() == ENOENT) {
 		/*
 		 * No checksum registered. Next, register a checksum for the
 		 * selected binary. Otherwise the rule is not useable.
 		 */
-		csumAddTask_.setPath(programPicker->getFileName());
-		JobCtrl::getInstance()->addTask(&csumAddTask_);
+		csumAddTask_ = new ComCsumAddTask();
+		csumAddTask_->addPath(programPicker->getFileName());
+		JobCtrl::getInstance()->addTask(csumAddTask_);
 	} else {
+		const char	*err;
+
 		/* An error occured while fetching the checksum */
 		getWizardPage()->setNextEnabled(false);
 
 		wxString message;
-		wxString path = csumGetTask_.getPath();
-		const char *err = anoubis_strerror(
-					csumGetTask_.getResultDetails());
+		wxString path = csumGetTask_->getPath();
+		err = anoubis_strerror(csumGetTask_->getResultDetails());
 
 		switch (result) {
 		case ComTask::RESULT_REMOTE_ERROR:
@@ -202,12 +214,15 @@ RuleWizardProgramPage::onCsumGet(TaskEvent &event)
 		anMessageBox(message, _("Rule Wizard"), wxOK | wxICON_ERROR,
 		    this);
 	}
+	delete csumGetTask_;
+	csumGetTask_ = NULL;
 }
 
 void
 RuleWizardProgramPage::onCsumAdd(TaskEvent &event)
 {
-	if (event.getTask() != &csumAddTask_) {
+	int	error = 0;
+	if (event.getTask() != csumAddTask_) {
 		/* Not "my" task, skip it */
 		event.Skip();
 		return;
@@ -215,8 +230,15 @@ RuleWizardProgramPage::onCsumAdd(TaskEvent &event)
 
 	event.Skip(false); /* "My" task -> stop propagating */
 
-	ComTask::ComTaskResult result = csumAddTask_.getComTaskResult();
+	ComTask::ComTaskResult result = csumAddTask_->getComTaskResult();
 
+	if (result == ComTask::RESULT_SUCCESS) {
+		error = csumAddTask_->getChecksumError(0);
+		if (error)
+			result = ComTask::RESULT_REMOTE_ERROR;
+	} else {
+		error = csumAddTask_->getResultDetails();
+	}
 	if (result == ComTask::RESULT_SUCCESS) {
 		/*
 		 * Checksum was successfully added to the shadowtree, allow
@@ -231,9 +253,8 @@ RuleWizardProgramPage::onCsumAdd(TaskEvent &event)
 		getWizardPage()->setNextEnabled(false);
 
 		wxString message;
-		wxString path = csumAddTask_.getPath();
-		const char *err = anoubis_strerror(
-					csumAddTask_.getResultDetails());
+		wxString path = csumAddTask_->getPath(0);
+		const char *err = anoubis_strerror(error);
 
 		switch (result) {
 		case ComTask::RESULT_LOCAL_ERROR:
@@ -259,12 +280,13 @@ RuleWizardProgramPage::onCsumAdd(TaskEvent &event)
 		anMessageBox(message, _("Rule Wizard"), wxOK | wxICON_ERROR,
 		    this);
 	}
+	delete csumAddTask_;
 }
 
 void
 RuleWizardProgramPage::onCsumCalc(TaskEvent &event)
 {
-	if (event.getTask() != &csumCalcTask_) {
+	if (event.getTask() != csumCalcTask_) {
 		/* Not "my" task, skip it */
 		event.Skip();
 		return;
@@ -272,14 +294,14 @@ RuleWizardProgramPage::onCsumCalc(TaskEvent &event)
 
 	event.Skip(false); /* "My" task -> stop propagating */
 
-	if (csumCalcTask_.getResult() != 0) {
+	if (csumCalcTask_->getResult() != 0) {
 		/* Calculation failed */
 		getWizardPage()->setNextEnabled(false);
 
 		wxString message = wxString::Format(
 		    _("Failed to calculate the checksum for %ls: %hs"),
-		    csumCalcTask_.getPath().c_str(),
-		    anoubis_strerror(csumCalcTask_.getResult()));
+		    csumCalcTask_->getPath().c_str(),
+		    anoubis_strerror(csumCalcTask_->getResult()));
 
 		anMessageBox(message, _("Rule Wizard"), wxOK | wxICON_ERROR,
 		    this);
@@ -288,11 +310,11 @@ RuleWizardProgramPage::onCsumCalc(TaskEvent &event)
 	}
 
 	/* Compare with daemon-checksum */
-	const u_int8_t *localCsum = csumCalcTask_.getCsum();
+	const u_int8_t *localCsum = csumCalcTask_->getCsum();
 	u_int8_t daemonCsum[ANOUBIS_CS_LEN];
 
 	/* Daemon-checksum still stored in comCsumGetTask_ */
-	csumGetTask_.getCsum(daemonCsum, ANOUBIS_CS_LEN);
+	csumGetTask_->getCsum(daemonCsum, ANOUBIS_CS_LEN);
 
 	if (memcmp(localCsum, daemonCsum, ANOUBIS_CS_LEN) == 0) {
 		/*
@@ -311,7 +333,7 @@ RuleWizardProgramPage::onCsumCalc(TaskEvent &event)
 
 		wxString message = wxString::Format(_("The checksum for %ls "
 		    "does not match! Please go to the SFS Browser and update "
-		    "the checksum."), csumCalcTask_.getPath().c_str());
+		    "the checksum."), csumCalcTask_->getPath().c_str());
 
 		anMessageBox(message, _("Rule Wizard"), wxOK | wxICON_ERROR,
 		    this);

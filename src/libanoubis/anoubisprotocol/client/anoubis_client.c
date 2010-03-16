@@ -1140,6 +1140,55 @@ anoubis_client_csumrequest_start(struct anoubis_client *client,
 	return t;
 }
 
+/**
+ * Return the request record pointed to by last or the first record
+ * if last is NULL.
+ *
+ * @param req The csmulti request.
+ * @return The record pointed to by req->last.
+ *
+ * See csmulti_iterator_next for details.
+ */
+static inline struct anoubis_csmulti_record *
+csmulti_iterator_first(const struct anoubis_csmulti_request *req)
+{
+	if (req->last)
+		return req->last;
+	return TAILQ_FIRST(&req->reqs);
+}
+
+/**
+ * Return the record that follows the given record in the csmulti request.
+ * The iteration wraps around at the end of the record list and only stops
+ * at the element req->last.
+ *
+ * @param req The csmulti request.
+ * @param current The current record.
+ * @return The next record or NULL if req->last is reached.
+ *
+ * Intended usage is in a for-loop like this:
+ *     for (record = csmulti_iterator_first(req);
+ *          record != NULL; record = csmulti_iterator_next(req, record))
+ * Provided that req->last is not modified during the iterator, this will
+ * iterate through all records exactly once starting at req->last instead
+ * of the first element in the tail queue.
+ */
+static inline struct anoubis_csmulti_record *
+csmulti_iterator_next(const struct anoubis_csmulti_request *req,
+    struct anoubis_csmulti_record *current)
+{
+	current = TAILQ_NEXT(current, next);
+	/* This also handles the req->last == NULL case */
+	if (current == req->last)
+		return NULL;
+	if (current)
+		return current;
+	current = TAILQ_FIRST(&req->reqs);
+	if (current == req->last)
+		return NULL;
+	return current;
+}
+
 struct anoubis_csmulti_request *
 anoubis_csmulti_create(unsigned int op, uid_t uid, void *keyid, int idlen)
 {
@@ -1198,20 +1247,12 @@ anoubis_csmulti_find(struct anoubis_csmulti_request *req, unsigned int idx)
 {
 	struct anoubis_csmulti_record	*record = req->last;
 
-	while(record) {
+	for (record = csmulti_iterator_first(req); record;
+	     record = csmulti_iterator_next(req, record)) {
 		if (record->idx == idx) {
 			req->last = record;
 			return record;
 		}
-		record = TAILQ_NEXT(record, next);
-	}
-	record = TAILQ_FIRST(&req->reqs);
-	while(record && record != req->last) {
-		if (record->idx == idx) {
-			req->last = record;
-			return record;
-		}
-		record = TAILQ_NEXT(record, next);
 	}
 	return NULL;
 }
@@ -1316,7 +1357,6 @@ anoubis_csmulti_add_error(struct anoubis_csmulti_request *request,
 	record->error = error;
 	record->idx = request->nreqs++;
 	record->length = 0;
-	request->openreqs++;
 	TAILQ_INSERT_TAIL(&request->reqs, record, next);
 	return 0;
 }
@@ -1495,7 +1535,8 @@ anoubis_csmulti_msg(struct anoubis_csmulti_request *request)
 		length += 4 - length % 4;
 	recoff = length - offsetof(Anoubis_CSMultiRequestMessage, payload);
 
-	TAILQ_FOREACH(record, &request->reqs, next) {
+	for (record = csmulti_iterator_first(request); record;
+	    record = csmulti_iterator_next(request, record)) {
 		/* Only request records that have not yet been asked for. */
 		if (record->error != EAGAIN)
 			continue;
@@ -1507,6 +1548,9 @@ anoubis_csmulti_msg(struct anoubis_csmulti_request *request)
 	}
 	/* Sentinel */
 	length += sizeof(Anoubis_CSMultiRequestRecord);
+	/* Safety measure in case openreqs accounting goes wrong. */
+	if (nrec == 0)
+		request->openreqs = 0;
 
 	/* Step 2: Allocate and fill the message */
 
@@ -1521,7 +1565,8 @@ anoubis_csmulti_msg(struct anoubis_csmulti_request *request)
 	if (request->idlen)
 		memcpy(m->u.csmultireq->payload, request->keyid,
 		    request->idlen);
-	TAILQ_FOREACH(record, &request->reqs, next) {
+	for (record = csmulti_iterator_first(request); record;
+	    record = csmulti_iterator_next(request, record)) {
 		unsigned int	plen = strlen(record->path) + 1;
 
 		r = (Anoubis_CSMultiRequestRecord *)
@@ -1547,6 +1592,7 @@ anoubis_csmulti_msg(struct anoubis_csmulti_request *request)
 		if (nrec == 0)
 			break;
 	}
+	request->last = record;
 	/* Sentinel */
 	r = (Anoubis_CSMultiRequestRecord *)(m->u.csmultireq->payload + recoff);
 	set_value(r->length, 0);

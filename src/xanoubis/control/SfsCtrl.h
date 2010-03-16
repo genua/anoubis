@@ -522,13 +522,13 @@ class SfsCtrl : public wxEvtHandler
 
 		/**
 		 * Create a task that calculates the checksum and
-		 * potentially the signature for a given file. The task
-		 * sends the result to the anoubis daemon.
+		 * potentially the signature for files. The task is
+		 * only created but not queued for job execution. Use
+		 * task->addPath(...) to add files to the task.
 		 *
-		 * @param 1st The absolute path name of the file.
-		 * @param 2nd True if signatures should be calculated, too.
+		 * @param 1st True if signatures should be calculated, too.
 		 */
-		void createComCsumAddTask(const wxString &, bool);
+		ComCsumAddTask *createComCsumAddTask(bool);
 
 		/**
 		 * Create a task that send the contents of the sfs_entry

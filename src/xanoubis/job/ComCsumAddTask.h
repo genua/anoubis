@@ -28,6 +28,8 @@
 #ifndef _COMCSUMADDTASK_H_
 #define _COMCSUMADDTASK_H_
 
+#include <vector>
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -39,7 +41,6 @@
 #include <dev/anoubis.h>
 #endif
 
-#include "ComCsumHandler.h"
 #include "ComTask.h"
 #include <anoubis_transaction.h>
 
@@ -64,7 +65,7 @@
  *   failed. getResultDetails() will return the remote error-code and can be
  *   evaluated by strerror(3) or similar.
  */
-class ComCsumAddTask : public ComTask, public ComCsumHandler
+class ComCsumAddTask : public ComTask
 {
 	public:
 		/**
@@ -75,17 +76,16 @@ class ComCsumAddTask : public ComTask, public ComCsumHandler
 		ComCsumAddTask(void);
 
 		/**
-		 * Constructs a ComCsumAddTask with an assigned filename.
-		 *
-		 * @param file The source-file
-		 * @see setFile()
-		 */
-		ComCsumAddTask(const wxString &);
-
-		/**
 		 * D'tor.
 		 */
 		~ComCsumAddTask(void);
+
+		/**
+		 * Add a path to the request.
+		 *
+		 * @param 1st The new path.
+		 */
+		void addPath(const wxString);
 
 		/**
 		 * Configures a private-key.
@@ -129,6 +129,7 @@ class ComCsumAddTask : public ComTask, public ComCsumHandler
 		 * The checksum that was calculated during the runtime
 		 * of the task and sent to the anoubis daemon is returned.
 		 *
+		 * @param idx The index of the path in the path list.
 		 * @param csum Destination buffer, where the resulting checksum
 		 *             is written.
 		 * @param size Size of destination buffer <code>csum</code>.
@@ -138,19 +139,59 @@ class ComCsumAddTask : public ComTask, public ComCsumHandler
 		 *     not success or the destination buffer is not large
 		 *     enough to hold the whole checksum.
 		 */
-		size_t getCsum(u_int8_t *, size_t) const;
+		size_t getCsum(unsigned int idx, u_int8_t *, size_t) const;
 
 		/**
-		 * Return true if the checksum was sent successfully.
-		 * @return True if the checksum was sent successfully.
+		 * Return the error received for the checksum request
+		 * with the given index.
+		 *
+		 * @param idx The index.
+		 * @return Zero if the checksum was sent successfully,
+		 *     an error code (positive!) otherwise.
 		 */
-		bool checksumOk(void);
+		int getChecksumError(unsigned int idx) const;
 
 		/**
-		 * Return true if the signature was sent successfully.
-		 * @return True if the signature was sent successfully.
+		 * Return the error received for the signature request
+		 * with the given index.
+		 *
+		 * @param idx The index.
+		 * @return Zero if the signature was sent successfully,
+		 *     an error code (positive!) otherwise.
 		 */
-		bool signatureOk(void);
+		int getSignatureError(unsigned int idx) const;
+
+		/**
+		 * Return the number of paths in this CsumAddTask.
+		 *
+		 * @return The number of paths.
+		 */
+		unsigned int getPathCount(void) const;
+
+		/**
+		 * Return the path associated with an index in the request.
+		 *
+		 * @param idx The index.
+		 * @return The path.
+		 */
+		wxString getPath(unsigned int idx) const;
+
+		/**
+		 * Assign a key-ID to the request.
+		 *
+		 * @param 1st The keyid data.
+		 * @param 2nd The length of the keyid.
+		 * @return True is case of success, false if memory
+		 *     allocation failed.
+		 */
+		bool setKeyId(const u_int8_t *, unsigned int);
+
+		/**
+		 * Return true if signatures where calculated in this task.
+		 *
+		 * @return True if signature requests were sent.
+		 */
+		bool haveSignatures(void);
 
 	protected:
 		/**
@@ -164,14 +205,46 @@ class ComCsumAddTask : public ComTask, public ComCsumHandler
 		bool done(void);
 
 	private:
-		struct anoubis_sig	*privKey_;
-		u_int8_t		 cs_[ANOUBIS_CS_LEN];
+
+		/**
+		 * Helper function for ::exec and ::done: Create the
+		 * checksum requests neccessary for this tassk.
+		 */
+		void createRequests(void);
+
+		/**
+		 * Add one record to a request. If this fails try to
+		 * add an error record to the request.
+		 *
+		 * @param 1st The request.
+		 * @param 2nd The path name.
+		 * @param 3rd The checksum/signature data.
+		 * @param 4th The length of the checksum/signature data.
+		 * @return Zero if a record was added, a negative error
+		 *     code in case of an error.
+		 * NOTE: The only valid error should be ENOMEM.
+		 */
+		int addPathToRequest(struct anoubis_csmulti_request *,
+		    const char *path, u_int8_t *csdata, unsigned int cslen);
+
+		/**
+		 * Add an error record to both the checksum and the
+		 * signature request.
+		 *
+		 * @param 1st The path name.
+		 * @param 2nd The error code.
+		 * @return Zero if a record was added, a negative error
+		 *     code in case of an error.
+		 * NOTE: The only valid error should be ENOMEM.
+		 */
+		int addErrorPath(const char *path, int error);
+
+		std::vector<wxString>		 paths_;
+		struct anoubis_csmulti_request	*csreq_, *sigreq_;
+		struct anoubis_sig		*privKey_;
 		struct anoubis_transaction	*ta_;
-		u_int8_t		*sig_;
-		unsigned int		 sigLen_, csLen_;
-		bool			 sigSent_, csumSent_;
-		bool			 sigSentOk_, csumSentOk_;
-		bool			 realCsumCalculated_;
+		u_int8_t			*keyId_;
+		unsigned int			 kidLen_;
 };
 
 #endif	/* _COMCSUMADDTASK_H_ */

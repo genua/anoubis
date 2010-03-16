@@ -265,7 +265,7 @@ START_TEST(test_csum)
 	/* Register checksum: Success */
 	TaskEventSpy add_spy(jobCtrl, anTASKEVT_CSUM_ADD);
 	ComCsumAddTask add_task;
-	add_task.setPath(fileName);
+	add_task.addPath(fileName);
 
 	jobCtrl->addTask(&add_task);
 	add_spy.waitForInvocation(1);
@@ -391,7 +391,7 @@ START_TEST(test_csum_orphaned)
 	/* Register checksum: Success */
 	TaskEventSpy add_spy(jobCtrl, anTASKEVT_CSUM_ADD);
 	ComCsumAddTask add_task;
-	add_task.setPath(fileName);
+	add_task.addPath(fileName);
 
 	jobCtrl->addTask(&add_task);
 	add_spy.waitForInvocation(1);
@@ -401,7 +401,7 @@ START_TEST(test_csum_orphaned)
 	fail_unless(add_task.getResultDetails() == 0,
 	    "ResultDetails: %s (%i)\n", strerror(add_task.getResultDetails()),
 	    add_task.getResultDetails());
-	fail_unless(add_task.haveKeyId() == false, "A key-id is assigned");
+	fail_unless(add_task.haveSignatures() == false, "A key-id is assigned");
 
 	/* Remove file -> orphaned */
 	fail_unless(wxRemoveFile(fileName), "Failed to remove file");
@@ -450,7 +450,7 @@ START_TEST(test_csum_symlink)
 	/* Register checksum: Success */
 	TaskEventSpy add_spy(jobCtrl, anTASKEVT_CSUM_ADD);
 	ComCsumAddTask add_task;
-	add_task.setPath(fileName);
+	add_task.addPath(fileName);
 
 	jobCtrl->addTask(&add_task);
 	add_spy.waitForInvocation(1);
@@ -460,7 +460,7 @@ START_TEST(test_csum_symlink)
 	fail_unless(add_task.getResultDetails() == 0,
 	    "ResultDetails: %s (%i)\n", strerror(add_task.getResultDetails()),
 	    add_task.getResultDetails());
-	fail_unless(add_task.haveKeyId() == false, "A key-id is assigned");
+	fail_unless(add_task.haveSignatures() == false, "A key-id is assigned");
 
 	/* Symlink the file */
 	wxString symlinkName = wxFileName::GetTempDir() + wxT("/csumsymlink");
@@ -522,8 +522,7 @@ START_TEST(test_csum_symlink_link)
 	/* Register symlink at daemon: Success */
 	TaskEventSpy add_spy(jobCtrl, anTASKEVT_CSUM_ADD);
 	ComCsumAddTask add_task;
-	add_task.setPath(symlinkName);
-	add_task.setCalcLink(true);
+	add_task.addPath(symlinkName);
 
 	jobCtrl->addTask(&add_task);
 	add_spy.waitForInvocation(1);
@@ -533,7 +532,7 @@ START_TEST(test_csum_symlink_link)
 	fail_unless(add_task.getResultDetails() == 0,
 	    "ResultDetails: %s (%i)\n", strerror(add_task.getResultDetails()),
 	    add_task.getResultDetails());
-	fail_unless(add_task.haveKeyId() == false, "A key-id is assigned");
+	fail_unless(add_task.haveSignatures() == false, "A key-id is assigned");
 
 	/* Receive from daemon: success */
 	TaskEventSpy get_spy(jobCtrl, anTASKEVT_CSUM_GET);
@@ -585,7 +584,7 @@ START_TEST(test_signature)
 	TaskEventSpy add_spy(jobCtrl, anTASKEVT_CSUM_ADD);
 
 	ComCsumAddTask add_task;
-	add_task.setPath(fileName);
+	add_task.addPath(fileName);
 	fail_unless(add_task.setKeyId(raw_cert->keyid, raw_cert->idlen),
 	    "Failed to setup task with key-id.");
 	add_task.setPrivateKey(
