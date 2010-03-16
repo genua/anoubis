@@ -44,7 +44,12 @@
 #include "SfsCtrl.h"
 #include "main.h"	/* For wxGetApp().ProcessPendingEvents() */
 
-SfsCtrl::SfsCtrl(void)
+#define SFSCTRL_PROGRESS_TIMER	1
+BEGIN_EVENT_TABLE(SfsCtrl, wxEvtHandler)
+	EVT_TIMER(SFSCTRL_PROGRESS_TIMER, SfsCtrl::onProgressTimer)
+END_EVENT_TABLE()
+
+SfsCtrl::SfsCtrl(void) : progressTimer_(this, SFSCTRL_PROGRESS_TIMER)
 {
 	this->entryFilter_ = FILTER_STD;
 	this->comEnabled_ = false; /* Communication disabled */
@@ -277,7 +282,7 @@ SfsCtrl::registerChecksum(const IndexArray &arr)
 
 	if (comEnabled_) {
 		bool	doSig = isSignatureEnabled();
-		startSfsOp(arr.Count()*2);
+		startSfsOp(arr.Count());
 		for (size_t i = 0; i < arr.Count(); i++) {
 			idx = arr.Item(i);
 
@@ -305,24 +310,27 @@ SfsCtrl::registerChecksum(const IndexArray &arr)
 			if (!task)
 				task = createComCsumAddTask(doSig);
 			task->addPath(entry->getPath());
+			/* Add one to the progress bar for the new task*/
 			if (task->getPathCount() >= 1000) {
-				if (!updateSfsOp(task->getPathCount())) {
+				startSfsOp(1);
+				if (!updateSfsOp(1)) {
 					delete task;
 					task = NULL;
+					endSfsOp();
 					break;
 				}
-				startSfsOp(0);
 				pushTask(task);
 				JobCtrl::getInstance()->addTask(task);
 				task = NULL;
 			}
 		}
 		if (task) {
-			if (!updateSfsOp(task->getPathCount())) {
+			startSfsOp(1);
+			if (!updateSfsOp(1)) {
 				delete task;
 				task = NULL;
+				endSfsOp();
 			} else {
-				startSfsOp(0);
 				pushTask(task);
 				JobCtrl::getInstance()->addTask(task);
 			}
@@ -665,7 +673,7 @@ SfsCtrl::OnCsumCalc(TaskEvent &event)
 	PopTaskHelper	taskHelper(this, task);
 
 	if (task == 0) {
-		/* No ComCsumGetTask -> stop propagating */
+		/* No ComCsumCalcTask -> stop propagating */
 		event.Skip(false);
 		return;
 	}
@@ -1428,10 +1436,12 @@ SfsCtrl::startSfsOp(int steps)
 		progressDone_ = 0;
 		progressAbort_ = false;
 	}
-	if (!progress_ && progressMax_ > 40)
+	if (!progress_ && progressMax_ > 40) {
 		progress_ = new wxProgressDialog(_("SFS operation"),
 		    _("SFS operation in Progress. Please wait ..."),
 		    1000, NULL, wxPD_APP_MODAL|wxPD_AUTO_HIDE|wxPD_CAN_ABORT);
+		progressTimer_.Start(1000, wxTIMER_CONTINUOUS);
+	}
 }
 
 bool
@@ -1446,8 +1456,10 @@ SfsCtrl::updateSfsOp(int done)
 		int	reldone = (1000LL * progressDone_) / progressMax_;
 		ret =  progress_->Update(reldone);
 	}
-	if (!ret)
+	if (!ret) {
 		progressAbort_ = true;
+		abortAllTasks();
+	}
 	return ret;
 }
 
@@ -1458,10 +1470,27 @@ SfsCtrl::endSfsOp(void)
 		return;
 	if (progress_) {
 		/* The Yield is required to avoid a BadWindow warning from X */
+		progressTimer_.Stop();
 		progress_->Hide();
 		wxSafeYield(false);
 		delete progress_;
 		progress_ = NULL;
 	}
 	popTask(NULL);
+}
+
+void
+SfsCtrl::abortAllTasks(void)
+{
+	std::map<Task *, bool>::iterator	it;
+
+	for (it = taskList_.begin(); it != taskList_.end(); it++)
+		it->first->abort();
+}
+
+void
+SfsCtrl::onProgressTimer(wxTimerEvent &)
+{
+	/* Check for aborts. */
+	updateSfsOp(0);
 }

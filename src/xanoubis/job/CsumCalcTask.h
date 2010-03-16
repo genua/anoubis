@@ -171,6 +171,11 @@ class CsumCalcTask : public Task
 		 */
 		wxString getCsumStr(void) const;
 
+		/**
+		 * Set the task's result to EINTR. Implemenation of the
+		 * corresponding pure virtual function in class Task.
+		 */
+		void setTaskResultAbort(void);
 	private:
 		/**
 		 * Path of file to be checksumed

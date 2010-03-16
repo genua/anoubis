@@ -30,6 +30,7 @@
 
 #include <wx/event.h>
 #include <wx/progdlg.h>
+#include <wx/timer.h>
 
 #include <list>
 #include <map>
@@ -482,6 +483,7 @@ class SfsCtrl : public wxEvtHandler
 		bool		sigEnabled_;
 		int		inProgress_;
 		wxProgressDialog	*progress_;
+		wxTimer		progressTimer_;
 		int		progressMax_;
 		int		progressDone_;
 		bool		progressAbort_;
@@ -607,6 +609,11 @@ class SfsCtrl : public wxEvtHandler
 		void sendErrorEvent(void);
 
 		/**
+		 * Abort all pending SFS tasks.
+		 */
+		void abortAllTasks(void);
+
+		/**
 		 * Start an SFS-Operation with a given number of steps.
 		 * If an SFS-Operation is already in progress the steps
 		 * are added to the ongoing operation.
@@ -634,6 +641,12 @@ class SfsCtrl : public wxEvtHandler
 		bool updateSfsOp(int done);
 
 		/**
+		 * Event handler for the progressTimer_ events.
+		 * @param 1st The timer event (unused).
+		 */
+		void onProgressTimer(wxTimerEvent &);
+
+		/**
 		 * Internal utility class, which helps to pop tasks from
 		 * taskList_ and deleting them.
 		 *
@@ -653,6 +666,7 @@ class SfsCtrl : public wxEvtHandler
 				SfsCtrl *sfsCtrl_;
 				Task *task_;
 		};
+		DECLARE_EVENT_TABLE();
 };
 
 #endif	/* _SFSCTRL_H_ */

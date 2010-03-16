@@ -109,6 +109,12 @@ class ComTask : public Task
 		 */
 		void setClient(struct anoubis_client *client);
 
+		/**
+		 * Set the task's result as appropriate after aborting
+		 * the task.
+		 */
+		void setTaskResultAbort(void);
+
 	protected:
 		/**
 		 * Std-c'tor.

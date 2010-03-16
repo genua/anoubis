@@ -84,9 +84,35 @@ class Task
 		 */
 		virtual void exec(void) = 0;
 
+		/**
+		 * Abort this task.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void abort(void);
+
+		/**
+		 * Get abort status.
+		 * @param None.
+		 * @return True if abort was requested.
+		 */
+		bool shallAbort(void) const;
+
+		/**
+		 * Task must provide an implementation that sets a task
+		 * result code as appropriate for an aborted task.
+		 */
+		virtual void setTaskResultAbort(void) = 0;
+
 	protected:
 		Task(Type);
 		Type type_;
+
+	private:
+		/**
+		 * Store abort request.
+		 */
+		bool abortRequest_;
 };
 
 /**

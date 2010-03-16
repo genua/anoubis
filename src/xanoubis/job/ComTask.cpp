@@ -25,6 +25,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <cerrno>
 #include "ComTask.h"
 
 ComTask::ComTask(void) : Task(Task::TYPE_COM)
@@ -74,4 +75,11 @@ struct anoubis_client *
 ComTask::getClient(void) const
 {
 	return client_;
+}
+
+void
+ComTask::setTaskResultAbort(void)
+{
+	setComTaskResult(RESULT_LOCAL_ERROR);
+	setResultDetails(EINTR);
 }

@@ -42,6 +42,7 @@ class DummyTask : public Task
 		DummyTask(Task::Type type) : Task(type) { };
 		void exec(void) { };
 		wxEventType getEventType(void) const;
+		void setTaskResultAbort(void);
 };
 
 #endif	/* _DUMMYTASK_H_ */

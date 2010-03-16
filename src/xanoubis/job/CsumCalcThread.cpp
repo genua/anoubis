@@ -44,10 +44,14 @@ CsumCalcThread::Entry(void)
 		if (task == 0)
 			continue;
 
-		task->exec();
-		if (task->getType() != Task::TYPE_CSUMCALC) {
-			JobCtrl::getInstance()->addTask(task);
-			continue;
+		if (task->shallAbort()) {
+			task->setTaskResultAbort();
+		} else {
+			task->exec();
+			if (task->getType() != Task::TYPE_CSUMCALC) {
+				JobCtrl::getInstance()->addTask(task);
+				continue;
+			}
 		}
 
 		TaskEvent event(task, wxID_ANY);

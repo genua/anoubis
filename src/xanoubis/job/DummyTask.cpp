@@ -33,3 +33,8 @@ DummyTask::getEventType(void) const
 {
 	return (anTASKEVT_DUMMY);
 }
+
+void
+DummyTask::setTaskResultAbort(void)
+{
+}

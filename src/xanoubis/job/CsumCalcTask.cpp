@@ -160,3 +160,9 @@ CsumCalcTask::calculateCsum(const char *path, u_int8_t *csum, int *csum_len)
 {
 	return anoubis_csum_calc(path, csum, csum_len);
 }
+
+void
+CsumCalcTask::setTaskResultAbort(void)
+{
+	result_ = EINTR;
+}

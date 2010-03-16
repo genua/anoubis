@@ -33,6 +33,7 @@ WX_DEFINE_LIST(TaskList);
 Task::Task(Type type)
 {
 	this->type_ = type;
+	this->abortRequest_ = false;
 }
 
 Task::~Task(void)
@@ -43,4 +44,16 @@ Task::Type
 Task::getType(void) const
 {
 	return (this->type_);
+}
+
+void
+Task::abort(void)
+{
+	abortRequest_ = true;
+}
+
+bool
+Task::shallAbort(void) const
+{
+	return (abortRequest_);
 }

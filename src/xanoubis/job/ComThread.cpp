@@ -325,7 +325,7 @@ ComThread::Entry(void)
 			Task	*task = getNextTask(Task::TYPE_COM);
 
 			current = dynamic_cast<ComTask *>(task);
-			if (current) {
+			if (current && !current->shallAbort()) {
 				current->setClient(client_);
 				current->exec();
 			}
@@ -336,8 +336,10 @@ ComThread::Entry(void)
 		 *         and performs the next stpes of the task if the
 		 *         task is not yet done.
 		 */
-		if (current && current->done()) {
+		if (current && (current->shallAbort() || current->done())) {
 			TaskEvent	event(current, wxID_ANY);
+			if (current->shallAbort())
+				current->setTaskResultAbort();
 			sendEvent(event);
 			/* Restart in case there are more tasks on the list. */
 			current = NULL;

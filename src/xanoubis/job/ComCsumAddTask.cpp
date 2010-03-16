@@ -165,6 +165,10 @@ ComCsumAddTask::exec(void)
 			u_int8_t	cs[ANOUBIS_CS_LEN];
 			int		tmplen = ANOUBIS_CS_LEN;
 
+			if (shallAbort()) {
+				setTaskResultAbort();
+				break;
+			}
 			ret = anoubis_csum_link_calc(paths_[i].fn_str(),
 			    cs, &tmplen);
 			if (ret < 0) {
