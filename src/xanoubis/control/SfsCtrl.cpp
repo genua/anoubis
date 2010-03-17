@@ -232,7 +232,7 @@ SfsCtrl::validate(const IndexArray &arr)
 			entry->reset();
 
 			/* In any case fetch the remote checksums */
-			createComCsumGetTasks(entry->getPath(), true, doSig);
+			createComCsumGetTasks(entry->getPath(), doSig);
 
 			if (entry->canHaveChecksum(false)) {
 				/* Ask for the local checksum */
@@ -446,8 +446,7 @@ SfsCtrl::importChecksums(const wxString &path)
 				if (!e->haveLocalCsum())
 					createCsumCalcTask(e->getPath());
 
-				createComCsumGetTasks(
-				    e->getPath(), true, doSig);
+				createComCsumGetTasks(e->getPath(), doSig);
 			}
 			entry = entry->next;
 			if (!updateSfsOp(1))
@@ -487,7 +486,7 @@ SfsCtrl::exportChecksums(const IndexArray &arr, const wxString &path)
 			 */
 			SfsEntry *entry = sfsDir_.getEntry(idx);
 			createCsumCalcTask(entry->getPath());
-			createComCsumGetTasks(entry->getPath(), true, doSig);
+			createComCsumGetTasks(entry->getPath(), doSig);
 			if (!updateSfsOp(1))
 				break;
 		}
@@ -554,7 +553,7 @@ SfsCtrl::OnSfsListArrived(TaskEvent &event)
 	PopTaskHelper	taskHelper(this, task);
 
 	if (task == 0) {
-		/* No ComCsumGetTask -> stop propagating */
+		/* No ComCsumListTask -> stop propagating */
 		event.Skip(false);
 		return;
 	}
@@ -624,6 +623,8 @@ SfsCtrl::OnSfsListArrived(TaskEvent &event)
 		basePath += wxT("/");
 
 	startSfsOp(result.Count());
+	bool doSig = isSignatureEnabled();
+	sfsDir_.beginChange();
 	for (unsigned int idx = 0; idx < result.Count(); idx++) {
 		SfsEntry *entry = sfsDir_.insertEntry(basePath + result[idx]);
 
@@ -648,19 +649,11 @@ SfsCtrl::OnSfsListArrived(TaskEvent &event)
 			entry->setLocalCsum(0);
 		}
 
-		/*
-		 * Fetch the checksum(s). In Upgrade-mode fetch all checksums
-		 * because this method is triggered only once.
-		 */
-		if (task->fetchUpgraded()) {
-			createComCsumGetTasks(entry->getPath(), true, true);
-		} else {
-			createComCsumGetTasks(entry->getPath(),
-			    !task->haveKeyId(), task->haveKeyId());
-		}
+		createComCsumGetTasks(entry->getPath(), doSig);
 		if (!updateSfsOp(1))
 			break;
 	}
+	sfsDir_.endChange();
 	endSfsOp();
 	/* Directory listing is complete */
 	sendDirChangedEvent();
@@ -1029,11 +1022,9 @@ SfsCtrl::OnCsumDel(TaskEvent &event)
 	SfsEntry *entry = sfsDir_.getEntry(idx);
 	entry->setChecksumMissing(type);
 
-	if (!entry->fileExists()) {
-		if (!entry->haveChecksum()) {
-			sfsDir_.removeEntry(idx);
-			sendDirChangedEvent();
-		}
+	if (!entry->fileExists() && !entry->haveChecksum()) {
+		sfsDir_.removeEntry(idx);
+		sendDirChangedEvent();
 	}
 }
 
@@ -1099,20 +1090,17 @@ SfsCtrl::sendErrorEvent(void)
 }
 
 void
-SfsCtrl::createComCsumGetTasks(const wxString &path, bool createCsum,
-    bool createSig)
+SfsCtrl::createComCsumGetTasks(const wxString &path, bool doSig)
 {
-	if (createCsum) {
-		/* Ask anoubisd for the checksum */
-		ComCsumGetTask *csTask = new ComCsumGetTask;
-		csTask->setPath(path);
-		csTask->setCalcLink(true);
+	/* Ask anoubisd for the checksum */
+	ComCsumGetTask *csTask = new ComCsumGetTask;
+	csTask->setPath(path);
+	csTask->setCalcLink(true);
 
-		pushTask(csTask);
-		JobCtrl::getInstance()->addTask(csTask);
-	}
+	pushTask(csTask);
+	JobCtrl::getInstance()->addTask(csTask);
 
-	if (createSig) {
+	if (doSig) {
 		KeyCtrl *keyCtrl = KeyCtrl::getInstance();
 		LocalCertificate &cert = keyCtrl->getLocalCertificate();
 		struct anoubis_sig *raw_cert = cert.getCertificate();
@@ -1368,6 +1356,7 @@ SfsCtrl::popTask(Task *task)
 			 */
 			unsigned int idx = 0;
 
+			sfsDir_.beginChange();
 			while (idx < sfsDir_.getNumEntries()) {
 				SfsEntry *entry = sfsDir_.getEntry(idx);
 				if (!entry->isChecksumChanged())
@@ -1375,6 +1364,7 @@ SfsCtrl::popTask(Task *task)
 				else
 					idx++;
 			}
+			sfsDir_.endChange();
 
 			sendDirChangedEvent();
 		}

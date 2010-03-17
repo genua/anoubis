@@ -259,26 +259,39 @@ class SfsDirectory : public AnRowProvider, private wxDirTraverser
 		 * Inserts a new SfsEntry into the SfsDirectory.
 		 *
 		 * The method does not check the path! It simply adds the new
-		 * entry in correct alphabetical order.
-		 *
-		 * If a new SfsEntry was inserted into the directory, a
-		 * wxCommandEvent of type anEVT_ROW_SIZECHANGE is fired.
+		 * entry in correct alphabetical order. If neccessary this
+		 * function sends an approriate row change event. See
+		 * beginChange() and endChange() for details.
 		 *
 		 * @param path The path of the file to be inserted
 		 * @return The SfsEntry, which was created. If you try to
-		 *         insert a path, which was already inserted into the
-		 *         model, the corresponding SfsEntry is returned.
-		 * @see AnRowProvider::sizeChangeEvent()
+		 *     insert a path, which was already inserted into the
+		 *     model, NULL is returned.
 		 */
 		SfsEntry *insertEntry(const wxString &);
+
+		/**
+		 * Start a series of modifications that do not send
+		 * individual row upadate events. Changes can be nested,
+		 * i.e. multiple calls to beginChange() must be followed
+		 * by multiple calls to endChange().
+		 */
+		void beginChange(void);
+
+		/**
+		 * End a series of modifications. If this ends the last
+		 * active change the view is updated by sending a
+		 * suitable row change event.
+		 */
+		void endChange(void);
 
 		/**
 		 * Removes the SfsEntry at the specified index.
 		 *
 		 * The model is not touched, if the index is out of range.
 		 *
-		 * If the SfsEntry was successfully removed from the directory,
-		 * a wxCommandEvent of type anEVT_ROW_SIZECHANGE is fired.
+		 * If neccessary an appropriate row change event is sent.
+		 * See beginChange() and endChange() for details.
 		 *
 		 * @param idx Index of SfsEntry to be removed from model.
 		 * @see AnRowProvider::sizeChangeEvent()
@@ -339,28 +352,19 @@ class SfsDirectory : public AnRowProvider, private wxDirTraverser
 		bool abortScan_;
 
 		/**
+		 * Non-zero while a change is in progress. No events are
+		 * sent from insertEntry() and removeEntry() if this value
+		 * is set.
+		 */
+		int changeInProgress_;
+
+		/**
 		 * Tests whether a SfsEntry can be inserted into the directory.
 		 *
 		 * This method is called by insertEntry() to ensure that the
 		 * new entry fits to the assigned filter options.
 		 */
 		bool canInsert(const wxString &) const;
-
-		/**
-		 * Inserts a new SfsEntry into the SfsDirectory.
-		 *
-		 * The method does not check the path! It simply adds the new
-		 * entry in correct alphabetical order.
-		 *
-		 * @param path The path of the file to be inserted
-		 * @param sendEvent if set to true, a wxCommandEvent of type
-		 *                  anEVT_ROW_SIZECHANGE is fired.
-		 * @return The SfsEntry, which was created. If you try to
-		 *         insert a path, which was already inserted into the
-		 *         model, the corresponding SfsEntry is returned.
-		 * @see AnRowProvider::sizeChangeEvent()
-		 */
-		SfsEntry *insertEntry(const wxString &, bool);
 
 		/**
 		 * Removes all entries from the directory.

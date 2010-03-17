@@ -123,6 +123,7 @@ SfsDirectory::SfsDirectory()
 	this->inverseFilter_ = false;
 	this->scanHandler_ = 0;
 	this->abortScan_ = false;
+	changeInProgress_ = 0;
 }
 
 SfsDirectory::~SfsDirectory()
@@ -241,27 +242,19 @@ SfsDirectory::getEntry(unsigned int idx) const
 SfsEntry *
 SfsDirectory::insertEntry(const wxString &path)
 {
-	return (insertEntry(path, true));
-}
-
-SfsEntry *
-SfsDirectory::insertEntry(const wxString &path, bool sendEvent)
-{
 	if (!canInsert(path))
 		return (0);
 
 	SfsEntry *newEntry = new SfsEntry(this, path);
 	if (entryList_.insert(newEntry)) {
-		if (sendEvent) {
-			int	idx = entryList_.index_of(newEntry);
+		if (!changeInProgress_) {
+			unsigned int	idx = entryList_.index_of(newEntry);
 			rowChangeEvent(idx, -1);
 		}
-
 		return newEntry;
 	} else {
-		SfsEntry	*ret = entryList_.find(newEntry);
 		delete newEntry;
-		return ret;
+		return NULL;
 	}
 }
 
@@ -271,8 +264,10 @@ SfsDirectory::removeEntry(unsigned int idx)
 	SfsEntry *entry = entryList_.get(idx);
 
 	if (entry) {
-		entryList_.remove(entry);
-		rowChangeEvent(idx, -1);
+		if (!changeInProgress_) {
+			entryList_.remove(entry);
+			rowChangeEvent(idx, -1);
+		}
 		delete entry;
 	}
 }
@@ -315,11 +310,11 @@ SfsDirectory::scanLocalFilesystem()
 
 	/* Clear list before traversion starts */
 	removeAllEntries(false);
+	beginChange();
 	dir.Traverse(*this);
+	endChange();
 
 	callHandler(scanFinished(abortScan_));
-
-	rowChangeEvent(0, -1);
 }
 
 AnListClass *
@@ -386,7 +381,7 @@ SfsDirectory::OnFile(const wxString &filename)
 	 * Insert into directory
 	 * Entries are sorted in alphabetic order
 	 */
-	insertEntry(filename, false);
+	insertEntry(filename);
 	wxGetApp().ProcessPendingEvents();
 
 	return (wxDIR_CONTINUE);
@@ -407,4 +402,17 @@ SfsDirectory::getDirectoryCount(const wxString &path)
 		count++;
 
 	return count;
+}
+
+void
+SfsDirectory::beginChange(void)
+{
+	changeInProgress_++;
+}
+
+void
+SfsDirectory::endChange(void)
+{
+	if (--changeInProgress_ == 0)
+		rowChangeEvent(0, -1);
 }

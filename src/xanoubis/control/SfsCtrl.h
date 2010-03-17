@@ -520,7 +520,14 @@ class SfsCtrl : public wxEvtHandler
 		void enableCommunication(void);
 		void disableCommunication(void);
 
-		void createComCsumGetTasks(const wxString &, bool, bool);
+		/**
+		 * Create GET requqest for a path.
+		 *
+		 * @param 1st The path name.
+		 * @param 2nd True if signature data should be requested.
+		 * @return None.
+		 */
+		void createComCsumGetTasks(const wxString &, bool);
 
 		/**
 		 * Create a task that calculates the checksum and
