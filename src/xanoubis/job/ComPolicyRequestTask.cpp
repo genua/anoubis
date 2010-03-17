@@ -49,11 +49,6 @@ ComPolicyRequestTask::ComPolicyRequestTask(int prio, uid_t uid)
 	setRequestParameter(prio, uid);
 }
 
-ComPolicyRequestTask::~ComPolicyRequestTask()
-{
-	resetComTaskResult();
-}
-
 int
 ComPolicyRequestTask::getPriority(void) const
 {
@@ -84,7 +79,6 @@ ComPolicyRequestTask::exec(void)
 {
 	Policy_GetByUid			req;
 
-	resetComTaskResult();
 	ta_ = NULL;
 
 	/* Prepare and set request message */
@@ -179,11 +173,8 @@ ComPolicyRequestTask::getPolicy(void)
 	return (ruleSet);
 }
 
-void
-ComPolicyRequestTask::resetComTaskResult(void)
+ComPolicyRequestTask::~ComPolicyRequestTask(void)
 {
-	ComTask::resetComTaskResult();
-
 	/* Destroy reply-message */
 	if (this->msg_ != 0) {
 		struct anoubis_msg *tmp = this->msg_;

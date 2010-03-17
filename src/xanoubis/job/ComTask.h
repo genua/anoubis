@@ -117,10 +117,7 @@ class ComTask : public Task
 
 	protected:
 		/**
-		 * Std-c'tor.
-		 *
-		 * The ComTaskResult-attribute is resetted
-		 * (ComTask::resetComTaskResult()).
+		 * Default constructor.
 		 */
 		ComTask(void);
 
@@ -141,21 +138,6 @@ class ComTask : public Task
 		 * @see getResultDetails()
 		 */
 		void setResultDetails(int);
-
-		/**
-		 * Resets the result-code to its original state.
-		 *
-		 * The default-implementation sets
-		 * - the ComTaskResult-attribute to Comtask::RESULT_INIT,
-		 * - the ResultDetails-attribute to 0.
-		 *
-		 * Derivated classes can overwrite the method to perform a
-		 * task-specific reset-operation. Note: Do not forget to invoke
-		 * the original implementation!
-		 *
-		 * The method should be invoked in the exec()-method!
-		 */
-		virtual void resetComTaskResult(void);
 
 		/**
 		 * Get the Client data structure of the ComTask.

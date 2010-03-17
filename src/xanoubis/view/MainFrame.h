@@ -61,7 +61,7 @@ class MainFrame : public MainFrameBase
 		wxIcon		*errorIcon_;
 		wxIcon		*alertIcon_;
 		wxIcon		*escalationIcon_;
-		ComSfsListTask	 upgradeTask_;
+		ComSfsListTask	*upgradeTask_;
 
 		void setConnectionString(bool, const wxString &);
 		void setMessageString(void);

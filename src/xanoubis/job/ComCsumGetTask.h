@@ -176,12 +176,6 @@ class ComCsumGetTask : public ComTask, public ComCsumHandler
 		 */
 		wxString getCsumStr(void) const;
 
-	protected:
-		/**
-		 * @see ComTask::resetComTaskResult()
-		 */
-		void resetComTaskResult(void);
-
 	private:
 		u_int8_t			*cs_, *upcs_;
 		size_t				cs_len_, upcs_len_;

@@ -58,7 +58,6 @@ ComCsumDelTask::exec(void)
 	int				req_op;
 	char				path[PATH_MAX];
 
-	resetComTaskResult();
 	ta_ = NULL;
 
 	if (haveKeyId())

@@ -204,7 +204,7 @@ class ComSfsListTask : public ComTask
 		 * to the list. This is useful if we only need to know if
 		 * the list is empty or not.
 		 * @param enabled Set to ture if you want to activate the
-		 * 		feature.
+		 *     feature.
 		 */
 		void setOneFile(bool);
 
@@ -233,12 +233,6 @@ class ComSfsListTask : public ComTask
 		 * @return List of filenames, which has a registered checksum.
 		 */
 		wxArrayString getFileList(void) const;
-
-	protected:
-		/**
-		 * @see ComTask::resetComTaskResult()
-		 */
-		void resetComTaskResult(void);
 
 	private:
 		uid_t				 uid_;

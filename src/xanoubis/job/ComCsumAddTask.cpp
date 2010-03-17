@@ -53,7 +53,6 @@ ComCsumAddTask::ComCsumAddTask(void)
 {
 	type_ = Task::TYPE_CSUMCALC;
 	privKey_ = 0;
-	resetComTaskResult();
 	csreq_ = NULL;
 	sigreq_ = NULL;
 	keyId_ = NULL;
@@ -266,12 +265,6 @@ ComCsumAddTask::getCsum(unsigned int idx, u_int8_t *csum, size_t size) const
 		return 0;
 	memcpy(csum, record->u.add.csdata, ANOUBIS_CS_LEN);
 	return ANOUBIS_CS_LEN;
-}
-
-void
-ComCsumAddTask::resetComTaskResult(void)
-{
-	ComTask::resetComTaskResult();
 }
 
 int

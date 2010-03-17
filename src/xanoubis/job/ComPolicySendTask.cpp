@@ -145,7 +145,6 @@ ComPolicySendTask::exec(void)
 	unsigned int			 sig_len;
 	size_t				 total = 0;
 
-	resetComTaskResult();
 	ta_ = NULL;
 
 	if (policy_content_ == 0) {

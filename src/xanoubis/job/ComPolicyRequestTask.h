@@ -147,11 +147,6 @@ class ComPolicyRequestTask : public ComTask
 		uid_t				 uid_;
 		struct anoubis_msg		*msg_;
 		struct anoubis_transaction	*ta_;
-
-		/**
-		 * @see ComTask::resetComTaskResult()
-		 */
-		void resetComTaskResult(void);
 };
 
 #endif	/* _COMPOLICYREQUESTTASK_H_ */

@@ -195,11 +195,6 @@ class ComCsumAddTask : public ComTask
 
 	protected:
 		/**
-		 * @see ComTask::resetComTaskResult()
-		 */
-		void resetComTaskResult(void);
-
-		/**
 		 * Implementation of ComTask::done()
 		 */
 		bool done(void);

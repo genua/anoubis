@@ -175,7 +175,6 @@ ComSfsListTask::getEventType(void) const
 void
 ComSfsListTask::exec(void)
 {
-	resetComTaskResult();
 	ta_ = NULL;
 
 	dirqueue_.push(strdup(""));
@@ -186,14 +185,6 @@ wxArrayString
 ComSfsListTask::getFileList(void) const
 {
 	return (this->fileList_);
-}
-
-void
-ComSfsListTask::resetComTaskResult(void)
-{
-	ComTask::resetComTaskResult();
-
-	fileList_.Clear();
 }
 
 bool

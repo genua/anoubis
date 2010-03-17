@@ -33,6 +33,8 @@
 
 ComVersionTask::ComVersionTask(void)
 {
+	this->protocolVersion_ = 0;
+	this->apnVersion_ = 0;
 }
 
 int
@@ -56,7 +58,6 @@ ComVersionTask::getEventType(void) const
 void
 ComVersionTask::exec(void)
 {
-	resetComTaskResult();
 	ta_ = anoubis_client_version_start(getClient());
 
 	if(!ta_)
@@ -83,14 +84,6 @@ ComVersionTask::done(void)
 		return (true);
 	} else
 		return (false);
-}
-
-void
-ComVersionTask::resetComTaskResult(void)
-{
-	ComTask::resetComTaskResult();
-	this->protocolVersion_ = 0;
-	this->apnVersion_ = 0;
 }
 
 bool

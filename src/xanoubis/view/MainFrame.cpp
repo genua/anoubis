@@ -86,11 +86,7 @@ MainFrame::MainFrame(wxWindow *parent, bool trayVisible)
 	    wxTaskEventHandler(MainFrame::onSfsListArrived),
 	    NULL, this);
 
-	upgradeTask_.setRequestParameter(0, wxT("/"));
-	upgradeTask_.setFetchUpgraded(true);
-	upgradeTask_.setOneFile(true);
-	upgradeTask_.setRecursive(true);
-
+	upgradeTask_ = NULL;
 	logViewer_ = new DlgLogViewer(this);
 	ruleEditor_ = new DlgRuleEditor(this);
 	trayIcon_ = trayVisible ? new TrayIcon : 0;
@@ -723,10 +719,15 @@ MainFrame::doUpgradeNotify(void)
 			if (now >= last_message + 60) {
 				last_message = now;
 				raw_cert = cert.getCertificate();
-				upgradeTask_.setKeyId(raw_cert->keyid,
+				upgradeTask_ = new ComSfsListTask();
+				upgradeTask_->setRequestParameter(0, wxT("/"));
+				upgradeTask_->setFetchUpgraded(true);
+				upgradeTask_->setOneFile(true);
+				upgradeTask_->setRecursive(true);
+				upgradeTask_->setKeyId(raw_cert->keyid,
 				    raw_cert->idlen);
 
-				instance->addTask(&upgradeTask_);
+				instance->addTask(upgradeTask_);
 			}
 		}
 	}
@@ -763,7 +764,7 @@ MainFrame::onSfsListArrived(TaskEvent &event)
 		return;
 	}
 
-	if (&upgradeTask_ != task) {
+	if (upgradeTask_ != task) {
 		/* Belongs to someone other, ignore it */
 		event.Skip();
 		return;
@@ -796,6 +797,8 @@ MainFrame::onSfsListArrived(TaskEvent &event)
 			askDlg->Destroy();
 		}
 	}
+	delete upgradeTask_;
+	upgradeTask_ = NULL;
 }
 
 ANEVENTS_IDENT_BCAST_METHOD_DEFINITION(MainFrame)

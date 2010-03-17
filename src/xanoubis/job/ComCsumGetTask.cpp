@@ -44,6 +44,7 @@ ComCsumGetTask::ComCsumGetTask(void)
 	this->cs_len_ = 0;
 	upcs_ = NULL;
 	upcs_len_ = 0;
+	resetCsum();
 }
 
 ComCsumGetTask::ComCsumGetTask(const wxString &file)
@@ -73,7 +74,6 @@ ComCsumGetTask::exec(void)
 	int				req_op;
 	char				path[PATH_MAX];
 
-	resetComTaskResult();
 	ta_ = NULL;
 
 	if (haveKeyId())
@@ -214,14 +214,6 @@ ComCsumGetTask::getUpgradeCsum(u_int8_t *csum, size_t size) const
 		}
 	}
 	return 0;
-}
-
-void
-ComCsumGetTask::resetComTaskResult(void)
-{
-	ComTask::resetComTaskResult();
-
-	resetCsum();
 }
 
 void

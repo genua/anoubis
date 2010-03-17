@@ -81,7 +81,6 @@ void
 ComRegistrationTask::exec(void)
 {
 	state_ = STATE_DONE;
-	resetComTaskResult();
 	ta_ = NULL;
 	if (getClient() == 0) {
 		setComTaskResult(RESULT_COM_ERROR);

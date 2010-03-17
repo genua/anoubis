@@ -79,12 +79,6 @@ class ComVersionTask : public ComTask
 		 */
 		bool done(void);
 
-	protected:
-		/**
-		 * @see ComTask::resetComTaskResult()
-		 */
-		void resetComTaskResult(void);
-
 	private:
 		/**
 		 * The transaction.
