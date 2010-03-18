@@ -39,6 +39,7 @@
 #include "ComRegistrationTask.h"
 #include "ComSfsListTask.h"
 #include "CsumCalcTask.h"
+#include "Debug.h"
 #include "JobCtrl.h"
 #include "KeyCtrl.h"
 #include "SfsCtrl.h"
@@ -214,7 +215,7 @@ SfsCtrl::validate(const IndexArray &arr)
 		int	numScheduled = 0;
 		bool	doSig = isSignatureEnabled();
 
-		startSfsOp(arr.Count());
+		startSfsOp(2 * arr.Count());
 		for (size_t i = 0; i < arr.Count(); i++) {
 			unsigned int idx = arr.Item(i);
 
@@ -237,6 +238,7 @@ SfsCtrl::validate(const IndexArray &arr)
 			task->addPath(entry->getPath());
 			if (task->getPathCount() >= 1000) {
 				pushTask(task);
+				startSfsOp(0);
 				JobCtrl::getInstance()->addTask(task);
 				task = NULL;
 			}
@@ -251,6 +253,7 @@ SfsCtrl::validate(const IndexArray &arr)
 		}
 		if (task) {
 			pushTask(task);
+			startSfsOp(0);
 			JobCtrl::getInstance()->addTask(task);
 			task = NULL;
 		}
@@ -294,7 +297,7 @@ SfsCtrl::registerChecksum(const IndexArray &arr)
 
 	if (comEnabled_) {
 		bool	doSig = isSignatureEnabled();
-		startSfsOp(arr.Count());
+		startSfsOp(2 * arr.Count());
 		for (size_t i = 0; i < arr.Count(); i++) {
 			idx = arr.Item(i);
 
@@ -372,7 +375,7 @@ SfsCtrl::unregisterChecksum(const IndexArray &arr)
 		int	numScheduled = 0;
 		bool	doSig = isSignatureEnabled();
 
-		startSfsOp(arr.Count());
+		startSfsOp(2 * arr.Count());
 		for (size_t i = 0; i < arr.Count(); i++) {
 			unsigned int idx = arr.Item(i);
 
@@ -447,7 +450,7 @@ SfsCtrl::importChecksums(const wxString &path)
 			total++;
 
 		entry = entries;
-		startSfsOp(total);
+		startSfsOp(2 * total);
 		/* XXX CEH: Make better use of csmulti requests if possible */
 		while (entry != 0) {
 			createComCsumAddTask(entry);
@@ -464,6 +467,7 @@ SfsCtrl::importChecksums(const wxString &path)
 				task = createComCsumGetTask(doSig);
 				task->addPath(e->getPath());
 				pushTask(task);
+				startSfsOp(0);
 				JobCtrl::getInstance()->addTask(task);
 			}
 			entry = entry->next;
@@ -490,7 +494,7 @@ SfsCtrl::exportChecksums(const IndexArray &arr, const wxString &path)
 		exportEnabled_ = true;
 		exportFile_ = path;
 
-		startSfsOp(arr.Count());
+		startSfsOp(3 * arr.Count());
 		for (size_t i = 0; i < arr.Count(); i++) {
 			unsigned int idx = arr.Item(i);
 
@@ -509,6 +513,7 @@ SfsCtrl::exportChecksums(const IndexArray &arr, const wxString &path)
 			task = createComCsumGetTask(doSig);
 			task->addPath(entry->getPath());
 			pushTask(task);
+			startSfsOp(0);
 			JobCtrl::getInstance()->addTask(task);
 			if (!updateSfsOp(1))
 				break;
@@ -593,6 +598,8 @@ SfsCtrl::OnSfsListArrived(TaskEvent &event)
 	ComTask::ComTaskResult comResult = task->getComTaskResult();
 	SfsEntry::ChecksumType type = task->haveKeyId() ?
 	    SfsEntry::SFSENTRY_SIGNATURE : SfsEntry::SFSENTRY_CHECKSUM;
+	updateSfsOp(1);
+	endSfsOp();
 
 	if (comResult != ComTask::RESULT_SUCCESS) {
 		ComTask::ComTaskResult comResult = task->getComTaskResult();
@@ -610,8 +617,8 @@ SfsCtrl::OnSfsListArrived(TaskEvent &event)
 				    "files of %ls."),
 				    task->getDirectory().c_str());
 		} else if (comResult == ComTask::RESULT_REMOTE_ERROR) {
-			const char *err =
-				anoubis_strerror(task->getResultDetails());
+			const char *err = anoubis_strerror(
+			    task->getResultDetails());
 
 			if (type == SfsEntry::SFSENTRY_CHECKSUM)
 				message = wxString::Format(_("Got error from "
@@ -646,7 +653,7 @@ SfsCtrl::OnSfsListArrived(TaskEvent &event)
 	if (!basePath.EndsWith(wxT("/")))
 		basePath += wxT("/");
 
-	startSfsOp(result.Count());
+	startSfsOp(2 * result.Count());
 	bool doSig = isSignatureEnabled();
 	sfsDir_.beginChange();
 	for (unsigned int idx = 0; idx < result.Count(); idx++) {
@@ -678,6 +685,7 @@ SfsCtrl::OnSfsListArrived(TaskEvent &event)
 		getTask->addPath(entry->getPath());
 		if (getTask->getPathCount() >= 1000) {
 			pushTask(getTask);
+			startSfsOp(0);
 			JobCtrl::getInstance()->addTask(getTask);
 			getTask = NULL;
 		}
@@ -686,6 +694,7 @@ SfsCtrl::OnSfsListArrived(TaskEvent &event)
 	}
 	if (getTask) {
 		pushTask(getTask);
+		startSfsOp(0);
 		JobCtrl::getInstance()->addTask(getTask);
 		getTask = NULL;
 	}
@@ -714,6 +723,8 @@ SfsCtrl::OnCsumCalc(TaskEvent &event)
 	}
 
 	event.Skip(false); /* "My" task -> stop propagating */
+	updateSfsOp(1);
+	endSfsOp();
 
 	/* Search for SfsEntry */
 	int idx = sfsDir_.getIndexOf(task->getPath());
@@ -835,6 +846,8 @@ SfsCtrl::OnCsumGet(TaskEvent &event)
 	}
 
 	event.Skip(false); /* "My" task -> stop propagating */
+	updateSfsOp(1);
+	endSfsOp();
 
 	taskResult = task->getComTaskResult();
 	if (taskResult == ComTask::RESULT_REMOTE_ERROR) {
@@ -999,6 +1012,8 @@ SfsCtrl::OnCsumDel(TaskEvent &event)
 	}
 
 	event.Skip(false); /* "My" task -> stop propagating */
+	updateSfsOp(1);
+	endSfsOp();
 
 	/* Search for SfsEntry */
 	int idx = sfsDir_.getIndexOf(task->getPath());
@@ -1170,6 +1185,7 @@ SfsCtrl::createComCsumAddTask(struct sfs_entry *entry)
 		csTask->setSfsEntry(entry);
 
 		pushTask(csTask);
+		startSfsOp(0);
 		JobCtrl::getInstance()->addTask(csTask);
 	}
 }
@@ -1187,6 +1203,7 @@ SfsCtrl::createComCsumDelTasks(SfsEntry *entry, bool doSig)
 		csTask->setCalcLink(true);
 
 		pushTask(csTask);
+		startSfsOp(0);
 		JobCtrl::getInstance()->addTask(csTask);
 
 		count++;
@@ -1205,6 +1222,7 @@ SfsCtrl::createComCsumDelTasks(SfsEntry *entry, bool doSig)
 		sigTask->setKeyId(raw_cert->keyid, raw_cert->idlen);
 
 		pushTask(sigTask);
+		startSfsOp(0);
 		JobCtrl::getInstance()->addTask(sigTask);
 
 		count++;
@@ -1223,6 +1241,7 @@ SfsCtrl::createSfsListTasks(uid_t uid, const wxString &path)
 		csTask->setFetchOrphaned(entryFilter_ == FILTER_ORPHANED);
 
 		pushTask(csTask);
+		startSfsOp(0);
 		JobCtrl::getInstance()->addTask(csTask);
 	}
 
@@ -1239,6 +1258,7 @@ SfsCtrl::createSfsListTasks(uid_t uid, const wxString &path)
 		sigTask->setKeyId(raw_cert->keyid, raw_cert->idlen);
 
 		pushTask(sigTask);
+		startSfsOp(0);
 		JobCtrl::getInstance()->addTask(sigTask);
 	}
 }
@@ -1251,6 +1271,7 @@ SfsCtrl::createCsumCalcTask(const wxString &path)
 	task->setCalcLink(true);
 
 	pushTask(task);
+	startSfsOp(0);
 	JobCtrl::getInstance()->addTask(task);
 }
 
