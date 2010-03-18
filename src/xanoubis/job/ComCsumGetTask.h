@@ -31,6 +31,7 @@
 #include <config.h>
 
 #include <sys/types.h>
+#include <vector>
 
 #ifdef LINUX
 #include <linux/anoubis.h>
@@ -39,29 +40,23 @@
 #include <dev/anoubis.h>
 #endif
 
-#include "ComCsumHandler.h"
 #include "ComTask.h"
 #include <anoubis_transaction.h>
 
 /**
  * Task to receive a registered checksum from anoubisd.
  *
- * Before the task gets scheduled, you have to specify the file you are
- * requesting (ComCsumGetTask::setFile()).
+ * Before the task gets scheduled, you have to specify the files you are
+ * requesting (ComCsumGetTask::addFile()).
  *
- * You can bind the operation to a certificate. In this case, the checksum of
- * the file is returned, which is signed by the configured certificate.
+ * You can add a keyid to the request. In this case, unsigend checksums and
+ * signatures for the files are retrieved.
  *
- * If the task was successfully executed, you can ask for the checksum using
- * ComCsumGetTask::getCsum().
+ * If the task was successfully executed, you can ask for the checksum
+ * data  using ComCsumGetTask::getChecksumData().
  *
- * If no certificate is deposited for the requested key-id, getResultDetails()
- * will return EINVAL, getCsum() will not copy a checksum (returns 0) and
- * getCsumStr() will return an empty string.
- *
- * If no checksum exists for the requested file, getResultDetails() will return
- * ENOENT, getCsum() will not copy a checksum (returns 0) and getCsumStr() will
- * return an empty string.
+ * If no checksum exists for the requested file ENOENT is returend for this
+ * file and getChecksumData will not copy checksum data.
  *
  * Supported error-codes:
  * - <code>RESULT_COM_ERROR</code> Communication error. Failed to create a
@@ -70,30 +65,41 @@
  *   symlink is specified.
  * - <code>RESULT_REMOTE_ERROR</code> Operation(s) performed by anoubisd
  *   failed. getResultDetails() will return the remote error-code and can be
- *   evaluated by strerror(3) or similar.
+ *   evaluated by anoubis_strerror.
  */
-class ComCsumGetTask : public ComTask, public ComCsumHandler
+class ComCsumGetTask : public ComTask
 {
 	public:
 		/**
-		 * Default c'tor.
-		 *
-		 * You explicity need to set the filename by calling setFile().
+		 * Default constructor.
 		 */
 		ComCsumGetTask(void);
 
 		/**
-		 * Constructs a ComCsumGetTask with an already assigned file.
-		 *
-		 * @param file The requested filename
-		 * @see setFile()
-		 */
-		ComCsumGetTask(const wxString &);
-
-		/**
-		 * D'tor.
+		 * Destructor.
 		 */
 		~ComCsumGetTask(void);
+
+		/**
+		 * Add a path to the GET request.
+		 *
+		 * @param 1st The file.
+		 * @return none.
+		 */
+		void addPath(const wxString &);
+
+		/**
+		 * Return the path associated with the given index.
+		 *
+		 * @param 1st The index.
+		 * @return The path.
+		 */
+		wxString getPath(unsigned int idx) const;
+
+		/**
+		 * Return the total number of paths in this request.
+		 */
+		size_t getPathCount(void) const;
 
 		/**
 		 * Implementation of Task::getEventType().
@@ -111,77 +117,103 @@ class ComCsumGetTask : public ComTask, public ComCsumHandler
 		bool done(void);
 
 		/**
-		 * Returns the size of the requested checksum/signature.
+		 * Returns the result of the checksum get request for
+		 * the path with the given index.
 		 *
-		 * If a checksum was requested, the size is ANOUBIS_CS_LEN but
-		 * if a signature was requested, the size is not constant.
-		 *
-		 * @return Size of requested checksum/signature.
+		 * @param idx The index.
+		 * @return The error code. Zero if a checksum was received.
 		 */
-		size_t getCsumLen(void) const;
+		int getChecksumError(unsigned int idx) const;
 
 		/**
-		 * Returns the size of the upgrade checksum if present.
-		 * The size should always be ANOUBIS_CS_LEN if the upgrade
-		 * marker is present or 0 if no upgrade marker was found.
+		 * Return the result of the signature get request for
+		 * the path with the given index.
 		 *
-		 * @return Size of requested checksum/signature.
+		 * @param idx The index.
+		 * @return The error code. Zero if a signature was received.
 		 */
-		size_t getUpgradeCsumLen(void) const;
+		int getSignatureError(unsigned int idx) const;
 
 		/**
-		 * Returns the requested checksum.
+		 * Returns the size of a checksum/signature.
 		 *
-		 * If the request-operation was successful, you can use this
-		 * method to receive the requested checksum.
-		 *
-		 * @param csum Destination buffer, where the resulting checksum
-		 *             is written.
-		 * @param size Size of destination buffer <code>csum</code>.
-		 * @return On success, the length of the checksum is
-		 *         returned. Use getCsumLen() to get the length of the
-		 *         checksum. A return-code of 0 means, that nothing was
-		 *         written. It might happen, if the requested file does
-		 *         not have a registered checksum or the destination
-		 *         buffer is not large enough to hold the whole
-		 *         checksum.
-		 * @see getCsumLen()
+		 * @param 1st The index of the path.
+		 * @param 2nd The checksum type.
+		 * @return The length of the checksum/signature of the
+		 *     given type. Zero if no such checksum was received.
 		 */
-		size_t getCsum(u_int8_t *, size_t) const;
+		size_t getChecksumLen(unsigned int idx, int type) const;
 
 		/**
-		 * Returns the upgrade checksum if present.
+		 * Returns a pointer to the checksum data in the task.
+		 * The caller is not allowed to modify this data.
 		 *
-		 * If the request-operation was successful and contained an
-		 * upgrade checksum, you can use this method to receive the
-		 * upgrade checksum.
-		 *
-		 * @param csum Destination buffer, where the resulting checksum
-		 *             is written.
-		 * @param size Size of destination buffer <code>csum</code>.
-		 * @return On success, the length of the checksum is
-		 *         returned. Otherwise 0 is returned.
-		 * @see getUpgradeCsumLen()
+		 * @param 1st The index of the corresponding path.
+		 * @param 2nd The checksum/signature type.
+		 * @param 3rd A pointer to the destination buffer.
+		 * @param 4th The length of the destination buffer.
+		 * @return True if data was returned.
 		 */
-		size_t getUpgradeCsum(u_int8_t *, size_t) const;
+		bool getChecksumData(unsigned int idx, int type,
+		    const u_int8_t *&buffer, size_t &len) const;
 
 		/**
-		 * Returns an hex-string representation of getCsum().
-		 * @return Hex-string of getCsum(). An empty string is
-		 *         returned, if the requested file foes not have a
-		 *         registered checksum.
-		 * @note The resulting string does <b>not</b> start with the
-		 *       leading hex-indicator <code>0x</code>!
-		 * @see getCsum()
+		 * Assign a keyid to the request.
+		 *
+		 * @param 1st The keyid.
+		 * @param 2nd The length of the keyid.
+		 * @return True if successful.
 		 */
-		wxString getCsumStr(void) const;
+		bool setKeyId(const u_int8_t *keyid, unsigned int kidlen);
+
+		/**
+		 * Return true if a keyid is assigned to the request.
+		 *
+		 * @param None.
+		 * @return True if there is a keyid.
+		 */
+		bool haveKeyId(void) const;
 
 	private:
-		u_int8_t			*cs_, *upcs_;
-		size_t				cs_len_, upcs_len_;
-		struct anoubis_transaction	*ta_;
+		std::vector<wxString>		 paths_;
+		struct anoubis_csmulti_request	*csreq_;
+		struct anoubis_csmulti_request	*sigreq_;
+		u_int8_t			*keyid_;
+		unsigned int			 kidlen_;
+		anoubis_transaction		*ta_;
 
-		void resetCsum(void);
+		/**
+		 * Create the neccessary checksum and signature request
+		 * if they do not exist.
+		 */
+		void createRequests(void);
+
+		/**
+		 * Add a new path to a single request. If this fails add
+		 * an error request.
+		 *
+		 * @param 1st The request.
+		 * @param 2nd The path.
+		 * @return Zero if something was added to the request.
+		 *     An error code (ENOMEM) if neither the request nor
+		 *     an error request could be added.
+		 */
+		int addPathToRequest(struct anoubis_csmulti_request *,
+		    const char *path);
+
+		/**
+		 * Return a pointer to the checksum entry structure of the
+		 * specified type or NULL if no checksum of that type was
+		 * received.
+		 * This function will automatically search for the checksum
+		 * in the appropriate request, depending on the type.
+		 *
+		 * @param 1st The index of the file.
+		 * @param 2nd The checksum type (ANOUBIS_SIG_TYPE_*)
+		 * @return The anoubis_csentry structure or NULL.
+		 */
+		struct anoubis_csentry *get_checksum_entry(
+		    unsigned int idx, int type) const;
 };
 
 #endif	/* _COMCSUMGETTASK_H_ */

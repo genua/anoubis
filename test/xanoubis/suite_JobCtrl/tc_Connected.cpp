@@ -255,6 +255,8 @@ END_TEST
 
 START_TEST(test_csum)
 {
+	size_t		len;
+
 	wxString fileName = JobCtrl_tempfile();
 	fail_if(fileName.IsEmpty(), "Failed to create file");
 
@@ -278,29 +280,31 @@ START_TEST(test_csum)
 
 	/* Receive checksum: Success */
 	TaskEventSpy get_spy(jobCtrl, anTASKEVT_CSUM_GET);
-	ComCsumGetTask get_task;
-	get_task.setPath(fileName);
+	ComCsumGetTask *get_task = new ComCsumGetTask;
+	get_task->addPath(fileName);
 
-	jobCtrl->addTask(&get_task);
+	jobCtrl->addTask(get_task);
 	get_spy.waitForInvocation(1);
 
-	fail_unless(get_task.getComTaskResult() == ComTask::RESULT_SUCCESS,
+	fail_unless(get_task->getComTaskResult() == ComTask::RESULT_SUCCESS,
 	    "Failed to get a checksum!\n"
 	    "ComTaskResult = %i\n"
 	    "ResultDetails = %i (%s)\n",
-	    get_task.getComTaskResult(), get_task.getResultDetails(),
-	    strerror(get_task.getResultDetails()));
-	fail_unless(get_task.getResultDetails() == 0,
-	    "ResultDetails: %s (%i)\n", strerror(get_task.getResultDetails()),
-	    get_task.getResultDetails());
-	fail_unless(get_task.haveKeyId() == false, "A key-id is assigned");
-	fail_unless(get_task.getCsumLen() == ANOUBIS_CS_LEN,
-	    "Unexpected csum-len\n"
-	    "Is: %i\n"
-	    "Expected: %i\n", get_task.getCsumLen(), ANOUBIS_CS_LEN);
+	    get_task->getComTaskResult(), get_task->getResultDetails(),
+	    strerror(get_task->getResultDetails()));
+	fail_unless(get_task->getResultDetails() == 0,
+	    "ResultDetails: %s (%i)\n", strerror(get_task->getResultDetails()),
+	    get_task->getResultDetails());
+	fail_unless(get_task->haveKeyId() == false, "A key-id is assigned");
+	len = get_task->getChecksumLen(0, ANOUBIS_SIG_TYPE_CS);
+	fail_unless(len == ANOUBIS_CS_LEN,
+	    "Unexpected csum-len\nIs: %ld\nExpected: %d\n",
+	    len, ANOUBIS_CS_LEN);
 
-	u_int8_t cs_out[ANOUBIS_CS_LEN];
-	fail_unless(get_task.getCsum(cs_out, ANOUBIS_CS_LEN) == ANOUBIS_CS_LEN,
+	const u_int8_t *cs_out;
+	bool ok = get_task->getChecksumData(0, ANOUBIS_SIG_TYPE_CS,
+	    cs_out, len);
+	fail_unless(ok && len == ANOUBIS_CS_LEN,
 	    "Unexpected checksum received!");
 	fail_unless(memcmp(cs_in, cs_out, ANOUBIS_CS_LEN) == 0,
 	    "Unexpected checksum fetched from daemon");
@@ -323,24 +327,27 @@ START_TEST(test_csum)
 	    "ResultDetails: %s (%i)", strerror(del_task.getResultDetails()),
 	    del_task.getResultDetails());
 
+	delete get_task;
+	get_task = new ComCsumGetTask;
+	get_task->addPath(fileName);
 	/* Fetch checksum again: Failure */
-	jobCtrl->addTask(&get_task);
+	jobCtrl->addTask(get_task);
 	get_spy.waitForInvocation(2);
 
-	fail_unless(get_task.getComTaskResult() == ComTask::RESULT_REMOTE_ERROR,
-	    "Failed to get a checksum!\n"
+	fail_unless(get_task->getComTaskResult() == ComTask::RESULT_SUCCESS,
+	    "Checksum request failed\n"
 	    "ComTaskResult = %i\n"
 	    "ResultDetails = %i\n",
-	    get_task.getComTaskResult(), get_task.getResultDetails());
-	fail_unless(get_task.getResultDetails() == ENOENT,
-	    "ResultDetails: %s (%i)\n",
-	    strerror(get_task.getResultDetails()), get_task.getResultDetails());
-	fail_unless(get_task.haveKeyId() == false, "A key-id is assigned");
-	fail_unless(get_task.getCsumLen() == 0, "Task contains a checksum");
-	fail_unless(get_task.getCsum(cs_out, ANOUBIS_CS_LEN) == 0,
-	   "Task contains a checksum!\n");
-	fail_unless(get_task.getCsumStr().IsEmpty(),
-	   "Task contains a checksum-string!\n");
+	    get_task->getComTaskResult(), get_task->getResultDetails());
+	fail_unless(get_task->getChecksumError(0) == ENOENT,
+	    "Checksum error: %s (%i)\n",
+	    strerror(get_task->getChecksumError(0)),
+	    get_task->getChecksumError(0));
+	fail_unless(get_task->haveKeyId() == false, "A key-id is assigned");
+	len = get_task->getChecksumLen(0, ANOUBIS_SIG_TYPE_CS);
+	fail_unless(len == 0, "Task contains a checksum");
+	ok = get_task->getChecksumData(0, ANOUBIS_SIG_TYPE_CS, cs_out, len);
+	fail_unless(!ok && len == 0, "Task contains a checksum!\n");
 
 	wxRemoveFile(fileName);
 }
@@ -348,38 +355,39 @@ END_TEST
 
 START_TEST(test_csum_nosuchfile)
 {
+	size_t		len;
 	TaskEventSpy spy(jobCtrl, anTASKEVT_CSUM_GET);
 
 	wxString file = wxFileName::GetTempDir() + wxT("/blablubb");
 	fail_if(wxFileExists(file), "File already exists");
 
-	ComCsumGetTask task;
-	task.setPath(file);
+	ComCsumGetTask *task = new ComCsumGetTask;
+	task->addPath(file);
 
-	jobCtrl->addTask(&task);
+	jobCtrl->addTask(task);
 	spy.waitForInvocation(1);
 
-	fail_unless(task.getComTaskResult() == ComTask::RESULT_REMOTE_ERROR,
-	    "Failed to get a checksum!\n"
+	fail_unless(task->getComTaskResult() == ComTask::RESULT_SUCCESS,
+	    "Checksum request failed!\n"
 	    "ComTaskResult = %i\n"
 	    "ResultDetails = %i\n",
-	    task.getComTaskResult(), task.getResultDetails());
-	fail_unless(task.getResultDetails() == ENOENT,
-	    "ResultDetails: %s (%i)\n", strerror(task.getResultDetails()),
-	    task.getResultDetails());
-	fail_unless(task.haveKeyId() == false, "A key-id is assigned");
-	fail_unless(task.getCsumLen() == 0, "Task contains a checksum");
+	    task->getComTaskResult(), task->getResultDetails());
+	fail_unless(task->getChecksumError(0) == ENOENT,
+	    "Checksum error: %s (%i)\n",
+	    strerror(task->getChecksumError(0)), task->getChecksumError(0));
+	fail_unless(task->haveKeyId() == false, "A key-id is assigned");
+	len = task->getChecksumLen(0, ANOUBIS_SIG_TYPE_CS);
+	fail_unless(len == 0, "Task contains a checksum");
 
-	u_int8_t cs[ANOUBIS_CS_LEN];
-	fail_unless(task.getCsum(cs, ANOUBIS_CS_LEN) == 0,
-	   "Task contains a checksum!\n");
-	fail_unless(task.getCsumStr().IsEmpty(),
-	   "Task contains a checksum-string!\n");
+	const u_int8_t *cs;
+	bool ok = task->getChecksumData(0, ANOUBIS_SIG_TYPE_CS, cs, len);
+	fail_unless(!ok && len == 0, "Task contains a checksum!\n");
 }
 END_TEST
 
 START_TEST(test_csum_orphaned)
 {
+	size_t		len;
 	/* Create a new file */
 	wxString fileName = JobCtrl_tempfile();
 	fail_if(fileName.IsEmpty(), "Failed to create file");
@@ -408,29 +416,31 @@ START_TEST(test_csum_orphaned)
 
 	/* Receive checksum: Success */
 	TaskEventSpy get_spy(jobCtrl, anTASKEVT_CSUM_GET);
-	ComCsumGetTask get_task;
-	get_task.setPath(fileName);
+	ComCsumGetTask *get_task = new ComCsumGetTask;
+	get_task->addPath(fileName);
 
-	jobCtrl->addTask(&get_task);
+	jobCtrl->addTask(get_task);
 	get_spy.waitForInvocation(1);
 
-	fail_unless(get_task.getComTaskResult() == ComTask::RESULT_SUCCESS,
+	fail_unless(get_task->getComTaskResult() == ComTask::RESULT_SUCCESS,
 	    "Failed to get a checksum!\n"
 	    "ComTaskResult = %i\n"
 	    "ResultDetails = %i (%s)\n",
-	    get_task.getComTaskResult(), get_task.getResultDetails(),
-	    strerror(get_task.getResultDetails()));
-	fail_unless(get_task.getResultDetails() == 0,
-	    "ResultDetails: %s (%i)\n", strerror(get_task.getResultDetails()),
-	    get_task.getResultDetails());
-	fail_unless(get_task.haveKeyId() == false, "A key-id is assigned");
-	fail_unless(get_task.getCsumLen() == ANOUBIS_CS_LEN,
-	    "Unexpected csum-len\n"
-	    "Is: %i\n"
-	    "Expected: %i\n", get_task.getCsumLen(), ANOUBIS_CS_LEN);
+	    get_task->getComTaskResult(), get_task->getResultDetails(),
+	    strerror(get_task->getResultDetails()));
+	fail_unless(get_task->getResultDetails() == 0,
+	    "ResultDetails: %s (%i)\n", strerror(get_task->getResultDetails()),
+	    get_task->getResultDetails());
+	fail_unless(get_task->haveKeyId() == false, "A key-id is assigned");
+	len = get_task->getChecksumLen(0, ANOUBIS_SIG_TYPE_CS);
+	fail_unless(len == ANOUBIS_CS_LEN,
+	    "Unexpected csum-len\nIs: %i\nExpected: %i\n",
+	    len, ANOUBIS_CS_LEN);
 
-	u_int8_t cs_out[ANOUBIS_CS_LEN];
-	fail_unless(get_task.getCsum(cs_out, ANOUBIS_CS_LEN) == ANOUBIS_CS_LEN,
+	const u_int8_t *cs_out;
+	bool ok = get_task->getChecksumData(0, ANOUBIS_SIG_TYPE_CS,
+	    cs_out, len);
+	fail_unless(ok && len == ANOUBIS_CS_LEN,
 	    "Unexpected checksum received!");
 	fail_unless(memcmp(cs_in, cs_out, ANOUBIS_CS_LEN) == 0,
 	    "Unexpected checksum fetched from daemon");
@@ -471,30 +481,32 @@ START_TEST(test_csum_symlink)
 
 	/* Receive checksum: Success */
 	TaskEventSpy get_spy(jobCtrl, anTASKEVT_CSUM_GET);
-	ComCsumGetTask get_task;
-	get_task.setPath(symlinkName);
+	ComCsumGetTask *get_task = new ComCsumGetTask;
+	get_task->addPath(symlinkName);
 
-	jobCtrl->addTask(&get_task);
+	jobCtrl->addTask(get_task);
 	get_spy.waitForInvocation(1);
 
-	fail_unless(get_task.getComTaskResult() == ComTask::RESULT_SUCCESS,
+	fail_unless(get_task->getComTaskResult() == ComTask::RESULT_SUCCESS,
 	    "Failed to get a checksum!\nComTaskResult = %i\n"
-	    "ResultDetails = %s\n", get_task.getComTaskResult(),
-	    strerror(get_task.getResultDetails()));
-	fail_unless(get_task.getResultDetails() == 0,
-	    "ResultDetails: %s (%i)\n", strerror(get_task.getResultDetails()),
-	    get_task.getResultDetails());
-	fail_unless(get_task.haveKeyId() == false, "A key-id is assigned");
-	fail_unless(get_task.getCsumLen() == ANOUBIS_CS_LEN,
-	    "Unexpected csum-len\n"
-	    "Is: %i\n"
-	    "Expected: %i\n", get_task.getCsumLen(), ANOUBIS_CS_LEN);
+	    "ResultDetails = %s\n", get_task->getComTaskResult(),
+	    strerror(get_task->getResultDetails()));
+	fail_unless(get_task->getResultDetails() == 0,
+	    "ResultDetails: %s (%i)\n", strerror(get_task->getResultDetails()),
+	    get_task->getResultDetails());
+	fail_unless(get_task->haveKeyId() == false, "A key-id is assigned");
+	size_t len = get_task->getChecksumLen(0, ANOUBIS_SIG_TYPE_CS);
+	/*
+	 * No checksum expected, get_task is for symlinkName while
+	 * add_task is for filename.
+	 */
+	fail_unless(len == 0,
+	    "Unexpected csum-len\nIs: %i\nExpected: 0\n", len);
 
-	u_int8_t cs_out[ANOUBIS_CS_LEN];
-	fail_unless(get_task.getCsum(cs_out, ANOUBIS_CS_LEN) == ANOUBIS_CS_LEN,
-	    "Unexpected checksum received!");
-	fail_unless(memcmp(cs_in, cs_out, ANOUBIS_CS_LEN) == 0,
-	    "Unexpected checksum fetched from daemon");
+	const u_int8_t *cs_out;
+	bool ok = get_task->getChecksumData(0, ANOUBIS_SIG_TYPE_CS,
+	    cs_out, len);
+	fail_unless(!ok && len == 0, "Unexpected checksum received!");
 
 	unlink(symlinkName.To8BitData());
 	wxRemoveFile(fileName);
@@ -504,28 +516,35 @@ END_TEST
 START_TEST(test_csum_symlink_link)
 {
 	/* Create a new file */
+	mark_point();
 	wxString fileName = JobCtrl_tempfile();
 	fail_if(fileName.IsEmpty(), "Failed to create file");
+	mark_point();
 
 	u_int8_t cs_in[ANOUBIS_CS_LEN];
 	fail_unless(JobCtrl_calculate_checksum_buffer(
 	    fileName.To8BitData(), fileName.Len(), cs_in, sizeof(cs_in)),
 	    "Failed to calculate checksum");
 
+	mark_point();
 	/* Symlink the file */
 	wxString symlinkName = wxFileName::GetTempDir() + wxT("/csumsymlink");
 	fail_if(wxFileExists(symlinkName), "Symlink already exists");
 	fail_unless(
 	    symlink(fileName.To8BitData(), symlinkName.To8BitData()) == 0,
 	    "Failed to create symlink (%s)", strerror(errno));
+	mark_point();
 
 	/* Register symlink at daemon: Success */
 	TaskEventSpy add_spy(jobCtrl, anTASKEVT_CSUM_ADD);
+	mark_point();
 	ComCsumAddTask add_task;
 	add_task.addPath(symlinkName);
+	mark_point();
 
 	jobCtrl->addTask(&add_task);
 	add_spy.waitForInvocation(1);
+	mark_point();
 
 	fail_unless(add_task.getComTaskResult() == ComTask::RESULT_SUCCESS,
 	    "Failed to add a checksum: %i\n", add_task.getComTaskResult());
@@ -533,87 +552,108 @@ START_TEST(test_csum_symlink_link)
 	    "ResultDetails: %s (%i)\n", strerror(add_task.getResultDetails()),
 	    add_task.getResultDetails());
 	fail_unless(add_task.haveSignatures() == false, "A key-id is assigned");
+	mark_point();
 
 	/* Receive from daemon: success */
 	TaskEventSpy get_spy(jobCtrl, anTASKEVT_CSUM_GET);
-	ComCsumGetTask get_task;
-	get_task.setPath(symlinkName);
-	get_task.setCalcLink(true);
+	ComCsumGetTask *get_task = new ComCsumGetTask;
+	get_task->addPath(symlinkName);
+	mark_point();
 
-	jobCtrl->addTask(&get_task);
+	jobCtrl->addTask(get_task);
 	get_spy.waitForInvocation(1);
+	mark_point();
 
-	fail_unless(get_task.getComTaskResult() == ComTask::RESULT_SUCCESS,
+	fail_unless(get_task->getComTaskResult() == ComTask::RESULT_SUCCESS,
 	    "Failed to get a checksum!\nComTaskResult = %i\n"
-	    "ResultDetails = %s\n", get_task.getComTaskResult(),
-	    strerror(get_task.getResultDetails()));
-	fail_unless(get_task.getResultDetails() == 0,
-	    "ResultDetails: %s (%i)\n", strerror(get_task.getResultDetails()),
-	    get_task.getResultDetails());
-	fail_unless(get_task.haveKeyId() == false, "A key-id is assigned");
-	fail_unless(get_task.getCsumLen() == ANOUBIS_CS_LEN,
+	    "ResultDetails = %s\n", get_task->getComTaskResult(),
+	    strerror(get_task->getResultDetails()));
+	fail_unless(get_task->getResultDetails() == 0,
+	    "ResultDetails: %s (%i)\n", strerror(get_task->getResultDetails()),
+	    get_task->getResultDetails());
+	fail_unless(get_task->haveKeyId() == false, "A key-id is assigned");
+	mark_point();
+	size_t len = get_task->getChecksumLen(0, ANOUBIS_SIG_TYPE_CS);
+	mark_point();
+	fail_unless(len == ANOUBIS_CS_LEN,
 	    "Unexpected csum-len\n"
 	    "Is: %i\n"
-	    "Expected: %i\n", get_task.getCsumLen(), ANOUBIS_CS_LEN);
+	    "Expected: %i\n", len, ANOUBIS_CS_LEN);
 
-	u_int8_t cs_out[ANOUBIS_CS_LEN];
-	fail_unless(get_task.getCsum(cs_out, ANOUBIS_CS_LEN) == ANOUBIS_CS_LEN,
+	mark_point();
+	const u_int8_t *cs_out;
+	bool ok = get_task->getChecksumData(0, ANOUBIS_SIG_TYPE_CS,
+	    cs_out, len);
+	fail_unless(ok && len == ANOUBIS_CS_LEN,
 	    "Unexpected checksum received!");
 	fail_unless(memcmp(cs_in, cs_out, ANOUBIS_CS_LEN) == 0,
 	    "Unexpected checksum fetched from daemon");
+	mark_point();
 
 	wxRemoveFile(symlinkName);
 	wxRemoveFile(fileName);
+	mark_point();
 }
 END_TEST
 
 START_TEST(test_signature)
 {
+	mark_point();
 	LocalCertificate &cert = KeyCtrl::getInstance()->getLocalCertificate();
 	struct anoubis_sig *raw_cert = cert.getCertificate();
 
+	mark_point();
 	/* Create a new file */
 	wxString fileName = JobCtrl_tempfile();
 	fail_if(fileName.IsEmpty(), "Failed to create file");
 
+	mark_point();
 	u_int8_t cs_in[ANOUBIS_CS_LEN];
 	fail_unless(JobCtrl_calculate_checksum(fileName, cs_in, sizeof(cs_in)),
 	    "Failed to calculate checksum");
 
+	mark_point();
 	/* Register signature: Success */
 	TaskEventSpy add_spy(jobCtrl, anTASKEVT_CSUM_ADD);
 
+	mark_point();
 	ComCsumAddTask add_task;
 	add_task.addPath(fileName);
 	fail_unless(add_task.setKeyId(raw_cert->keyid, raw_cert->idlen),
 	    "Failed to setup task with key-id.");
 	add_task.setPrivateKey(
 	    KeyCtrl::getInstance()->getPrivateKey().getKey());
+	mark_point();
 
 	jobCtrl->addTask(&add_task);
 	add_spy.waitForInvocation(1);
 
+	mark_point();
 	/* Receive signature: Success */
 	TaskEventSpy get_spy(jobCtrl, anTASKEVT_CSUM_GET);
 
-	ComCsumGetTask get_task;
-	get_task.setPath(fileName);
-	fail_unless(get_task.setKeyId(raw_cert->keyid, raw_cert->idlen),
+	mark_point();
+	ComCsumGetTask *get_task = new ComCsumGetTask;
+	get_task->addPath(fileName);
+	fail_unless(get_task->setKeyId(raw_cert->keyid, raw_cert->idlen),
 	    "Failed to setup task with key-id.");
 
-	jobCtrl->addTask(&get_task);
+	mark_point();
+	jobCtrl->addTask(get_task);
 	get_spy.waitForInvocation(1);
 
-	fail_unless(get_task.getComTaskResult() == ComTask::RESULT_SUCCESS,
+	mark_point();
+	fail_unless(get_task->getComTaskResult() == ComTask::RESULT_SUCCESS,
 	    "Failed to get a checksum!\nComTaskResult = %i\n"
-	    "ResultDetails = %i\n", get_task.getComTaskResult(),
-	    get_task.getResultDetails());
-	fail_unless(get_task.getResultDetails() == 0,
-	    "ResultDetails: %s (%i)\n", strerror(get_task.getResultDetails()),
-	    get_task.getResultDetails());
-	fail_unless(get_task.haveKeyId(), "No key-id is assigned");
-	fail_unless(get_task.getCsumLen() > ANOUBIS_CS_LEN,
-	    "Unexpected csum-len\nIs: %i", get_task.getCsumLen());
+	    "ResultDetails = %i\n", get_task->getComTaskResult(),
+	    get_task->getResultDetails());
+	fail_unless(get_task->getResultDetails() == 0,
+	    "ResultDetails: %s (%i)\n", strerror(get_task->getResultDetails()),
+	    get_task->getResultDetails());
+	fail_unless(get_task->haveKeyId(), "No key-id is assigned");
+	size_t len = get_task->getChecksumLen(0, ANOUBIS_SIG_TYPE_SIG);
+	fail_unless(len > ANOUBIS_CS_LEN, "Unexpected csum-len\nIs: %i", len);
+	mark_point();
 
 	/* Remove signature: Success */
 	TaskEventSpy del_spy(jobCtrl, anTASKEVT_CSUM_DEL);
@@ -621,9 +661,11 @@ START_TEST(test_signature)
 	del_task.setPath(fileName);
 	fail_unless(del_task.setKeyId(raw_cert->keyid, raw_cert->idlen),
 	    "Failed to setup task with key-id.");
+	mark_point();
 
 	jobCtrl->addTask(&del_task);
 	del_spy.waitForInvocation(1);
+	mark_point();
 
 	fail_unless(del_task.getComTaskResult() == ComTask::RESULT_SUCCESS,
 	    "Failed to remove a checksum!\nComTaskResult = %i\n"
@@ -634,20 +676,32 @@ START_TEST(test_signature)
 	    del_task.getResultDetails());
 	fail_unless(del_task.haveKeyId(), "No key-id is assigned");
 
+	mark_point();
+	delete get_task;
+	get_task = new ComCsumGetTask;
+	get_task->addPath(fileName);
+	mark_point();
+	fail_unless(get_task->setKeyId(raw_cert->keyid, raw_cert->idlen),
+	    "Failed to setup task with key-id.");
+	mark_point();
 	/* Fetch signature again: Failure */
-	jobCtrl->addTask(&get_task);
+	jobCtrl->addTask(get_task);
 	get_spy.waitForInvocation(2);
 
-	fail_unless(get_task.getComTaskResult() == ComTask::RESULT_REMOTE_ERROR,
-	    "Failed to get a checksum!\nComTaskResult = %i\n"
-	    "ResultDetails = %i", get_task.getComTaskResult(),
-	    get_task.getResultDetails());
-	fail_unless(get_task.getResultDetails() == ENOENT,
-	    "ResultDetails: %s (%i)\n",
-	    strerror(get_task.getResultDetails()), get_task.getResultDetails());
-	fail_unless(get_task.getCsumLen() == 0, "Task contains a checksum");
+	mark_point();
+	fail_unless(get_task->getComTaskResult() == ComTask::RESULT_SUCCESS,
+	    "Checksum request failed!\nComTaskResult = %i\nResultDetails = %i",
+	    get_task->getComTaskResult(), get_task->getResultDetails());
+	fail_unless(get_task->getSignatureError(0) == ENOENT,
+	    "Signature error: %s (%i)\n",
+	    strerror(get_task->getSignatureError(0)),
+	    get_task->getSignatureError(0));
+	len = get_task->getChecksumLen(0, ANOUBIS_SIG_TYPE_SIG);
+	fail_unless(len == 0, "Task contains a signature");
+	mark_point();
 
 	wxRemoveFile(fileName);
+	mark_point();
 }
 END_TEST
 

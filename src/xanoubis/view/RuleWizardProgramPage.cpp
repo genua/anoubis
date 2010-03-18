@@ -104,7 +104,7 @@ RuleWizardProgramPage::update(Subject *subject)
 			 */
 			if (JobCtrl::getInstance()->isConnected()) {
 				csumGetTask_ = new ComCsumGetTask();
-				csumGetTask_->setPath(path);
+				csumGetTask_->addPath(path);
 				JobCtrl::getInstance()->addTask(csumGetTask_);
 			} else {
 				getWizardPage()->setNextEnabled(true);
@@ -187,7 +187,7 @@ RuleWizardProgramPage::onCsumGet(TaskEvent &event)
 		getWizardPage()->setNextEnabled(false);
 
 		wxString message;
-		wxString path = csumGetTask_->getPath();
+		wxString path = csumGetTask_->getPath(0);
 		err = anoubis_strerror(csumGetTask_->getResultDetails());
 
 		switch (result) {
@@ -311,12 +311,15 @@ RuleWizardProgramPage::onCsumCalc(TaskEvent &event)
 
 	/* Compare with daemon-checksum */
 	const u_int8_t *localCsum = csumCalcTask_->getCsum();
-	u_int8_t daemonCsum[ANOUBIS_CS_LEN];
+	const u_int8_t *daemonCsum;
+	size_t		daemonCsumSize;
 
 	/* Daemon-checksum still stored in comCsumGetTask_ */
-	csumGetTask_->getCsum(daemonCsum, ANOUBIS_CS_LEN);
+	bool csok = csumGetTask_->getChecksumData(0, ANOUBIS_SIG_TYPE_CS,
+	    daemonCsum, daemonCsumSize);
 
-	if (memcmp(localCsum, daemonCsum, ANOUBIS_CS_LEN) == 0) {
+	if (csok && daemonCsumSize >= ANOUBIS_CS_LEN
+	    && memcmp(localCsum, daemonCsum, ANOUBIS_CS_LEN) == 0) {
 		/*
 		 * Checksum matches with checksum from shadowtree, allow to
 		 * continue with the wizard.

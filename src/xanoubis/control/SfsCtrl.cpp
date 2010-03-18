@@ -206,6 +206,7 @@ SfsCtrl::refresh(void)
 SfsCtrl::CommandResult
 SfsCtrl::validate(const IndexArray &arr)
 {
+	ComCsumGetTask		*task = NULL;
 	if (!taskList_.empty() || inProgress_)
 		return (RESULT_BUSY);
 
@@ -231,8 +232,14 @@ SfsCtrl::validate(const IndexArray &arr)
 			 */
 			entry->reset();
 
-			/* In any case fetch the remote checksums */
-			createComCsumGetTasks(entry->getPath(), doSig);
+			if (!task)
+				task = createComCsumGetTask(doSig);
+			task->addPath(entry->getPath());
+			if (task->getPathCount() >= 1000) {
+				pushTask(task);
+				JobCtrl::getInstance()->addTask(task);
+				task = NULL;
+			}
 
 			if (entry->canHaveChecksum(false)) {
 				/* Ask for the local checksum */
@@ -241,6 +248,11 @@ SfsCtrl::validate(const IndexArray &arr)
 			if (!updateSfsOp(1))
 				break;
 			numScheduled++;
+		}
+		if (task) {
+			pushTask(task);
+			JobCtrl::getInstance()->addTask(task);
+			task = NULL;
 		}
 		endSfsOp();
 
@@ -392,6 +404,8 @@ SfsCtrl::unregisterChecksum(const IndexArray &arr)
 SfsCtrl::CommandResult
 SfsCtrl::importChecksums(const wxString &path)
 {
+	ComCsumGetTask	*task;
+
 	if (!taskList_.empty() || inProgress_)
 		return (RESULT_BUSY);
 
@@ -434,6 +448,7 @@ SfsCtrl::importChecksums(const wxString &path)
 
 		entry = entries;
 		startSfsOp(total);
+		/* XXX CEH: Make better use of csmulti requests if possible */
 		while (entry != 0) {
 			createComCsumAddTask(entry);
 
@@ -446,7 +461,10 @@ SfsCtrl::importChecksums(const wxString &path)
 				if (!e->haveLocalCsum())
 					createCsumCalcTask(e->getPath());
 
-				createComCsumGetTasks(e->getPath(), doSig);
+				task = createComCsumGetTask(doSig);
+				task->addPath(e->getPath());
+				pushTask(task);
+				JobCtrl::getInstance()->addTask(task);
 			}
 			entry = entry->next;
 			if (!updateSfsOp(1))
@@ -461,6 +479,8 @@ SfsCtrl::importChecksums(const wxString &path)
 SfsCtrl::CommandResult
 SfsCtrl::exportChecksums(const IndexArray &arr, const wxString &path)
 {
+	ComCsumGetTask	*task;
+
 	if (!taskList_.empty() || inProgress_)
 		return (RESULT_BUSY);
 
@@ -486,7 +506,10 @@ SfsCtrl::exportChecksums(const IndexArray &arr, const wxString &path)
 			 */
 			SfsEntry *entry = sfsDir_.getEntry(idx);
 			createCsumCalcTask(entry->getPath());
-			createComCsumGetTasks(entry->getPath(), doSig);
+			task = createComCsumGetTask(doSig);
+			task->addPath(entry->getPath());
+			pushTask(task);
+			JobCtrl::getInstance()->addTask(task);
 			if (!updateSfsOp(1))
 				break;
 		}
@@ -549,6 +572,7 @@ void
 SfsCtrl::OnSfsListArrived(TaskEvent &event)
 {
 	ComSfsListTask	*task = dynamic_cast<ComSfsListTask*>(event.getTask());
+	ComCsumGetTask	*getTask = NULL;
 	wxArrayString	result; /* Files which has a checksum */
 	PopTaskHelper	taskHelper(this, task);
 
@@ -649,9 +673,21 @@ SfsCtrl::OnSfsListArrived(TaskEvent &event)
 			entry->setLocalCsum(0);
 		}
 
-		createComCsumGetTasks(entry->getPath(), doSig);
+		if (!getTask)
+			getTask = createComCsumGetTask(doSig);
+		getTask->addPath(entry->getPath());
+		if (getTask->getPathCount() >= 1000) {
+			pushTask(getTask);
+			JobCtrl::getInstance()->addTask(getTask);
+			getTask = NULL;
+		}
 		if (!updateSfsOp(1))
 			break;
+	}
+	if (getTask) {
+		pushTask(getTask);
+		JobCtrl::getInstance()->addTask(getTask);
+		getTask = NULL;
 	}
 	sfsDir_.endChange();
 	endSfsOp();
@@ -706,10 +742,85 @@ SfsCtrl::OnCsumCalc(TaskEvent &event)
 }
 
 void
+SfsCtrl::processOneCsumGet(ComCsumGetTask *task, unsigned int idx,
+    SfsEntry *entry)
+{
+	const u_int8_t		*csdata;
+	size_t			 cslen;
+	SfsEntry::ChecksumType	 type;
+	int			 error;
+	wxString		 message;
+
+	type = SfsEntry::SFSENTRY_CHECKSUM;
+	error = task->getChecksumError(idx);
+	if (error == 0) {
+		if (task->getChecksumData(idx, ANOUBIS_SIG_TYPE_CS,
+		    csdata, cslen) && cslen == ANOUBIS_CS_LEN) {
+			entry->setChecksum(type, csdata, cslen);
+			if (exportEnabled_)
+				pushExportEntry(entry, type);
+		} else {
+			message = wxString::Format(_("An unexpected checksum "
+			    "was fetched for %ls"), entry->getPath().c_str());
+			errorList_.Add(message);
+		}
+	} else if (error == ENOENT) {
+		error = entry->setChecksumMissing(type);
+	} else if (error == EINVAL) {
+		error = entry->setChecksumInvalid(type);
+	} else {
+		message = wxString::Format(_("Got error from daemon while "
+		    "fetching the checksum for %ls: %hs"),
+		    entry->getPath().c_str(), anoubis_strerror(error));
+		errorList_.Add(message);
+	}
+
+	if (!task->haveKeyId())
+		return;
+	error = task->getSignatureError(idx);
+	type = SfsEntry::SFSENTRY_SIGNATURE;
+	if (error == ENOENT) {
+		entry->setChecksumMissing(type);
+	} else if (error == EINVAL) {
+		entry->setChecksumInvalid(type);
+	} else if (error) {
+		message = wxString::Format(_("Got error from "
+		    "daemon while fetching the signature for %ls: %hs"),
+		    entry->getPath().c_str(), anoubis_strerror(error));
+		errorList_.Add(message);
+	}
+	if (error)
+		return;
+	if (!task->getChecksumData(idx, ANOUBIS_SIG_TYPE_SIG, csdata, cslen)
+	    || cslen < ANOUBIS_CS_LEN) {
+		message = wxString::Format(_("An unexpected signature was "
+		    "fetched for %ls"), entry->getPath().c_str());
+		errorList_.Add(message);
+		return;
+	}
+	entry->setChecksum(type, csdata, cslen);
+	if (exportEnabled_) {
+		pushExportEntry(entry, type);
+		/* XXX CEH: Why no process UPGRADE for export? */
+		return;
+	}
+	if (task->getChecksumData(idx, ANOUBIS_SIG_TYPE_UPGRADECS,
+	    csdata, cslen) && cslen >= ANOUBIS_CS_LEN) {
+		entry->setChecksum(SfsEntry::SFSENTRY_UPGRADE, csdata, cslen);
+	} else {
+		entry->reset(SfsEntry::SFSENTRY_UPGRADE);
+	}
+}
+
+void
 SfsCtrl::OnCsumGet(TaskEvent &event)
 {
-	ComCsumGetTask	*task = dynamic_cast<ComCsumGetTask*>(event.getTask());
-	PopTaskHelper	taskHelper(this, task);
+	ComCsumGetTask		*task =
+	    dynamic_cast<ComCsumGetTask*>(event.getTask());
+	PopTaskHelper		 taskHelper(this, task);
+	ComTask::ComTaskResult	 taskResult;
+	wxString		 message;
+	const char		*err;
 
 	if (task == 0) {
 		/* No ComCsumGetTask -> stop propagating */
@@ -725,117 +836,46 @@ SfsCtrl::OnCsumGet(TaskEvent &event)
 
 	event.Skip(false); /* "My" task -> stop propagating */
 
-	/* Search for SfsEntry */
-	int idx = sfsDir_.getIndexOf(task->getPath());
-	if (idx == -1) {
-		wxString message = wxString::Format(
-		    _("%ls not found in file-list!"), task->getPath().c_str());
-		errorList_.Add(message);
-
-		return;
-	}
-
-	/* Receive checksum from task */
-	SfsEntry *entry = sfsDir_.getEntry(idx);
-	ComTask::ComTaskResult taskResult = task->getComTaskResult();
-	SfsEntry::ChecksumType type = task->haveKeyId() ?
-	    SfsEntry::SFSENTRY_SIGNATURE : SfsEntry::SFSENTRY_CHECKSUM;
-
+	taskResult = task->getComTaskResult();
 	if (taskResult == ComTask::RESULT_REMOTE_ERROR) {
-		int err = task->getResultDetails();
-
-		if (err == ENOENT) {
-			/* No checksum registered */
-			entry->setChecksumMissing(type);
-		} else if (err == EINVAL) {
-			entry->setChecksumInvalid(type);
-		} else {
-			const char *err =
-				anoubis_strerror(task->getResultDetails());
-			wxString message;
-
-			if (type == SfsEntry::SFSENTRY_CHECKSUM)
-				message = wxString::Format(_("Got error from "
-				    "daemon (%hs) while fetching the checksum "
-				    "for %ls."), err, task->getPath().c_str());
-			else
-				message = wxString::Format(_("Got error from "
-				    "daemon (%hs) while fetching the "
-				    "signature for %ls."), err,
-				    task->getPath().c_str());
-
-			errorList_.Add(message);
-		}
-
+		err = anoubis_strerror(task->getResultDetails());
+		message = wxString::Format(_("Got error from daemon while "
+		    "fetching checksums/signatures: %hs"), err);
+		errorList_.Add(message);
 		return;
 	} else if (taskResult == ComTask::RESULT_COM_ERROR) {
-		wxString message;
-
-		if (type == SfsEntry::SFSENTRY_CHECKSUM)
-			message = wxString::Format(_("Communication error "
-			    "while fetching the checksum for %ls."),
-			    task->getPath().c_str());
-		else
-			message = wxString::Format(_("Communication error "
-			    "while fetching the signature for %ls."),
-			    task->getPath().c_str());
-
+		message = wxString::Format(_("Communication error while "
+		    "fetching checksums/signatures"));
 		errorList_.Add(message);
 		return;
 	} else if (taskResult == ComTask::RESULT_LOCAL_ERROR) {
-		wxString message = wxString::Format(
-		    _("Failed to resolve %ls"), task->getPath().c_str());
-
+		err = anoubis_strerror(task->getResultDetails());
+		message = wxString::Format(_("Failed to retrieve "
+		    "checksums/signatures: %hs"), err);
 		errorList_.Add(message);
 		return;
 	} else if (taskResult != ComTask::RESULT_SUCCESS) {
-		wxString message;
-
-		if (type == SfsEntry::SFSENTRY_CHECKSUM)
-			message = wxString::Format(_("An unexpected error "
-			    "occured (%hs) while fetching the checksum for "
-			    "%ls."), anoubis_strerror(task->getComTaskResult()),
-			    task->getPath().c_str());
-		else
-			message = wxString::Format(_("An unexpected error "
-			    "occured (%hs) while fetching the signature for "
-			    "%ls."), anoubis_strerror(task->getComTaskResult()),
-			    task->getPath().c_str());
-
+		err = anoubis_strerror(task->getResultDetails());
+		message = wxString::Format(_("An unexpected error occured "
+		    "while fetching checksums/signatures: %hs"), err);
 		errorList_.Add(message);
 		return;
 	}
 
-	size_t csumLen = task->getCsumLen();
-	u_int8_t cs[csumLen];
+	for (unsigned int idx = 0; idx < task->getPathCount(); ++idx) {
+		int			 modelindex;
+		SfsEntry		*entry;
+		wxString		 path = task->getPath(idx);
 
-	if (task->getCsum(cs, csumLen) == csumLen) {
-		/* File has a checksum, copy into model */
-		entry->setChecksum(type, cs, csumLen);
-
-		if (exportEnabled_) {
-			/* Export is enabled, push entry into export-list */
-			pushExportEntry(entry, type);
-		} else if (type == SfsEntry::SFSENTRY_SIGNATURE) {
-			size_t		upcsLen = task->getUpgradeCsumLen();
-			u_int8_t	upcs[upcsLen];
-
-			if (task->getUpgradeCsum(upcs, upcsLen) == upcsLen) {
-				entry->setChecksum(
-				    SfsEntry::SFSENTRY_UPGRADE, upcs, upcsLen);
-			} else {
-				entry->reset(SfsEntry::SFSENTRY_UPGRADE);
-			}
+		modelindex = sfsDir_.getIndexOf(path);
+		if (modelindex < 0) {
+			message = wxString::Format(
+			    _("%ls not found in file-list!"), path.c_str());
+			errorList_.Add(message);
+			continue;
 		}
-	} else {
-		wxString message;
-
-		if (type == SfsEntry::SFSENTRY_CHECKSUM)
-			message = _("An unexpected checksum was fetched.");
-		else
-			message = _("An unexpected signature was fetched.");
-
-		errorList_.Add(message);
+		entry = sfsDir_.getEntry(modelindex);
+		processOneCsumGet(task, idx, entry);
 	}
 }
 
@@ -1089,30 +1129,19 @@ SfsCtrl::sendErrorEvent(void)
 	ProcessEvent(event);
 }
 
-void
-SfsCtrl::createComCsumGetTasks(const wxString &path, bool doSig)
+ComCsumGetTask *
+SfsCtrl::createComCsumGetTask(bool doSig)
 {
-	/* Ask anoubisd for the checksum */
-	ComCsumGetTask *csTask = new ComCsumGetTask;
-	csTask->setPath(path);
-	csTask->setCalcLink(true);
-
-	pushTask(csTask);
-	JobCtrl::getInstance()->addTask(csTask);
+	ComCsumGetTask		*task = new ComCsumGetTask;
 
 	if (doSig) {
 		KeyCtrl *keyCtrl = KeyCtrl::getInstance();
 		LocalCertificate &cert = keyCtrl->getLocalCertificate();
 		struct anoubis_sig *raw_cert = cert.getCertificate();
 
-		ComCsumGetTask *sigTask = new ComCsumGetTask;
-		sigTask->setPath(path);
-		sigTask->setCalcLink(true);
-		sigTask->setKeyId(raw_cert->keyid, raw_cert->idlen);
-
-		pushTask(sigTask);
-		JobCtrl::getInstance()->addTask(sigTask);
+		task->setKeyId(raw_cert->keyid, raw_cert->idlen);
 	}
+	return task;
 }
 
 ComCsumAddTask *

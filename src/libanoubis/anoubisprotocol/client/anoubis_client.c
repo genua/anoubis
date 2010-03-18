@@ -1503,6 +1503,7 @@ anoubis_csmulti_msg(struct anoubis_csmulti_request *request)
 	int				 add = 0;
 	unsigned int			 nrec = 0;
 	Anoubis_CSMultiRequestRecord	*r;
+	unsigned int			 limit = 10000;
 
 	/* First we check if the minimal conditions are met */
 	switch (request->op) {
@@ -1526,6 +1527,14 @@ anoubis_csmulti_msg(struct anoubis_csmulti_request *request)
 		return NULL;
 	}
 
+	/*
+	 * Limit GET requests to about 80. This means that the reply will
+	 * be able to hold all checksums.
+	 */
+	if (request->op == ANOUBIS_CHECKSUM_OP_GET2
+	    || request->op == ANOUBIS_CHECKSUM_OP_GETSIG2)
+		limit = 80;
+
 	/* Step 1: Calculate the total length of the message */
 
 	length = sizeof(Anoubis_CSMultiRequestMessage);
@@ -1545,6 +1554,8 @@ anoubis_csmulti_msg(struct anoubis_csmulti_request *request)
 			break;
 		length += record->length;
 		nrec++;
+		if (nrec >= limit)
+			break;
 	}
 	/* Sentinel */
 	length += sizeof(Anoubis_CSMultiRequestRecord);

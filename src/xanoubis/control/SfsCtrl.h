@@ -40,6 +40,7 @@
 #include "Task.h"
 #include "TaskEvent.h"
 #include "ComCsumAddTask.h"
+#include "ComCsumGetTask.h"
 
 /**
  * Array is a list of indexes.
@@ -470,9 +471,30 @@ class SfsCtrl : public wxEvtHandler
 		void OnRegistration(TaskEvent &);
 		void OnSfsListArrived(TaskEvent &);
 		void OnCsumCalc(TaskEvent &);
-		void OnCsumGet(TaskEvent &);
-		void OnCsumAdd(TaskEvent &);
-		void OnCsumDel(TaskEvent &);
+
+		/**
+		 * Event handler for completed ComCsumGetTasks.
+		 *
+		 * @param task The ComCsumGetTask.
+		 * @return None.
+		 */
+		void OnCsumGet(TaskEvent &task);
+
+		/**
+		 * Event handler for completed ComCsumAddTasks.
+		 *
+		 * @param task The ComCsumGetTask.
+		 * @return None.
+		 */
+		void OnCsumAdd(TaskEvent &task);
+
+		/**
+		 * Event handler for completed ComCsumDelTasks.
+		 *
+		 * @param task The ComCsumGetTask.
+		 * @return None.
+		 */
+		void OnCsumDel(TaskEvent &task);
 
 	private:
 		SfsDirectory	sfsDir_;
@@ -521,13 +543,27 @@ class SfsCtrl : public wxEvtHandler
 		void disableCommunication(void);
 
 		/**
-		 * Create GET requqest for a path.
+		 * Create a GET request. This function does not add
+		 * any paths to the request and will not schedule it.
 		 *
-		 * @param 1st The path name.
-		 * @param 2nd True if signature data should be requested.
+		 * @param 1st True if the request should ask for checksums
+		 *     and signatures.
+		 * @return The new request.
+		 */
+		ComCsumGetTask *createComCsumGetTask(bool);
+
+		/**
+		 * Process a single entry in a ComCsumGetTask that uses
+		 * csmulti requests.
+		 *
+		 * @param 1st The ComCsumGetTask.
+		 * @param 2nd The index of the entry to process in the
+		 *     tasks path list.
+		 * @param 3rd The SfsEntry associated with the reply.
 		 * @return None.
 		 */
-		void createComCsumGetTasks(const wxString &, bool);
+		void processOneCsumGet(ComCsumGetTask *task,
+		    unsigned int idx, SfsEntry * entry);
 
 		/**
 		 * Create a task that calculates the checksum and
