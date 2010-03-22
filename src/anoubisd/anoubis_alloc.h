@@ -98,6 +98,25 @@ __abuf_check(struct abuf_buffer buf, unsigned int off,
 }
 
 /**
+ * Internal checking function, similar to __abuf_check. However, it
+ * returns a pointer tot the data.
+ * @param buf The buffer.
+ * @param off The offset into the buffer whee the memory area starts.
+ * @param len The length of the memory area.
+ * @return A pointer to the memory area on success or NULL.
+ */
+static inline void *
+__abuf_check_ptr(struct abuf_buffer buf, unsigned int off,
+    unsigned int len)
+{
+	int	ok = __abuf_check(buf, off, len);
+
+	if (ok)
+		return buf.data + off;
+	return NULL;
+}
+
+/**
  * This macro returs true if the buffer is empty.
  * @param BUF The buffer.
  * @return True iff the buffer is empty.
@@ -120,8 +139,7 @@ __abuf_check(struct abuf_buffer buf, unsigned int off,
  *     given type.
  */
 #define abuf_cast(BUF, TYPE)						\
-	((TYPE*)(__abuf_check((BUF), 0, sizeof(TYPE))		\
-	    ? (BUF).data : NULL))
+	((TYPE*)(__abuf_check_ptr((BUF), 0, sizeof(TYPE))))
 
 /**
  * Cast the data at offset OFF in the buffer BUF to type TYPE.
@@ -135,8 +153,7 @@ __abuf_check(struct abuf_buffer buf, unsigned int off,
  *     given type.
  */
 #define abuf_cast_off(BUF, OFF, TYPE)					\
-	((TYPE*)(__abuf_check((BUF), (OFF), sizeof(TYPE))		\
-	    ? ((BUF).data + off) : NULL))
+	((TYPE*)(__abuf_check_ptr((BUF), (OFF), sizeof(TYPE))))
 
 /**
  * Allocate a buffer that is large enough to hold a structure of

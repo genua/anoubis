@@ -26,6 +26,7 @@
  */
 
 #include <anoubis_alloc.h>
+#include <stdlib.h>
 
 /**
  * Magic cookie that is stored in front of an allocated buffer. It
