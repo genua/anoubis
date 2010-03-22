@@ -118,7 +118,7 @@ process_request(struct anoubis_csmulti_request *req)
 		ret = -t->result;
 		anoubis_transaction_destroy(t);
 		if (ret) {
-			fprintf(stderr, "Tranaction error: %d\n", -ret);
+			fprintf(stderr, "Transaction error: %d\n", -ret);
 			return ret;
 		}
 	}
@@ -265,15 +265,20 @@ auth_callback(struct anoubis_client *client __used, struct anoubis_msg *in,
 	return anoubis_auth_callback(sigs, sigs, in, outp, 0);
 }
 
-int main()
+int main(int argc, char **argv)
 {
 	struct anoubis_csmulti_request		*req;
 	int					 ret;
+	unsigned int				 maxversion = -1;
 
+	if (argc > 1) {
+		assert(argc == 2);
+		maxversion = atoi(argv[1]);
+	}
 	init_files();
 	sigs = create_sig();
 	assert(sigs && sigs->pkey && sigs->cert);
-	create_channel(&channel, &client, auth_callback);
+	create_channel_old(&channel, &client, auth_callback, maxversion);
 
 	/* First delete all entries. */
 	req = create_request(ANOUBIS_CHECKSUM_OP_DEL);

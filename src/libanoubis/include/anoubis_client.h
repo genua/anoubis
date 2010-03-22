@@ -78,6 +78,7 @@ struct anoubis_client * anoubis_client_create(
     struct achat_channel * chan, int authtype, anoubis_client_auth_callback_t);
 void anoubis_client_destroy(struct anoubis_client *);
 int anoubis_client_connect(struct anoubis_client *, unsigned int);
+int anoubis_client_connect_old(struct anoubis_client *, unsigned int, int);
 struct anoubis_transaction * anoubis_client_connect_start(
     struct anoubis_client *, unsigned int);
 int anoubis_client_serverversion(struct anoubis_client *);

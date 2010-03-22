@@ -60,8 +60,9 @@
 #include <protocol_utils.h>
 
 void
-create_channel(struct achat_channel **chanp, struct anoubis_client **clientp,
-    anoubis_client_auth_callback_t callback)
+create_channel_old(struct achat_channel **chanp,
+    struct anoubis_client **clientp, anoubis_client_auth_callback_t callback,
+    int maxversion)
 {
 	int				 error = 0;
 	achat_rc			 rc;
@@ -89,12 +90,23 @@ create_channel(struct achat_channel **chanp, struct anoubis_client **clientp,
 	if (callback)
 		auth_type = ANOUBIS_AUTH_TRANSPORTANDKEY;
 	client = anoubis_client_create(channel, auth_type, callback);
-	error = anoubis_client_connect(client, ANOUBIS_PROTO_BOTH);
+	if (maxversion < 0)
+		error = anoubis_client_connect(client, ANOUBIS_PROTO_BOTH);
+	else
+		error = anoubis_client_connect_old(client, ANOUBIS_PROTO_BOTH,
+		    maxversion);
 	assert(error == 0);
 	if (chanp)
 		(*chanp) = channel;
 	if (clientp)
 		(*clientp) = client;
+}
+
+void
+create_channel(struct achat_channel **chanp,
+    struct anoubis_client **clientp, anoubis_client_auth_callback_t callback)
+{
+	create_channel_old(chanp, clientp, callback, -1);
 }
 
 void

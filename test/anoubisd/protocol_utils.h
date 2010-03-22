@@ -51,6 +51,25 @@ extern void create_channel(struct achat_channel **, struct anoubis_client **,
     anoubis_client_auth_callback_t);
 
 /**
+ * NOTE: You really should not be using this function unless you know what
+ * NOTE: you are doing!
+ *
+ * The same as create channel, except the the protocol version is patched
+ * to at most maxversion after a successful connect. All warnings related
+ * to anoubis_client_connect_old apply!
+ * @param 1st The channel for the client connection will be stored here.
+ * @param 2nd The anoubis_client protocol object will be stored here.
+ * @param 3rd If non-NULL this function is used as the callback funcion.
+ *     The authentication is set to ANOUBIS_AUTH_TRANSPORT if this value
+ *     is NULL.
+ * @param 4th The maximum version. A value of -1 will use the default
+ *     protocol version handling.
+ * @return None. assert(3) is used to indicate errors.
+ */
+extern void create_channel_old(struct achat_channel **,
+    struct anoubis_client **, anoubis_client_auth_callback_t, int maxversion);
+
+/**
  * Destroy a previously created channel.
  *
  * @param 1st The anoubis chat channel.

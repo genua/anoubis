@@ -90,15 +90,6 @@ struct anoubis_client {
 	anoubis_client_auth_callback_t	auth_callback;
 };
 
-/* XXX tartler: The anoubis client library is pretty challenging to
- *              annotate properly, since I don't quite understand the
- *              memory managment implications between struct
- *              anoubis_client and struct anoubis_msg. Since for MS7 the
- *              priority is on anoubisd, we defer enabling memory checks
- *              for this part of libanoubisprotocol.
- */
-
-/*@-memchecks@*/
 static void queue_notify(struct anoubis_client * client, struct anoubis_msg * m)
 {
 	m->next = client->tail;
@@ -992,6 +983,95 @@ anoubis_client_policyrequest_start(struct anoubis_client * client,
 	return t;
 }
 
+
+static struct anoubis_msg *
+anoubis_client_compat_checksum_msg(const char *path, int op, uid_t uid,
+    const void *keyid, unsigned int kidlen,
+    const void *csdata, unsigned int cslen)
+{
+	struct anoubis_msg	*m;
+	void			*dstpath;
+	void			*dstid;
+	int			 add = 0;
+	unsigned int		 flags = 0;
+
+	/* At first we check if the minimal conditions are met */
+	switch (op) {
+	case ANOUBIS_CHECKSUM_OP_ADDSIG:
+		/* Need a key and checksum data */
+		if (keyid == NULL || kidlen == 0)
+			return NULL;
+		if (csdata == NULL || cslen == 0)
+			return NULL;
+		add = 1;
+		break;
+	case ANOUBIS_CHECKSUM_OP_DELSIG:
+	case ANOUBIS_CHECKSUM_OP_GETSIG2:
+		/* Need a key but no checksum data */
+		if (keyid == NULL || kidlen == 0)
+			return NULL;
+		if (csdata != NULL || cslen != 0)
+			return 0;
+		break;
+	case ANOUBIS_CHECKSUM_OP_ADDSUM:
+		/* Need checksum data but no key. */
+		if (keyid != NULL || kidlen != 0)
+			return 0;
+		if (csdata == NULL || cslen == 0)
+			return NULL;
+		add = 1;
+		break;
+	case ANOUBIS_CHECKSUM_OP_DEL:
+	case ANOUBIS_CHECKSUM_OP_GET2:
+		/* Neither keyid nor checksum data */
+		if (keyid != NULL || kidlen != 0)
+			return 0;
+		if (csdata != NULL || cslen != 0)
+			return 0;
+		break;
+	default:
+		return NULL;
+	}
+	if (kidlen == 0)
+		flags = ANOUBIS_CSUM_UID;
+	else
+		flags = ANOUBIS_CSUM_KEY;
+	if (!path || !strlen(path))
+		return NULL;
+	/* Everything seems fine, lets start the operation */
+	if (add) {
+		m = anoubis_msg_new(sizeof(Anoubis_ChecksumAddMessage)
+		    + cslen + kidlen + strlen(path) + 1);
+		if (!m)
+			return NULL;
+		set_value(m->u.checksumadd->type, ANOUBIS_P_CSUMREQUEST);
+		set_value(m->u.checksumadd->uid, uid);
+		set_value(m->u.checksumadd->flags, flags);
+		set_value(m->u.checksumadd->idlen, kidlen);
+		set_value(m->u.checksumadd->operation, op);
+		set_value(m->u.checksumadd->cslen, cslen);
+		memcpy(m->u.checksumadd->payload + kidlen, csdata, cslen);
+		dstpath = m->u.checksumadd->payload + cslen + kidlen;
+		dstid = m->u.checksumadd->payload;
+	} else {
+		m = anoubis_msg_new(sizeof(Anoubis_ChecksumRequestMessage)
+		    + strlen(path) + kidlen + 1);
+		if (!m)
+			return NULL;
+		set_value(m->u.checksumrequest->type, ANOUBIS_P_CSUMREQUEST);
+		set_value(m->u.checksumrequest->uid, uid);
+		set_value(m->u.checksumrequest->flags, flags);
+		set_value(m->u.checksumrequest->idlen, kidlen);
+		set_value(m->u.checksumrequest->operation, op);
+		dstid = m->u.checksumrequest->payload;
+		dstpath = m->u.checksumrequest->payload + kidlen;
+	}
+	if (dstid)
+		memcpy(dstid, keyid, kidlen);
+	strlcpy(dstpath, path, strlen(path) + 1);
+	return m;
+}
+
 /* If a signature is delivered to the daemon the signature, the keyid and the
  * checksum will be stored in the function parameter payload.
  *
@@ -1385,7 +1465,55 @@ anoubis_client_csmulti_finish(struct anoubis_transaction *t)
 }
 
 /**
- * The methods processes the reply of a CSMULTI request and stores the
+ * Extract the checksum reply data of a get request from the data buffer
+ * and assign it to a request record.
+ *
+ * @param record The request record.
+ * @param databuffer The data buffer containing the checksum data.
+ * @param datalen The length of the data buffer.
+ * @return Zero in case of success, a negative error code if an error
+ *     occured.
+ */
+static int
+anoubis_csmulti_handle_get(struct anoubis_csmulti_record *record,
+    void *databuffer, unsigned int datalen)
+{
+	unsigned int	off = 0;
+
+	while (1) {
+		struct anoubis_csentry	*e;
+		unsigned int		 total;
+		unsigned int		 cstype;
+
+		if (datalen < sizeof(struct anoubis_csentry))
+			return -EFAULT;
+		e = (struct anoubis_csentry *)(databuffer + off);
+		total = sizeof(struct anoubis_csentry)
+		    + get_value(e->cslen);
+		if (total > datalen)
+			return -EFAULT;
+		datalen -= total;
+		off += total;
+		cstype =  get_value(e->cstype);
+		if (cstype == ANOUBIS_SIG_TYPE_EOT)
+			break;
+		switch(cstype) {
+		case ANOUBIS_SIG_TYPE_CS:
+			record->u.get.csum = e;
+			break;
+		case ANOUBIS_SIG_TYPE_SIG:
+			record->u.get.sig = e;
+			break;
+		case ANOUBIS_SIG_TYPE_UPGRADECS:
+			record->u.get.upgrade = e;
+			break;
+		}
+	}
+	return 0;
+}
+
+/**
+ * This method processes the reply of a CSMULTI request and stores the
  * data in the anoubis_csmulti_request associated with the transaction.
  *
  * @param t The transaction.
@@ -1398,43 +1526,71 @@ anoubis_client_csmulti_steps(struct anoubis_transaction *t,
 	struct anoubis_csmulti_request	*request = t->cbdata;
 	struct anoubis_client		*client = request->client;
 	unsigned int			 off = 0;
+	unsigned int			 type;
 	int				 ret;
 
 	ret = -EPROTO;
 	if (!request || !client)
-		goto err;
-	if (!VERIFY_LENGTH(m, sizeof(Anoubis_CSMultiReplyMessage)))
-		goto err;
-	if (!get_value(m->u.csmultireply->operation) == request->op)
-		goto err;
-	ret = -get_value(m->u.csmultireply->error);
+		goto out;
+	if (!VERIFY_FIELD(m, general, type))
+		goto out;
+	type = get_value(m->u.general->type);
+	switch(type) {
+	case ANOUBIS_REPLY: {
+		struct anoubis_csmulti_record	*record = request->last;
+
+		if (!VERIFY_LENGTH(m, sizeof(Anoubis_AckPayloadMessage)))
+			goto out;
+		record->error = get_value(m->u.ackpayload->error);
+		/* Error handled. Report success. */
+		ret = 0;
+		if (record->error)
+			goto out;
+		/* If this is not a GET/GETSIG request, we are done. */
+		if (request->op != ANOUBIS_CHECKSUM_OP_GET2
+		    && request->op != ANOUBIS_CHECKSUM_OP_GETSIG2)
+			goto out;
+		ret = anoubis_csmulti_handle_get(record,
+		    m->u.ackpayload->payload,
+		    PAYLOAD_LEN(m, ackpayload, payload));
+		goto out;
+	}
+	case ANOUBIS_P_CSMULTIREPLY:
+		if (!VERIFY_LENGTH(m, sizeof(Anoubis_CSMultiReplyMessage)))
+			goto out;
+		if (!get_value(m->u.csmultireply->operation) == request->op)
+			goto out;
+		ret = -get_value(m->u.csmultireply->error);
+		break;
+	default:
+		goto out;
+	}
 	if (ret != 0)
-		goto err;
+		goto out;
 
 	ret = -EFAULT;
 	while (1) {
 		Anoubis_CSMultiReplyRecord	*r;
 		unsigned int			 rlen;
 		unsigned int			 idx;
-		unsigned int			 off2;
 		struct anoubis_csmulti_record	*record;
 
 		if (!VERIFY_LENGTH(m, sizeof(Anoubis_CSMultiReplyMessage)
 		    + off + sizeof(Anoubis_CSMultiReplyRecord)))
-			goto err;
+			goto out;
 		r = (Anoubis_CSMultiReplyRecord *)
 		    (m->u.csmultireply->payload + off);
 		rlen = get_value(r->length);
 		if (rlen == 0)
 			break;
 		if (rlen < sizeof(Anoubis_CSMultiReplyRecord))
-			goto err;
+			goto out;
 		if (off + rlen < off)
-			goto err;
+			goto out;
 		off += rlen;
 		if (!VERIFY_LENGTH(m,
 		    sizeof(Anoubis_CSMultiReplyMessage) + off))
-			goto err;
+			goto out;
 		idx = get_value(r->index);
 		record = anoubis_csmulti_find(request, idx);
 		if (!record)
@@ -1455,47 +1611,20 @@ anoubis_client_csmulti_steps(struct anoubis_transaction *t,
 		 * the result record only points into the message!
 		 */
 		rlen -= sizeof(Anoubis_CSMultiReplyRecord);
-		off2 = 0;
-		while (1) {
-			struct anoubis_csentry	*e;
-			unsigned int		 total;
-			unsigned int		 cstype;
-
-			if (rlen < sizeof(struct anoubis_csentry))
-				goto err;
-			e = (struct anoubis_csentry *)(r->payload + off2);
-			total = sizeof(struct anoubis_csentry)
-			    + get_value(e->cslen);
-			if (total > rlen)
-				goto err;
-			rlen -= total;
-			off2 += total;
-			cstype =  get_value(e->cstype);
-			if (cstype == ANOUBIS_SIG_TYPE_EOT)
-				break;
-			switch(cstype) {
-			case ANOUBIS_SIG_TYPE_CS:
-				record->u.get.csum = e;
-				break;
-			case ANOUBIS_SIG_TYPE_SIG:
-				record->u.get.sig = e;
-				break;
-			case ANOUBIS_SIG_TYPE_UPGRADECS:
-				record->u.get.upgrade = e;
-				break;
-			}
-		}
+		ret = anoubis_csmulti_handle_get(record, r->payload, rlen);
+		if (ret < 0)
+			goto out;
 	}
 	ret = 0;
-err:
+out:
 	/* Do not free the message because of ANOUBIS_T_WANTMESSAGE */
 	anoubis_transaction_done(t, -ret);
 	LIST_REMOVE(t, next);
 	client->flags &= ~FLAG_POLICY_PENDING;
 }
 
-struct anoubis_msg *
-anoubis_csmulti_msg(struct anoubis_csmulti_request *request)
+static struct anoubis_msg *
+__anoubis_csmulti_msg(struct anoubis_csmulti_request *request, int compat)
 {
 	struct anoubis_msg		*m;
 	struct anoubis_csmulti_record	*record;
@@ -1525,6 +1654,24 @@ anoubis_csmulti_msg(struct anoubis_csmulti_request *request)
 		break;
 	default:
 		return NULL;
+	}
+
+	if (compat) {
+		for (record = csmulti_iterator_first(request); record;
+		    record = csmulti_iterator_next(request, record)) {
+			if (record->error == EAGAIN)
+				break;
+		}
+		if (!record) {
+			request->openreqs = 0;
+			return NULL;
+		}
+		request->last = record;
+		m = anoubis_client_compat_checksum_msg(record->path,
+		    request->op, request->uid, request->keyid, request->idlen,
+		    add ? record->u.add.csdata : NULL,
+		    add ? record->u.add.cslen : 0);
+		return m;
 	}
 
 	/*
@@ -1613,14 +1760,21 @@ anoubis_csmulti_msg(struct anoubis_csmulti_request *request)
 	return m;
 }
 
+struct anoubis_msg *
+anoubis_csmulti_msg(struct anoubis_csmulti_request *request)
+{
+	return __anoubis_csmulti_msg(request, 0);
+}
+
 struct anoubis_transaction *
 anoubis_client_csmulti_start(struct anoubis_client *client,
     struct anoubis_csmulti_request *request)
 {
 	static const u_int32_t ops[] = { ANOUBIS_P_CSMULTIREPLY, -1 };
-
+	static const u_int32_t compat_ops[] = { ANOUBIS_REPLY, -1 };
 	struct anoubis_msg		*m;
 	struct anoubis_transaction	*t = NULL;
+	int				 compat = 0;
 
 	if ((client->proto & ANOUBIS_PROTO_POLICY) == 0)
 		return NULL;
@@ -1631,7 +1785,13 @@ anoubis_client_csmulti_start(struct anoubis_client *client,
 	if (request->client)
 		return NULL;
 
-	m = anoubis_csmulti_msg(request);
+	if (client->selected_version < 5)
+		compat = 1;
+	/*
+	 * Do not use CSMULTI messages if the server does not support them
+	 * (selected_version < 5)
+	 */
+	m = __anoubis_csmulti_msg(request, compat);
 	if (!m)
 		return NULL;
 
@@ -1651,7 +1811,10 @@ anoubis_client_csmulti_start(struct anoubis_client *client,
 		anoubis_transaction_destroy(t);
 		return NULL;
 	}
-	anoubis_transaction_setopcodes(t, ops);
+	if (compat)
+		anoubis_transaction_setopcodes(t, compat_ops);
+	else
+		anoubis_transaction_setopcodes(t, ops);
 	LIST_INSERT_HEAD(&client->ops, t, next);
 	client->flags |= FLAG_POLICY_PENDING;
 	return t;
@@ -1691,7 +1854,8 @@ anoubis_client_passphrase_start(struct anoubis_client *client,
 }
 
 /* Sync functions */
-int anoubis_client_connect(struct anoubis_client * client, unsigned int proto)
+int
+anoubis_client_connect(struct anoubis_client * client, unsigned int proto)
 {
 	struct anoubis_transaction * t;
 	struct anoubis_msg * m;
@@ -1712,6 +1876,28 @@ int anoubis_client_connect(struct anoubis_client * client, unsigned int proto)
 	}
 	ret = -t->result;
 	anoubis_transaction_destroy(t);
+	return ret;
+}
+
+/*
+ * NOTE: This function is intended for testing purposes. It is may go
+ * NOTE: away anytime and really nobody should use it. It may also not
+ * NOTE: work as expected because the selected_version in the client will
+ * NOTE: differ from what the server has been told.
+ * NOTE: You have been warned!
+ */
+int
+anoubis_client_connect_old(struct anoubis_client *client,
+    unsigned int proto, int maxversion)
+{
+	int	ret = anoubis_client_connect(client, proto);
+
+	if (ret < 0)
+		return ret;
+	if (client->selected_version > maxversion)
+		client->selected_version = maxversion;
+	if (client->selected_version < client->server_min_version)
+		ret = -EPROTO;
 	return ret;
 }
 
@@ -1807,5 +1993,3 @@ anoubis_client_version_start(struct anoubis_client *client)
 
 	return (t);
 }
-
-/*@=memchecks@*/
