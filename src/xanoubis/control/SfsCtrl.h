@@ -643,7 +643,7 @@ class SfsCtrl : public wxEvtHandler
 		 */
 		void clearImportEntries(void);
 
-		void pushTask(Task *);
+		void pushTask(Task *, int work);
 		void popTask(Task *);
 
 		void sendOperationFinishedEvent(void);

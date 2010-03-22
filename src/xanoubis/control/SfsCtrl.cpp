@@ -215,6 +215,12 @@ SfsCtrl::validate(const IndexArray &arr)
 		int	numScheduled = 0;
 		bool	doSig = isSignatureEnabled();
 
+		/*
+		 * Progress calculation 2*#Elements:
+		 * - One for each path in a GET task.
+		 * - One for each checksum calculation.
+		 * - One extra count for each GET task added below.
+		 */
 		startSfsOp(2 * arr.Count());
 		for (size_t i = 0; i < arr.Count(); i++) {
 			unsigned int idx = arr.Item(i);
@@ -237,9 +243,7 @@ SfsCtrl::validate(const IndexArray &arr)
 				task = createComCsumGetTask(doSig);
 			task->addPath(entry->getPath());
 			if (task->getPathCount() >= 1000) {
-				pushTask(task);
-				startSfsOp(0);
-				JobCtrl::getInstance()->addTask(task);
+				pushTask(task, 1);
 				task = NULL;
 			}
 
@@ -247,14 +251,17 @@ SfsCtrl::validate(const IndexArray &arr)
 				/* Ask for the local checksum */
 				createCsumCalcTask(entry->getPath());
 			}
-			if (!updateSfsOp(1))
+			/* No progress but allow abort. */
+			if (!updateSfsOp(0)) {
+				if (task)
+					delete task;
+				task = NULL;
 				break;
+			}
 			numScheduled++;
 		}
 		if (task) {
-			pushTask(task);
-			startSfsOp(0);
-			JobCtrl::getInstance()->addTask(task);
+			pushTask(task, 1);
 			task = NULL;
 		}
 		endSfsOp();
@@ -296,8 +303,14 @@ SfsCtrl::registerChecksum(const IndexArray &arr)
 		return (RESULT_BUSY);
 
 	if (comEnabled_) {
+		/*
+		 * Progress calculation:
+		 * - one for each entry in the path list.
+		 * - one more for each task that is actually sent
+		 *   (handled inside the loop).
+		 */
 		bool	doSig = isSignatureEnabled();
-		startSfsOp(2 * arr.Count());
+		startSfsOp(arr.Count());
 		for (size_t i = 0; i < arr.Count(); i++) {
 			idx = arr.Item(i);
 
@@ -327,29 +340,18 @@ SfsCtrl::registerChecksum(const IndexArray &arr)
 			task->addPath(entry->getPath());
 			/* Add one to the progress bar for the new task*/
 			if (task->getPathCount() >= 1000) {
-				startSfsOp(1);
-				if (!updateSfsOp(1)) {
+				pushTask(task, 1);
+				task = NULL;
+			}
+			if (!updateSfsOp(0)) {
+				if (task)
 					delete task;
-					task = NULL;
-					endSfsOp();
-					break;
-				}
-				pushTask(task);
-				JobCtrl::getInstance()->addTask(task);
 				task = NULL;
+				break;
 			}
 		}
-		if (task) {
-			startSfsOp(1);
-			if (!updateSfsOp(1)) {
-				delete task;
-				task = NULL;
-				endSfsOp();
-			} else {
-				pushTask(task);
-				JobCtrl::getInstance()->addTask(task);
-			}
-		}
+		if (task)
+			pushTask(task, 1);
 		endSfsOp();
 		return (RESULT_EXECUTE);
 	} else
@@ -375,6 +377,10 @@ SfsCtrl::unregisterChecksum(const IndexArray &arr)
 		int	numScheduled = 0;
 		bool	doSig = isSignatureEnabled();
 
+		/*
+		 * Progress accounting:
+		 * - two for each createComCsumDelTasks
+		 */
 		startSfsOp(2 * arr.Count());
 		for (size_t i = 0; i < arr.Count(); i++) {
 			unsigned int idx = arr.Item(i);
@@ -395,7 +401,7 @@ SfsCtrl::unregisterChecksum(const IndexArray &arr)
 				entry->setChecksumMissing(
 				    SfsEntry::SFSENTRY_SIGNATURE);
 			}
-			if (!updateSfsOp(1))
+			if (!updateSfsOp(0))
 				break;
 		}
 		endSfsOp();
@@ -407,7 +413,7 @@ SfsCtrl::unregisterChecksum(const IndexArray &arr)
 SfsCtrl::CommandResult
 SfsCtrl::importChecksums(const wxString &path)
 {
-	ComCsumGetTask	*task;
+	ComCsumGetTask	*task = NULL;
 
 	if (!taskList_.empty() || inProgress_)
 		return (RESULT_BUSY);
@@ -450,11 +456,19 @@ SfsCtrl::importChecksums(const wxString &path)
 			total++;
 
 		entry = entries;
-		startSfsOp(2 * total);
-		/* XXX CEH: Make better use of csmulti requests if possible */
+		/*
+		 * Progress accounting:
+		 * - each createComCsumAddTask(SfsEntry) requires a
+		 *   progress of two.
+		 * - each path in a createComCsumGetTask will make
+		 *   progress of one.
+		 * - each createCsumCalcTask requires a progress of 1
+		 * - additionally, each ComCsumGetTask that is scheduled
+		 *   makes another progress of one (handled inside the loop).
+		 */
+		startSfsOp(4 * total);
 		while (entry != 0) {
 			createComCsumAddTask(entry);
-
 			int idx = sfsDir_.getIndexOf(
 			    wxString::FromAscii(entry->name));
 			if (idx != -1) {
@@ -463,17 +477,29 @@ SfsCtrl::importChecksums(const wxString &path)
 
 				if (!e->haveLocalCsum())
 					createCsumCalcTask(e->getPath());
+				else
+					updateSfsOp(1);
 
-				task = createComCsumGetTask(doSig);
+				if (!task)
+					task = createComCsumGetTask(doSig);
 				task->addPath(e->getPath());
-				pushTask(task);
-				startSfsOp(0);
-				JobCtrl::getInstance()->addTask(task);
+				if (task->getPathCount() >= 1000) {
+					pushTask(task, 1);
+					task = NULL;
+				}
+			} else {
+				updateSfsOp(3);
 			}
 			entry = entry->next;
-			if (!updateSfsOp(1))
+			if (!updateSfsOp(0)) {
+				if (task)
+					delete task;
+				task = NULL;
 				break;
+			}
 		}
+		if (task)
+			pushTask(task, 1);
 		endSfsOp();
 		return (RESULT_EXECUTE);
 	} else
@@ -483,7 +509,7 @@ SfsCtrl::importChecksums(const wxString &path)
 SfsCtrl::CommandResult
 SfsCtrl::exportChecksums(const IndexArray &arr, const wxString &path)
 {
-	ComCsumGetTask	*task;
+	ComCsumGetTask	*task = NULL;
 
 	if (!taskList_.empty() || inProgress_)
 		return (RESULT_BUSY);
@@ -494,7 +520,14 @@ SfsCtrl::exportChecksums(const IndexArray &arr, const wxString &path)
 		exportEnabled_ = true;
 		exportFile_ = path;
 
-		startSfsOp(3 * arr.Count());
+		/*
+		 * Progress calculation:
+		 * - One for each ComCsumCalcTask
+		 * - One for each path in a ComCsumGetTask.
+		 * - additionally, one more each ComCsumGetTask itself
+		 *   (handled inside the loop).
+		 */
+		startSfsOp(2 * arr.Count());
 		for (size_t i = 0; i < arr.Count(); i++) {
 			unsigned int idx = arr.Item(i);
 
@@ -510,14 +543,22 @@ SfsCtrl::exportChecksums(const IndexArray &arr, const wxString &path)
 			 */
 			SfsEntry *entry = sfsDir_.getEntry(idx);
 			createCsumCalcTask(entry->getPath());
-			task = createComCsumGetTask(doSig);
+			if (!task)
+				task = createComCsumGetTask(doSig);
 			task->addPath(entry->getPath());
-			pushTask(task);
-			startSfsOp(0);
-			JobCtrl::getInstance()->addTask(task);
-			if (!updateSfsOp(1))
+			if (task->getPathCount() >= 1000) {
+				pushTask(task, 1);
+				task = NULL;
+			}
+			if (!updateSfsOp(0)) {
+				if (task)
+					delete task;
+				task = NULL;
 				break;
+			}
 		}
+		if (task)
+			pushTask(task, 1);
 		endSfsOp();
 		return (RESULT_EXECUTE);
 	} else
@@ -573,6 +614,14 @@ SfsCtrl::OnRegistration(TaskEvent &event)
 	event.Skip();
 }
 
+/*
+ * Progress calculation:
+ * An SfsListArrived task makes a progress for a non-recursive list
+ * operation and a progress of 50 for a recursive one.
+ * Additionally, it start new SFS-Operations that will need to make progress.
+ * We take care to make sure that any new operations are started before
+ * we call endSfsOp for the list operation!
+ */
 void
 SfsCtrl::OnSfsListArrived(TaskEvent &event)
 {
@@ -598,8 +647,6 @@ SfsCtrl::OnSfsListArrived(TaskEvent &event)
 	ComTask::ComTaskResult comResult = task->getComTaskResult();
 	SfsEntry::ChecksumType type = task->haveKeyId() ?
 	    SfsEntry::SFSENTRY_SIGNATURE : SfsEntry::SFSENTRY_CHECKSUM;
-	updateSfsOp(1);
-	endSfsOp();
 
 	if (comResult != ComTask::RESULT_SUCCESS) {
 		ComTask::ComTaskResult comResult = task->getComTaskResult();
@@ -653,16 +700,33 @@ SfsCtrl::OnSfsListArrived(TaskEvent &event)
 	if (!basePath.EndsWith(wxT("/")))
 		basePath += wxT("/");
 
+	/*
+	 * First start the new operation than end the list operation.
+	 * Progress calculation for the new list operation:#
+	 * - One for each CsumCalc task.
+	 * - One for each PATH in a GET request.
+	 * - One more for each GET task that is actually pushed
+	 *   (this is handled inside the loop).
+	 */
 	startSfsOp(2 * result.Count());
+	if (isRecursive())
+		updateSfsOp(50);
+	else
+		updateSfsOp(1);
+	endSfsOp();
 	bool doSig = isSignatureEnabled();
 	sfsDir_.beginChange();
 	for (unsigned int idx = 0; idx < result.Count(); idx++) {
 		SfsEntry *entry = sfsDir_.insertEntry(basePath + result[idx]);
 
 		if (entry == 0) {
-			/* Not inserted into the model */
-			if (!updateSfsOp(1))
+			/* Not inserted into model. Make progress and skip */
+			if (!updateSfsOp(2)) {
+				if (getTask)
+					delete getTask;
+				getTask = NULL;
 				break;
+			}
 			continue;
 		}
 
@@ -675,35 +739,39 @@ SfsCtrl::OnSfsListArrived(TaskEvent &event)
 		} else {
 			/*
 			 * Remove a previous calculated local checksum, the
-			 * file might be removed in the meanwhile.
+			 * file might be removed in the meanwhile. Make
+			 * progress for the CALC task that is not needed.
 			 */
 			entry->setLocalCsum(0);
+			updateSfsOp(1);
 		}
 
 		if (!getTask)
 			getTask = createComCsumGetTask(doSig);
 		getTask->addPath(entry->getPath());
 		if (getTask->getPathCount() >= 1000) {
-			pushTask(getTask);
-			startSfsOp(0);
-			JobCtrl::getInstance()->addTask(getTask);
+			pushTask(getTask, 1);
 			getTask = NULL;
 		}
-		if (!updateSfsOp(1))
+		if (!updateSfsOp(0)) {
+			if (getTask)
+				delete getTask;
+			getTask = NULL;
 			break;
+		}
 	}
-	if (getTask) {
-		pushTask(getTask);
-		startSfsOp(0);
-		JobCtrl::getInstance()->addTask(getTask);
-		getTask = NULL;
-	}
+	if (getTask)
+		pushTask(getTask, 1);
 	sfsDir_.endChange();
 	endSfsOp();
 	/* Directory listing is complete */
 	sendDirChangedEvent();
 }
 
+/*
+ * Progress calculation:
+ * A checksum calcuation task makes progress and ends an SFS operation.
+ */
 void
 SfsCtrl::OnCsumCalc(TaskEvent &event)
 {
@@ -723,8 +791,6 @@ SfsCtrl::OnCsumCalc(TaskEvent &event)
 	}
 
 	event.Skip(false); /* "My" task -> stop propagating */
-	updateSfsOp(1);
-	endSfsOp();
 
 	/* Search for SfsEntry */
 	int idx = sfsDir_.getIndexOf(task->getPath());
@@ -732,24 +798,20 @@ SfsCtrl::OnCsumCalc(TaskEvent &event)
 		wxString message = wxString::Format(
 		    _("%ls not found in file-list!"), task->getPath().c_str());
 		errorList_.Add(message);
-
-		return;
-	}
-
-	if (task->getResult() != 0) {
+	} else if (task->getResult() != 0) {
 		/* Calculation failed */
 		wxString message = wxString::Format(
 		    _("Failed to calculate the checksum for %ls: %hs"),
 		    task->getPath().c_str(),
 		    anoubis_strerror(task->getResult()));
 		errorList_.Add(message);
-
-		return;
+	} else {
+		/* Copy checksum into SfsEntry */
+		SfsEntry *entry = sfsDir_.getEntry(idx);
+		entry->setLocalCsum(task->getCsum());
 	}
-
-	/* Copy checksum into SfsEntry */
-	SfsEntry *entry = sfsDir_.getEntry(idx);
-	entry->setLocalCsum(task->getCsum());
+	updateSfsOp(1);
+	endSfsOp();
 }
 
 void
@@ -823,6 +885,13 @@ SfsCtrl::processOneCsumGet(ComCsumGetTask *task, unsigned int idx,
 	}
 }
 
+/*
+ * Progress calculation:
+ * A GET request ends one SFS operation that is associated with its task.
+ * Additionally, it makes a progress of
+ * - one for the task itself
+ * - one for each path in the task.
+ */
 void
 SfsCtrl::OnCsumGet(TaskEvent &event)
 {
@@ -846,10 +915,15 @@ SfsCtrl::OnCsumGet(TaskEvent &event)
 	}
 
 	event.Skip(false); /* "My" task -> stop propagating */
-	updateSfsOp(1);
-	endSfsOp();
 
+	/* Progress for the finished task. */
+	updateSfsOp(1);
 	taskResult = task->getComTaskResult();
+	if (taskResult != ComTask::RESULT_SUCCESS) {
+		/* We will abort, account for Progress. */
+		updateSfsOp(task->getPathCount());
+		endSfsOp();
+	}
 	if (taskResult == ComTask::RESULT_REMOTE_ERROR) {
 		err = anoubis_strerror(task->getResultDetails());
 		message = wxString::Format(_("Got error from daemon while "
@@ -890,8 +964,18 @@ SfsCtrl::OnCsumGet(TaskEvent &event)
 		entry = sfsDir_.getEntry(modelindex);
 		processOneCsumGet(task, idx, entry);
 	}
+	/* Account for the progress made. */
+	updateSfsOp(task->getPathCount());
+	endSfsOp();
 }
 
+/*
+ * Progress calculation:
+ * An add task finishes one SFS operation associated with the task and
+ * makes progress as follows:
+ * - one for the task itslef
+ * - one for each path in the task.
+ */
 void
 SfsCtrl::OnCsumAdd(TaskEvent &event)
 {
@@ -910,6 +994,8 @@ SfsCtrl::OnCsumAdd(TaskEvent &event)
 		event.Skip();
 		return;
 	}
+	/* Account for the finished task itself. */
+	updateSfsOp(1);
 
 	event.Skip(false); /* "My" task -> stop propagating */
 
@@ -939,6 +1025,12 @@ SfsCtrl::OnCsumAdd(TaskEvent &event)
 		    "occured (%hs) while registering checksums/signatures."),
 		    anoubis_strerror(task->getComTaskResult()));
 		errorList_.Add(message);
+	}
+	/* Stop processing in case of errors */
+	if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
+		updateSfsOp(task->getPathCount());
+		endSfsOp();
+		return;
 	}
 
 	sigs = task->haveSignatures();
@@ -989,10 +1081,15 @@ SfsCtrl::OnCsumAdd(TaskEvent &event)
 			entry->setChecksum(SfsEntry::SFSENTRY_SIGNATURE,
 			    cs, ANOUBIS_CS_LEN);
 	}
+	/* Account for the entries in the task. */
 	updateSfsOp(task->getPathCount());
 	endSfsOp();
 }
 
+/*
+ * Progress caluclation:
+ * A CsumDel Task make a progress of one and ends an SFS operation.
+ */
 void
 SfsCtrl::OnCsumDel(TaskEvent &event)
 {
@@ -1012,8 +1109,6 @@ SfsCtrl::OnCsumDel(TaskEvent &event)
 	}
 
 	event.Skip(false); /* "My" task -> stop propagating */
-	updateSfsOp(1);
-	endSfsOp();
 
 	/* Search for SfsEntry */
 	int idx = sfsDir_.getIndexOf(task->getPath());
@@ -1021,7 +1116,8 @@ SfsCtrl::OnCsumDel(TaskEvent &event)
 		wxString message = wxString::Format(
 		    _("%ls not found in file-list!"), task->getPath().c_str());
 		errorList_.Add(message);
-
+		updateSfsOp(1);
+		endSfsOp();
 		return;
 	}
 
@@ -1081,6 +1177,8 @@ SfsCtrl::OnCsumDel(TaskEvent &event)
 		sfsDir_.removeEntry(idx);
 		sendDirChangedEvent();
 	}
+	updateSfsOp(1);
+	endSfsOp();
 }
 
 void
@@ -1144,6 +1242,10 @@ SfsCtrl::sendErrorEvent(void)
 	ProcessEvent(event);
 }
 
+/*
+ * Create a CSMULTI get task.
+ * This function does not modify the progress counts in any way.
+ */
 ComCsumGetTask *
 SfsCtrl::createComCsumGetTask(bool doSig)
 {
@@ -1159,6 +1261,10 @@ SfsCtrl::createComCsumGetTask(bool doSig)
 	return task;
 }
 
+/*
+ * This creates a CSMulit add task.
+ * This function does not modify the progress counts in any way.
+ */
 ComCsumAddTask *
 SfsCtrl::createComCsumAddTask(bool doSig)
 {
@@ -1176,6 +1282,11 @@ SfsCtrl::createComCsumAddTask(bool doSig)
 	return ret;
 }
 
+/*
+ * Start one SFS operation of zero size for the sfs entry.
+ * Starts one SFS operation if neccessary.
+ * The caller must account for a progress of two.
+ */
 void
 SfsCtrl::createComCsumAddTask(struct sfs_entry *entry)
 {
@@ -1183,13 +1294,18 @@ SfsCtrl::createComCsumAddTask(struct sfs_entry *entry)
 		ComCsumAddTask	*csTask = new ComCsumAddTask;
 
 		csTask->setSfsEntry(entry);
-
-		pushTask(csTask);
-		startSfsOp(0);
-		JobCtrl::getInstance()->addTask(csTask);
+		pushTask(csTask, 0);
+	} else {
+		updateSfsOp(2);
 	}
 }
 
+/*
+ * Creates up to two tasks that the caller must account for.
+ * Start an SFS operation for each task that _is_ created.
+ * The caller must account for a progress of two. This progress is either
+ * made by the task if created or by this function directory.
+ */
 int
 SfsCtrl::createComCsumDelTasks(SfsEntry *entry, bool doSig)
 {
@@ -1202,11 +1318,10 @@ SfsCtrl::createComCsumDelTasks(SfsEntry *entry, bool doSig)
 		csTask->setPath(entry->getPath());
 		csTask->setCalcLink(true);
 
-		pushTask(csTask);
-		startSfsOp(0);
-		JobCtrl::getInstance()->addTask(csTask);
-
+		pushTask(csTask, 0);
 		count++;
+	} else {
+		updateSfsOp(1);
 	}
 
 	SfsEntry::ChecksumState sigState =
@@ -1221,16 +1336,22 @@ SfsCtrl::createComCsumDelTasks(SfsEntry *entry, bool doSig)
 		sigTask->setCalcLink(true);
 		sigTask->setKeyId(raw_cert->keyid, raw_cert->idlen);
 
-		pushTask(sigTask);
-		startSfsOp(0);
-		JobCtrl::getInstance()->addTask(sigTask);
-
+		pushTask(sigTask, 0);
 		count++;
+	} else {
+		updateSfsOp(1);
 	}
 
 	return (count);
 }
 
+/*
+ * Starts up to two new SFS operations. Each operation has a size of
+ * one if it is not recurisve and a size of 50 if it is recursive.
+ * This ensures that the progress bar is shown immediately if the request
+ * is recursive.
+ * The caller need not account for any progress!
+ */
 void
 SfsCtrl::createSfsListTasks(uid_t uid, const wxString &path)
 {
@@ -1239,10 +1360,7 @@ SfsCtrl::createSfsListTasks(uid_t uid, const wxString &path)
 		csTask->setRequestParameter(uid, path);
 		csTask->setRecursive(isRecursive());
 		csTask->setFetchOrphaned(entryFilter_ == FILTER_ORPHANED);
-
-		pushTask(csTask);
-		startSfsOp(0);
-		JobCtrl::getInstance()->addTask(csTask);
+		pushTask(csTask, isRecursive() ? 50 : 1);
 	}
 
 	if (isSignatureEnabled()) {
@@ -1256,23 +1374,23 @@ SfsCtrl::createSfsListTasks(uid_t uid, const wxString &path)
 		sigTask->setFetchOrphaned(entryFilter_ == FILTER_ORPHANED);
 		sigTask->setFetchUpgraded(entryFilter_ == FILTER_UPGRADED);
 		sigTask->setKeyId(raw_cert->keyid, raw_cert->idlen);
-
-		pushTask(sigTask);
-		startSfsOp(0);
-		JobCtrl::getInstance()->addTask(sigTask);
+		pushTask(sigTask, isRecursive() ? 50 : 1);
 	}
 }
 
+/*
+ * Create a checksum calculation request.
+ * Starts a new sfs operation. Progress will be made once the operation
+ * completes.
+ * The caller must account for a progress of one.
+ */
 void
 SfsCtrl::createCsumCalcTask(const wxString &path)
 {
 	CsumCalcTask *task = new CsumCalcTask;
 	task->setPath(path);
 	task->setCalcLink(true);
-
-	pushTask(task);
-	startSfsOp(0);
-	JobCtrl::getInstance()->addTask(task);
+	pushTask(task, 0);
 }
 
 void
@@ -1365,7 +1483,7 @@ SfsCtrl::clearImportEntries(void)
 }
 
 void
-SfsCtrl::pushTask(Task *task)
+SfsCtrl::pushTask(Task *task, int work)
 {
 	if (taskList_.size() == 0 && !inProgress_) {
 		/*
@@ -1375,8 +1493,9 @@ SfsCtrl::pushTask(Task *task)
 		 */
 		errorList_.Clear();
 	}
-
+	startSfsOp(work);
 	taskList_[task] = true;
+	JobCtrl::getInstance()->addTask(task);
 	if (taskList_.size() > 20)
 		wxGetApp().ProcessPendingEvents();
 }
@@ -1491,15 +1610,22 @@ SfsCtrl::updateSfsOp(int done)
 
 	if (!inProgress_ || progressAbort_)
 		return false;
+	/*
+	 * Wrap this in a startSfsOp/endSfsOp. This prevents the dialog
+	 * from going away during the update. This is neccessary beacuse
+	 * progress_->Update might call wxYield().
+	 */
+	startSfsOp(0);
 	progressDone_ += done;
 	if (progress_ && progressMax_) {
 		int	reldone = (1000LL * progressDone_) / progressMax_;
-		ret =  progress_->Update(reldone);
+		ret = progress_->Update(reldone);
 	}
 	if (!ret) {
 		progressAbort_ = true;
 		abortAllTasks();
 	}
+	endSfsOp();
 	return ret;
 }
 
@@ -1508,13 +1634,19 @@ SfsCtrl::endSfsOp(void)
 {
 	if (--inProgress_)
 		return;
+	/*
+	 * NOTE: The Yield is required to avoid a BadWindow warning from X.
+	 * NOTE: However, this requires extra care because the timer might
+	 * NOTE: see the progress bar.
+	 */
 	if (progress_) {
-		/* The Yield is required to avoid a BadWindow warning from X */
-		progressTimer_.Stop();
-		progress_->Hide();
-		wxSafeYield(false);
-		delete progress_;
+		wxProgressDialog	*old = progress_;
+
 		progress_ = NULL;
+		progressTimer_.Stop();
+		old->Hide();
+		wxSafeYield(false);
+		delete old;
 	}
 	popTask(NULL);
 }

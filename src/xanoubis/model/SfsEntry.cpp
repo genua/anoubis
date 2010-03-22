@@ -32,10 +32,11 @@
 
 SfsEntry::SfsEntry(SfsDirectory *parent)
 {
-	this->parent_ = parent;
-	this->csum_[SFSENTRY_CHECKSUM] = 0;
-	this->csum_[SFSENTRY_SIGNATURE] = 0;
-	this->csum_[SFSENTRY_UPGRADE] = 0;
+	parent_ = parent;
+	csum_[SFSENTRY_CHECKSUM] = 0;
+	csum_[SFSENTRY_SIGNATURE] = 0;
+	csum_[SFSENTRY_UPGRADE] = 0;
+	haveLocalCsum_ = false;
 
 	setPath(wxEmptyString);
 	reset();
