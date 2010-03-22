@@ -54,6 +54,7 @@
 #include "ModAnoubisMainPanelImpl.h"
 #include "RuleWizard.h"
 #include "DlgBackupPolicyImpl.h"
+#include "anoubis_errno.h"
 
 #include "main.h"
 
@@ -782,7 +783,7 @@ MainFrame::onSfsListArrived(TaskEvent &event)
 			errMsg = wxString::Format(_("Got error "
 			    "(%hs) from daemon while fetching list "
 			    "of upgraded files."),
-			strerror(task->getResultDetails()));
+			anoubis_strerror(task->getResultDetails()));
 		} else {
 			errMsg = wxString::Format(_("An unexpected "
 			    "error (%i) occured while while fetching list "

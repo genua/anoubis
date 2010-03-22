@@ -70,9 +70,6 @@
 #define ANOUBIS_E_MLINK		31
 #define ANOUBIS_E_PIPE		32
 
-#define ANOUBIS_E_AGAIN		1024
-
-
 /* following defines and fucntion are used by anoubiserrorcodes*/
 
 /*

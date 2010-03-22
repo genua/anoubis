@@ -1043,7 +1043,7 @@ SfsCtrl::OnCsumAdd(TaskEvent &event)
 
 			message = wxString::Format(
 			    _("Failed to add checksum for %ls: %hs"),
-			    task->getPath(i).c_str(), strerror(error));
+			    task->getPath(i).c_str(), anoubis_strerror(error));
 			errorList_.Add(message);
 		}
 		error = task->getSignatureError(i);
@@ -1052,7 +1052,7 @@ SfsCtrl::OnCsumAdd(TaskEvent &event)
 
 			message = wxString::Format(
 			    _("Failed to add signature for %ls: %hs"),
-			    task->getPath(i).c_str(), strerror(error));
+			    task->getPath(i).c_str(), anoubis_strerror(error));
 			errorList_.Add(message);
 		}
 

@@ -35,6 +35,7 @@
 #include <wx/settings.h>
 #include <wx/stdpaths.h>
 
+#include <anoubis_errno.h>
 #include "AnPickFromFs.h"
 
 AnPickFromFs::AnPickFromFs(wxWindow *parent, wxWindowID id, const wxPoint & pos,
@@ -192,7 +193,7 @@ AnPickFromFs::adoptFileName(const wxString &fileName)
 				msg = wxEmptyString;
 			}
 		} else {
-			msg = wxString::From8BitData(strerror(errno));
+			msg = wxString::From8BitData(anoubis_strerror(errno));
 			msg.Prepend(_("Failure to resolve: "));
 			fileName_ = fileName;
 		}

@@ -47,7 +47,7 @@
  *   symlink is specified.
  * - <code>RESULT_REMOTE_ERROR</code> Operation(s) performed by anoubisd
  *   failed. getResultDetails() will return the remote error-code and can be
- *   evaluated by strerror(3) or similar.
+ *   evaluated by anoubis_strerror(3) or similar.
  */
 class ComCsumDelTask : public ComTask, public ComCsumHandler
 {

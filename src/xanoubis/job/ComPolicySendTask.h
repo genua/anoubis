@@ -54,10 +54,10 @@ class PolicyRuleSet;
  *   transaction or to fetch the answer-message.
  * - <code>RESULT_REMOTE_ERROR</code> Operation(s) performed by anoubisd
  *   failed. getResultDetails() will return the remote error-code and can be
- *   evaluated by strerror(3) or similar.
+ *   evaluated by anoubis_strerror or similar.
  * - <code>RESULT_LOCAL_ERROR</code> Failed to sign the policy (if requested).
  *   getResultDetails() will return the remote error-code and can be evaluated
- *   by strerror(3) or similar.
+ *   by anoubis_strerror or similar.
  */
 class ComPolicySendTask : public ComTask
 {

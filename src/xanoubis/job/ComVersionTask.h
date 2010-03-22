@@ -41,7 +41,7 @@
  *   transaction or to fetch the answer-message.
  * - <code>RESULT_REMOTE_ERROR</code> The daemin could not collect version
  *   information. getResultDetails() will return the remote error-code and can
- *   be evaluated by strerror(3) or similar.
+ *   be evaluated by anoubis_strerror(3) or similar.
  */
 class ComVersionTask : public ComTask
 {
