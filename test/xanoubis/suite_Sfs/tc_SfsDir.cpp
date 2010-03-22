@@ -542,11 +542,7 @@ START_TEST(SfsDir_insert_double_entry)
 	    "Unexptected path (%ls)", entry->getPath().c_str());
 
 	entry = dir.insertEntry(wxT("foo"));
-	fail_unless(entry != 0, "Failed to insert path");
-	fail_unless(entry->getPath() == wxT("foo"),
-	    "Unexptected path (%ls)", entry->getPath().c_str());
-
-	fail_unless(entry == foo_entry, "Wrong entry fetched");
+	fail_unless(entry == NULL, "Should not be able to insert path twice");
 
 	fail_unless(dir.getNumEntries() == 2,
 	    "Unexpected number of entries (%i)", dir.getNumEntries());
