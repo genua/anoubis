@@ -100,6 +100,12 @@ class Singleton
 		 */
 		static T* instance(void);
 
+		/**
+		 * Return the object if it pre-exists. Do NOT allocate
+		 * it if it is not already there.
+		 */
+		static T* existingInstance(void);
+
 	protected:
 		/**
 		 * Constructor of a singleton.

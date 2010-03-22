@@ -49,6 +49,8 @@ JobCtrl::JobCtrl(void)
 	this->protocolVersion_ = -1;
 	this->apnVersion_ = -1;
 
+	regTask_ = NULL;
+	versionTask_ = NULL;
 	csumCalcTaskQueue_ = new SynchronizedQueue<Task>(true);
 	comTaskQueue_ = new SynchronizedQueue<Task>(false);
 
@@ -72,7 +74,10 @@ JobCtrl::~JobCtrl(void)
 	Disconnect(anEVT_COM_CONNECTION,
 	    wxCommandEventHandler(JobCtrl::onConnectionStateChange),
 	    NULL, this);
-
+	if (versionTask_)
+		delete versionTask_;
+	if (regTask_)
+		delete regTask_;
 	delete csumCalcTaskQueue_;
 	delete comTaskQueue_;
 }
@@ -137,9 +142,10 @@ JobCtrl::connect(void)
 			} else {
 				threadList_.push_back(t);
 
-				regTask_.setAction(
+				regTask_ = new ComRegistrationTask;
+				regTask_->setAction(
 				    ComRegistrationTask::ACTION_REGISTER);
-				addTask(&regTask_);
+				addTask(regTask_);
 
 				return (true);
 			}
@@ -156,8 +162,9 @@ JobCtrl::connect(void)
 void
 JobCtrl::disconnect(void)
 {
-	regTask_.setAction(ComRegistrationTask::ACTION_UNREGISTER);
-	JobCtrl::getInstance()->addTask(&regTask_);
+	regTask_ = new ComRegistrationTask;
+	regTask_->setAction(ComRegistrationTask::ACTION_UNREGISTER);
+	JobCtrl::getInstance()->addTask(regTask_);
 }
 
 bool
@@ -231,13 +238,15 @@ JobCtrl::onDaemonRegistration(TaskEvent &event)
 	ComRegistrationTask *task =
 	    dynamic_cast<ComRegistrationTask*>(event.getTask());
 
-	if (task == 0)
+	if (task != regTask_)
 		return;
+	regTask_ = NULL;
 
 	if (task->getAction() == ComRegistrationTask::ACTION_REGISTER) {
 		if (task->getComTaskResult() == ComTask::RESULT_SUCCESS) {
 			/* Next, fetch versions from daemon */
-			addTask(&versionTask_);
+			versionTask_ = new ComVersionTask;
+			addTask(versionTask_);
 		} else {
 			/* Registration failed, disconnect again */
 			sendComEvent(JobCtrl::ERR_REG);
@@ -259,36 +268,41 @@ JobCtrl::onDaemonRegistration(TaskEvent &event)
 
 		sendComEvent(JobCtrl::DISCONNECTED);
 	}
-
+	delete task;
 	event.Skip();
 }
 
 void
 JobCtrl::onDaemonVersion(TaskEvent &event)
 {
+	ComVersionTask	*task = dynamic_cast<ComVersionTask*>(event.getTask());
 	event.Skip();
 
-	if (event.getTask() != &versionTask_) {
+	if (task != versionTask_) {
 		/* Not "my" task, do nothing */
 		return;
 	}
+	versionTask_ = NULL;
 
-	if (versionTask_.getComTaskResult() != ComTask::RESULT_SUCCESS) {
+	if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
 		sendComEvent(JobCtrl::ERR_REG);
 		disconnect();
+		delete task;
 
 		return;
 	}
 
-	protocolVersion_ = versionTask_.getProtocolVersion();
-	apnVersion_ = versionTask_.getApnVersion();
+	protocolVersion_ = task->getProtocolVersion();
+	apnVersion_ = task->getApnVersion();
 
 	if (apnVersion_ != apn_parser_version()) {
 		sendComEvent(JobCtrl::ERR_VERSION_APN);
 		disconnect();
+		delete task;
 
 		return;
 	}
+	delete task;
 
 	sendComEvent(JobCtrl::CONNECTED);
 }

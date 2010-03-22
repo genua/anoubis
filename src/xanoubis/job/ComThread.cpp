@@ -478,7 +478,13 @@ ComThread::sendNotify(struct anoubis_msg *notifyMsg)
 
 	type = get_value((notifyMsg->u.general)->type);
 	notify = NULL;
-	notifyCtrl = NotificationCtrl::instance();
+	/*
+	 * NOTE: We must not allocate the NotificationCtrl from the
+	 * NOTE: ComThrea. It must be created in the main Thread.
+	 * NOTE: This is particularly imporant in tests where the
+	 * NOTE: event handlers of the NotificationCtrl do not work.
+	 */
+	notifyCtrl = NotificationCtrl::existingInstance();
 
 	if (type == ANOUBIS_N_POLICYCHANGE) {
 		wxCommandEvent		 pce(anEVT_POLICY_CHANGE);
@@ -510,9 +516,15 @@ ComThread::sendNotify(struct anoubis_msg *notifyMsg)
 			    key, value);
 		}
 	} else {
-		notify = Notification::factory(notifyMsg);
-		if (notify != NULL) {
-			notifyCtrl->addNotification(notify);
+		/*
+		 * Ignore any notifies if we don't have a
+		 * NotificationCtrl. This can happen in unit tests.
+		 */
+		if (notifyCtrl) {
+			notify = Notification::factory(notifyMsg);
+			if (notify != NULL) {
+				notifyCtrl->addNotification(notify);
+			}
 		}
 	}
 }

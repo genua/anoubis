@@ -59,4 +59,10 @@ Singleton<T>::instance(void)
 	return (instance_);
 }
 
+template <typename T> T*
+Singleton<T>::existingInstance(void)
+{
+	return instance_;
+}
+
 #endif /* _SINGLETON_CPP_ */

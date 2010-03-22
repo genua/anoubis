@@ -266,8 +266,8 @@ class JobCtrl : public wxEvtHandler, public Singleton<JobCtrl>
 		SynchronizedQueue<Task> *csumCalcTaskQueue_;
 		SynchronizedQueue<Task> *comTaskQueue_;
 		JobThreadList threadList_;
-		ComRegistrationTask regTask_;
-		ComVersionTask versionTask_;
+		ComRegistrationTask *regTask_;
+		ComVersionTask *versionTask_;
 		int protocolVersion_;
 		int apnVersion_;
 

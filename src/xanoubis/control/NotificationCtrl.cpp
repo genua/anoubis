@@ -48,12 +48,6 @@ NotificationCtrl::~NotificationCtrl(void)
 	notificationHash_.clear();
 }
 
-NotificationCtrl *
-NotificationCtrl::instance(void)
-{
-	return Singleton<NotificationCtrl>::instance();
-}
-
 void
 NotificationCtrl::addNotification(Notification *notification)
 {
@@ -400,3 +394,9 @@ NotificationCtrl::fixupEscalationAnswer(int type, anoubis_token_t token,
 
 	return NULL;
 }
+
+/* Explicit instantiation of Singleton Baseclass methods. */
+template NotificationCtrl *
+Singleton<NotificationCtrl>::instance();
+template NotificationCtrl *
+Singleton<NotificationCtrl>::existingInstance();

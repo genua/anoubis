@@ -69,16 +69,6 @@ class NotificationCtrl : public wxEvtHandler, public Singleton<NotificationCtrl>
 		~NotificationCtrl(void);
 
 		/**
-		 * Get instance.
-		 *
-		 * This returns the (only) object of
-		 * this class (see singleton pattern).
-		 * @param None.
-		 * @return It self.
-		 */
-		static NotificationCtrl *instance(void);
-
-		/**
 		 * Add new notification.
 		 *
 		 * This stores new/given notification and updates
