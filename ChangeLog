@@ -1,7 +1,13 @@
-2010-03-02 - Changes between 0.9.2 and 0.9.3
+2010-03-18 - Changes between 0.9.2 and 0.9.3
 
 New features:
 
+o anoubisd: Remove unnecessary fsync call in anoubisd/sfs.c
+  which resulted in a huge performance loss when adding checksums.
+o anoubisd: Now uses the multi-checksum-request messages to improve
+  performance.
+o xanoubis: Now uses the multi-checksum-request messages to improve
+  performance.
 o anoubisd: Limit the size of policy-files which can be configured in
   anoubisd.conf(5).
 o xanoubis: Implementation of client-authorization was added to xanoubis.
@@ -14,9 +20,15 @@ o xanoubis: The nosfs-flag can now be set within the RuleEditor and
 o Support for SCTP was added to apn, anoubis daemon and xanoubis.
 o Support for eCryptfs was added to the Anoubis Linux kernel.
 o Authentication was added in protocol version 4.
+o A multi-checksum-request message type was added in protocol version 5.
+o Long-running jobs comprised of numerous tasks such as register and validate
+  operations can now be interrupted within xanoubis.
 
 Bug fixes:
 
+o Linux Kernel: Fix a NULL pointer dereference sfs_bprm_committed_creds gets
+  called with a task that does not have a security label attached to it.
+  BUG #1447
 o OpenBSD: Fix OpenBSD pool allocator bug.
 o OpenBSD: anoubisctl leaks the setgid status to anoubisd causing issues
   on opening /dev/eventdev
@@ -25,14 +37,25 @@ o OpenBSD kernel: Fix deadlocks with vnode locks in OpenBSD.
 o Kernel: Disable ANOUBIS_REQUEST_STATS ioctl for regular users.
 o anoubisd: Fix memory leaks in the anoubis daemon revealed by valgrind(1)
 o Fix a crash in the SHA256 calculation of libanoubissig.
+o xanoubis: Fix a display bug that caused text to be displayed in adjacent
+  empty cells.
+o xanoubis: Assure that the private key is loaded only into memory when actually
+  needed.
+o xanoubis: Fix timeout of end-of-session key within SFS-Browser.
+o xanoubis: Fix a bug were index counting for visible/invisible columns could
+  lead to a memory access behind the actual end of the list in question.
 o xanoubis: Fix a segfault when xanoubis gets closed while in the upgrade
   message dialogue.
+o xanoubis: Fix view in RuleEditor to show non-bold fonts in headers, refuse
+selection of these and store the size persistently.
 o xanoubis: Change permissions of .xanoubis directory to 0700.
 o xanoubis: Fix AnPickFromFS Dialogue to handle files as well as directories.
 o xanoubis: Fix a segfault if a PolicyCtrl object is destroyed without an
   explicit creation.
 o xanoubis: Handling of the TrayIcon exclamation mark is now correctly done
   when opening LogViewer or Notification tab
+o anoubis-keyinstall: Bail out and provide and exit with a reasonable error
+  message when the tool is called by non-root users.
 o Properly handle syssigs on !SFS_CS_OK filesystems to allow execs on dazukofs
   mounts.
 
@@ -42,6 +65,8 @@ o Limit connections per user to avoid DoS by ENFILE
 o anoubisd: Enforce secure exec if the policy of a task changes during exec.
 o anoubisd: The number of pending notifications per session was limited to
   avoid an out of memory DOS.
+o xanoubis: Fix ComCsumAddTask to calculate checksum/signature in CsumCalcTask
+  not until both are meant to be send to daemon to improve performance.
 o xanoubis: Redesign of the ALF, SB and SFS overview module.
 o xanoubis: Double-Clicking on an empty application rules now also opens the
   RuleEditor.
