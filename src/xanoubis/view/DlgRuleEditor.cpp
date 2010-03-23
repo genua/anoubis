@@ -445,7 +445,12 @@ DlgRuleEditor::onAppGridCellSelect(wxGridEvent &event)
 	/* create tabs for each binary */
 	appPolicyPanels->deselect();
 	appPolicyPanels->select(appPolicy);
+
 	filterPolicyPanels->resetTabSelection();
+	filterPolicyPanels->deselect();
+	filterListUpButton->Disable();
+	filterListDownButton->Disable();
+	filterListDeleteButton->Disable();
 
 	/* Ensure the changes will apear on the screen */
 	Layout();
@@ -540,6 +545,10 @@ DlgRuleEditor::onAppListUpClick(wxCommandEvent &)
 				index--;
 			}
 			loadRuleSet();
+			/*
+			 * No need to mess with the filter list. It's
+			 * contents do not change.
+			 */
 			selectRow(appGrid, index);
 			appListUpButton->Hide();
 			appListUpButton->Show();
@@ -563,6 +572,10 @@ DlgRuleEditor::onAppListDownClick(wxCommandEvent &)
 				index++;
 			}
 			loadRuleSet();
+			/*
+			 * No need to mess with the filter list. It's
+			 * contents do not change.
+			 */
 			selectRow(appGrid, index);
 			appListDownButton->Hide();
 			appListDownButton->Show();
@@ -650,6 +663,11 @@ DlgRuleEditor::onAppListDeleteClick(wxCommandEvent &)
 			isLast = true;
 		}
 
+		filterPolicyPanels->resetTabSelection();
+		filterPolicyPanels->deselect();
+		filterListUpButton->Disable();
+		filterListDownButton->Disable();
+		filterListDeleteButton->Disable();
 		if (policy->remove() && index && isLast) {
 			index--;
 		}
@@ -813,6 +831,12 @@ DlgRuleEditor::onAppListCreateButton(wxCommandEvent &)
 	if (index < 0) {
 		index = indexSuggestion;
 	}
+
+	filterPolicyPanels->resetTabSelection();
+	filterPolicyPanels->deselect();
+	filterListUpButton->Disable();
+	filterListDownButton->Disable();
+	filterListDeleteButton->Disable();
 
 	loadRuleSet();
 	selectRow(appGrid, index);

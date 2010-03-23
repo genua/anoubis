@@ -390,6 +390,7 @@ DlgRuleEditorListProperty::examineContextFilterPolicy(
 		if (ruleSet && ruleSet->isAdmin()) {
 			text.Append(wxT("(A)"));
 		}
+		break;
 	case PROPERTY_SCOPE:
 		text = filter->getScopeName();
 		break;

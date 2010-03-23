@@ -164,15 +164,21 @@ RuleWizardProgramPage::onCsumGet(TaskEvent &event)
 
 	ComTask::ComTaskResult result = csumGetTask_->getComTaskResult();
 
-	if (result == ComTask::RESULT_SUCCESS) {
+	if (result == ComTask::RESULT_SUCCESS
+	    && csumGetTask_->getChecksumError(0) == 0) {
 		/*
 		 * A checksum is registered. Next, compare with local checksum.
 		 * If the checksums does not match, the rule is useable.
 		 */
+		csumCalcTask_ = new CsumCalcTask();
 		csumCalcTask_->setPath(programPicker->getFileName());
 		JobCtrl::getInstance()->addTask(csumCalcTask_);
-	} else if (result == ComTask::RESULT_REMOTE_ERROR &&
-	    csumGetTask_->getResultDetails() == ENOENT) {
+		/*
+		 * NOTE: Do NOT delete comCsumGetTask_ here.
+		 * NOTE: The handler for ComCsumCalcTask will need it.
+		 */
+	} else if (result == ComTask::RESULT_SUCCESS &&
+	    csumGetTask_->getChecksumError(0) == ENOENT) {
 		/*
 		 * No checksum registered. Next, register a checksum for the
 		 * selected binary. Otherwise the rule is not useable.
@@ -180,18 +186,26 @@ RuleWizardProgramPage::onCsumGet(TaskEvent &event)
 		csumAddTask_ = new ComCsumAddTask();
 		csumAddTask_->addPath(programPicker->getFileName());
 		JobCtrl::getInstance()->addTask(csumAddTask_);
+		delete csumGetTask_;
+		csumGetTask_ = NULL;
 	} else {
 		const char	*err;
+		int		 error;
 
 		/* An error occured while fetching the checksum */
 		getWizardPage()->setNextEnabled(false);
 
 		wxString message;
 		wxString path = csumGetTask_->getPath(0);
-		err = anoubis_strerror(csumGetTask_->getResultDetails());
+		if (result == ComTask::RESULT_SUCCESS)
+			error = csumGetTask_->getChecksumError(0);
+		else
+			error = csumGetTask_->getResultDetails();
+		err = anoubis_strerror(error);
 
 		switch (result) {
 		case ComTask::RESULT_REMOTE_ERROR:
+		case ComTask::RESULT_SUCCESS:
 			message.Printf(_("Got error from daemon (%hs) while "
 			    "fetching the checksum for %ls."),
 			    err, path.c_str());
@@ -213,9 +227,9 @@ RuleWizardProgramPage::onCsumGet(TaskEvent &event)
 
 		anMessageBox(message, _("Rule Wizard"), wxOK | wxICON_ERROR,
 		    this);
+		delete csumGetTask_;
+		csumGetTask_ = NULL;
 	}
-	delete csumGetTask_;
-	csumGetTask_ = NULL;
 }
 
 void
@@ -281,6 +295,7 @@ RuleWizardProgramPage::onCsumAdd(TaskEvent &event)
 		    this);
 	}
 	delete csumAddTask_;
+	csumAddTask_ = NULL;
 }
 
 void
@@ -305,7 +320,12 @@ RuleWizardProgramPage::onCsumCalc(TaskEvent &event)
 
 		anMessageBox(message, _("Rule Wizard"), wxOK | wxICON_ERROR,
 		    this);
-
+		delete csumCalcTask_;
+		csumCalcTask_ = NULL;
+		if (csumGetTask_) {
+			delete csumGetTask_;
+			csumGetTask_ = NULL;
+		}
 		return;
 	}
 
@@ -340,6 +360,12 @@ RuleWizardProgramPage::onCsumCalc(TaskEvent &event)
 
 		anMessageBox(message, _("Rule Wizard"), wxOK | wxICON_ERROR,
 		    this);
+	}
+	delete csumCalcTask_;
+	csumCalcTask_ = NULL;
+	if (csumGetTask_) {
+		delete csumGetTask_;
+		csumGetTask_ = NULL;
 	}
 }
 
