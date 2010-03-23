@@ -204,10 +204,10 @@ apn_parse1(const char *filename, struct iovec *iov, int iovcnt,
 		ret = init_sfs_rule(rs);
 	if (ret != 0) {
 		rs->idtree = NULL;
-		apn_free_chain(&rs->alf_queue, NULL);
-		apn_free_chain(&rs->sfs_queue, NULL);
-		apn_free_chain(&rs->sb_queue, NULL);
-		apn_free_chain(&rs->ctx_queue, NULL);
+		apn_free_chain(&rs->alf_queue, rs);
+		apn_free_chain(&rs->sfs_queue, rs);
+		apn_free_chain(&rs->sb_queue, rs);
+		apn_free_chain(&rs->ctx_queue, rs);
 	}
 	return ret;
 }
@@ -981,10 +981,10 @@ apn_free_ruleset(struct apn_ruleset *rs)
 
 	apn_free_errq(errq);
 	rs->idtree = NULL;
-	apn_free_chain(alfq, NULL);
-	apn_free_chain(sfsq, NULL);
-	apn_free_chain(sbq, NULL);
-	apn_free_chain(ctxq, NULL);
+	apn_free_chain(alfq, rs);
+	apn_free_chain(sfsq, rs);
+	apn_free_chain(sbq, rs);
+	apn_free_chain(ctxq, rs);
 
 	free(rs);
 }
@@ -1588,7 +1588,11 @@ apn_free_one_rule(struct apn_rule *rule, struct apn_ruleset *rs)
 		apn_free_app(rule->app);
 	rule->scope = NULL;
 	rule->app = NULL;
-	if (rs)
+	/*
+	 * Some callers set rs->idtree to NULL in order to avoid the
+	 * overhead of the rb_remove_entry if the entire ruleset is freed.
+	 */
+	if (rs && rs->idtree)
 		rb_remove_entry(&rs->idtree, &rule->_rbentry);
 	free(rule);
 }
