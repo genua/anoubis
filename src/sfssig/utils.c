@@ -30,6 +30,40 @@
 #include "sfssig.h"
 #include <anoubis_errno.h>
 
+#define FT_HASH_SHIFT   (24)
+#define FT_HASH_MASK    ((1UL<<FT_HASH_SHIFT)-1)
+
+static int hashcmp(struct sfs_request_node *, struct sfs_request_node *);
+static unsigned long hash_fn(const char *data, int cnt);
+
+RB_PROTOTYPE_STATIC(rb_request_tree, sfs_request_node, entry, hashcmp);
+RB_GENERATE_STATIC(rb_request_tree, sfs_request_node, entry, hashcmp);
+
+static int
+hashcmp(struct sfs_request_node *e1, struct sfs_request_node *e2)
+{
+	if (e1->idx == e2->idx)
+		return strcmp(e1->key, e2->key);
+	return (e1->idx - e2->idx);
+}
+
+static unsigned long
+hash_fn(const char *data, int cnt)
+{
+	unsigned long   ret = 0;
+	int	     i;
+
+	if (data == NULL)
+		return 0;
+
+	for (i=0; i<cnt; ++i,++data) {
+		ret <<= 1;
+		ret ^= *data;
+		ret = (ret ^ (ret >> FT_HASH_SHIFT)) & FT_HASH_MASK;
+	}
+	return ret & FT_HASH_MASK;
+}
+
 int
 str2hash(const char * s, unsigned char dest[SHA256_DIGEST_LENGTH])
 {
@@ -343,4 +377,146 @@ load_keys(int priv_key, int show_err, char *cert, char *keyfile)
 		return NULL;
 	}
 	return ast;
+}
+
+struct sfs_request_tree *
+sfs_init_request_tree(void)
+{
+	struct sfs_request_tree *tree;
+
+	tree = malloc(sizeof(*tree));
+	if (tree == NULL)
+		return NULL;
+	RB_INIT(&tree->head);
+	return tree;
+}
+
+struct sfs_request_node  *
+sfs_insert_request_node(struct sfs_request_tree *t, int op, uid_t uid,
+    u_int8_t *keyid, int idlen, sumop_callback_t callback)
+{
+	struct sfs_request_node *n = NULL, *other = NULL;
+	struct anoubis_csmulti_request *req = NULL;
+
+	if (t == NULL)
+		return NULL;
+
+	n = malloc(sizeof(struct sfs_request_node));
+	if (n == NULL)
+		return NULL;
+
+	if (idlen == 0)
+		keyid = NULL;
+
+	req = anoubis_csmulti_create(op, uid, keyid, idlen);
+	if (req == NULL) {
+		free(n);
+		return NULL;
+	}
+
+	if (idlen) {
+		n->key = anoubis_sig_key2char(idlen, keyid);
+		if (n->key == NULL) {
+			free(n);
+			anoubis_csmulti_destroy(req);
+			return NULL;
+		}
+	} else {
+		if (asprintf(&n->key, "%u", uid) < 0) {
+			free(n);
+			anoubis_csmulti_destroy(req);
+			return NULL;
+		}
+	}
+	n->idx = hash_fn(n->key, strlen(n->key));
+	n->req = req;
+	n->t = NULL;
+	n->callback = callback;
+
+	other = RB_INSERT(rb_request_tree, &t->head, n);
+	if (other) {
+		anoubis_csmulti_destroy(n->req);
+		free(n->key);
+		free(n);
+		return NULL;
+	}
+
+	return n;
+}
+
+struct sfs_request_node *
+sfs_find_request(struct sfs_request_tree *t, uid_t uid, u_int8_t *keyid,
+    int idlen)
+{
+	struct sfs_request_node n, *res = NULL;
+	char *key = NULL;
+
+	if (t == NULL)
+		return NULL;
+
+	if (idlen) {
+		if((key = anoubis_sig_key2char(idlen, keyid)) == NULL)
+			return NULL;
+	} else {
+		if (asprintf(&key, "%u", uid) < 0)
+			return NULL;
+	}
+
+	n.key = key;
+	n.idx = hash_fn(key, strlen(key));
+	res = RB_FIND(rb_request_tree, &t->head, &n);
+	return res;
+}
+
+void
+sfs_delete_request(struct sfs_request_tree *t, struct sfs_request_node *n)
+{
+	if (t == NULL || n == NULL)
+		return;
+	if (RB_REMOVE(rb_request_tree, &t->head, n) == NULL)
+		return;
+	free(n->key);
+	free(n);
+}
+
+void
+sfs_destroy_request_tree(struct sfs_request_tree *t)
+{
+	struct sfs_request_node *var, *nxt;
+
+	if (t == NULL)
+		return;
+	for (var = RB_MIN(rb_request_tree, &t->head); var != NULL; var = nxt) {
+		nxt = RB_NEXT(rb_request_tree, &t->head, var);
+		RB_REMOVE(rb_request_tree, &t->head, var);
+		free(var->key);
+		free(var);
+	}
+	free(t);
+
+}
+
+/* gets a first node in the tree. this can be used to
+ * initlize a iterator:
+ * for (np = sfs_first_request(f); np != NULL; np = sfs_next_request(f, np)) {
+ *      ...
+ * }
+ */
+struct sfs_request_node *
+sfs_first_request(struct sfs_request_tree *f)
+{
+	if (f == NULL)
+		return NULL;
+	return RB_MIN(rb_request_tree, &f->head);
+}
+
+/* gets the next node in the tree from the 'last node'
+ * it will return NULL if the 'last node' was the last node
+ */
+struct sfs_request_node *
+sfs_next_request(struct sfs_request_tree *f, struct sfs_request_node *last)
+{
+	if (f == NULL || last == NULL)
+		return NULL;
+	return RB_NEXT(rb_request_tree, &f->head, last);
 }

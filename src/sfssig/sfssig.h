@@ -46,6 +46,7 @@
 #include <sys/un.h>
 #include <sys/mman.h>
 #include <sys/socket.h>
+#include <sys/tree.h>
 
 #include <sys/queue.h>
 
@@ -109,10 +110,30 @@
 #define SYSSIGNAME "security.anoubis_syssig"
 #define SKIPSUMNAME "security.anoubis_skipsum"
 
+#define REQUESTS_MAX			1000
+
+typedef int (*sumop_callback_t) (struct anoubis_csmulti_request *,
+    struct anoubis_csmulti_record *);
+
+struct sfs_request_node
+{
+  RB_ENTRY(sfs_request_node) entry;
+  struct anoubis_csmulti_request *req;
+  struct anoubis_transaction *t;
+  char *key;
+  unsigned long idx;
+  sumop_callback_t callback;
+};
+
+struct sfs_request_tree
+{
+  RB_HEAD(rb_request_tree, sfs_request_node) head;
+};
+
 int filter_one_file(char *path, char *prefix, uid_t uid,
     struct anoubis_sig *as);
-int	filter_hassum(char *arg, uid_t uid);
-int	filter_hassig(char *arg, struct anoubis_sig *as);
+int filter_hassum(char *arg, uid_t uid);
+int filter_hassig(char *arg, struct anoubis_sig *as);
 struct anoubis_sig *load_keys(int priv_key, int show_err, char *cert,
     char *keyfile);
 char **file_input(int *file_cnt, char *file);
@@ -127,9 +148,110 @@ int syssig_update(int argc, char *argv[]);
 int syssig_remove(int argc, char *argv[]);
 int skipsum_update(char *file, int op);
 int str2hash(const char *s, unsigned char dest[SHA256_DIGEST_LENGTH]);
-struct anoubis_transaction	*sfs_sumop(const char *file, int operation,
+
+/* XXX KM: Depracated, but in time of switching still needed */
+struct anoubis_transaction *sfs_sumop2(const char *file, int operation,
     u_int8_t *cs, int cslen, int idlen, uid_t uid, unsigned int);
+
+
+/**
+ * This adds a checksumrequest to a request-node of the request-tree.
+ * If no request-node is found for this uid/keyid a new one will be
+ * created and add to the request tree.
+ *
+ * @param file The target filen name.
+ * @param op The operation which is to be performed on the target file
+ * @param keyid keyid of the certificate used for this transaction
+ * @param idlen Is the len of the keyid stored in keyid.
+ * @param uid of the user in which name the operation on the file should be
+ *        done.
+ * @param cs checksum buffer which can hold keyid and/or checksum and signature.
+ * @param cslen Is the len of the complete buffer.
+ * @param callback function of the realated operation, which is to be
+ *        called after receiving the answer of the request.
+ * @return 0 on sucess and a negativ errno in case of error.
+ */
+int sfs_csumop(const char *file, int op, uid_t uid, u_int8_t *keyid, int idlen,
+    u_int8_t *cs, int cslen, sumop_callback_t callback);
+
+/**
+ * Initilize the Red-Black Request-Tree which holds anoubis_csmulti_requests.
+ *
+ * @return An empty sfs_request_tree or NULL in case of an error.
+ */
+struct sfs_request_tree *sfs_init_request_tree(void);
+
+/**
+ * Creates a new anoubis_csmulti_requests and puts it into the request tree.
+ * The key to search the request can be either the keyid or the uid.
+ *
+ * @param tree which holds the requests.
+ * @param op is the operation which the request should perform
+ * @param uid of the user in which name the operation on the file should be
+ *        done.
+ * @param keyid of the user in which name the operation on the file should be
+ *        done.
+ * @param idlen length of the keyid
+ * @param callback function of the realated operation, which is to be
+ *        called after receiving the answer of the request.
+ * @return the resulting node or NULL in case of an error.
+ */
+struct sfs_request_node *sfs_insert_request_node(struct sfs_request_tree
+    *tree, int op, uid_t uid, u_int8_t * keyid, int idlen,
+    sumop_callback_t cb);
+
+/**
+ * Find a request inside of the tree.
+ *
+ * @param tree which should be searched in.
+ * @param uid which indentifies the desired request, if the request is based
+ *        on a uid otherwise 0.
+ * @param key which indentifies the desired request, if the request is based
+ *        on a keyid otherwise NULL.
+ * @param idlen is the length of the keyid. The parameter must be 0 if the
+ *        request is based on uid.
+ * @return The desired node or NULL if no matched node could be found.
+ */
+struct sfs_request_node *sfs_find_request(struct sfs_request_tree *t,
+    uid_t uid, u_int8_t * keyid, int idlen);
+
+/**
+ * Destroys a request tree
+ *
+ * @param the tree that should be destroied.
+ * @return Nothing
+ */
+void sfs_destroy_request_tree(struct sfs_request_tree *t);
+
+/**
+ * Deletes a node from the tree.
+ *
+ * @param tree which holds the node.
+ * @param node which should be deleted.
+ * @return Nothing.
+ */
+void sfs_delete_request(struct sfs_request_tree *t,
+    struct sfs_request_node *n);
+
+/**
+ * Return the first entry of the tree which can be used to iterated over
+ * the tree.
+ *
+ * @param tree which should be iterated over.
+ * @return node which is the first node of the tree.
+ */
+struct sfs_request_node *sfs_first_request(struct sfs_request_tree *);
+
+/**
+ * Return the next node of the tree relative to the node of the argument.
+ *
+ * @param tree which should be iterated over.
+ * @param node before the desired node.
+ * @return node after the node as parameter.
+ */
+struct sfs_request_node *sfs_next_request(struct sfs_request_tree *,
+    struct sfs_request_node *);
 
 extern unsigned int opts;
 
-#endif	/* _SFSSIG_H_ */
+#endif /* _SFSSIG_H_ */
