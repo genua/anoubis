@@ -81,6 +81,7 @@ SfsCtrl::setPath(const wxString &path)
 {
 	if (sfsDir_.setPath(path))
 		refresh();
+	sendDirChangedEvent();
 }
 
 wxString
@@ -200,7 +201,6 @@ SfsCtrl::refresh(void)
 		break;
 	}
 
-	sendDirChangedEvent();
 	return (RESULT_EXECUTE);
 }
 
@@ -764,8 +764,6 @@ SfsCtrl::OnSfsListArrived(TaskEvent &event)
 		pushTask(getTask, 1);
 	sfsDir_.endChange();
 	endSfsOp();
-	/* Directory listing is complete */
-	sendDirChangedEvent();
 }
 
 /*
@@ -919,33 +917,30 @@ SfsCtrl::OnCsumGet(TaskEvent &event)
 	/* Progress for the finished task. */
 	updateSfsOp(1);
 	taskResult = task->getComTaskResult();
-	if (taskResult != ComTask::RESULT_SUCCESS) {
-		/* We will abort, account for Progress. */
-		updateSfsOp(task->getPathCount());
-		endSfsOp();
-	}
 	if (taskResult == ComTask::RESULT_REMOTE_ERROR) {
 		err = anoubis_strerror(task->getResultDetails());
 		message = wxString::Format(_("Got error from daemon while "
 		    "fetching checksums/signatures: %hs"), err);
 		errorList_.Add(message);
-		return;
 	} else if (taskResult == ComTask::RESULT_COM_ERROR) {
 		message = wxString::Format(_("Communication error while "
 		    "fetching checksums/signatures"));
 		errorList_.Add(message);
-		return;
 	} else if (taskResult == ComTask::RESULT_LOCAL_ERROR) {
 		err = anoubis_strerror(task->getResultDetails());
 		message = wxString::Format(_("Failed to retrieve "
 		    "checksums/signatures: %hs"), err);
 		errorList_.Add(message);
-		return;
 	} else if (taskResult != ComTask::RESULT_SUCCESS) {
 		err = anoubis_strerror(task->getResultDetails());
 		message = wxString::Format(_("An unexpected error occured "
 		    "while fetching checksums/signatures: %hs"), err);
 		errorList_.Add(message);
+	}
+	if (taskResult != ComTask::RESULT_SUCCESS) {
+		/* We will abort, account for Progress. */
+		updateSfsOp(task->getPathCount());
+		endSfsOp();
 		return;
 	}
 
@@ -954,6 +949,8 @@ SfsCtrl::OnCsumGet(TaskEvent &event)
 		SfsEntry		*entry;
 		wxString		 path = task->getPath(idx);
 
+		/* Finish processing even if cancel was pressed. */
+		updateSfsOp(1);
 		modelindex = sfsDir_.getIndexOf(path);
 		if (modelindex < 0) {
 			message = wxString::Format(
@@ -965,7 +962,6 @@ SfsCtrl::OnCsumGet(TaskEvent &event)
 		processOneCsumGet(task, idx, entry);
 	}
 	/* Account for the progress made. */
-	updateSfsOp(task->getPathCount());
 	endSfsOp();
 }
 
@@ -1055,7 +1051,8 @@ SfsCtrl::OnCsumAdd(TaskEvent &event)
 			    task->getPath(i).c_str(), anoubis_strerror(error));
 			errorList_.Add(message);
 		}
-
+		/* Finish processing even the operation is canceled. */
+		updateSfsOp(1);
 		/*
 		 * Search for SfsEntry. Do _not_ report an error if the
 		 * index is not found. It may be from an import.
@@ -1082,7 +1079,6 @@ SfsCtrl::OnCsumAdd(TaskEvent &event)
 			    cs, ANOUBIS_CS_LEN);
 	}
 	/* Account for the entries in the task. */
-	updateSfsOp(task->getPathCount());
 	endSfsOp();
 }
 
@@ -1173,10 +1169,8 @@ SfsCtrl::OnCsumDel(TaskEvent &event)
 	SfsEntry *entry = sfsDir_.getEntry(idx);
 	entry->setChecksumMissing(type);
 
-	if (!entry->fileExists() && !entry->haveChecksum()) {
+	if (!entry->fileExists() && !entry->haveChecksum())
 		sfsDir_.removeEntry(idx);
-		sendDirChangedEvent();
-	}
 	updateSfsOp(1);
 	endSfsOp();
 }
@@ -1224,6 +1218,7 @@ SfsCtrl::sendOperationFinishedEvent(void)
 	ProcessEvent(event);
 }
 
+/* XXX CEH: Is this still needed? */
 void
 SfsCtrl::sendDirChangedEvent(void)
 {
@@ -1485,14 +1480,6 @@ SfsCtrl::clearImportEntries(void)
 void
 SfsCtrl::pushTask(Task *task, int work)
 {
-	if (taskList_.size() == 0 && !inProgress_) {
-		/*
-		 * This is the first task in the list -> an operation began.
-		 * Clear the error-list.
-		 * NOTE: This has been replaced in most cases by startSfsOp()
-		 */
-		errorList_.Clear();
-	}
 	startSfsOp(work);
 	taskList_[task] = true;
 	JobCtrl::getInstance()->addTask(task);
@@ -1503,59 +1490,12 @@ SfsCtrl::pushTask(Task *task, int work)
 void
 SfsCtrl::popTask(Task *task)
 {
-	if (task) {
-		std::map<Task *, bool>::iterator	it;
+	std::map<Task *, bool>::iterator	it;
 
-		it = taskList_.find(task);
-		if (it != taskList_.end()) {
-			taskList_.erase(it);
-			delete task;
-		}
-	}
-
-	if (taskList_.size() == 0 && !inProgress_) {
-		/*
-		 * This was the last task in the list -> the operation finished
-		 */
-
-		if (entryFilter_ == FILTER_CHANGED) {
-			/*
-			 * Remove all entries from model which has not
-			 * changed
-			 */
-			unsigned int idx = 0;
-
-			sfsDir_.beginChange();
-			while (idx < sfsDir_.getNumEntries()) {
-				SfsEntry *entry = sfsDir_.getEntry(idx);
-				if (!entry->isChecksumChanged())
-					sfsDir_.removeEntry(idx);
-				else
-					idx++;
-			}
-			sfsDir_.endChange();
-
-			sendDirChangedEvent();
-		}
-
-		if (exportEnabled_) {
-			/*
-			 * Export is enabled
-			 * All files and checksums are collected. Now dump into
-			 * file.
-			 */
-			dumpExportEntries();
-
-			/* Cleanup */
-			clearExportEntries();
-			exportEnabled_ = false;
-		}
-
-		sendOperationFinishedEvent();
-
-		/* Check for errors */
-		if (!errorList_.empty())
-			sendErrorEvent();
+	it = taskList_.find(task);
+	if (it != taskList_.end()) {
+		taskList_.erase(it);
+		delete task;
 	}
 }
 
@@ -1632,9 +1572,52 @@ SfsCtrl::updateSfsOp(int done)
 void
 SfsCtrl::endSfsOp(void)
 {
-	if (--inProgress_)
-		return;
 	/*
+	 * Do not decrement the inProgress_ counter to zero before we
+	 * are actually done.
+	 */
+	if (inProgress_ > 1) {
+		--inProgress_;
+		return;
+	}
+	/*
+	 * The SFS operation just finished.
+	 */
+
+	/* Handle entry filter. */
+	if (entryFilter_ == FILTER_CHANGED) {
+		/*
+		 * Remove all entries from model which has not
+		 * changed
+		 */
+		unsigned int idx = 0;
+
+		sfsDir_.beginChange();
+		while (idx < sfsDir_.getNumEntries()) {
+			SfsEntry *entry = sfsDir_.getEntry(idx);
+			if (!entry->isChecksumChanged())
+				sfsDir_.removeEntry(idx);
+			else
+				idx++;
+		}
+		sfsDir_.endChange();
+	}
+
+	/* Handle export */
+	if (exportEnabled_) {
+		/*
+		 * Export is enabled. All files and checksums are
+		 * collected. Now dump into file.
+		 */
+		dumpExportEntries();
+
+		/* Cleanup */
+		clearExportEntries();
+		exportEnabled_ = false;
+	}
+
+	/*
+	 * Remove progress bar if any.
 	 * NOTE: The Yield is required to avoid a BadWindow warning from X.
 	 * NOTE: However, this requires extra care because the timer might
 	 * NOTE: see the progress bar.
@@ -1648,7 +1631,15 @@ SfsCtrl::endSfsOp(void)
 		wxSafeYield(false);
 		delete old;
 	}
-	popTask(NULL);
+
+	/* Send notifications Events */
+	sendOperationFinishedEvent();
+	/* Check for errors */
+	if (!errorList_.empty())
+		sendErrorEvent();
+
+	/* Set inProgress_ counter to zero. */
+	inProgress_ = 0;
 }
 
 void

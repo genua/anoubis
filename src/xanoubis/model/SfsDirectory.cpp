@@ -264,10 +264,9 @@ SfsDirectory::removeEntry(unsigned int idx)
 	SfsEntry *entry = entryList_.get(idx);
 
 	if (entry) {
-		if (!changeInProgress_) {
-			entryList_.remove(entry);
+		entryList_.remove(entry);
+		if (!changeInProgress_)
 			rowChangeEvent(idx, -1);
-		}
 		delete entry;
 	}
 }
