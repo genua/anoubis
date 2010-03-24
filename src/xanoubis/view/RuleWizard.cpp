@@ -64,12 +64,14 @@
 #define CREATE_PAGE(list, idx, name, history)				\
 	do {								\
 		list[idx] = new RuleWizardPage(this, idx);		\
-		new name(list[idx], &history);				\
+		new name(list[idx], history);				\
 	} while (0)
 
 RuleWizard::RuleWizard(wxWindow *parent)
 {
 	Create(parent, wxID_ANY, wxT("Rule Wizard"));
+
+	history_ = new RuleWizardHistory();
 
 	/* Program */
 	CREATE_PAGE(pages_, PAGE_PROGRAM, RuleWizardProgramPage, history_);
@@ -112,6 +114,11 @@ RuleWizard::RuleWizard(wxWindow *parent)
 	    NULL, this);
 }
 
+RuleWizard::~RuleWizard(void)
+{
+	RuleWizardHistory::put(history_);
+}
+
 wxWizardPage *
 RuleWizard::getPage(enum wizardPages index)
 {
@@ -133,35 +140,35 @@ RuleWizard::forwardTransition(enum wizardPages pageNo) const
 
 	switch (pageNo) {
 	case PAGE_PROGRAM:
-		if (!history_.haveContextPolicy()) {
+		if (!history_->haveContextPolicy()) {
 			nextPage = PAGE_CTX;
-		} else if (history_.haveAlfPolicy()) {
+		} else if (history_->haveAlfPolicy()) {
 			nextPage = PAGE_ALF_OVERWRITE;
 		} else {
 			nextPage = PAGE_ALF_CLIENT;
 		}
 		break;
 	case PAGE_CTX:
-		if (history_.haveContextException()) {
+		if (history_->haveContextException()) {
 			nextPage = PAGE_CTX_EXCEPT;
-		} else if (history_.haveAlfPolicy()) {
+		} else if (history_->haveAlfPolicy()) {
 			nextPage = PAGE_ALF_OVERWRITE;
 		} else {
 			nextPage = PAGE_ALF_CLIENT;
 		}
 		break;
 	case PAGE_CTX_EXCEPT:
-		if (history_.haveAlfPolicy()) {
+		if (history_->haveAlfPolicy()) {
 			nextPage = PAGE_ALF_OVERWRITE;
 		} else {
 			nextPage = PAGE_ALF_CLIENT;
 		}
 		break;
 	case PAGE_ALF_OVERWRITE:
-		if (history_.shallOverwriteAlfPolicy() !=
+		if (history_->shallOverwriteAlfPolicy() !=
 		    RuleWizardHistory::OVERWRITE_NO) {
 			nextPage = PAGE_ALF_CLIENT;
-		} else if (history_.haveSandboxPolicy()) {
+		} else if (history_->haveSandboxPolicy()) {
 			nextPage = PAGE_SB_OVERWRITE;
 		} else {
 			nextPage = PAGE_SB;
@@ -169,10 +176,10 @@ RuleWizard::forwardTransition(enum wizardPages pageNo) const
 		break;
 	case PAGE_ALF_CLIENT:
 		/* XXX ch: ALF server pages still pending */
-		if (history_.getAlfClientPermission() ==
+		if (history_->getAlfClientPermission() ==
 		    RuleWizardHistory::PERM_RESTRICT_USER) {
 			nextPage = PAGE_ALF_CLIENT_PORTS;
-		} else if (history_.haveSandboxPolicy()) {
+		} else if (history_->haveSandboxPolicy()) {
 			nextPage = PAGE_SB_OVERWRITE;
 		} else {
 			nextPage = PAGE_SB;
@@ -180,14 +187,14 @@ RuleWizard::forwardTransition(enum wizardPages pageNo) const
 		break;
 	case PAGE_ALF_CLIENT_PORTS:
 		/* XXX ch: ALF server pages still pending */
-		if (history_.haveSandboxPolicy()) {
+		if (history_->haveSandboxPolicy()) {
 			nextPage = PAGE_SB_OVERWRITE;
 		} else {
 			nextPage = PAGE_SB;
 		}
 		break;
 	case PAGE_SB:
-		if (history_.haveSandbox() ==
+		if (history_->haveSandbox() ==
 		    RuleWizardHistory::PERM_RESTRICT_USER) {
 			nextPage = PAGE_SB_READ;
 		} else {
@@ -195,7 +202,7 @@ RuleWizard::forwardTransition(enum wizardPages pageNo) const
 		}
 		break;
 	case PAGE_SB_OVERWRITE:
-		if (history_.shallOverwriteSandboxPolicy() !=
+		if (history_->shallOverwriteSandboxPolicy() !=
 		    RuleWizardHistory::OVERWRITE_NO) {
 			nextPage = PAGE_SB_READ;
 		} else {
@@ -203,7 +210,7 @@ RuleWizard::forwardTransition(enum wizardPages pageNo) const
 		}
 		break;
 	case PAGE_SB_READ:
-		if (history_.getSandboxPermission(SbEntry::READ) ==
+		if (history_->getSandboxPermission(SbEntry::READ) ==
 		    RuleWizardHistory::PERM_RESTRICT_USER) {
 			nextPage = PAGE_SB_READ_FILES;
 		} else {
@@ -214,7 +221,7 @@ RuleWizard::forwardTransition(enum wizardPages pageNo) const
 		nextPage = PAGE_SB_WRITE;
 		break;
 	case PAGE_SB_WRITE:
-		if (history_.getSandboxPermission(SbEntry::WRITE) ==
+		if (history_->getSandboxPermission(SbEntry::WRITE) ==
 		    RuleWizardHistory::PERM_RESTRICT_USER) {
 			nextPage = PAGE_SB_WRITE_FILES;
 		} else {
@@ -225,7 +232,7 @@ RuleWizard::forwardTransition(enum wizardPages pageNo) const
 		nextPage = PAGE_SB_EXECUTE;
 		break;
 	case PAGE_SB_EXECUTE:
-		if (history_.getSandboxPermission(SbEntry::EXECUTE) ==
+		if (history_->getSandboxPermission(SbEntry::EXECUTE) ==
 		    RuleWizardHistory::PERM_RESTRICT_USER) {
 			nextPage = PAGE_SB_EXECUTE_FILES;
 		} else {
@@ -262,15 +269,15 @@ RuleWizard::backwardTransition(enum wizardPages pageNo) const
 		previousPage = PAGE_CTX;
 		break;
 	case PAGE_ALF_CLIENT:
-		if (history_.haveAlfPolicy()) {
+		if (history_->haveAlfPolicy()) {
 			previousPage = PAGE_ALF_OVERWRITE;
 			break;
 		}
 		/* FALLTHROUGH */
 	case PAGE_ALF_OVERWRITE:
-		if (history_.haveContextPolicy()) {
+		if (history_->haveContextPolicy()) {
 			previousPage = PAGE_PROGRAM;
-		} else if (history_.haveContextException()) {
+		} else if (history_->haveContextException()) {
 			previousPage = PAGE_CTX_EXCEPT;
 		} else {
 			previousPage = PAGE_CTX;
@@ -283,12 +290,12 @@ RuleWizard::backwardTransition(enum wizardPages pageNo) const
 	case PAGE_SB_OVERWRITE:
 		/* XXX ch: ALF server pages still pending */
 		overwrite = RuleWizardHistory::OVERWRITE_YES;
-		if (history_.haveAlfPolicy()) {
-			overwrite = history_.shallOverwriteAlfPolicy();
+		if (history_->haveAlfPolicy()) {
+			overwrite = history_->shallOverwriteAlfPolicy();
 		}
 		if (overwrite == RuleWizardHistory::OVERWRITE_NO) {
 			previousPage = PAGE_ALF_OVERWRITE;
-		} else if (history_.getAlfClientPermission() ==
+		} else if (history_->getAlfClientPermission() ==
 		    RuleWizardHistory::PERM_RESTRICT_USER) {
 			previousPage = PAGE_ALF_CLIENT_PORTS;
 		} else {
@@ -296,7 +303,7 @@ RuleWizard::backwardTransition(enum wizardPages pageNo) const
 		}
 		break;
 	case PAGE_SB_READ:
-		if (history_.haveSandboxPolicy()) {
+		if (history_->haveSandboxPolicy()) {
 			previousPage = PAGE_SB_OVERWRITE;
 		} else {
 			previousPage = PAGE_SB;
@@ -306,7 +313,7 @@ RuleWizard::backwardTransition(enum wizardPages pageNo) const
 		previousPage = PAGE_SB_READ;
 		break;
 	case PAGE_SB_WRITE:
-		if (history_.getSandboxPermission(SbEntry::READ) ==
+		if (history_->getSandboxPermission(SbEntry::READ) ==
 		    RuleWizardHistory::PERM_RESTRICT_USER) {
 			previousPage = PAGE_SB_READ_FILES;
 		} else {
@@ -317,7 +324,7 @@ RuleWizard::backwardTransition(enum wizardPages pageNo) const
 		previousPage = PAGE_SB_WRITE;
 		break;
 	case PAGE_SB_EXECUTE:
-		if (history_.getSandboxPermission(SbEntry::WRITE) ==
+		if (history_->getSandboxPermission(SbEntry::WRITE) ==
 		    RuleWizardHistory::PERM_RESTRICT_USER) {
 			previousPage = PAGE_SB_WRITE_FILES;
 		} else {
@@ -329,15 +336,15 @@ RuleWizard::backwardTransition(enum wizardPages pageNo) const
 		break;
 	case PAGE_FINAL:
 		overwrite = RuleWizardHistory::OVERWRITE_YES;
-		if (history_.haveSandboxPolicy()) {
-			overwrite = history_.shallOverwriteSandboxPolicy();
+		if (history_->haveSandboxPolicy()) {
+			overwrite = history_->shallOverwriteSandboxPolicy();
 		}
 		if (overwrite == RuleWizardHistory::OVERWRITE_NO) {
 			previousPage = PAGE_SB_OVERWRITE;
-		} else if (history_.haveSandbox() !=
+		} else if (history_->haveSandbox() !=
 		    RuleWizardHistory::PERM_RESTRICT_USER) {
 			previousPage = PAGE_SB;
-		} else if (history_.getSandboxPermission(SbEntry::EXECUTE) ==
+		} else if (history_->getSandboxPermission(SbEntry::EXECUTE) ==
 		    RuleWizardHistory::PERM_RESTRICT_USER) {
 			previousPage = PAGE_SB_EXECUTE_FILES;
 		} else {
@@ -390,18 +397,18 @@ RuleWizard::onWizardFinished(wxWizardEvent &)
 		ruleSet->lock();
 	}
 
-	if (!history_.haveContextPolicy()) {
+	if (!history_->haveContextPolicy()) {
 		createContextPolicy(ruleSet);
 	}
 	createAlfPolicy(ruleSet);
-	if (history_.haveSandbox() != RuleWizardHistory::PERM_NONE)
+	if (history_->haveSandbox() != RuleWizardHistory::PERM_NONE)
 		createSandboxPolicy(ruleSet);
 
 	newRuleSetEvent.SetInt(ruleSet->getRuleSetId());
 	newRuleSetEvent.SetExtraLong(ruleSet->getRuleSetId());
 	ruleSet->unlock();
 
-	if(history_.shallActivatePolicy()) {
+	if(history_->shallActivatePolicy()) {
 		polRes = policyCtrl->sendToDaemon(ruleSet->getRuleSetId());
 		switch (polRes) {
 		case PolicyCtrl::RESULT_POL_WRONG_PASS:
@@ -447,24 +454,24 @@ RuleWizard::createContextPolicy(PolicyRuleSet *ruleSet) const
 	}
 
 	ruleSet->prependAppPolicy(ctxApp);
-	ctxApp->addBinary(history_.getProgram());
-	if (history_.getChecksumType() == APN_CS_NONE) {
+	ctxApp->addBinary(history_->getProgram());
+	if (history_->getChecksumType() == APN_CS_NONE) {
 		ctxApp->setSubjectNone(0);
 	} else {
 		ctxApp->setSubjectSelf(0, false);
 	}
 
-	ctxApp->setFlag(APN_RULE_NOSFS, history_.isSfsDisabled());
+	ctxApp->setFlag(APN_RULE_NOSFS, history_->isSfsDisabled());
 
-	if (!history_.isSameContext()) {
+	if (!history_->isSameContext()) {
 		/* Create 'context new any' */
 		ctxFilter = new ContextFilterPolicy(ctxApp);
 		ctxApp->prependFilterPolicy(ctxFilter);
 		ctxFilter->setContextTypeNo(APN_CTX_NEW);
 	} else {
-		if (history_.haveContextException()) {
+		if (history_->haveContextException()) {
 			StringListModel *ctxModel =
-			    history_.getContextExceptions();
+			    history_->getContextExceptions();
 
 			ctxFilter = new ContextFilterPolicy(ctxApp);
 			ctxApp->prependFilterPolicy(ctxFilter);
@@ -496,9 +503,9 @@ RuleWizard::createAlfPolicy(PolicyRuleSet *ruleSet) const
 		return;
 	}
 
-	if (history_.haveAlfPolicy()) {
-		alfApp = ruleSet->searchAlfAppPolicy(history_.getProgram());
-		if (history_.shallOverwriteAlfPolicy() ==
+	if (history_->haveAlfPolicy()) {
+		alfApp = ruleSet->searchAlfAppPolicy(history_->getProgram());
+		if (history_->shallOverwriteAlfPolicy() ==
 		    RuleWizardHistory::OVERWRITE_NO) {
 			return;
 		}
@@ -507,7 +514,7 @@ RuleWizard::createAlfPolicy(PolicyRuleSet *ruleSet) const
 		 * remove all and re-create the app policy.
 		 */
 		if (alfApp->getBinaryCount() > 1) {
-			alfApp->removeBinary(history_.getProgram());
+			alfApp->removeBinary(history_->getProgram());
 		} else {
 			alfApp->remove();
 		}
@@ -516,8 +523,8 @@ RuleWizard::createAlfPolicy(PolicyRuleSet *ruleSet) const
 	/* Create new application bock */
 	alfApp = new AlfAppPolicy(ruleSet);
 	ruleSet->prependAppPolicy(alfApp);
-	alfApp->addBinary(history_.getProgram());
-	if (history_.getChecksumType() == APN_CS_NONE) {
+	alfApp->addBinary(history_->getProgram());
+	if (history_->getChecksumType() == APN_CS_NONE) {
 		alfApp->setSubjectNone(0);
 	} else {
 		alfApp->setSubjectSelf(0, false);
@@ -526,7 +533,7 @@ RuleWizard::createAlfPolicy(PolicyRuleSet *ruleSet) const
 	dflFilter = new DefaultFilterPolicy(alfApp);
 	alfApp->prependFilterPolicy(dflFilter);
 
-	switch (history_.getAlfClientPermission()) {
+	switch (history_->getAlfClientPermission()) {
 	case RuleWizardHistory::PERM_ALLOW_ALL:
 		dflFilter->setActionNo(APN_ACTION_ALLOW);
 		break;
@@ -536,18 +543,18 @@ RuleWizard::createAlfPolicy(PolicyRuleSet *ruleSet) const
 		break;
 	case RuleWizardHistory::PERM_RESTRICT_DEFAULT:
 		dflFilter->setActionNo(APN_ACTION_ASK);
-		history_.getAlfClientPortList()->assignDefaultServices();
+		history_->getAlfClientPortList()->assignDefaultServices();
 		createAlfPortList(alfApp, APN_CONNECT);
 		break;
 	default:
-		if (history_.getAlfClientAsk()) {
+		if (history_->getAlfClientAsk()) {
 			dflFilter->setActionNo(APN_ACTION_ASK);
 		} else {
 			dflFilter->setActionNo(APN_ACTION_DENY);
 			dflFilter->setLogNo(APN_LOG_NORMAL);
 		}
 
-		if (history_.getAlfClientRaw()) {
+		if (history_->getAlfClientRaw()) {
 			alfCap = new AlfCapabilityFilterPolicy(alfApp);
 			alfApp->prependFilterPolicy(alfCap);
 			alfCap->setCapabilityTypeNo(APN_ALF_CAPRAW);
@@ -570,9 +577,9 @@ RuleWizard::createSandboxPolicy(PolicyRuleSet *ruleSet) const
 	sbFilter = NULL;
 	dflFilter  = NULL;
 
-	if (history_.haveSandboxPolicy()) {
-		sbApp = ruleSet->searchSandboxAppPolicy(history_.getProgram());
-		if (history_.shallOverwriteSandboxPolicy() ==
+	if (history_->haveSandboxPolicy()) {
+		sbApp = ruleSet->searchSandboxAppPolicy(history_->getProgram());
+		if (history_->shallOverwriteSandboxPolicy() ==
 		    RuleWizardHistory::OVERWRITE_NO) {
 			return;
 		}
@@ -581,7 +588,7 @@ RuleWizard::createSandboxPolicy(PolicyRuleSet *ruleSet) const
 		 * remove all and re-create the app policy.
 		 */
 		if (sbApp->getBinaryCount() > 1) {
-			sbApp->removeBinary(history_.getProgram());
+			sbApp->removeBinary(history_->getProgram());
 		} else {
 			sbApp->remove();
 		}
@@ -589,8 +596,8 @@ RuleWizard::createSandboxPolicy(PolicyRuleSet *ruleSet) const
 	/* Create new app block. */
 	sbApp = new SbAppPolicy(ruleSet);
 	ruleSet->prependAppPolicy(sbApp);
-	sbApp->addBinary(history_.getProgram());
-	if (history_.getChecksumType() == APN_CS_NONE) {
+	sbApp->addBinary(history_->getProgram());
+	if (history_->getChecksumType() == APN_CS_NONE) {
 		sbApp->setSubjectNone(0);
 	} else {
 		sbApp->setSubjectSelf(0, false);
@@ -607,7 +614,7 @@ RuleWizard::createSandboxPolicy(PolicyRuleSet *ruleSet) const
 void
 RuleWizard::createAlfPortList(AlfAppPolicy *app, int direction) const
 {
-	ServiceList	*list = history_.getAlfClientPortList();
+	ServiceList	*list = history_->getAlfClientPortList();
 	AlfFilterPolicy	*filter;
 	static int	 dirs[2] = { APN_CONNECT, APN_ACCEPT };
 
@@ -707,7 +714,7 @@ RuleWizard::createSbPermissions(SbAppPolicy *app) const
 	/*
 	 * Finally convert entries of the SbModel into policies
 	 */
-	SbModel *model = history_.getSandboxFileList();
+	SbModel *model = history_->getSandboxFileList();
 	for (unsigned int i = 0; i < model->getEntryCount(); i++) {
 		SbEntry *entry = model->getEntry(i);
 
@@ -732,16 +739,17 @@ RuleWizard::createSbPermissions(SbAppPolicy *app) const
 void
 RuleWizard::createSbPermissionsStage1(void) const
 {
-	if (history_.haveSandbox() ==
+	if (history_->haveSandbox() ==
 	    RuleWizardHistory::PERM_RESTRICT_DEFAULT) {
 		/*
 		 * The user has chosen
 		 * "Yes, load default policies (skip wizard)".
 		 * Load defaults for all permissions.
 		 */
-		history_.getSandboxFileList()->assignDefaults(SbEntry::READ);
-		history_.getSandboxFileList()->assignDefaults(SbEntry::WRITE);
-		history_.getSandboxFileList()->assignDefaults(SbEntry::EXECUTE);
+		history_->getSandboxFileList()->assignDefaults(SbEntry::READ);
+		history_->getSandboxFileList()->assignDefaults(SbEntry::WRITE);
+		history_->getSandboxFileList()
+		    ->assignDefaults(SbEntry::EXECUTE);
 	}
 
 	/*
@@ -757,12 +765,12 @@ void
 RuleWizard::createSbPermissionsStage2(SbAppPolicy *app,
     SbEntry::Permission permission) const
 {
-	if (history_.haveSandbox() != RuleWizardHistory::PERM_RESTRICT_USER) {
+	if (history_->haveSandbox() != RuleWizardHistory::PERM_RESTRICT_USER) {
 		/* Wizard has not reached stage 2, abort */
 		return;
 	}
 
-	switch (history_.getSandboxPermission(permission)) {
+	switch (history_->getSandboxPermission(permission)) {
 	case RuleWizardHistory::PERM_ALLOW_ALL:
 		/*
 		 * The user has chosen "unrestricted".
@@ -776,7 +784,7 @@ RuleWizard::createSbPermissionsStage2(SbAppPolicy *app,
 		 * The user has chosen "restricted (default)".
 		 * Load defaults for the given permission.
 		 */
-		history_.getSandboxFileList()->assignDefaults(permission);
+		history_->getSandboxFileList()->assignDefaults(permission);
 		break;
 	default:
 		/*
@@ -792,7 +800,7 @@ void
 RuleWizard::createSbPermissionsStage3(SbAppPolicy *app,
     SbEntry::Permission permission) const
 {
-	if (history_.getSandboxPermission(permission) !=
+	if (history_->getSandboxPermission(permission) !=
 	    RuleWizardHistory::PERM_RESTRICT_USER) {
 		/* The wizard has not reached stage 3, abort */
 		return;
@@ -806,13 +814,13 @@ RuleWizard::createSbPermissionsStage3(SbAppPolicy *app,
 	 */
 
 	/* Create the rule for the root directory. */
-	if (history_.getSandboxAsk(permission))
+	if (history_->getSandboxAsk(permission))
 		createSbPermissionRoot(app, section, APN_ACTION_ASK);
 	else
 		createSbPermissionRoot(app, section, APN_ACTION_DENY);
 
 	/* Finally put signature rules first if those were requested. */
-	if (history_.getSandboxValidSignature(permission)) {
+	if (history_->getSandboxValidSignature(permission)) {
 		SbAccessFilterPolicy	*filter;
 		int			 action = APN_ACTION_ALLOW;
 		int			 log = APN_LOG_NONE;

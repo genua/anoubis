@@ -80,10 +80,12 @@ RuleWizardHistory::RuleWizardHistory(void)
 	cstype_			      = APN_CS_NONE;
 
 	shallActivatePolicy_ = true;
+	refcount_ = 1;
 }
 
 RuleWizardHistory::~RuleWizardHistory(void)
 {
+	assert(refcount_ == 0);
 	delete contextExceptionList_;
 	delete alfClientPortList_;
 	delete sandboxFileList_;

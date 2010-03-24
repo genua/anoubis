@@ -44,6 +44,11 @@ class RuleWizardAlfClientPage : public RuleWizardAlfPermissionPageBase
 		 */
 		RuleWizardAlfClientPage(wxWindow *, RuleWizardHistory *);
 
+		/**
+		 * Destructor of this page.
+		 */
+		~RuleWizardAlfClientPage(void);
+
 	private:
 		/**
 		 * Store the input here.

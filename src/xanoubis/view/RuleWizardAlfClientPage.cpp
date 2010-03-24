@@ -32,6 +32,7 @@
 RuleWizardAlfClientPage::RuleWizardAlfClientPage(wxWindow *parent,
     RuleWizardHistory *history) : RuleWizardAlfPermissionPageBase(parent)
 {
+	history->get();
 	history_ = history;
 
 	switch (history_->getAlfClientPermission()) {
@@ -59,6 +60,11 @@ RuleWizardAlfClientPage::RuleWizardAlfClientPage(wxWindow *parent,
 	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED,
 	    wxWizardEventHandler(RuleWizardAlfClientPage::onPageChanged),
 	    NULL, this);
+}
+
+RuleWizardAlfClientPage::~RuleWizardAlfClientPage(void)
+{
+	RuleWizardHistory::put(history_);
 }
 
 void

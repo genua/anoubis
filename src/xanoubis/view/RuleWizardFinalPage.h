@@ -43,6 +43,11 @@ class RuleWizardFinalPage : public RuleWizardFinalPageBase
 		 */
 		RuleWizardFinalPage(wxWindow *, RuleWizardHistory *);
 
+		/**
+		 * Destructor of this page.
+		 */
+		~RuleWizardFinalPage(void);
+
 	private:
 		/**
 		 * Store the input here.

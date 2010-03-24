@@ -32,6 +32,7 @@
 RuleWizardSandboxWritePage::RuleWizardSandboxWritePage(wxWindow *parent,
     RuleWizardHistory *history) : RuleWizardSandboxPermissionPageBase(parent)
 {
+	history->get();
 	history_ = history;
 
 	switch (history_->getSandboxPermission(SbEntry::WRITE)) {
@@ -54,6 +55,11 @@ RuleWizardSandboxWritePage::RuleWizardSandboxWritePage(wxWindow *parent,
 	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED,
 	    wxWizardEventHandler(RuleWizardSandboxWritePage::onPageChanged),
 	    NULL, this);
+}
+
+RuleWizardSandboxWritePage::~RuleWizardSandboxWritePage(void)
+{
+	RuleWizardHistory::put(history_);
 }
 
 void

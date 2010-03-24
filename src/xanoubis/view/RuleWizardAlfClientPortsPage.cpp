@@ -41,6 +41,7 @@ RuleWizardAlfClientPortsPage::RuleWizardAlfClientPortsPage(wxWindow *parent,
 	int		width;
 	AnListColumn	*col;
 
+	history->get();
 	history_ = history;
 
 	/* Initial column width */
@@ -72,6 +73,11 @@ RuleWizardAlfClientPortsPage::RuleWizardAlfClientPortsPage(wxWindow *parent,
 	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED,
 	    wxWizardEventHandler(RuleWizardAlfClientPortsPage::onPageChanged),
 	    NULL, this);
+}
+
+RuleWizardAlfClientPortsPage::~RuleWizardAlfClientPortsPage(void)
+{
+	RuleWizardHistory::put(history_);
 }
 
 void

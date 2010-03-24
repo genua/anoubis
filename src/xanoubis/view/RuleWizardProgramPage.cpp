@@ -42,6 +42,7 @@ RuleWizardProgramPage::RuleWizardProgramPage(wxWindow *parent,
     RuleWizardHistory *history) : Observer(NULL),
     RuleWizardProgramPageBase(parent)
 {
+	history->get();
 	history_ = history;
 
 	history_->setChecksumType(APN_CS_NONE);
@@ -86,6 +87,7 @@ RuleWizardProgramPage::~RuleWizardProgramPage(void)
 		delete csumAddTask_;
 	if (csumCalcTask_)
 		delete csumCalcTask_;
+	RuleWizardHistory::put(history_);
 }
 
 void

@@ -44,6 +44,11 @@ class RuleWizardContextPage : public RuleWizardContextPageBase
 		 */
 		RuleWizardContextPage(wxWindow *, RuleWizardHistory *);
 
+		/**
+		 * Destructor of this page.
+		 */
+		~RuleWizardContextPage(void);
+
 	private:
 		/**
 		 * Store the input here.

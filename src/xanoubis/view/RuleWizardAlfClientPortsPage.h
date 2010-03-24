@@ -44,6 +44,11 @@ class RuleWizardAlfClientPortsPage : public RuleWizardAlfServicePageBase
 		 */
 		RuleWizardAlfClientPortsPage(wxWindow *, RuleWizardHistory *);
 
+		/**
+		 * Destructor of this page.
+		 */
+		~RuleWizardAlfClientPortsPage(void);
+
 	private:
 		/**
 		 * Store the input here.

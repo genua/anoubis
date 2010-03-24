@@ -44,6 +44,11 @@ class RuleWizardAlfOverwritePage : public RuleWizardOverwritePolicyPageBase
 		 */
 		RuleWizardAlfOverwritePage(wxWindow *, RuleWizardHistory *);
 
+		/**
+		 * Destructor of this page.
+		 */
+		~RuleWizardAlfOverwritePage(void);
+
 	private:
 		/**
 		 * Store the input here.

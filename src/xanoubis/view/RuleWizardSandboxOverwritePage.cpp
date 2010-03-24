@@ -37,6 +37,7 @@ RuleWizardSandboxOverwritePage::RuleWizardSandboxOverwritePage(wxWindow *parent,
 	wxString	 text;
 	wxIcon		*icon;
 
+	history->get();
 	history_ = history;
 
 	text = wxT("Sandbox settings:");
@@ -66,6 +67,11 @@ RuleWizardSandboxOverwritePage::RuleWizardSandboxOverwritePage(wxWindow *parent,
 	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED,
 	    wxWizardEventHandler(RuleWizardSandboxOverwritePage::onPageChanged),
 	    NULL, this);
+}
+
+RuleWizardSandboxOverwritePage::~RuleWizardSandboxOverwritePage(void)
+{
+	RuleWizardHistory::put(history_);
 }
 
 void

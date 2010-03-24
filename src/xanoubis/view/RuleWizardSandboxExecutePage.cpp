@@ -32,6 +32,7 @@
 RuleWizardSandboxExecutePage::RuleWizardSandboxExecutePage(wxWindow *parent,
     RuleWizardHistory *history) : RuleWizardSandboxPermissionPageBase(parent)
 {
+	history->get();
 	history_ = history;
 
 	switch (history_->getSandboxPermission(SbEntry::EXECUTE)) {
@@ -54,6 +55,11 @@ RuleWizardSandboxExecutePage::RuleWizardSandboxExecutePage(wxWindow *parent,
 	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED,
 	    wxWizardEventHandler(RuleWizardSandboxExecutePage::onPageChanged),
 	    NULL, this);
+}
+
+RuleWizardSandboxExecutePage::~RuleWizardSandboxExecutePage(void)
+{
+	RuleWizardHistory::put(history_);
 }
 
 void

@@ -44,6 +44,11 @@ class RuleWizardSandboxOverwritePage : public RuleWizardOverwritePolicyPageBase
 		 */
 		RuleWizardSandboxOverwritePage(wxWindow *, RuleWizardHistory *);
 
+		/**
+		 * Destructor of this page.
+		 */
+		~RuleWizardSandboxOverwritePage(void);
+
 	private:
 		/**
 		 * Store the input here.

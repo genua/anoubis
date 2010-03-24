@@ -41,6 +41,7 @@
 RuleWizardSandboxReadFilesPage::RuleWizardSandboxReadFilesPage(wxWindow *parent,
     RuleWizardHistory *history) : RuleWizardSandboxFilesPageBase(parent)
 {
+	history->get();
 	history_ = history;
 
 	/* The initial column width */
@@ -76,6 +77,7 @@ RuleWizardSandboxReadFilesPage::~RuleWizardSandboxReadFilesPage(void)
 {
 	fileListCtrl->setRowProvider(0);
 	delete rowProvider_;
+	RuleWizardHistory::put(history_);
 }
 
 void
@@ -159,7 +161,7 @@ RuleWizardSandboxReadFilesPage::onDeleteButton(wxCommandEvent &)
 
 		if (entry != 0)
 			removeList.push_back(entry);
-        }
+	}
 
 	/*
 	 * Now it's save to remove the services from the model as you are
@@ -169,7 +171,7 @@ RuleWizardSandboxReadFilesPage::onDeleteButton(wxCommandEvent &)
 	    it != removeList.end(); ++it) {
 		SbEntry *entry = (*it);
 		entry->setPermission(SbEntry::READ, false);
-        }
+	}
 
 	updateNavi();
 }

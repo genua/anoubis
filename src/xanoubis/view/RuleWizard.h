@@ -180,6 +180,12 @@ class RuleWizard : public wxWizard
 		RuleWizard(wxWindow *);
 
 		/**
+		 * Destructor of the Wizard.
+		 * @param None.
+		 */
+		~RuleWizard(void);
+
+		/**
 		 * Get a special page.
 		 * This will deliver the specified page if the given index
 		 * meets the need of wizardPages range.
@@ -219,7 +225,7 @@ class RuleWizard : public wxWizard
 		/**
 		 * Store made input within this class.
 		 */
-		RuleWizardHistory history_;
+		RuleWizardHistory *history_;
 
 		/**
 		 * Handle event of finished wizard.

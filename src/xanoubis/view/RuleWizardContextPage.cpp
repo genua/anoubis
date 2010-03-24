@@ -30,6 +30,7 @@
 RuleWizardContextPage::RuleWizardContextPage(wxWindow *parent,
     RuleWizardHistory *history) : RuleWizardContextPageBase(parent)
 {
+	history->get();
 	history_ = history;
 
 	if (history_->isSameContext()) {
@@ -47,6 +48,11 @@ RuleWizardContextPage::RuleWizardContextPage(wxWindow *parent,
 	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED,
 	    wxWizardEventHandler(RuleWizardContextPage::onPageChanged),
 	    NULL, this);
+}
+
+RuleWizardContextPage::~RuleWizardContextPage(void)
+{
+	RuleWizardHistory::put(history_);
 }
 
 void

@@ -32,6 +32,7 @@
 RuleWizardSandboxPage::RuleWizardSandboxPage(wxWindow *parent,
     RuleWizardHistory *history) : RuleWizardSandboxPageBase(parent)
 {
+	history->get();
 	history_ = history;
 
 	switch (history_->haveSandbox()) {
@@ -53,6 +54,11 @@ RuleWizardSandboxPage::RuleWizardSandboxPage(wxWindow *parent,
 	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED,
 	    wxWizardEventHandler(RuleWizardSandboxPage::onPageChanged),
 	    NULL, this);
+}
+
+RuleWizardSandboxPage::~RuleWizardSandboxPage(void)
+{
+	RuleWizardHistory::put(history_);
 }
 
 void

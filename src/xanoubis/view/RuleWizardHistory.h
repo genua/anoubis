@@ -70,6 +70,11 @@ class RuleWizardHistory
 		 * @param None.
 		 */
 		RuleWizardHistory(void);
+
+		/**
+		 * Destructor of this wizard history.
+		 * @param None.
+		 */
 		~RuleWizardHistory(void);
 
 		/**
@@ -580,6 +585,40 @@ class RuleWizardHistory
 		 * @return Nothing.
 		 */
 		void addValue(wxWindow *, wxSizer *, wxString) const;
+
+	private:
+		int refcount_;
+
+	public:
+		/**
+		 * Get a reference to the history.
+		 */
+		void get(void) { refcount_++; };
+
+	private:
+		/**
+		 * Drop a single reference to the history and return
+		 * the new refcount. This is an internal helper function
+		 * and should not be used. Use the static "put" function
+		 * instead.
+		 * @return The new reference count. This history is dead
+		 *     if this count reaches zero.
+		 */
+		int internal_put(void) { return --refcount_; };
+
+	public:
+		/**
+		 * Drop a single reference to the history and delete
+		 * the history if the reference count reaches zero.
+		 *
+		 * @param A pointer to the history. The pointer itself
+		 *     is set to NULL in the caller to catch usage errors.
+		 */
+		static void put(RuleWizardHistory * &h) {
+			if (h->internal_put() == 0)
+				delete h;
+			h = NULL;
+		}
 };
 
 #endif	/* _RULEWIZARDHISTORY_H_ */

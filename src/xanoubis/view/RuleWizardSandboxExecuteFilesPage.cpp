@@ -44,6 +44,7 @@ RuleWizardSandboxExecuteFilesPage::RuleWizardSandboxExecuteFilesPage(
     wxWindow *parent, RuleWizardHistory *history)
     : RuleWizardSandboxFilesPageBase(parent)
 {
+	history->get();
 	history_ = history;
 
 	/* The initial column width */
@@ -78,6 +79,7 @@ RuleWizardSandboxExecuteFilesPage::~RuleWizardSandboxExecuteFilesPage(void)
 {
 	fileListCtrl->setRowProvider(0);
 	delete rowProvider_;
+	RuleWizardHistory::put(history_);
 }
 
 void
@@ -161,17 +163,17 @@ RuleWizardSandboxExecuteFilesPage::onDeleteButton(wxCommandEvent &)
 
 		if (entry != 0)
 			removeList.push_back(entry);
-        }
+	}
 
 	/*
 	 * Now it's save to remove the services from the model as you are
 	 * independent from the selection
 	 */
-        for (std::list<SbEntry *>::const_iterator it = removeList.begin();
+	for (std::list<SbEntry *>::const_iterator it = removeList.begin();
 	    it != removeList.end(); ++it) {
 		SbEntry *entry = (*it);
 		entry->setPermission(SbEntry::EXECUTE, false);
-        }
+	}
 
 	updateNavi();
 }

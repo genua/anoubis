@@ -31,11 +31,17 @@
 RuleWizardFinalPage::RuleWizardFinalPage(wxWindow *parent,
     RuleWizardHistory *history) : RuleWizardFinalPageBase(parent)
 {
+	history->get();
 	history_ = history;
 
 	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED,
 	    wxWizardEventHandler(RuleWizardFinalPage::onPageChanged),
 	    NULL, this);
+}
+
+RuleWizardFinalPage::~RuleWizardFinalPage(void)
+{
+	RuleWizardHistory::put(history_);
 }
 
 void

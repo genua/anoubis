@@ -71,6 +71,7 @@ class ContextExceptionProperty : public AnListProperty
 RuleWizardContextExceptionPage::RuleWizardContextExceptionPage(wxWindow *parent,
     RuleWizardHistory *history) : RuleWizardContextExceptionPageBase(parent)
 {
+	history->get();
 	history_ = history;
 
 	/* List has one column, expanded over complete list */
@@ -91,6 +92,7 @@ RuleWizardContextExceptionPage::RuleWizardContextExceptionPage(wxWindow *parent,
 RuleWizardContextExceptionPage::~RuleWizardContextExceptionPage(void)
 {
 	exceptionList->setRowProvider(0);
+	RuleWizardHistory::put(history_);
 }
 
 void

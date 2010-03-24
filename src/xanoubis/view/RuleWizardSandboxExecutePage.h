@@ -44,6 +44,11 @@ class RuleWizardSandboxExecutePage : public RuleWizardSandboxPermissionPageBase
 		 */
 		RuleWizardSandboxExecutePage(wxWindow *, RuleWizardHistory *);
 
+		/**
+		 * Destructor of this page.
+		 */
+		~RuleWizardSandboxExecutePage(void);
+
 	private:
 		/**
 		 * Store the input here.

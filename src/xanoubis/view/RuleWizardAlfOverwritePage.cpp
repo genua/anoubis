@@ -38,6 +38,7 @@ RuleWizardAlfOverwritePage::RuleWizardAlfOverwritePage(wxWindow *parent,
 	wxString	 text;
 	wxIcon		*icon;
 
+	history->get();
 	history_ = history;
 
 	text = wxT("Application Level Firewall settings:");
@@ -67,6 +68,11 @@ RuleWizardAlfOverwritePage::RuleWizardAlfOverwritePage(wxWindow *parent,
 	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED,
 	    wxWizardEventHandler(RuleWizardAlfOverwritePage::onPageChanged),
 	    NULL, this);
+}
+
+RuleWizardAlfOverwritePage::~RuleWizardAlfOverwritePage(void)
+{
+	RuleWizardHistory::put(history_);
 }
 
 void

@@ -32,6 +32,7 @@
 RuleWizardSandboxReadPage::RuleWizardSandboxReadPage(wxWindow *parent,
     RuleWizardHistory *history) : RuleWizardSandboxPermissionPageBase(parent)
 {
+	history->get();
 	history_ = history;
 
 	switch (history_->getSandboxPermission(SbEntry::READ)) {
@@ -54,6 +55,11 @@ RuleWizardSandboxReadPage::RuleWizardSandboxReadPage(wxWindow *parent,
 	parent->Connect(wxEVT_WIZARD_PAGE_CHANGED,
 	    wxWizardEventHandler(RuleWizardSandboxReadPage::onPageChanged),
 	    NULL, this);
+}
+
+RuleWizardSandboxReadPage::~RuleWizardSandboxReadPage(void)
+{
+	RuleWizardHistory::put(history_);
 }
 
 void
