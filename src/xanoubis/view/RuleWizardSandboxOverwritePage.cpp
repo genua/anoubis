@@ -84,14 +84,24 @@ RuleWizardSandboxOverwritePage::onPageChanged(wxWizardEvent &)
 void
 RuleWizardSandboxOverwritePage::onYesRadioButton(wxCommandEvent &)
 {
+	/*
+	 * Must call setSandbox(...), too because the page that selects
+	 * this value is skipped if sandbox policies exist.
+	 */
 	history_->setOverwriteSandboxPolicy(RuleWizardHistory::OVERWRITE_YES);
+	history_->setSandbox(RuleWizardHistory::PERM_RESTRICT_USER);
 	updateNavi();
 }
 
 void
 RuleWizardSandboxOverwritePage::onNoRadioButton(wxCommandEvent &)
 {
+	/*
+	 * Must call setSandbox(...), too because the page that selects
+	 * this value is skipped if sandbox policies exist.
+	 */
 	history_->setOverwriteSandboxPolicy(RuleWizardHistory::OVERWRITE_NO);
+	history_->setSandbox(RuleWizardHistory::PERM_NONE);
 	updateNavi();
 }
 
