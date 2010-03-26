@@ -26,7 +26,6 @@
  */
 
 #include <check.h>
-#include <errno.h>
 #include <stdio.h>
 
 #include <wx/app.h>
@@ -35,6 +34,8 @@
 
 #include <Service.h>
 #include <ServiceList.h>
+
+#include <anoubis_errno.h>
 
 class ServiceObserver : public Observer
 {
@@ -112,21 +113,21 @@ setup(void)
 
 	snprintf(path, sizeof(path), "%s/share", tmp_prefix);
 	fail_unless(mkdir(path, S_IRWXU) == 0,
-	    "Failed to create %s: %s", path, strerror(errno));
+	    "Failed to create %s: %s", path, anoubis_strerror(errno));
 
 	snprintf(path, sizeof(path), "%s/share/ServicesApp", tmp_prefix);
 	fail_unless(mkdir(path, S_IRWXU) == 0,
-	    "Failed to create %s: %s", path, strerror(errno));
+	    "Failed to create %s: %s", path, anoubis_strerror(errno));
 
 	snprintf(path, sizeof(path), "%s/share/ServicesApp/profiles",
 	    tmp_prefix);
 	fail_unless(mkdir(path, S_IRWXU) == 0,
-	    "Failed to create %s: %s", path, strerror(errno));
+	    "Failed to create %s: %s", path, anoubis_strerror(errno));
 
 	snprintf(path, sizeof(path), "%s/share/ServicesApp/profiles/wizard",
 	    tmp_prefix);
 	fail_unless(mkdir(path, S_IRWXU) == 0,
-	    "Failed to create %s: %s", path, strerror(errno));
+	    "Failed to create %s: %s", path, anoubis_strerror(errno));
 
 	snprintf(path, sizeof(path),
 	    "%s/share/ServicesApp/profiles/wizard/alf", tmp_prefix);
@@ -155,23 +156,23 @@ teardown(void)
 	snprintf(path, sizeof(path), "%s/share/ServicesApp/profiles/wizard",
 	    tmp_prefix);
 	fail_unless(rmdir(path) == 0, "Failed to remove %s: %s",
-	    path, strerror(errno));
+	    path, anoubis_strerror(errno));
 
 	snprintf(path, sizeof(path), "%s/share/ServicesApp/profiles",
 	    tmp_prefix);
 	fail_unless(rmdir(path) == 0, "Failed to remove %s: %s",
-	    path, strerror(errno));
+	    path, anoubis_strerror(errno));
 
 	snprintf(path, sizeof(path), "%s/share/ServicesApp", tmp_prefix);
 	fail_unless(rmdir(path) == 0, "Failed to remove %s: %s",
-	    path, strerror(errno));
+	    path, anoubis_strerror(errno));
 
 	snprintf(path, sizeof(path), "%s/share", tmp_prefix);
 	fail_unless(rmdir(path) == 0, "Failed to remove %s: %s",
-	    path, strerror(errno));
+	    path, anoubis_strerror(errno));
 
 	fail_unless(rmdir(tmp_prefix) == 0, "Failed to remove %s: %s",
-	    tmp_prefix, strerror(errno));
+	    tmp_prefix, anoubis_strerror(errno));
 }
 
 START_TEST(add_service)
@@ -303,7 +304,7 @@ START_TEST(no_default_service)
 	snprintf(path, sizeof(path),
 	"%s/share/ServicesApp/profiles/wizard/alf", tmp_prefix);
 	fail_unless(unlink(path) == 0, "Failed to remove %s: %s",
-	    path, strerror(errno));
+	    path, anoubis_strerror(errno));
 
 	fail_unless(!serviceList.canHaveDefaultServices());
 

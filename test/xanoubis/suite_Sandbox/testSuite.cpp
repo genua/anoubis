@@ -26,7 +26,6 @@
  */
 
 #include <check.h>
-#include <errno.h>
 
 #include <wx/app.h>
 #include <wx/apptrait.h>
@@ -34,6 +33,8 @@
 
 #include <SbModel.h>
 #include <SbModelRowProvider.h>
+
+#include <anoubis_errno.h>
 
 class SandboxAppTraits : public wxGUIAppTraits
 {
@@ -86,21 +87,21 @@ setup(void)
 
 	snprintf(path, sizeof(path), "%s/share", tmp_prefix);
 	fail_unless(mkdir(path, S_IRWXU) == 0,
-	    "Failed to create %s: %s", path, strerror(errno));
+	    "Failed to create %s: %s", path, anoubis_strerror(errno));
 
 	snprintf(path, sizeof(path), "%s/share/SandboxApp", tmp_prefix);
 	    fail_unless(mkdir(path, S_IRWXU) == 0,
-	    "Failed to create %s: %s", path, strerror(errno));
+	    "Failed to create %s: %s", path, anoubis_strerror(errno));
 
 	snprintf(path, sizeof(path), "%s/share/SandboxApp/profiles",
 	    tmp_prefix);
 	fail_unless(mkdir(path, S_IRWXU) == 0,
-	    "Failed to create %s: %s", path, strerror(errno));
+	    "Failed to create %s: %s", path, anoubis_strerror(errno));
 
 	snprintf(path, sizeof(path), "%s/share/SandboxApp/profiles/wizard",
 	    tmp_prefix);
 	fail_unless(mkdir(path, S_IRWXU) == 0,
-	    "Failed to create %s: %s", path, strerror(errno));
+	    "Failed to create %s: %s", path, anoubis_strerror(errno));
 
 	snprintf(path, sizeof(path),
 	    "%s/share/SandboxApp/profiles/wizard/sandbox", tmp_prefix);
@@ -135,23 +136,23 @@ teardown(void)
 	snprintf(path, sizeof(path), "%s/share/SandboxApp/profiles/wizard",
 	    tmp_prefix);
 	fail_unless(rmdir(path) == 0, "Failed to remove %s: %s",
-	    path, strerror(errno));
+	    path, anoubis_strerror(errno));
 
 	snprintf(path, sizeof(path), "%s/share/SandboxApp/profiles",
 	    tmp_prefix);
 	fail_unless(rmdir(path) == 0, "Failed to remove %s: %s",
-	    path, strerror(errno));
+	    path, anoubis_strerror(errno));
 
 	snprintf(path, sizeof(path), "%s/share/SandboxApp", tmp_prefix);
 	fail_unless(rmdir(path) == 0, "Failed to remove %s: %s",
-	    path, strerror(errno));
+	    path, anoubis_strerror(errno));
 
 	snprintf(path, sizeof(path), "%s/share", tmp_prefix);
 	fail_unless(rmdir(path) == 0, "Failed to remove %s: %s",
-	    path, strerror(errno));
+	    path, anoubis_strerror(errno));
 
 	fail_unless(rmdir(tmp_prefix) == 0, "Failed to remove %s: %s",
-	    tmp_prefix, strerror(errno));
+	    tmp_prefix, anoubis_strerror(errno));
 }
 
 START_TEST(empty)
@@ -456,7 +457,7 @@ START_TEST(no_default_sandbox)
 	snprintf(path, sizeof(path),
 	    "%s/share/SandboxApp/profiles/wizard/sandbox", tmp_prefix);
 	fail_unless(unlink(path) == 0, "Failed to remove %s: %s",
-	    path, strerror(errno));
+	    path, anoubis_strerror(errno));
 
 	fail_unless(!model.canAssignDefaults());
 	model.assignDefaults(SbEntry::READ);

@@ -32,7 +32,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <check.h>
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,6 +39,7 @@
 #include <sys/wait.h>
 
 #include "anoubis_chat.h"
+#include <anoubis_errno.h>
 #include <anoubis_protocol.h>
 #include <anoubis_client.h>
 #include <anoubis_msg.h>
@@ -90,10 +90,10 @@ START_TEST(tc_Sessions_one)
 
 	rc = acc_prepare(c);
 	fail_if(rc != ACHAT_RC_OK, "prepare failed with rc=%d [%s]", rc,
-	    strerror(errno));
+	    anoubis_strerror(errno));
 	rc = acc_open(c);
 	fail_if(rc != ACHAT_RC_OK, "open failed with rc=%d [%s]", rc,
-	    strerror(errno));
+	    anoubis_strerror(errno));
 	mark_point();
 
 	client = anoubis_client_create(c, ANOUBIS_AUTH_TRANSPORT, NULL);
@@ -153,10 +153,10 @@ START_TEST(tc_Sessions_two)
 
 	rc = acc_prepare(c1);
 	fail_if(rc != ACHAT_RC_OK, "1st channel prepare failed with rc=%d [%s]",
-	    rc, strerror(errno));
+	    rc, anoubis_strerror(errno));
 	rc = acc_open(c1);
 	fail_if(rc != ACHAT_RC_OK, "1st channel open failed with rc=%d [%s]",
-	    rc, strerror(errno));
+	    rc, anoubis_strerror(errno));
 	mark_point();
 
 	client1 = anoubis_client_create(c1, ANOUBIS_AUTH_TRANSPORT, NULL);
@@ -165,10 +165,10 @@ START_TEST(tc_Sessions_two)
 
 	rc = acc_prepare(c2);
 	fail_if(rc != ACHAT_RC_OK, "2nd channel prepare failed with rc=%d [%s]",
-	    rc, strerror(errno));
+	    rc, anoubis_strerror(errno));
 	rc = acc_open(c2);
 	fail_if(rc != ACHAT_RC_OK, "2nd channel open failed with rc=%d [%s]",
-	    rc, strerror(errno));
+	    rc, anoubis_strerror(errno));
 	mark_point();
 	client2 = anoubis_client_create(c2, ANOUBIS_AUTH_TRANSPORT, NULL);
 	fail_if(!client1, "2nd client create failed");
@@ -220,10 +220,10 @@ START_TEST(tc_Sessions_three)
 
 	rc = acc_prepare(c);
 	fail_if(rc != ACHAT_RC_OK, "prepare failed with rc=%d [%s]", rc,
-	    strerror(errno));
+	    anoubis_strerror(errno));
 	rc = acc_open(c);
 	fail_if(rc != ACHAT_RC_OK, "open failed with rc=%d [%s]", rc,
-	    strerror(errno));
+	    anoubis_strerror(errno));
 	mark_point();
 
 	client = anoubis_client_create(c, ANOUBIS_AUTH_TRANSPORT, NULL);

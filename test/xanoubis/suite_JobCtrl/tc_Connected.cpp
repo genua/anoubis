@@ -46,6 +46,8 @@
 #include "TaskEventSpy.h"
 #include "utils.h"
 
+#include <anoubis_errno.h>
+
 static wxApp *app = 0;
 static JobCtrl *jobCtrl = 0;
 
@@ -222,7 +224,7 @@ START_TEST(test_policyrequest)
 	    "Failed to receive a policy: %i\n", task.getComTaskResult());
 	fail_unless(task.getResultDetails() == 0,
 	    "ResultDetails: %s (%i)\n",
-	    strerror(task.getResultDetails()), task.getResultDetails());
+	    anoubis_strerror(task.getResultDetails()), task.getResultDetails());
 	mark_point();
 
 	PolicyRuleSet *rs = task.getPolicy();
@@ -257,7 +259,7 @@ START_TEST(test_policysend_empty)
 
 	fail_unless(task.getResultDetails() == 0,
 	    "ResultDetails: %s (%i)\n",
-	    strerror(task.getResultDetails()), task.getResultDetails());
+	    anoubis_strerror(task.getResultDetails()), task.getResultDetails());
 	mark_point();
 }
 END_TEST
@@ -288,7 +290,7 @@ START_TEST(test_policysend)
 	    "Failed to send a policy: %i\n", task.getComTaskResult());
 	fail_unless(task.getResultDetails() == 0,
 	    "ResultDetails: %s (%i)\n",
-	    strerror(task.getResultDetails()), task.getResultDetails());
+	    anoubis_strerror(task.getResultDetails()), task.getResultDetails());
 	mark_point();
 }
 END_TEST
@@ -320,7 +322,8 @@ START_TEST(test_csum)
 	fail_unless(add_task.getComTaskResult() == ComTask::RESULT_SUCCESS,
 	    "Failed to add a checksum: %i\n", add_task.getComTaskResult());
 	fail_unless(add_task.getResultDetails() == 0,
-	    "ResultDetails: %s (%i)\n", strerror(add_task.getResultDetails()),
+	    "ResultDetails: %s (%i)\n",
+	    anoubis_strerror(add_task.getResultDetails()),
 	    add_task.getResultDetails());
 	mark_point();
 
@@ -339,9 +342,10 @@ START_TEST(test_csum)
 	    "ComTaskResult = %i\n"
 	    "ResultDetails = %i (%s)\n",
 	    get_task->getComTaskResult(), get_task->getResultDetails(),
-	    strerror(get_task->getResultDetails()));
+	    anoubis_strerror(get_task->getResultDetails()));
 	fail_unless(get_task->getResultDetails() == 0,
-	    "ResultDetails: %s (%i)\n", strerror(get_task->getResultDetails()),
+	    "ResultDetails: %s (%i)\n",
+	    anoubis_strerror(get_task->getResultDetails()),
 	    get_task->getResultDetails());
 	fail_unless(get_task->haveKeyId() == false, "A key-id is assigned");
 	mark_point();
@@ -378,7 +382,8 @@ START_TEST(test_csum)
 	mark_point();
 	fail_unless(del_task.haveKeyId() == false, "A key-id is assigned");
 	fail_unless(del_task.getResultDetails() == 0,
-	    "ResultDetails: %s (%i)", strerror(del_task.getResultDetails()),
+	    "ResultDetails: %s (%i)",
+	    anoubis_strerror(del_task.getResultDetails()),
 	    del_task.getResultDetails());
 	mark_point();
 
@@ -397,7 +402,7 @@ START_TEST(test_csum)
 	    get_task->getComTaskResult(), get_task->getResultDetails());
 	fail_unless(get_task->getChecksumError(0) == ENOENT,
 	    "Checksum error: %s (%i)\n",
-	    strerror(get_task->getChecksumError(0)),
+	    anoubis_strerror(get_task->getChecksumError(0)),
 	    get_task->getChecksumError(0));
 	fail_unless(get_task->haveKeyId() == false, "A key-id is assigned");
 	mark_point();
@@ -437,7 +442,8 @@ START_TEST(test_csum_nosuchfile)
 	    task->getComTaskResult(), task->getResultDetails());
 	fail_unless(task->getChecksumError(0) == ENOENT,
 	    "Checksum error: %s (%i)\n",
-	    strerror(task->getChecksumError(0)), task->getChecksumError(0));
+	    anoubis_strerror(task->getChecksumError(0)),
+	    task->getChecksumError(0));
 	fail_unless(task->haveKeyId() == false, "A key-id is assigned");
 	len = task->getChecksumLen(0, ANOUBIS_SIG_TYPE_CS);
 	fail_unless(len == 0, "Task contains a checksum");
@@ -476,7 +482,8 @@ START_TEST(test_csum_orphaned)
 	fail_unless(add_task.getComTaskResult() == ComTask::RESULT_SUCCESS,
 	    "Failed to add a checksum: %i\n", add_task.getComTaskResult());
 	fail_unless(add_task.getResultDetails() == 0,
-	    "ResultDetails: %s (%i)\n", strerror(add_task.getResultDetails()),
+	    "ResultDetails: %s (%i)\n",
+	    anoubis_strerror(add_task.getResultDetails()),
 	    add_task.getResultDetails());
 	fail_unless(add_task.haveSignatures() == false, "A key-id is assigned");
 	mark_point();
@@ -500,9 +507,10 @@ START_TEST(test_csum_orphaned)
 	    "ComTaskResult = %i\n"
 	    "ResultDetails = %i (%s)\n",
 	    get_task->getComTaskResult(), get_task->getResultDetails(),
-	    strerror(get_task->getResultDetails()));
+	    anoubis_strerror(get_task->getResultDetails()));
 	fail_unless(get_task->getResultDetails() == 0,
-	    "ResultDetails: %s (%i)\n", strerror(get_task->getResultDetails()),
+	    "ResultDetails: %s (%i)\n",
+	    anoubis_strerror(get_task->getResultDetails()),
 	    get_task->getResultDetails());
 	fail_unless(get_task->haveKeyId() == false, "A key-id is assigned");
 	len = get_task->getChecksumLen(0, ANOUBIS_SIG_TYPE_CS);
@@ -547,7 +555,8 @@ START_TEST(test_csum_symlink)
 	fail_unless(add_task.getComTaskResult() == ComTask::RESULT_SUCCESS,
 	    "Failed to add a checksum: %i\n", add_task.getComTaskResult());
 	fail_unless(add_task.getResultDetails() == 0,
-	    "ResultDetails: %s (%i)\n", strerror(add_task.getResultDetails()),
+	    "ResultDetails: %s (%i)\n",
+	    anoubis_strerror(add_task.getResultDetails()),
 	    add_task.getResultDetails());
 	fail_unless(add_task.haveSignatures() == false, "A key-id is assigned");
 	mark_point();
@@ -557,7 +566,7 @@ START_TEST(test_csum_symlink)
 	fail_if(wxFileExists(symlinkName), "Symlink already exists");
 	fail_unless(
 	    symlink(fileName.To8BitData(), symlinkName.To8BitData()) == 0,
-	    "Failed to create symlink (%s)", strerror(errno));
+	    "Failed to create symlink (%s)", anoubis_strerror(errno));
 	mark_point();
 
 	/* Receive checksum: Success */
@@ -573,9 +582,10 @@ START_TEST(test_csum_symlink)
 	fail_unless(get_task->getComTaskResult() == ComTask::RESULT_SUCCESS,
 	    "Failed to get a checksum!\nComTaskResult = %i\n"
 	    "ResultDetails = %s\n", get_task->getComTaskResult(),
-	    strerror(get_task->getResultDetails()));
+	    anoubis_strerror(get_task->getResultDetails()));
 	fail_unless(get_task->getResultDetails() == 0,
-	    "ResultDetails: %s (%i)\n", strerror(get_task->getResultDetails()),
+	    "ResultDetails: %s (%i)\n",
+	    anoubis_strerror(get_task->getResultDetails()),
 	    get_task->getResultDetails());
 	fail_unless(get_task->haveKeyId() == false, "A key-id is assigned");
 	size_t len = get_task->getChecksumLen(0, ANOUBIS_SIG_TYPE_CS);
@@ -619,7 +629,7 @@ START_TEST(test_csum_symlink_link)
 	fail_if(wxFileExists(symlinkName), "Symlink already exists");
 	fail_unless(
 	    symlink(fileName.To8BitData(), symlinkName.To8BitData()) == 0,
-	    "Failed to create symlink (%s)", strerror(errno));
+	    "Failed to create symlink (%s)", anoubis_strerror(errno));
 	mark_point();
 
 	/* Register symlink at daemon: Success */
@@ -636,7 +646,8 @@ START_TEST(test_csum_symlink_link)
 	fail_unless(add_task.getComTaskResult() == ComTask::RESULT_SUCCESS,
 	    "Failed to add a checksum: %i\n", add_task.getComTaskResult());
 	fail_unless(add_task.getResultDetails() == 0,
-	    "ResultDetails: %s (%i)\n", strerror(add_task.getResultDetails()),
+	    "ResultDetails: %s (%i)\n",
+	    anoubis_strerror(add_task.getResultDetails()),
 	    add_task.getResultDetails());
 	fail_unless(add_task.haveSignatures() == false, "A key-id is assigned");
 	mark_point();
@@ -654,9 +665,10 @@ START_TEST(test_csum_symlink_link)
 	fail_unless(get_task->getComTaskResult() == ComTask::RESULT_SUCCESS,
 	    "Failed to get a checksum!\nComTaskResult = %i\n"
 	    "ResultDetails = %s\n", get_task->getComTaskResult(),
-	    strerror(get_task->getResultDetails()));
+	    anoubis_strerror(get_task->getResultDetails()));
 	fail_unless(get_task->getResultDetails() == 0,
-	    "ResultDetails: %s (%i)\n", strerror(get_task->getResultDetails()),
+	    "ResultDetails: %s (%i)\n",
+	    anoubis_strerror(get_task->getResultDetails()),
 	    get_task->getResultDetails());
 	fail_unless(get_task->haveKeyId() == false, "A key-id is assigned");
 	mark_point();
@@ -735,7 +747,8 @@ START_TEST(test_signature)
 	    "ResultDetails = %i\n", get_task->getComTaskResult(),
 	    get_task->getResultDetails());
 	fail_unless(get_task->getResultDetails() == 0,
-	    "ResultDetails: %s (%i)\n", strerror(get_task->getResultDetails()),
+	    "ResultDetails: %s (%i)\n",
+	    anoubis_strerror(get_task->getResultDetails()),
 	    get_task->getResultDetails());
 	fail_unless(get_task->haveKeyId(), "No key-id is assigned");
 	size_t len = get_task->getChecksumLen(0, ANOUBIS_SIG_TYPE_SIG);
@@ -759,7 +772,8 @@ START_TEST(test_signature)
 	    "ResultDetails = %i\n", del_task.getComTaskResult(),
 	    del_task.getResultDetails());
 	fail_unless(del_task.getResultDetails() == 0,
-	    "ResultDetails: %s (%i)\n", strerror(del_task.getResultDetails()),
+	    "ResultDetails: %s (%i)\n",
+	    anoubis_strerror(del_task.getResultDetails()),
 	    del_task.getResultDetails());
 	fail_unless(del_task.haveKeyId(), "No key-id is assigned");
 
@@ -781,7 +795,7 @@ START_TEST(test_signature)
 	    get_task->getComTaskResult(), get_task->getResultDetails());
 	fail_unless(get_task->getSignatureError(0) == ENOENT,
 	    "Signature error: %s (%i)\n",
-	    strerror(get_task->getSignatureError(0)),
+	    anoubis_strerror(get_task->getSignatureError(0)),
 	    get_task->getSignatureError(0));
 	len = get_task->getChecksumLen(0, ANOUBIS_SIG_TYPE_SIG);
 	fail_unless(len == 0, "Task contains a signature");

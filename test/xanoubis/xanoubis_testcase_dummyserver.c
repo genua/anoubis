@@ -50,6 +50,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <anoubis_errno.h>
 #include <anoubis_protocol.h>
 #include <anoubis_notify.h>
 #include <anoubis_server.h>
@@ -59,7 +60,6 @@
 #endif
 
 #include <check.h>
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -192,7 +192,7 @@ START_TEST(tc_dummyserver_args)
 	fail_if(tc_argc != 2, "Number of cmd line arguments");
 	fail_if(tc_argv[1] == NULL, "no socket specified for dummy server");
 	if (access(tc_argv[1], R_OK | W_OK) != 0) {
-		fail("Can't access given socket: %s", strerror(errno));
+		fail("Can't access given socket: %s", anoubis_strerror(errno));
 	}
 }
 END_TEST

@@ -29,7 +29,7 @@
 #include <sys/resource.h>
 
 #include <anoubischeck.h>
-#include <errno.h>
+#include <anoubis_errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -53,12 +53,12 @@ START_TEST(tc_error)
 
 	result = getrlimit(RLIMIT_CORE, &rlim);
 	fail_unless(result == 0, "getrlimit failed with %i (%s)",
-	    errno, strerror(errno));
+	    errno, anoubis_strerror(errno));
 
 	rlim.rlim_cur = 0;
 	result = setrlimit(RLIMIT_CORE, &rlim);
 	fail_unless(result == 0, "setrlimit failed with %i (%s)",
-	    errno, strerror(errno));
+	    errno, anoubis_strerror(errno));
 
 	abort();
 }

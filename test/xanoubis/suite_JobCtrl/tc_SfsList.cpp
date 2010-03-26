@@ -40,6 +40,8 @@
 #include "TaskEventSpy.h"
 #include "utils.h"
 
+#include <anoubis_errno.h>
+
 static wxApp *app = 0;
 static JobCtrl *jobCtrl = 0;
 static char testDir[PATH_MAX];
@@ -110,7 +112,7 @@ setup(void)
 	strcpy(testDir, "/tmp/sfslist.XXXXXX");
 	char *s = mkdtemp(testDir);
 	fail_if(s == 0,
-	    "Failed to create test-directory (%s)", strerror(errno));
+	    "Failed to create test-directory (%s)", anoubis_strerror(errno));
 
 	fail_unless(create_directory("%s/empty", testDir));
 	fail_unless(create_directory("%s/sub", testDir));

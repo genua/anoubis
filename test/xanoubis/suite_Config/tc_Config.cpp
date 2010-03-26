@@ -29,13 +29,13 @@
 #include <sys/wait.h>
 
 #include <check.h>
-#include <errno.h>
 #include <stdio.h>
 
 #include <wx/app.h>
 #include <wx/ffile.h>
 #include <wx/filename.h>
 
+#include <anoubis_errno.h>
 #include <AnConfig.h>
 #include <AnEvents.h>
 
@@ -95,7 +95,7 @@ setup(void)
 	strcpy(tempDir, "/tmp/suite_Config_XXXXXX");
 	charResult = mkdtemp(tempDir);
 	fail_unless(charResult != 0,
-	    "Failed to create temp. directory (%s)", strerror(errno));
+	    "Failed to create temp. directory (%s)", anoubis_strerror(errno));
 
 	/* Create applications data-directory */
 	boolResult = wxMkdir(wxString::FromAscii(tempDir) + wxT("/.xanoubis"));

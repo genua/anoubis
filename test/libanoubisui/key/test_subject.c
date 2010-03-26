@@ -35,6 +35,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <anoubis_keygen.h>
+#include <anoubis_errno.h>
 
 #include <openssl/err.h>
 #include <openssl/pem.h>
@@ -132,7 +133,7 @@ read_certificate(const char *name)
 	len = asprintf(&crtfile, "%s/%s", getenv("KEYDIR"), name);
 	fh = fopen(crtfile, "r");
 	fail_unless(fh != NULL, "Failed to open \"%s\" for reading: %s",
-	    crtfile, strerror(errno));
+	    crtfile, anoubis_strerror(errno));
 
 	cert = PEM_read_X509(fh, NULL, NULL, NULL);
 	fail_unless(cert != NULL, "Failed to load certificate: %li",

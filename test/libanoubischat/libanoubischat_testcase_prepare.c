@@ -35,10 +35,10 @@
 #include <arpa/inet.h>
 
 #include <check.h>
-#include <errno.h>
 #include <string.h>
 
 #include "anoubis_chat.h"
+#include <anoubis_errno.h>
 #ifdef NEEDBSDCOMPAT
 #include <bsdcompat.h>
 #endif
@@ -258,7 +258,7 @@ START_TEST(tc_set_tail_sslmode_addr)
 
 	rc = acc_prepare(c);
 	fail_if(rc != ACHAT_RC_OK, "client prepare failed with rc=%d [%s]",
-	    rc, strerror(errno));
+	    rc, anoubis_strerror(errno));
 	mark_point();
 
 	acc_destroy(c);

@@ -27,6 +27,7 @@
 
 
 #include <anoubis_sig.h>
+#include <anoubis_errno.h>
 #include <sys/types.h>
 
 #include <stdarg.h>
@@ -329,11 +330,11 @@ START_TEST(t_anoubis_sig_keycmp_einval)
 
 	rc = anoubis_sig_create(&keyA, prikey, certfile, pass_cb);
 	fail_if(rc < 0 || keyA == NULL, "Could not load private key (%d / %s).",
-	    rc, strerror(-rc));
+	    rc, anoubis_strerror(-rc));
 
 	rc = anoubis_sig_create(&keyB, NULL, certfile, pass_cb);
 	fail_if(rc < 0 || keyB == NULL, "Could not load public key (%d / %s).",
-	    rc, strerror(-rc));
+	    rc, anoubis_strerror(-rc));
 
 	rc = anoubis_sig_keycmp(NULL, NULL);
 	fail_if(rc != 0, "keycmp should work with NULL pointers.");
@@ -358,15 +359,15 @@ START_TEST(t_anoubis_sig_keycmp_pp_match)
 
 	rc = anoubis_sig_create(&keyA, prikey, NULL, pass_cb);
 	fail_if(rc < 0 || keyA == NULL, "Could not load private key (%d / %s).",
-	    rc, strerror(-rc));
+	    rc, anoubis_strerror(-rc));
 
 	rc = anoubis_sig_create(&keyB, prikey, NULL, pass_cb);
 	fail_if(rc < 0 || keyB == NULL, "Could not load private key (%d / %s).",
-	    rc, strerror(-rc));
+	    rc, anoubis_strerror(-rc));
 
 	rc = anoubis_sig_keycmp(keyA, keyB);
 	fail_if(rc != 0, "keycmp didn't detect same private keys (%d / %s).",
-	    rc, strerror(-rc));
+	    rc, anoubis_strerror(-rc));
 }
 END_TEST
 
@@ -382,7 +383,7 @@ START_TEST(t_anoubis_sig_keycmp_pp_mismatch)
 
 	rc = anoubis_sig_create(&keyA, prikey, NULL, pass_cb);
 	fail_if(rc != 0 || keyA == NULL,
-	    "Could not load private key (%d / %s).", rc, strerror(-rc));
+	    "Could not load private key (%d / %s).", rc, anoubis_strerror(-rc));
 
 	/* Create different key. */
 	libanoubissig_tc_teardown();
@@ -390,11 +391,11 @@ START_TEST(t_anoubis_sig_keycmp_pp_mismatch)
 
 	rc = anoubis_sig_create(&keyB, prikey, NULL, pass_cb);
 	fail_if(rc != 0 || keyB == NULL,
-	    "Could not load private key (%d / %s).", rc, strerror(-rc));
+	    "Could not load private key (%d / %s).", rc, anoubis_strerror(-rc));
 
 	rc = anoubis_sig_keycmp(keyA, keyB);
 	fail_if(rc == 0, "keycmp didn't detect non equal private keys"
-	    " (%d / %s).", rc, strerror(-rc));
+	    " (%d / %s).", rc, anoubis_strerror(-rc));
 }
 END_TEST
 
@@ -410,15 +411,15 @@ START_TEST(t_anoubis_sig_keycmp_pc_match)
 
 	rc = anoubis_sig_create(&keyA, prikey, certfile, pass_cb);
 	fail_if(rc != 0 || keyA == NULL,
-	    "Could not load private key (%d / %s).", rc, strerror(-rc));
+	    "Could not load private key (%d / %s).", rc, anoubis_strerror(-rc));
 
 	rc = anoubis_sig_create(&keyB, NULL, certfile, pass_cb);
 	fail_if(rc != 0 || keyB == NULL, "Could not load public key (%d / %s).",
-	    rc, strerror(-rc));
+	    rc, anoubis_strerror(-rc));
 
 	rc = anoubis_sig_keycmp(keyA, keyB);
 	fail_if(rc != 0, "keycmp didn't detect same key pair (%d / %s).",
-	    rc, strerror(-rc));
+	    rc, anoubis_strerror(-rc));
 }
 END_TEST
 
@@ -434,7 +435,7 @@ START_TEST(t_anoubis_sig_keycmp_pc_mismatch)
 
 	rc = anoubis_sig_create(&keyA, prikey, certfile, pass_cb);
 	fail_if(rc != 0 || keyA == NULL,
-	    "Could not load private key (%d / %s).", rc, strerror(-rc));
+	    "Could not load private key (%d / %s).", rc, anoubis_strerror(-rc));
 
 	/* Create different key. */
 	libanoubissig_tc_teardown();
@@ -442,11 +443,11 @@ START_TEST(t_anoubis_sig_keycmp_pc_mismatch)
 
 	rc = anoubis_sig_create(&keyB, NULL, certfile, pass_cb);
 	fail_if(rc != 0 || keyB == NULL, "Could not load public key (%d / %s).",
-	    rc, strerror(-rc));
+	    rc, anoubis_strerror(-rc));
 
 	rc = anoubis_sig_keycmp(keyA, keyB);
 	fail_if(rc == 0, "keycmp didn't detect non equal key pair"
-	    " (%d / %s).", rc, strerror(-rc));
+	    " (%d / %s).", rc, anoubis_strerror(-rc));
 }
 END_TEST
 
@@ -462,15 +463,15 @@ START_TEST(t_anoubis_sig_keycmp_cc_match)
 
 	rc = anoubis_sig_create(&keyA, NULL, certfile, pass_cb);
 	fail_if(rc != 0 || keyA == NULL,
-	    "Could not load public key (%d / %s).", rc, strerror(-rc));
+	    "Could not load public key (%d / %s).", rc, anoubis_strerror(-rc));
 
 	rc = anoubis_sig_create(&keyB, NULL, certfile, pass_cb);
 	fail_if(rc != 0 || keyB == NULL, "Could not load public key (%d / %s).",
-	    rc, strerror(-rc));
+	    rc, anoubis_strerror(-rc));
 
 	rc = anoubis_sig_keycmp(keyA, keyB);
 	fail_if(rc != 0, "keycmp didn't detect same key pair (%d / %s).",
-	    rc, strerror(-rc));
+	    rc, anoubis_strerror(-rc));
 }
 END_TEST
 
@@ -486,7 +487,7 @@ START_TEST(t_anoubis_sig_keycmp_cc_mismatch)
 
 	rc = anoubis_sig_create(&keyA, NULL, certfile, pass_cb);
 	fail_if(rc != 0 || keyA == NULL, "Could not load public key (%d / %s).",
-	    rc, strerror(-rc));
+	    rc, anoubis_strerror(-rc));
 
 	/* Create different key. */
 	libanoubissig_tc_teardown();
@@ -494,11 +495,11 @@ START_TEST(t_anoubis_sig_keycmp_cc_mismatch)
 
 	rc = anoubis_sig_create(&keyB, NULL, certfile, pass_cb);
 	fail_if(keyB == NULL, "Could not load public key (%d / %s).",
-	    rc, strerror(-rc));
+	    rc, anoubis_strerror(-rc));
 
 	rc = anoubis_sig_keycmp(keyA, keyB);
 	fail_if(rc == 0, "keycmp didn't detect non equal key pair"
-	   " (%d / %s).", rc, strerror(-rc));
+	   " (%d / %s).", rc, anoubis_strerror(-rc));
 }
 END_TEST
 

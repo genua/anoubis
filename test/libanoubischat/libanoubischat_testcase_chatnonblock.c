@@ -33,13 +33,13 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <check.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
+#include <anoubis_errno.h>
 #include <anoubis_chat.h>
 
 char raw_msg[] = {
@@ -258,10 +258,11 @@ START_TEST(tc_chatnb_nomessage)
 	pid_t	cpid;
 
 	if (pipe(pfd) == -1)
-		fail("Failed to create pipe: %s", strerror(errno));
+		fail("Failed to create pipe: %s", anoubis_strerror(errno));
 
 	cpid = check_fork();
-	fail_if(cpid == -1, "Failed to fork sub-process: %s", strerror(errno));
+	fail_if(cpid == -1, "Failed to fork sub-process: %s",
+		anoubis_strerror(errno));
 
 	if (cpid == 0) { /* Child process */
 		int result = tc_chatnb_child(pfd[0]);
@@ -279,7 +280,7 @@ START_TEST(tc_chatnb_nomessage)
 
 		sc = tc_chatnb_channel_init(&port);
 		fail_if(sc == NULL, "Failed to initialize channel: %s",
-			strerror(errno));
+			anoubis_strerror(errno));
 
 		/* Ask child to establish connection */
 		tc_chatnb_write_cmd(pfd[1], TC_CHATNB_CMD_START);
@@ -288,7 +289,7 @@ START_TEST(tc_chatnb_nomessage)
 		/* Wait for client-connection */
 		cc = acc_opendup(sc);
 		fail_if(cc == NULL, "Failed to connect to client: %s",
-			strerror(errno));
+			anoubis_strerror(errno));
 
 		/* Receive a message */
 		rc = acc_receivemsg(cc, msg, &smsg);
@@ -320,10 +321,11 @@ START_TEST(tc_chatnb_complete_message)
 	pid_t	cpid;
 
 	if (pipe(pfd) == -1)
-		fail("Failed to create pipe: %s", strerror(errno));
+		fail("Failed to create pipe: %s", anoubis_strerror(errno));
 
 	cpid = check_fork();
-	fail_if(cpid == -1, "Failed to fork sub-process: %s", strerror(errno));
+	fail_if(cpid == -1, "Failed to fork sub-process: %s",
+		anoubis_strerror(errno));
 
 	if (cpid == 0) { /* Child process */
 		int result = tc_chatnb_child(pfd[0]);
@@ -343,7 +345,7 @@ START_TEST(tc_chatnb_complete_message)
 
 		sc = tc_chatnb_channel_init(&port);
 		fail_if(sc == NULL, "Failed to initialize channel: %s",
-			strerror(errno));
+			anoubis_strerror(errno));
 
 		/* Ask child to establish connection */
 		tc_chatnb_write_cmd(pfd[1], TC_CHATNB_CMD_START);
@@ -352,7 +354,7 @@ START_TEST(tc_chatnb_complete_message)
 		/* Wait for client-connection */
 		cc = acc_opendup(sc);
 		fail_if(cc == NULL, "Failed to connect to client: %s",
-			strerror(errno));
+			anoubis_strerror(errno));
 
 		/* Watch client-channel to see when it has input */
 		FD_ZERO(&rfds);
@@ -373,7 +375,7 @@ START_TEST(tc_chatnb_complete_message)
 		while (1) {
 			int retval = select(cc->fd + 1, &rfds, NULL, NULL, &tv);
 			fail_if(retval < 0, "Select failed: %s",
-				strerror(errno));
+				anoubis_strerror(errno));
 
 			rc = acc_receivemsg(cc, msg, &smsg);
 
@@ -385,7 +387,7 @@ START_TEST(tc_chatnb_complete_message)
 			}
 			else if (rc != ACHAT_RC_PENDING) {
 				fail("Unexpected recv-result: %i [%s]",
-					rc, strerror(errno));
+					rc, anoubis_strerror(errno));
 			}
 		}
 
@@ -414,10 +416,11 @@ START_TEST(tc_chatnb_part_message)
 	pid_t	cpid;
 
 	if (pipe(pfd) == -1)
-		fail("Failed to create pipe: %s", strerror(errno));
+		fail("Failed to create pipe: %s", anoubis_strerror(errno));
 
 	cpid = check_fork();
-	fail_if(cpid == -1, "Failed to fork sub-process: %s", strerror(errno));
+	fail_if(cpid == -1, "Failed to fork sub-process: %s",
+		anoubis_strerror(errno));
 
 	if (cpid == 0) { /* Child process */
 		int result = tc_chatnb_child(pfd[0]);
@@ -438,7 +441,7 @@ START_TEST(tc_chatnb_part_message)
 
 		sc = tc_chatnb_channel_init(&port);
 		fail_if(sc == NULL, "Failed to initialize channel: %s",
-			strerror(errno));
+			anoubis_strerror(errno));
 
 		/* Ask child to establish connection */
 		tc_chatnb_write_cmd(pfd[1], TC_CHATNB_CMD_START);
@@ -447,7 +450,7 @@ START_TEST(tc_chatnb_part_message)
 		/* Wait for client-connection */
 		cc = acc_opendup(sc);
 		fail_if(cc == NULL, "Failed to connect to client: %s",
-			strerror(errno));
+			anoubis_strerror(errno));
 
 		/* Watch client-channel to see when it has input */
 		FD_ZERO(&rfds);
@@ -468,7 +471,7 @@ START_TEST(tc_chatnb_part_message)
 		while (1) {
 			int retval = select(cc->fd + 1, &rfds, NULL, NULL, &tv);
 			fail_if(retval == -1, "Select failed: %s",
-				strerror(errno));
+				anoubis_strerror(errno));
 
 			if (retval == 0 && num_pendings == 1) { /* Timeout */
 				tc_chatnb_write_cmd(pfd[1],
@@ -490,7 +493,7 @@ START_TEST(tc_chatnb_part_message)
 			}
 			else {
 				fail("Unexpected receive-result: %i [%s]",
-					rc, strerror(errno));
+					rc, anoubis_strerror(errno));
 			}
 		}
 
@@ -519,10 +522,11 @@ START_TEST(tc_chatnb_cutheader_message)
 	pid_t	cpid;
 
 	if (pipe(pfd) == -1)
-		fail("Failed to create pipe: %s", strerror(errno));
+		fail("Failed to create pipe: %s", anoubis_strerror(errno));
 
 	cpid = check_fork();
-	fail_if(cpid == -1, "Failed to fork sub-process: %s", strerror(errno));
+	fail_if(cpid == -1, "Failed to fork sub-process: %s",
+		anoubis_strerror(errno));
 
 	if (cpid == 0) { /* Child process */
 		int result = tc_chatnb_child(pfd[0]);
@@ -543,7 +547,7 @@ START_TEST(tc_chatnb_cutheader_message)
 
 		sc = tc_chatnb_channel_init(&port);
 		fail_if(sc == NULL, "Failed to initialize channel: %s",
-			strerror(errno));
+			anoubis_strerror(errno));
 
 		/* Ask child to establish connection */
 		tc_chatnb_write_cmd(pfd[1], TC_CHATNB_CMD_START);
@@ -552,7 +556,7 @@ START_TEST(tc_chatnb_cutheader_message)
 		/* Wait for client-connection */
 		cc = acc_opendup(sc);
 		fail_if(cc == NULL, "Failed to connect to client: %s",
-			strerror(errno));
+			anoubis_strerror(errno));
 
 		/* Watch client-channel to see when it has input */
 		FD_ZERO(&rfds);
@@ -573,7 +577,7 @@ START_TEST(tc_chatnb_cutheader_message)
 		while (1) {
 			int retval = select(cc->fd + 1, &rfds, NULL, NULL, &tv);
 			fail_if(retval == -1, "Select failed: %s",
-				strerror(errno));
+				anoubis_strerror(errno));
 
 			if (retval == 0 && num_pendings == 1) { /* Timeout */
 				tc_chatnb_write_cmd(pfd[1],
@@ -595,7 +599,7 @@ START_TEST(tc_chatnb_cutheader_message)
 			}
 			else {
 				fail("Unexpected receive-result: %i [%s]",
-					rc, strerror(errno));
+					rc, anoubis_strerror(errno));
 			}
 		}
 
@@ -624,10 +628,11 @@ START_TEST(tc_chatnb_write)
 	pid_t	cpid;
 
 	if (pipe(pfd) == -1)
-		fail("Failed to create pipe: %s", strerror(errno));
+		fail("Failed to create pipe: %s", anoubis_strerror(errno));
 
 	cpid = check_fork();
-	fail_if(cpid == -1, "Failed to fork sub-process: %s", strerror(errno));
+	fail_if(cpid == -1, "Failed to fork sub-process: %s",
+		anoubis_strerror(errno));
 
 	if (cpid == 0) { /* Child process */
 		int result = tc_chatnb_child(pfd[0]);
@@ -643,7 +648,7 @@ START_TEST(tc_chatnb_write)
 
 		sc = tc_chatnb_channel_init(&port);
 		fail_if(sc == NULL, "Failed to initialize channel: %s",
-			strerror(errno));
+			anoubis_strerror(errno));
 
 		/* Ask child to establish connection */
 		tc_chatnb_write_cmd(pfd[1], TC_CHATNB_CMD_START);
@@ -652,7 +657,7 @@ START_TEST(tc_chatnb_write)
 		/* Wait for client-connection */
 		cc = acc_opendup(sc);
 		fail_if(cc == NULL, "Failed to connect to client: %s",
-			strerror(errno));
+			anoubis_strerror(errno));
 
 		tc_chatnb_write_cmd(pfd[1], TC_CHATNB_CMD_READ);
 		tc_chatnb_write_arg(pfd[1], raw_msg, sizeof(raw_msg));
@@ -687,10 +692,11 @@ START_TEST(tc_chatnb_write_only)
 	pid_t	cpid;
 
 	if (pipe(pfd) == -1)
-		fail("Failed to create pipe: %s", strerror(errno));
+		fail("Failed to create pipe: %s", anoubis_strerror(errno));
 
 	cpid = check_fork();
-	fail_if(cpid == -1, "Failed to fork sub-process: %s", strerror(errno));
+	fail_if(cpid == -1, "Failed to fork sub-process: %s",
+		anoubis_strerror(errno));
 
 	if (cpid == 0) { /* Child process */
 		int result = tc_chatnb_child(pfd[0]);
@@ -708,7 +714,7 @@ START_TEST(tc_chatnb_write_only)
 
 		sc = tc_chatnb_channel_init(&port);
 		fail_if(sc == NULL, "Failed to initialize channel: %s",
-			strerror(errno));
+			anoubis_strerror(errno));
 
 		/* Ask child to establish connection */
 		tc_chatnb_write_cmd(pfd[1], TC_CHATNB_CMD_START);
@@ -717,7 +723,7 @@ START_TEST(tc_chatnb_write_only)
 		/* Wait for client-connection */
 		cc = acc_opendup(sc);
 		fail_if(cc == NULL, "Failed to connect to client: %s",
-			strerror(errno));
+			anoubis_strerror(errno));
 
 		while (do_send_msg > 0) {
 			rc = acc_sendmsg(cc, raw_msg + 4, sizeof(raw_msg) - 4);
@@ -727,14 +733,14 @@ START_TEST(tc_chatnb_write_only)
 				/* Buffer is full */
 				fail_if(num_msg < 2,
 					"Could not flush a message: %i (%s)",
-					rc, strerror(errno));
+					rc, anoubis_strerror(errno));
 				do_send_msg = 0;
 				break;
 			}
 
 			fail_if(rc != ACHAT_RC_OK && rc != ACHAT_RC_PENDING,
 				"Failed to send message #%i (%i): %s",
-				num_msg, rc, strerror(errno));
+				num_msg, rc, anoubis_strerror(errno));
 
 			while (rc != ACHAT_RC_OK) {
 				rc = acc_flush(cc);
@@ -743,7 +749,7 @@ START_TEST(tc_chatnb_write_only)
 					/* Buffer is full */
 					fail_if(num_msg < 2,
 					"Could not flush a message: %i (%s)",
-					rc, strerror(errno));
+					rc, anoubis_strerror(errno));
 
 					do_send_msg = 0;
 					break;
@@ -776,10 +782,11 @@ START_TEST(tc_chatnb_eof)
 	pid_t	cpid;
 
 	if (pipe(pfd) == -1)
-		fail("Failed to create pipe: %s", strerror(errno));
+		fail("Failed to create pipe: %s", anoubis_strerror(errno));
 
 	cpid = check_fork();
-	fail_if(cpid == -1, "Failed to fork sub-process: %s", strerror(errno));
+	fail_if(cpid == -1, "Failed to fork sub-process: %s",
+		anoubis_strerror(errno));
 
 	if (cpid == 0) { /* Child process */
 		int result = tc_chatnb_child(pfd[0]);
@@ -798,7 +805,7 @@ START_TEST(tc_chatnb_eof)
 
 		sc = tc_chatnb_channel_init(&port);
 		fail_if(sc == NULL, "Failed to initialize channel: %s",
-			strerror(errno));
+			anoubis_strerror(errno));
 
 		/* Ask child to establish connection */
 		tc_chatnb_write_cmd(pfd[1], TC_CHATNB_CMD_START);
@@ -807,7 +814,7 @@ START_TEST(tc_chatnb_eof)
 		/* Wait for client-connection */
 		cc = acc_opendup(sc);
 		fail_if(cc == NULL, "Failed to connect to client: %s",
-			strerror(errno));
+			anoubis_strerror(errno));
 
 		/* Ask child to close connection */
 		tc_chatnb_write_cmd(pfd[1], TC_CHATNB_CMD_QUIT);

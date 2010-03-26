@@ -30,7 +30,6 @@
 #include <sys/wait.h>
 
 #include <check.h>
-#include <errno.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -39,6 +38,7 @@
 #include <unistd.h>
 
 #include <anoubis_apnvm_cvs.h>
+#include <anoubis_errno.h>
 
 static int
 cvs_init_tc_exec(const char* cmd, ...)
@@ -183,7 +183,7 @@ START_TEST(cvs_init_permission_cvsroot)
 
 	result = mkdir(cvsroot, S_IRWXU|S_IRWXG|S_IRWXO);
 	fail_if(result != 0, "Failed to create %s: %s",
-	    cvsroot, strerror(errno));
+	    cvsroot, anoubis_strerror(errno));
 
 	cvs.cvsroot = cvsroot;
 	cvs.workdir = "bla"; /* Not used */

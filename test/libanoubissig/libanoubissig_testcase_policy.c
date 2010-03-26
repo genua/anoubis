@@ -27,6 +27,7 @@
 
 
 #include <anoubis_sig.h>
+#include <anoubis_errno.h>
 #include <sys/types.h>
 
 #include <stdarg.h>
@@ -176,11 +177,12 @@ START_TEST(sign_and_verify_policy_buf_match_tc)
 
 	len = strlen(buf);
 	sign = anoubis_sign_policy_buf(as, buf, &len);
-	fail_if(sign == NULL, "Could not sign buf: %s", strerror(-len));
+	fail_if(sign == NULL, "Could not sign buf: %s", anoubis_strerror(-len));
 
 	rc = anoubis_sig_verify_policy(policy, sign, len, as->pkey);
 	anoubis_sig_free(as);
-	fail_if(rc != 1, "Signatures dont match from %s", strerror(-rc));
+	fail_if(rc != 1, "Signatures dont match from %s",
+		anoubis_strerror(-rc));
 }
 END_TEST
 

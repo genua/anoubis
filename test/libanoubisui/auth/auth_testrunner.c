@@ -53,6 +53,7 @@
 
 #include <anoubischeck.h>
 #include <anoubis_auth.h>
+#include <anoubis_errno.h>
 
 
 #define TEST_CHALLENGE	"bvcdertyuilkmnjbvf"
@@ -81,7 +82,8 @@ setup(void)
 	/* Create / read local key. */
 	error = anoubis_sig_create(&asPrivKey, keyfile, crtfile, NULL);
 	fail_if(asPrivKey == NULL || error != 0, "Setup error: can't load "
-	    "private key %s / %s: %s", keyfile, crtfile, strerror(-error));
+	    "private key %s / %s: %s", keyfile, crtfile,
+	    anoubis_strerror(-error));
 
 	/* Create AuthChallange message as received from server. */
 	challengeLen = strlen(TEST_CHALLENGE);

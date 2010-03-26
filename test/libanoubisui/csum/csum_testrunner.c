@@ -53,6 +53,7 @@
 
 #include <anoubischeck.h>
 #include <anoubis_csum.h>
+#include <anoubis_errno.h>
 
 /* this function is not exported normally */
 int anoubis_csum_calc_userspace(const char *file, u_int8_t *cs, int *cslen);
@@ -71,16 +72,16 @@ START_TEST(csum_calc_userspace)
 	strncpy(path, "/tmp/csum_tc_XXXXXX", PATH_MAX);
 	fd = mkstemp(path);
 	fail_if(fd == -1, "Failed to create %s: %s",
-	    path, strerror(errno));
+	    path, anoubis_strerror(errno));
 
 	result = write(fd, "Hallo Welt", 10);
 	fail_unless(result == 10, "Failed to prepare input-file: %s",
-	    strerror(errno));
+	    anoubis_strerror(errno));
 	close(fd);
 
 	result = anoubis_csum_calc_userspace(path, csum, &csum_len);
 	fail_unless(result == 0, "Failed to calculate the checksum: %s",
-	    strerror(-result));
+	    anoubis_strerror(-result));
 
 	fail_unless(csum_len == sizeof(sha256),
 	    "Unexpected len of csum: %i != %i", csum_len, sizeof(sha256));
@@ -90,7 +91,7 @@ START_TEST(csum_calc_userspace)
 
 	result = unlink(path);
 	fail_unless(result == 0, "Failed to remove %s: %s",
-	    path, strerror(errno));
+	    path, anoubis_strerror(errno));
 }
 END_TEST
 
@@ -103,20 +104,20 @@ START_TEST(csum_calc_userspace_einval)
 
 	result = anoubis_csum_calc_userspace(NULL, csum, &csum_len);
 	fail_unless(result == -ERANGE, "Unexpected result: %s",
-	    strerror(-result));
+	    anoubis_strerror(-result));
 
 	result = anoubis_csum_calc_userspace(path, NULL, &csum_len);
 	fail_unless(result == -ERANGE, "Unexpected result: %s",
-	    strerror(-result));
+	    anoubis_strerror(-result));
 
 	result = anoubis_csum_calc_userspace(path, csum, NULL);
 	fail_unless(result == -ERANGE, "Unexpected result: %s",
-	    strerror(-result));
+	    anoubis_strerror(-result));
 
 	csum_len -= 1;
 	result = anoubis_csum_calc_userspace(path, csum, &csum_len);
 	fail_unless(result == -ERANGE, "Unexpected result: %s",
-	    strerror(-result));
+	    anoubis_strerror(-result));
 }
 END_TEST
 
@@ -129,7 +130,7 @@ START_TEST(csum_calc_userspace_enoent)
 
 	result = anoubis_csum_calc_userspace(path, csum, &csum_len);
 	fail_unless(result == -ENOENT, "Unexpected result: %s",
-	    strerror(-result));
+	    anoubis_strerror(-result));
 }
 END_TEST
 
@@ -214,15 +215,16 @@ START_TEST(csum_link)
 	t_name2 = tempnam(t_dir, t_pre);
 	fail_if(t_name1 == NULL || t_name2 == NULL, "Could not create tmpname");
 	fd = creat(t_name1, S_IRWXU|S_IRWXG|S_IRWXO);
-	fail_if(fd == -1, "Could not create file: %s", strerror(errno));
+	fail_if(fd == -1, "Could not create file: %s", anoubis_strerror(errno));
 
 	rc = link(t_name1, t_name2);
-	fail_if(rc == -1, "Could not link file: %s", strerror(errno));
+	fail_if(rc == -1, "Could not link file: %s", anoubis_strerror(errno));
 
 	rc = anoubis_csum_link_calc(t_name2, csum, &len);
 	rc = unlink(t_name2);
 	rc = unlink(t_name1);
-	fail_if(rc < 0, "Could not calc csum for link %s", strerror(-rc));
+	fail_if(rc < 0, "Could not calc csum for link %s",
+		anoubis_strerror(-rc));
 
 	close(fd);
 }
@@ -243,11 +245,12 @@ START_TEST(csum_prints)
 	fail_if(t_nam == NULL, "Could not create tmp name.");
 
 	fd = fopen(t_nam, "w+");
-	fail_if(fd == NULL, "Could not open file %s", strerror(errno));
+	fail_if(fd == NULL, "Could not open file %s", anoubis_strerror(errno));
 
 	len = sizeof(csum);
 	rc = anoubis_print_checksum(fd, csum, len);
-	fail_if(rc != 0, "Fail anoubis_print_checksum: %s", strerror(errno));
+	fail_if(rc != 0, "Fail anoubis_print_checksum: %s",
+		anoubis_strerror(errno));
 
 	rc = anoubis_print_checksum(fd, csum, -1);
 	fail_if(rc == 0, "Fail anoubis_print_checksum should fail");
@@ -259,13 +262,15 @@ START_TEST(csum_prints)
 	fail_if(rc == 0, "Fail anoubis_print_checksum should fail");
 
 	rc = anoubis_print_keyid(fd, csum, len);
-	fail_if(rc != 0, "Fail anoubis_print_keyid: %s", strerror(errno));
+	fail_if(rc != 0, "Fail anoubis_print_keyid: %s",
+		anoubis_strerror(errno));
 
 	rc = anoubis_print_signature(fd, csum, len);
-	fail_if(rc != 0, "Fail anoubis_print_keyid: %s", strerror(errno));
+	fail_if(rc != 0, "Fail anoubis_print_keyid: %s",
+		anoubis_strerror(errno));
 
 	rc = anoubis_print_file(fd, "/p ath/to\n/file");
-	fail_if(rc != 0, "Fail anoubis_print_file: %s", strerror(rc));
+	fail_if(rc != 0, "Fail anoubis_print_file: %s", anoubis_strerror(rc));
 
 	rc = anoubis_print_file(NULL, NULL);
 	fail_if(rc == 0, "anoubis_print_file should fail");
@@ -288,7 +293,7 @@ START_TEST(csum_prints)
 	list[0] = entry;
 
 	rc = anoubis_print_entries(fd, list, 1);
-	fail_if(rc != 0, "Fail anoubis_print_entries %s", strerror(rc));
+	fail_if(rc != 0, "Fail anoubis_print_entries %s", anoubis_strerror(rc));
 
 	anoubis_entry_free(entry);
 	fclose(fd);

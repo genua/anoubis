@@ -31,7 +31,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <check.h>
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -39,6 +38,7 @@
 #include <sys/wait.h>
 
 #include "anoubis_chat.h"
+#include <anoubis_errno.h>
 #include "config.h"
 #ifdef NEEDBSDCOMPAT
 #include <bsdcompat.h>
@@ -80,12 +80,12 @@ tc_chat_lud_client(const char *sockname, int num_msgs)
 
 	rc = acc_prepare(c);
 	fail_if(rc != ACHAT_RC_OK, "client prepare failed with rc=%d [%s]",
-	    rc, strerror(errno));
+	    rc, anoubis_strerror(errno));
 
 	sleep(4); /* give the server time to open his socket */
 	rc = acc_open(c);
 	fail_if(rc != ACHAT_RC_OK, "client open failed with rc=%d [%s]",
-	    rc, strerror(errno));
+	    rc, anoubis_strerror(errno));
 	mark_point();
 
 	for (i = 0; i < num_msgs; i++) {
@@ -94,7 +94,7 @@ tc_chat_lud_client(const char *sockname, int num_msgs)
 		rc = acc_receivemsg(c, buffer, &size);
 		fail_if(rc != ACHAT_RC_OK,
 			"client receive msg failed with rc=%d [%s]", rc,
-			strerror(errno));
+			anoubis_strerror(errno));
 		if (strncmp(buffer, msgs[i], sizeof(msgs[i])) != 0)
 			fail("client received msg mismatch [%s] != [%s]",
 			msgs[i], buffer);
@@ -108,7 +108,7 @@ tc_chat_lud_client(const char *sockname, int num_msgs)
 		rc = acc_sendmsg(c, msgs[i], sizeof(msgs[i]));
 		fail_if(rc != ACHAT_RC_OK,
 			"client send msg failed with rc=%d [%s]", rc,
-			strerror(errno));
+			anoubis_strerror(errno));
 		mark_point();
 	}
 
@@ -149,18 +149,18 @@ tc_chat_lud_server(const char *sockname, int num_msgs)
 
 	rc = acc_prepare(s);
 	fail_if(rc != ACHAT_RC_OK, "server prepare failed with rc=%d [%s]",
-	    rc, strerror(errno));
+	    rc, anoubis_strerror(errno));
 
 	rc = acc_open(s);
 	fail_if(rc != ACHAT_RC_OK, "server open failed with rc=%d [%s]",
-	    rc, strerror(errno));
+	    rc, anoubis_strerror(errno));
 	mark_point();
 
 	for (i = 0; i < num_msgs; i++) {
 		rc = acc_sendmsg(s, msgs[i], sizeof(msgs[i]));
 		fail_if(rc != ACHAT_RC_OK,
 			"server send msg failed with rc=%d [%s]", rc,
-			strerror(errno));
+			anoubis_strerror(errno));
 		mark_point();
 	}
 
@@ -170,7 +170,7 @@ tc_chat_lud_server(const char *sockname, int num_msgs)
 		rc = acc_receivemsg(s, buffer, &size);
 		fail_if(rc != ACHAT_RC_OK,
 			"server receive msg failed with rc=%d [%s]", rc,
-			strerror(errno));
+			anoubis_strerror(errno));
 		if (strncmp(buffer, msgs[i], sizeof(msgs[i])) != 0)
 			fail("server received msg mismatch [%s] != [%s]",
 				msgs[i], buffer);
@@ -222,24 +222,24 @@ tc_chat_lip_client(short port)
 
 	rc = acc_prepare(c);
 	fail_if(rc != ACHAT_RC_OK, "client prepare failed with rc=%d [%s]",
-	    rc, strerror(errno));
+	    rc, anoubis_strerror(errno));
 
 	sleep(4); /* give the server time to open his socket */
 	rc = acc_open(c);
 	fail_if(rc != ACHAT_RC_OK, "client open failed with rc=%d [%s]",
-	    rc, strerror(errno));
+	    rc, anoubis_strerror(errno));
 	mark_point();
 
 	rc = acc_sendmsg(c, msgs[0], sizeof(msgs[0]));
 	fail_if(rc != ACHAT_RC_OK, "client send msg failed with rc=%d [%s]",
-	    rc, strerror(errno));
+	    rc, anoubis_strerror(errno));
 	mark_point();
 
 	bzero(buffer, sizeof(buffer));
 	size = sizeof(msgs[0]);
 	rc = acc_receivemsg(c, buffer, &size);
 	fail_if(rc != ACHAT_RC_OK, "client receive msg failed with rc=%d [%s]",
-	    rc, strerror(errno));
+	    rc, anoubis_strerror(errno));
 	if (strncmp(buffer, msgs[0], sizeof(msgs[0])) != 0)
 		fail("client received msg mismatch [%s] != [%s]",
 			msgs[0], buffer);
@@ -315,14 +315,14 @@ START_TEST(tc_chat_localip)
 
 	rc = acc_prepare(s);
 	fail_if(rc != ACHAT_RC_OK, "server prepare failed with rc=%d [%s]",
-	    rc, strerror(errno));
+	    rc, anoubis_strerror(errno));
 	mark_point();
 
 	bzero(&sa.ss, sizeof(sa.ss));
 	sslen = sizeof(sa.ss);
 	if (getsockname(s->fd, (struct sockaddr *)&sa.ss, &sslen) == -1)
 		fail("error while asking about server socket name [%s]",
-		    strerror(errno));
+		    anoubis_strerror(errno));
 	fail_if(sa.in.sin_port == 0,
 	    "couldn't determine port of server socket");
 	mark_point();
@@ -340,7 +340,7 @@ START_TEST(tc_chat_localip)
 		/* parent / server */
 		rc = acc_open(s);
 		fail_if(rc != ACHAT_RC_OK, "server open failed with rc=%d [%s]",
-		    rc, strerror(errno));
+		    rc, anoubis_strerror(errno));
 		mark_point();
 
 		bzero(buffer, sizeof(buffer));
@@ -348,7 +348,7 @@ START_TEST(tc_chat_localip)
 		rc = acc_receivemsg(s, buffer, &size);
 		fail_if(rc != ACHAT_RC_OK,
 		    "server receive msg failed with rc=%d [%s]", rc,
-		    strerror(errno));
+		    anoubis_strerror(errno));
 		if (strncmp(buffer, msgs[0], sizeof(msgs[0])) != 0)
 			fail("server received msg mismatch [%s] != [%s]",
 			    msgs[0], buffer);
@@ -360,7 +360,7 @@ START_TEST(tc_chat_localip)
 		rc = acc_sendmsg(s, msgs[0], sizeof(msgs[0]));
 		fail_if(rc != ACHAT_RC_OK,
 		    "server send msg failed with rc=%d [%s]", rc,
-		    strerror(errno));
+		    anoubis_strerror(errno));
 		mark_point();
 
 		/* the client will close the channel now;

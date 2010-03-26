@@ -34,13 +34,13 @@
 #include <arpa/inet.h>
 
 #include <check.h>
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #include "anoubis_chat.h"
+#include <anoubis_errno.h>
 #include "config.h"
 #ifdef NEEDBSDCOMPAT
 #include <bsdcompat.h>
@@ -78,12 +78,12 @@ tc_connect_lud_client(const char *sockname)
 
 	rc = acc_prepare(c);
 	fail_if(rc != ACHAT_RC_OK, "client prepare failed with rc=%d [%s]",
-	    rc, strerror(errno));
+	    rc, anoubis_strerror(errno));
 
 	sleep(4); /* give the server time to open his socket */
 	rc = acc_open(c);
 	fail_if(rc != ACHAT_RC_OK, "client open failed with rc=%d [%s]",
-	    rc, strerror(errno));
+	    rc, anoubis_strerror(errno));
 
 	fail_if(c->euid == (uid_t)-1, "euid != -1 expected, is %i", c->euid);
 	fail_if(c->egid == (gid_t)-1, "egid != -1 expected, is %i", c->egid);
@@ -125,11 +125,11 @@ tc_connect_lud_server(const char *sockname)
 
 	rc = acc_prepare(s);
 	fail_if(rc != ACHAT_RC_OK, "server prepare failed with rc=%d [%s]",
-	    rc, strerror(errno));
+	    rc, anoubis_strerror(errno));
 
 	rc = acc_open(s);
 	fail_if(rc != ACHAT_RC_OK, "server open failed with rc=%d [%s]",
-	    rc, strerror(errno));
+	    rc, anoubis_strerror(errno));
 
 	fail_if(s->euid != geteuid(), "server retrieved bogus uid %d, "
 	    "expected %d", s->euid, geteuid());
@@ -172,10 +172,11 @@ tc_connect_lud_serverdup(const char *sockname)
 
 	rc = acc_prepare(s);
 	fail_if(rc != ACHAT_RC_OK, "server prepare failed with rc=%d [%s]",
-	    rc, strerror(errno));
+	    rc, anoubis_strerror(errno));
 
 	s2 = acc_opendup(s);
-	fail_if(s2 == NULL, "server opendup failed [%s]", strerror(errno));
+	fail_if(s2 == NULL, "server opendup failed [%s]",
+		anoubis_strerror(errno));
 	fail_if(s2->euid != geteuid(), "server retrieved bogus uid %d, "
 	    "expected %d", s2->euid, geteuid());
 	fail_if(s2->egid != getegid(), "server retrieved bogus gid %d, "
@@ -222,12 +223,12 @@ tc_connect_lip_client(short port)
 
 	rc = acc_prepare(c);
 	fail_if(rc != ACHAT_RC_OK, "client prepare failed with rc=%d [%s]",
-	    rc, strerror(errno));
+	    rc, anoubis_strerror(errno));
 
 	sleep(4); /* give the server time to open his socket */
 	rc = acc_open(c);
 	fail_if(rc != ACHAT_RC_OK, "client open failed with rc=%d [%s]",
-	    rc, strerror(errno));
+	    rc, anoubis_strerror(errno));
 	fail_unless(c->euid == (uid_t)-1, "euid: -1 expected but is %i",
 	    c->euid);
 	fail_unless(c->egid == (gid_t)-1, "egid: -1 expected but is %i",
@@ -343,7 +344,7 @@ START_TEST(tc_connect_localunixdomain_clientclose)
 
 	rc = acc_prepare(c);
 	fail_if(rc != ACHAT_RC_OK, "client prepare failed with rc=%d [%s]",
-	    rc, strerror(errno));
+	    rc, anoubis_strerror(errno));
 	mark_point();
 
 	s = acc_create();
@@ -364,7 +365,7 @@ START_TEST(tc_connect_localunixdomain_clientclose)
 
 	rc = acc_prepare(s);
 	fail_if(rc != ACHAT_RC_OK, "server prepare failed with rc=%d [%s]",
-	    rc, strerror(errno));
+	    rc, anoubis_strerror(errno));
 	mark_point();
 
 	if (access(sockname, F_OK) != 0)
@@ -447,14 +448,14 @@ START_TEST(tc_connect_localip)
 
 	rc = acc_prepare(s);
 	fail_if(rc != ACHAT_RC_OK, "server prepare failed with rc=%d [%s]",
-	    rc, strerror(errno));
+	    rc, anoubis_strerror(errno));
 	mark_point();
 
 	bzero(&sa.ss, sizeof(sa.ss));
 	sslen = sizeof(sa.ss);
 	if (getsockname(s->fd, (struct sockaddr *)&sa.ss, &sslen) == -1)
 		fail("error while asking about server socket name [%s]",
-		    strerror(errno));
+		    anoubis_strerror(errno));
 	fail_if(sa.in.sin_port == 0,
 	    "couldn't determine port of server socket");
 	mark_point();
@@ -472,7 +473,7 @@ START_TEST(tc_connect_localip)
 		/* parent / server */
 		rc = acc_open(s);
 		fail_if(rc != ACHAT_RC_OK, "server open failed with rc=%d [%s]",
-		    rc, strerror(errno));
+		    rc, anoubis_strerror(errno));
 		fail_unless(s->euid == (uid_t)-1, "euid: -1 expected but is %i",
 			s->euid);
 		fail_unless(s->egid == (gid_t)-1, "egid: -1 expected but is %i",
