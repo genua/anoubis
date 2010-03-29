@@ -60,7 +60,7 @@ extern "C" int
 x_auth_callback(struct anoubis_client *WXUNUSED(client), struct anoubis_msg *in,
     struct anoubis_msg **outp)
 {
-	KeyCtrl *keyCtrl = KeyCtrl::getInstance();
+	KeyCtrl *keyCtrl = KeyCtrl::instance();
 
 	if (!keyCtrl->canUseLocalKeys()) {
 		/* Key-pair not configured */

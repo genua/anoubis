@@ -175,7 +175,7 @@ ModSfsMainPanelImpl::updateDelete(Subject *)
 wxString
 ModSfsMainPanelImpl::compareKeyPair(void)
 {
-	KeyCtrl *keyCtrl = KeyCtrl::getInstance();
+	KeyCtrl *keyCtrl = KeyCtrl::instance();
 	PrivKey &privKey = keyCtrl->getPrivateKey();
 	LocalCertificate &localCert = keyCtrl->getLocalCertificate();
 
@@ -554,7 +554,7 @@ ModSfsMainPanelImpl::OnSfsMainDirViewChoiceSelected(wxCommandEvent &event)
 void
 ModSfsMainPanelImpl::OnSfsMainKeyLoaded(wxCommandEvent&)
 {
-	bool keysUsable = KeyCtrl::getInstance()->canUseLocalKeys();
+	bool keysUsable = KeyCtrl::instance()->canUseLocalKeys();
 	bool sigEnabled = sfsCtrl_->isSignatureEnabled();
 
 	SfsMainSignFilesCheckBox->Enable(keysUsable);
@@ -736,7 +736,7 @@ ModSfsMainPanelImpl::enableSfsControls(bool sfsOpRunning)
 void
 ModSfsMainPanelImpl::initSfsOptions(void)
 {
-	KeyCtrl *keyCtrl = KeyCtrl::getInstance();
+	KeyCtrl *keyCtrl = KeyCtrl::instance();
 	wxString oldPath = wxConfig::Get()->GetPath();  /* Original path */
 
 	/* Private key */
@@ -775,14 +775,14 @@ ModSfsMainPanelImpl::saveSfsOptions(void)
 	wxString oldPath = wxConfig::Get()->GetPath(); /* Original path */
 
 	/* Private key */
-	PrivKey &privKey = KeyCtrl::getInstance()->getPrivateKey();
+	PrivKey &privKey = KeyCtrl::instance()->getPrivateKey();
 
 	wxConfig::Get()->SetPath(wxT("/Options/PrivateKey"));
 	wxConfig::Get()->Write(wxT("path"), privKey.getFile());
 	wxConfig::Get()->Write(wxT("validity"), privKey.getValidity());
 
 	/* Certificate */
-	LocalCertificate &cert = KeyCtrl::getInstance()->getLocalCertificate();
+	LocalCertificate &cert = KeyCtrl::instance()->getLocalCertificate();
 
 	wxConfig::Get()->SetPath(wxT("/Options/LocalCertificate"));
 	wxConfig::Get()->Write(wxT("path"), cert.getFile());
@@ -794,7 +794,7 @@ ModSfsMainPanelImpl::saveSfsOptions(void)
 void
 ModSfsMainPanelImpl::privKeyParamsUpdate(const wxString &path, int validity)
 {
-	KeyCtrl *keyCtrl = KeyCtrl::getInstance();
+	KeyCtrl *keyCtrl = KeyCtrl::instance();
 	PrivKey &privKey = keyCtrl->getPrivateKey();
 	wxString oldPath = privKey.getFile();
 
@@ -832,7 +832,7 @@ bool
 ModSfsMainPanelImpl::certificateParamsUpdate(const wxString &path)
 {
 	wxDateTime	  time;
-	LocalCertificate &cert = KeyCtrl::getInstance()->getLocalCertificate();
+	LocalCertificate &cert = KeyCtrl::instance()->getLocalCertificate();
 	wxString oldPath = cert.getFile();
 
 	bool changed = oldPath != path;

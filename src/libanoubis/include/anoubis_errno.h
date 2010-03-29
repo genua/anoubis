@@ -80,8 +80,9 @@
 /*
  * some macros to define anoubis_errorcodes
  */
-#define A_EPERM_NO_CERTIFICATE 1024
-#define A_EPERM_UID_MISMATCH 1025
+#define A_EPERM_NO_CERTIFICATE		1024
+#define A_EPERM_UID_MISMATCH		1025
+#define A_KEYLOADFAIL			1026
 
 /*
  * Get Anoubis error code string.

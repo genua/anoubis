@@ -696,7 +696,7 @@ void
 MainFrame::doUpgradeNotify(void)
 {
 	JobCtrl			*instance = JobCtrl::getInstance();
-	KeyCtrl			*keyCtrl = KeyCtrl::getInstance();
+	KeyCtrl			*keyCtrl = KeyCtrl::instance();
 	LocalCertificate	&cert = keyCtrl->getLocalCertificate();
 	struct anoubis_sig	*raw_cert;
 	static time_t		 last_message = 0, now;

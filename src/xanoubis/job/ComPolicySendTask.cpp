@@ -38,6 +38,7 @@
 #include <anoubis_sig.h>
 #include <anoubis_client.h>
 #include <anoubis_transaction.h>
+#include <anoubis_errno.h>
 
 #include "ComPolicySendTask.h"
 #include "PolicyRuleSet.h"
@@ -49,7 +50,7 @@ ComPolicySendTask::ComPolicySendTask(void)
 	this->policy_content_ = 0;
 	this->uid_ = 0;
 	this->prio_ = 0;
-	this->privKey_ = 0;
+	privKey_ = NULL;
 	this->ruleSetId_ = 0;
 }
 
@@ -118,13 +119,13 @@ ComPolicySendTask::getPriority(void) const
 bool
 ComPolicySendTask::havePrivateKey(void) const
 {
-	return (this->privKey_ != 0);
+	return (privKey_ != 0);
 }
 
 void
-ComPolicySendTask::setPrivateKey(struct anoubis_sig *privKey)
+ComPolicySendTask::setPrivateKey(PrivKey *privKey)
 {
-	this->privKey_ = privKey;
+	privKey_ = privKey;
 }
 
 wxEventType
@@ -153,12 +154,18 @@ ComPolicySendTask::exec(void)
 	}
 
 	if (havePrivateKey()) {
+		struct anoubis_sig	*rawkey;
+
+		rawkey = comLoadPrivateKey(privKey_);
+		if (!rawkey) {
+			setComTaskResult(RESULT_LOCAL_ERROR);
+			setResultDetails(A_KEYLOADFAIL);
+			return;
+		}
 		/* Signing policy requested */
 		sig_len = strlen(policy_content_);
-		signature = anoubis_sign_policy_buf(
-		    this->privKey_, policy_content_, &sig_len);
-
-		this->privKey_ = 0; /* Reset assigned, not used anymore */
+		signature = anoubis_sign_policy_buf(rawkey, policy_content_,
+		    &sig_len);
 
 		if (signature == 0) {
 			setComTaskResult(RESULT_LOCAL_ERROR);

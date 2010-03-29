@@ -102,7 +102,7 @@ class ComCsumAddTask : public ComTask
 		 * @see PrivKey
 		 * @see setKeyId()
 		 */
-		void setPrivateKey(struct anoubis_sig *);
+		void setPrivateKey(PrivKey *);
 
 		/**
 		 * Assignes the contents of an sfs_entry-structure to the task.
@@ -236,7 +236,7 @@ class ComCsumAddTask : public ComTask
 
 		std::vector<wxString>		 paths_;
 		struct anoubis_csmulti_request	*csreq_, *sigreq_;
-		struct anoubis_sig		*privKey_;
+		PrivKey				*privKey_;
 		struct anoubis_transaction	*ta_;
 		u_int8_t			*keyId_;
 		unsigned int			 kidLen_;

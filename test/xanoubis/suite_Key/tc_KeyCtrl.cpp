@@ -203,7 +203,7 @@ setup()
 	fail_unless(wxModule::InitializeModules(),
 	    "Failed to initialize wxModules");
 
-	tc_keyCtrl = KeyCtrl::getInstance();
+	tc_keyCtrl = KeyCtrl::instance();
 }
 
 static void

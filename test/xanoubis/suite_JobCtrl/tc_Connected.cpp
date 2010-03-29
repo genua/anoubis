@@ -104,7 +104,7 @@ setup(void)
 
 	mark_point();
 	/* The private key */
-	PrivKey &privKey = KeyCtrl::getInstance()->getPrivateKey();
+	PrivKey &privKey = KeyCtrl::instance()->getPrivateKey();
 	privKey.setFile(wxFileName::GetHomeDir() + wxT("/privkey"));
 
 	mark_point();
@@ -116,7 +116,7 @@ setup(void)
 	mark_point();
 
 	/* Certificate */
-	LocalCertificate &cert = KeyCtrl::getInstance()->getLocalCertificate();
+	LocalCertificate &cert = KeyCtrl::instance()->getLocalCertificate();
 	cert.setFile(wxFileName::GetHomeDir() + wxT("/pubkey"));
 	mark_point();
 
@@ -246,7 +246,7 @@ START_TEST(test_policysend_empty)
 	TaskEventSpy spy(jobCtrl, anTASKEVT_POLICY_SEND);
 
 	ComPolicySendTask task;
-	task.setPrivateKey(KeyCtrl::getInstance()->getPrivateKey().getKey());
+	task.setPrivateKey(&KeyCtrl::instance()->getPrivateKey());
 	jobCtrl->addTask(&task);
 	mark_point();
 
@@ -276,7 +276,7 @@ START_TEST(test_policysend)
 
 	ComPolicySendTask task;
 	task.setPolicy(rs, getuid(), 1);
-	task.setPrivateKey(KeyCtrl::getInstance()->getPrivateKey().getKey());
+	task.setPrivateKey(&KeyCtrl::instance()->getPrivateKey());
 	mark_point();
 
 	apn_free_ruleset(rs);
@@ -698,7 +698,7 @@ END_TEST
 START_TEST(test_signature)
 {
 	mark_point();
-	LocalCertificate &cert = KeyCtrl::getInstance()->getLocalCertificate();
+	LocalCertificate &cert = KeyCtrl::instance()->getLocalCertificate();
 	struct anoubis_sig *raw_cert = cert.getCertificate();
 
 	mark_point();
@@ -720,8 +720,7 @@ START_TEST(test_signature)
 	add_task.addPath(fileName);
 	fail_unless(add_task.setKeyId(raw_cert->keyid, raw_cert->idlen),
 	    "Failed to setup task with key-id.");
-	add_task.setPrivateKey(
-	    KeyCtrl::getInstance()->getPrivateKey().getKey());
+	add_task.setPrivateKey(&KeyCtrl::instance()->getPrivateKey());
 	mark_point();
 
 	jobCtrl->addTask(&add_task);

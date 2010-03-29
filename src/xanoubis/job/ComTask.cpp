@@ -27,6 +27,7 @@
 
 #include <cerrno>
 #include "ComTask.h"
+#include "KeyCtrl.h"
 
 ComTask::ComTask(void) : Task(Task::TYPE_COM)
 {
@@ -76,4 +77,16 @@ ComTask::setTaskResultAbort(void)
 {
 	setComTaskResult(RESULT_LOCAL_ERROR);
 	setResultDetails(EINTR);
+}
+
+struct anoubis_sig *
+ComTask::comLoadPrivateKey(PrivKey *privkey) const
+{
+	if (!privkey->isLoaded()) {
+		KeyCtrl		*keyctrl = KeyCtrl::existingInstance();
+
+		if (keyctrl)
+			keyctrl->loadPrivateKey();
+	}
+	return privkey->getKey();
 }

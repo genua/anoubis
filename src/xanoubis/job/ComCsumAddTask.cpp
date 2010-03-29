@@ -45,6 +45,7 @@
 #include <anoubis_csum.h>
 #include <anoubis_protocol.h>
 #include <anoubis_sig.h>
+#include <anoubis_errno.h>
 
 #include "ComCsumAddTask.h"
 #include "TaskEvent.h"
@@ -79,9 +80,9 @@ ComCsumAddTask::addPath(wxString path)
 }
 
 void
-ComCsumAddTask::setPrivateKey(struct anoubis_sig *privKey)
+ComCsumAddTask::setPrivateKey(PrivKey *privKey)
 {
-	this->privKey_ = privKey;
+	privKey_ = privKey;
 }
 
 wxEventType
@@ -161,8 +162,11 @@ ComCsumAddTask::exec(void)
 			return;
 		type_ = Task::TYPE_COM;
 		for (unsigned int i=0; i<paths_.size(); ++i) {
-			u_int8_t	cs[ANOUBIS_CS_LEN];
-			int		tmplen = ANOUBIS_CS_LEN;
+			u_int8_t		 cs[ANOUBIS_CS_LEN];
+			int			 tmplen = ANOUBIS_CS_LEN;
+			unsigned int		 siglen;
+			u_int8_t		*sig;
+			struct anoubis_sig	*rawkey;
 
 			if (shallAbort()) {
 				setTaskResultAbort();
@@ -180,17 +184,23 @@ ComCsumAddTask::exec(void)
 			    cs, ANOUBIS_CS_LEN);
 			if (ret < 0)
 				goto fatal;
-			if (privKey_) {
-				u_int8_t		*sig;
-				unsigned int		 siglen;
+			if (privKey_ == NULL)
+				continue;
 
-				sig = anoubis_sign_csum(privKey_, cs, &siglen);
-				ret = addPathToRequest(sigreq_,
-				    paths_[i].fn_str(), sig, siglen);
-				free(sig);
+			rawkey = comLoadPrivateKey(privKey_);
+			if (rawkey == NULL) {
+				ret = anoubis_csmulti_add_error(sigreq_,
+				    paths_[i].fn_str(), A_KEYLOADFAIL);
 				if (ret < 0)
 					goto fatal;
+				continue;
 			}
+			sig = anoubis_sign_csum(rawkey, cs, &siglen);
+			ret = addPathToRequest(sigreq_, paths_[i].fn_str(),
+			    sig, siglen);
+			free(sig);
+			if (ret < 0)
+				goto fatal;
 		}
 		privKey_ = NULL;
 		return;

@@ -156,7 +156,7 @@ bool AnoubisGuiApp::OnInit()
 	PolicyCtrl::getInstance();
 
 	/* Assign the passphrase-callback */
-	KeyCtrl::getInstance()->setPassphraseReader(this);
+	KeyCtrl::instance()->setPassphraseReader(this);
 
 	/* Initialization of central event management */
 	AnEvents *anEvents = AnEvents::getInstance();
@@ -556,8 +556,8 @@ AnoubisGuiApp::readPassphrase(bool *ok)
 
 	wxWindow *w = wxWindow::FindWindowById(ID_MAINFRAME);
 
-	LocalCertificate &cert = KeyCtrl::getInstance()->getLocalCertificate();
-	PrivKey &pKey = KeyCtrl::getInstance()->getPrivateKey();
+	LocalCertificate &cert = KeyCtrl::instance()->getLocalCertificate();
+	PrivKey &pKey = KeyCtrl::instance()->getPrivateKey();
 
 	dName = cert.getDistinguishedName();
 

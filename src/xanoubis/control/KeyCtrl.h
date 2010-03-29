@@ -92,14 +92,6 @@ class KeyCtrl : public Singleton<KeyCtrl>, public wxEvtHandler
 		~KeyCtrl(void);
 
 		/**
-		 * Get object.
-		 * This returns the (only) object of this class
-		 * (see singleton pattern).
-		 * @return It self.
-		 */
-		static KeyCtrl *getInstance(void);
-
-		/**
 		 * Returns the assigned passphrase reader.
 		 *
 		 * This interface is used to ask for a passphrase, whenever
@@ -202,7 +194,7 @@ class KeyCtrl : public Singleton<KeyCtrl>, public wxEvtHandler
 		wxCondition *loadCondition_;
 
 		/**
-		 * Holds the result of the load-procedure in case of 
+		 * Holds the result of the load-procedure in case of
 		 * loadPrivateKey() was called from another thread than the
 		 * GUI-thread.
 		 */

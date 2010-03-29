@@ -103,7 +103,7 @@ setup(void)
 	fail_unless(spy.getLastState() == JobCtrl::CONNECTED,
 	    "Unexpected connection-state; is: %i", spy.getLastState());
 
-	LocalCertificate &cert = KeyCtrl::getInstance()->getLocalCertificate();
+	LocalCertificate &cert = KeyCtrl::instance()->getLocalCertificate();
 	cert.setFile(wxFileName::GetHomeDir() + wxT("/pubkey"));
 
 	fail_unless(cert.load(), "Failed to load certificate");
@@ -263,7 +263,7 @@ START_TEST(test_sig_nonempty)
 	task.setRequestParameter(
 	    getuid(), wxString(testDir, wxConvFile) + wxT("/sub"));
 
-	LocalCertificate &cert = KeyCtrl::getInstance()->getLocalCertificate();
+	LocalCertificate &cert = KeyCtrl::instance()->getLocalCertificate();
 	struct anoubis_sig *raw_cert = cert.getCertificate();
 	fail_unless(task.setKeyId(raw_cert->keyid, raw_cert->idlen),
 	    "Failed to setup task with key-id.");
@@ -293,7 +293,7 @@ START_TEST(test_sig_empty)
 	ComSfsListTask task;
 	task.setRequestParameter(getuid(), wxString(testDir, wxConvFile));
 
-	LocalCertificate &cert = KeyCtrl::getInstance()->getLocalCertificate();
+	LocalCertificate &cert = KeyCtrl::instance()->getLocalCertificate();
 	struct anoubis_sig *raw_cert = cert.getCertificate();
 	fail_unless(task.setKeyId(raw_cert->keyid, raw_cert->idlen),
 	    "Failed to setup task with key-id.");
@@ -316,7 +316,7 @@ START_TEST(test_sig_recursive)
 	task.setRequestParameter(getuid(), wxString(testDir, wxConvFile));
 	task.setRecursive(true);
 
-	LocalCertificate &cert = KeyCtrl::getInstance()->getLocalCertificate();
+	LocalCertificate &cert = KeyCtrl::instance()->getLocalCertificate();
 	struct anoubis_sig *raw_cert = cert.getCertificate();
 	fail_unless(task.setKeyId(raw_cert->keyid, raw_cert->idlen),
 	    "Failed to setup task with key-id.");

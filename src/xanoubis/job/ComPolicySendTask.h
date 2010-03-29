@@ -145,7 +145,7 @@ class ComPolicySendTask : public ComTask
 		 *
 		 * @see PrivKey
 		 */
-		void setPrivateKey(struct anoubis_sig *);
+		void setPrivateKey(PrivKey *);
 
 		/**
 		 * Implementation of Task::getEventType().
@@ -166,7 +166,7 @@ class ComPolicySendTask : public ComTask
 		char				*policy_content_;
 		uid_t				 uid_;
 		int				 prio_;
-		struct anoubis_sig		*privKey_;
+		PrivKey				*privKey_;
 		struct anoubis_transaction	*ta_;
 
 		/**

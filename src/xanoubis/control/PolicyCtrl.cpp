@@ -400,7 +400,7 @@ PolicyCtrl::sendToDaemon(long id)
 		return (RESULT_POL_ERR);
 	}
 
-	KeyCtrl *keyCtrl = KeyCtrl::getInstance();
+	KeyCtrl *keyCtrl = KeyCtrl::instance();
 	if (keyCtrl->canUseLocalKeys()) {
 		/* You need to sign the policy, the private key is required */
 		keyRes = keyCtrl->loadPrivateKey();
@@ -416,7 +416,7 @@ PolicyCtrl::sendToDaemon(long id)
 		}
 
 		PrivKey &privKey = keyCtrl->getPrivateKey();
-		task->setPrivateKey(privKey.getKey());
+		task->setPrivateKey(&privKey);
 	}
 
 	sendTaskList_.push_back(task);

@@ -40,9 +40,10 @@ PrivKey::PrivKey(void)
 	const wxString defFile =
 	    wxStandardPaths::Get().GetUserDataDir() + wxT("/default.key");
 
-	this->privKey_ = 0;
-	this->validity_ = 0;
-	this->tries_ = 0;
+	privKey_ = 0;
+	validity_ = 0;
+	tries_ = 0;
+	referenced_ = false;
 
 	/* Assign default keyfile, if already existing */
 	if (wxFileExists(defFile))
@@ -171,8 +172,9 @@ PrivKey::isLoaded(void) const
 }
 
 struct anoubis_sig *
-PrivKey::getKey(void) const
+PrivKey::getKey(void)
 {
+	referenced_ = true;
 	return (this->privKey_);
 }
 
@@ -194,5 +196,10 @@ PrivKey::stopTimer(void)
 void
 PrivKey::Notify(void)
 {
-	unload();
+	if (referenced_) {
+		referenced_ = false;
+		startTimer();
+	} else {
+		unload();
+	}
 }

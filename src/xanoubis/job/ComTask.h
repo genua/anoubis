@@ -29,6 +29,7 @@
 #define _COMTASK_H_
 
 #include "Task.h"
+#include "PrivKey.h"
 
 /**
  * Base-class for communication-tasks.
@@ -143,6 +144,15 @@ class ComTask : public Task
 		 * Get the Client data structure of the ComTask.
 		 */
 		struct anoubis_client	*getClient(void) const;
+
+		/**
+		 * Try to load the given private key if it is not yet loaded
+		 * and return the raw key or NULL in case of an error.
+		 *
+		 * @param privkey The private key.
+		 * @return The raw ky data or NULL in case of an error.
+		 */
+		struct anoubis_sig *comLoadPrivateKey(PrivKey *) const;
 
 	private:
 		ComTaskResult		 result_;

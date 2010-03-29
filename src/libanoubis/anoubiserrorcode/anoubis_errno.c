@@ -33,10 +33,12 @@ static const char *a_error_str[] = {
 	/*
 	 * array should begin with entry '0', not '1024'
 	 */
-	[A_EPERM_NO_CERTIFICATE - A_ERRORCODE_BASE] =
-		_("Operation not permitted: no certificate found"),
-	[A_EPERM_UID_MISMATCH - A_ERRORCODE_BASE] =
-		_("Operation not permitted: User ID and certificate's User ID do not match")
+	[A_EPERM_NO_CERTIFICATE - A_ERRORCODE_BASE] = _("Operation not "
+	    "permitted: no certificate found"),
+	[A_EPERM_UID_MISMATCH - A_ERRORCODE_BASE] = _("Operation not "
+	    "permitted: User ID and certificate's User ID do not match"),
+	[A_KEYLOADFAIL - A_ERRORCODE_BASE ] = _("Failed to load private key"),
+
 };
 #else
 /*

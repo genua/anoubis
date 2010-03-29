@@ -58,7 +58,7 @@ xpass_cb(char *buf, int size, int, void *err)
 	int *error = (int *)err;
 	int random = 0;
 
-	PassphraseReader *pr = KeyCtrl::getInstance()->getPassphraseReader();
+	PassphraseReader *pr = KeyCtrl::instance()->getPassphraseReader();
 	if (pr != 0) {
 		result = pr->readPassphrase(&ok);
 		if (!ok) {
@@ -103,12 +103,6 @@ KeyCtrl::~KeyCtrl(void)
 	    NULL, this);
 
 	delete this->loadCondition_;
-}
-
-KeyCtrl *
-KeyCtrl::getInstance(void)
-{
-	return (Singleton<KeyCtrl>::instance());
 }
 
 PassphraseReader *
@@ -207,3 +201,9 @@ KeyCtrl::onLoadPrivateKeyRequest(wxCommandEvent &)
 	/* Inform the calling thread that the key is loaded */
 	loadCondition_->Signal();
 }
+
+/* Explicit instantiation of Singleton Baseclass methods. */
+template KeyCtrl *
+Singleton<KeyCtrl>::instance();
+template KeyCtrl *
+Singleton<KeyCtrl>::existingInstance();

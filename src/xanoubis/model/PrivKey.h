@@ -196,7 +196,7 @@ class PrivKey : private wxTimer
 		 *
 		 * @return The raw-key. If no key is loaded, 0 is returned.
 		 */
-		struct anoubis_sig *getKey(void) const;
+		struct anoubis_sig *getKey(void);
 
 	private:
 		/**
@@ -218,6 +218,13 @@ class PrivKey : private wxTimer
 		 * Tries to type in a correct passphrase
 		 */
 		int tries_;
+
+		/**
+		 * Set to true if the key is accessed using getKey.
+		 * This prevents the key from being unloaded at the next
+		 * timer expiration.
+		 */
+		bool referenced_;
 
 		/**
 		 * Starts a timer if necessary.

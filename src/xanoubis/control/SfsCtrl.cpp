@@ -151,7 +151,7 @@ SfsCtrl::setEntryFilter(EntryFilter filter, bool recursive)
 bool
 SfsCtrl::isSignatureEnabled(void) const
 {
-	KeyCtrl *keyCtrl = KeyCtrl::getInstance();
+	KeyCtrl *keyCtrl = KeyCtrl::instance();
 	return (this->sigEnabled_ && keyCtrl->canUseLocalKeys());
 }
 
@@ -163,7 +163,7 @@ SfsCtrl::setSignatureEnabled(bool enable)
 		 * Signature-support should be enabled, you need a certificate
 		 * and private key to be able to use the signature-support.
 		 */
-		if (KeyCtrl::getInstance()->canUseLocalKeys()) {
+		if (KeyCtrl::instance()->canUseLocalKeys()) {
 			this->sigEnabled_ = true;
 			return (true);
 		} else {
@@ -322,7 +322,7 @@ SfsCtrl::registerChecksum(const IndexArray &arr)
 
 			if (doSig) {
 				/* Need a loaded private key */
-				KeyCtrl *keyCtrl = KeyCtrl::getInstance();
+				KeyCtrl *keyCtrl = KeyCtrl::instance();
 				keyRes = keyCtrl->loadPrivateKey();
 				if (keyRes == KeyCtrl::RESULT_KEY_WRONG_PASS)
 					return (RESULT_WRONG_PASS);
@@ -1247,7 +1247,7 @@ SfsCtrl::createComCsumGetTask(bool doSig)
 	ComCsumGetTask		*task = new ComCsumGetTask;
 
 	if (doSig) {
-		KeyCtrl *keyCtrl = KeyCtrl::getInstance();
+		KeyCtrl *keyCtrl = KeyCtrl::instance();
 		LocalCertificate &cert = keyCtrl->getLocalCertificate();
 		struct anoubis_sig *raw_cert = cert.getCertificate();
 
@@ -1266,13 +1266,13 @@ SfsCtrl::createComCsumAddTask(bool doSig)
 	ComCsumAddTask *ret = new ComCsumAddTask;
 
 	if (doSig) {
-		KeyCtrl *keyCtrl = KeyCtrl::getInstance();
+		KeyCtrl *keyCtrl = KeyCtrl::instance();
 		LocalCertificate &cert = keyCtrl->getLocalCertificate();
 		PrivKey &privKey = keyCtrl->getPrivateKey();
 		struct anoubis_sig *raw_cert = cert.getCertificate();
 
 		ret->setKeyId(raw_cert->keyid, raw_cert->idlen);
-		ret->setPrivateKey(privKey.getKey());
+		ret->setPrivateKey(&privKey);
 	}
 	return ret;
 }
@@ -1322,7 +1322,7 @@ SfsCtrl::createComCsumDelTasks(SfsEntry *entry, bool doSig)
 	SfsEntry::ChecksumState sigState =
 	    entry->getChecksumState(SfsEntry::SFSENTRY_SIGNATURE);
 	if ((sigState != SfsEntry::SFSENTRY_MISSING) && doSig) {
-		KeyCtrl *keyCtrl = KeyCtrl::getInstance();
+		KeyCtrl *keyCtrl = KeyCtrl::instance();
 		LocalCertificate &cert = keyCtrl->getLocalCertificate();
 		struct anoubis_sig *raw_cert = cert.getCertificate();
 
@@ -1359,7 +1359,7 @@ SfsCtrl::createSfsListTasks(uid_t uid, const wxString &path)
 	}
 
 	if (isSignatureEnabled()) {
-		KeyCtrl *keyCtrl = KeyCtrl::getInstance();
+		KeyCtrl *keyCtrl = KeyCtrl::instance();
 		LocalCertificate &cert = keyCtrl->getLocalCertificate();
 		struct anoubis_sig *raw_cert = cert.getCertificate();
 
@@ -1404,7 +1404,7 @@ SfsCtrl::pushExportEntry(SfsEntry *entry, SfsEntry::ChecksumType type)
 		    csum, csumLen, NULL, 0, geteuid(), NULL, 0);
 	} else if (isSignatureEnabled()) {
 		/* Receive key-id of local-certificate */
-		KeyCtrl *keyCtrl = KeyCtrl::getInstance();
+		KeyCtrl *keyCtrl = KeyCtrl::instance();
 		LocalCertificate &lc = keyCtrl->getLocalCertificate();
 		/* keyid part of anoubis_sig-structure */
 		struct anoubis_sig *cert = lc.getCertificate();
