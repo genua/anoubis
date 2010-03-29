@@ -777,13 +777,6 @@ pe_context_decide(struct pe_proc *proc, int type, int prio,
 	struct pe_context	*ctx;
 	int			 ret;
 
-	/*
-	 * NOTE: Once we actually use the pathhint in policiy decision
-	 * NOTE: this shortcut will no longer be valid.
-	 */
-	if (pident == NULL || pident->csum == NULL)
-		return (0);
-
 	ctx = pe_proc_get_context(proc, prio);
 	/* No context: Allow a context switch. */
 	if (ctx == NULL)
