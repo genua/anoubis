@@ -79,6 +79,7 @@ AnoubisGuiApp::AnoubisGuiApp(void)
 	mainFrame = NULL;
 	onInitProfile_ = true;
 	trayVisible_ = true;
+	hide_ = false;
 	oldhandle_ = -1;
 #ifdef LINUX
 	grubPath_ = wxT("/boot/grub/menu.lst");
@@ -177,7 +178,6 @@ bool AnoubisGuiApp::OnInit()
 
 	SetTopWindow(mainFrame);
 	mainFrame->OnInit();
-	mainFrame->Show();
 
 	modules_[OVERVIEW] = new ModOverview(mainFrame);
 	modules_[ALF]      = new ModAlf(mainFrame);
@@ -201,6 +201,10 @@ bool AnoubisGuiApp::OnInit()
 	if (hasLocale) {
 		status(_("Language setting: ") + language_.GetCanonicalName());
 	}
+
+	/* Show the window only after it is completely constructed. */
+	if (!hide_)
+		mainFrame->Show();
 
 	wxConfig::Get()->Read(wxT("/Options/GrubConfigPath"), &grubPath_);
 
@@ -302,6 +306,13 @@ AnoubisGuiApp::OnInitCmdLine(wxCmdLineParser& parser)
 			wxCMD_LINE_VAL_NONE,
 			wxCMD_LINE_PARAM_OPTIONAL
 		}, {
+			wxCMD_LINE_SWITCH,
+			wxT("H"),
+			wxT("hide"),
+			_("Do not show the main window"),
+			wxCMD_LINE_VAL_NONE,
+			0
+		}, {
 			wxCMD_LINE_NONE,
 			NULL,
 			NULL,
@@ -332,6 +343,8 @@ AnoubisGuiApp::OnCmdLineParsed(wxCmdLineParser& parser)
 
 	if (parser.Found(wxT("t")))
 		trayVisible_ = false;
+	if (parser.Found(wxT("H")))
+		hide_ = true;
 
 	return (true);
 }
