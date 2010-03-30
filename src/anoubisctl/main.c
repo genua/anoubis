@@ -52,6 +52,7 @@
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/wait.h>
 #include <string.h>
 #include <unistd.h>
 #include <syslog.h>
@@ -484,8 +485,12 @@ daemon_start(void)
 	static const char	*command = PACKAGE_SBINDIR "/" PACKAGE_DAEMON;
 
 	if ((err = system(command))) {
-		syslog(LOG_ERR, "%s: %s", command,
-		    anoubis_strerror(errno));
+		if (err < 0)
+		    syslog(LOG_ERR, "%s failed: %s", command,
+			anoubis_strerror(errno));
+		else
+		    syslog(LOG_ERR, "%s failed with exit code %d", command,
+			WEXITSTATUS(err));
 		error = 2;
 	}
 

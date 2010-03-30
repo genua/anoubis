@@ -98,7 +98,6 @@ file_input(int *file_cnt, char *file)
 		return NULL;
 
 	cnt = 0;
-	i = 0;
 
 	if (strcmp(file, "-") == 0) {
 		fp = stdin;
@@ -153,10 +152,9 @@ sfs_realpath(const char *path, char resolved[PATH_MAX])
 	char *p, *q, *s;
 	size_t left_len, resolved_len;
 	unsigned symlinks;
-	int serrno, slen, lstat_fail = 0;
+	int slen, lstat_fail = 0;
 	char left[PATH_MAX], next_token[PATH_MAX], symlink[PATH_MAX];
 
-	serrno = errno;
 	symlinks = 0;
 	if (path[0] == '/') {
 		resolved[0] = '/';
@@ -341,6 +339,7 @@ load_keys(int priv_key, int show_err, char *cert, char *keyfile)
 		if ((cert = build_path(homepath, ANOUBIS_DEF_CRT)) == NULL) {
 			fprintf(stderr, "Error while allocating"
 			    "memory\n");
+			return NULL;
 		}
 	}
 
@@ -358,6 +357,7 @@ load_keys(int priv_key, int show_err, char *cert, char *keyfile)
 			    == NULL) {
 				fprintf(stderr, "Error while allocating"
 				    "memory\n");
+				return NULL;
 			}
 		}
 		if (stat(keyfile, &sb) != 0) {
