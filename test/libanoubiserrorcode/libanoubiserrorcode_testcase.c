@@ -106,9 +106,9 @@ run_test(char * predicted_error_string[])
 		teststring);
 
 	/* case unspecified anoubis error */
-	teststring = anoubis_strerror(1026);
+	teststring = anoubis_strerror(1226);
 	fail_if(strcmp(teststring, predicted_error_string[2]) != 0,
-		"errorcode 1026 didn't match error_text: \"%s\"",
+		"errorcode 1226 didn't match error_text: \"%s\"",
 		teststring);
 
 	/* case anoubis error out of range*/
