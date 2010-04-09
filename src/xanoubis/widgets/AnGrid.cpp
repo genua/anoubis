@@ -81,7 +81,7 @@ AnGrid::onLabelRightClick(wxGridEvent &)
 	AnTable			*table;
 	wxMultiChoiceDialog	*multiChoiceDlg;
 
-	table = wxDynamicCast(GetTable(), AnTable);
+	table = dynamic_cast<AnTable*>(GetTable());
 	if (table == NULL) {
 		return;
 	}
@@ -124,7 +124,7 @@ AnGrid::onColumnSize(wxGridSizeEvent & event)
 	event.Skip();
 
 	idx = event.GetRowOrCol();
-	table = wxDynamicCast(GetTable(), AnTable);
+	table = dynamic_cast<AnTable*>(GetTable());
 	if (table == NULL) {
 		return;
 	}
