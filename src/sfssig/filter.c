@@ -29,133 +29,187 @@
 
 #include "sfssig.h"
 
-static int	filter_isupgraded(char *arg, struct anoubis_sig *as);
-static int	filter_hasnosum(char *arg, uid_t uid);
-static int	filter_hasnosig(char *arg, struct anoubis_sig *as);
-static int	filter_sumsig(char *arg, int op, unsigned int idlen, unsigned
-		    char *keyid, uid_t uid, int upgraded);
+/**
+ * Add a checksum filter request for a file. This will
+ * add an request with an GET operation. So its used
+ * for HASSUM/NOSUM
+ *
+ * @param file which should be filtered.
+ * @param uid which registered (not) a checksum
+ * @param callback which handels the result of the request
+ * @return 1 keep file till processing filter,
+ *	   0 file can be dismissed
+ *	  -1 error occurd
+ */
+static int filter_sum(char *, uid_t, sumop_callback_t);
+
+/**
+ * Add a signature filter request for a file. This will
+ * add an request with an GETSIG operation. So its used
+ * for HASSIG/NOSIG/ISUPGRADED
+ *
+ * @param file which should be filtered.
+ * @param anoubis_sig struct which contains a keyid. The keyid specifies the
+ *	  (not) registered signature
+ * @param callback which handels the result of the request
+ * @return 1 keep file till processing filter,
+ *	   0 file can be dismissed
+ *	  -1 error occurd
+ */
+static int filter_sig(char *, struct anoubis_sig *, sumop_callback_t);
+
+/**
+ * Add an request to the filter reqeust tree.
+ * @param file which should be filtered.
+ * @param operation which should be added ANOUBIS_CHECKSUM_OP_GET2 or
+ *	  ANOUBIS_CHECKSUM_OP_GETSIG2 only.
+ * @param lenght of the keyid
+ * @param keyid of the request
+ * @param uid of the request
+ * @param callback which handels the result of the request
+ * @return 1 keep file till processing filter,
+ *	   0 file can be dismissed
+ *	  -1 error occurd
+ */
+static int filter_request_add(char *, int, unsigned int,
+    unsigned char *, uid_t, filter_callback_t);
 
 int
-filter_hassum(char *arg, uid_t uid)
+filter_hassum_callback(struct anoubis_csmulti_request *req,
+    struct anoubis_csmulti_record *rec)
 {
-	if (opts & SFSSIG_OPT_DEBUG2)
-		fprintf(stderr, " filter_hassum");
-	return filter_sumsig(arg, ANOUBIS_CHECKSUM_OP_GET2, 0, NULL, uid, 0);
+	if (req == NULL || rec == NULL || rec->error)
+		return 0;
+	if (rec->u.get.csum) {
+		return (get_value(rec->u.get.csum->cslen) > 0);
+	} else
+		return 0;
 }
 
 int
-filter_hassig(char *arg, struct anoubis_sig *as)
+filter_hasnosum_callback(struct anoubis_csmulti_request *req,
+    struct anoubis_csmulti_record *rec)
+{
+	if (req == NULL || rec == NULL)
+		return 0;
+	if (rec->error == ENOENT)
+		return 1;
+	if (rec->error)
+		return 0;
+	if (rec->u.get.csum)
+		return 0;
+	else
+		return 1;
+}
+
+int
+filter_hassig_callback(struct anoubis_csmulti_request *req,
+    struct anoubis_csmulti_record *rec)
+{
+	if (req == NULL || rec == NULL || rec->error)
+		return 0;
+	if (rec->u.get.sig)
+		return (get_value(rec->u.get.sig->cslen) > 0);
+	else
+		return 0;
+}
+
+int
+filter_hasnosig_callback(struct anoubis_csmulti_request *req,
+    struct anoubis_csmulti_record *rec)
+{
+	if (req == NULL || rec == NULL)
+		return 0;
+	if (rec->error == ENOENT)
+		return 1;
+	if (rec->error)
+		return 0;
+	if (rec->u.get.sig)
+		return 0;
+	else
+		return 1;
+}
+
+int
+filter_upgraded_callback(struct anoubis_csmulti_request *req,
+    struct anoubis_csmulti_record *rec)
+{
+	if (req == NULL || rec == NULL || rec->error)
+		return 0;
+	if (rec->u.get.upgrade)
+		return (get_value(rec->u.get.upgrade->cslen) > 0);
+	else
+		return 0;
+}
+
+static int
+filter_sum(char *altpath, uid_t uid, sumop_callback_t callback)
 {
 	if (opts & SFSSIG_OPT_DEBUG2)
-		fprintf(stderr, " filter_hassig");
+		fprintf(stderr, " filter_sum\n");
+	return filter_request_add(altpath, ANOUBIS_CHECKSUM_OP_GET2, 0, NULL,
+	    uid, callback);
+}
+
+static int
+filter_sig(char *altpath, struct anoubis_sig *as, sumop_callback_t callback)
+{
 	if ((as == NULL) || (as->keyid == NULL)) {
 		fprintf(stderr, "You need to specify a certifcate\n");
 		return 0;
 	}
-	return filter_sumsig(arg, ANOUBIS_CHECKSUM_OP_GETSIG2, as->idlen,
-	    as->keyid, 0, 0);
+	return filter_request_add(altpath, ANOUBIS_CHECKSUM_OP_GETSIG2,
+	    as->idlen, as->keyid, 0, callback);
 }
 
 static int
-filter_hasnosum(char *arg, uid_t uid)
+filter_request_add(char *arg, int op, unsigned int idlen, unsigned char *keyid,
+    uid_t uid, filter_callback_t callback)
 {
-	int rc = 0;
+	struct sfs_request_node *node = NULL;
+	char	tmp[PATH_MAX];
+	int error;
 
-	if (opts & SFSSIG_OPT_DEBUG2)
-		fprintf(stderr, " filter_hasnosum");
-	rc = filter_sumsig(arg, ANOUBIS_CHECKSUM_OP_GET2, 0, NULL, uid, 0);
-	if (rc)
-		return 0;
-	else
-		return 1;
-}
+	if (opts & SFSSIG_OPT_DEBUG)
+		fprintf(stderr, ">filter_request_add\n");
 
-static int
-filter_hasnosig(char *arg, struct anoubis_sig *as)
-{
-	int rc = 0;
-
-	if (opts & SFSSIG_OPT_DEBUG2)
-		fprintf(stderr, " filter_hasnosig\n");
-	if ((as == NULL) || (as->keyid == NULL)) {
-			fprintf(stderr, "You need to specify a "
-			    "certifcate\n");
-			return 0;
-	}
-	rc =  filter_sumsig(arg, ANOUBIS_CHECKSUM_OP_GETSIG2, as->idlen,
-	    as->keyid, 0, 0);
-	if (rc)
-		return 0;
-	else
-		return 1;
-}
-
-static int
-filter_isupgraded(char *arg, struct anoubis_sig *as)
-{
-	if (opts & SFSSIG_OPT_DEBUG2)
-		fprintf(stderr, " filter_isupgraded\n");
-	if ((as == NULL) || (as->keyid == NULL)) {
-			fprintf(stderr, "You need to specify a "
-			    "certifcate\n");
-			return 0;
-	}
-	return filter_sumsig(arg, ANOUBIS_CHECKSUM_OP_GETSIG2, as->idlen,
-	    as->keyid, 0, 1);
-}
-
-static int
-filter_sumsig(char *arg, int op, unsigned int idlen, unsigned char *keyid,
-    uid_t uid, int upgraded)
-{
-	struct anoubis_transaction	*t = NULL;
-	char				 tmp[PATH_MAX];
-	int				 len;
-	const void			*data;
-	unsigned int			 flags;
+	if (!arg)
+		return -EINVAL;
 
 	if (sfs_realpath(arg, tmp) == NULL)
-		return 0;
+		return -EINVAL;
 
-	if (op == ANOUBIS_CHECKSUM_OP_GETSIG2)
-		flags = ANOUBIS_CSUM_KEY;
-	else
-		flags = ANOUBIS_CSUM_UID;
-	t = sfs_sumop2(tmp, op, keyid, 0, idlen, uid, flags);
-	if (!t) {
-		if (opts & SFSSIG_OPT_DEBUG)
-			fprintf(stderr, "filter_sumsig: failed transaction\n");
-		return 0;
+	if (op != ANOUBIS_CHECKSUM_OP_GETSIG2 &&
+	    op != ANOUBIS_CHECKSUM_OP_GET2)
+		return -EINVAL;
+
+	node = sfs_find_request(filter_tree, uid, keyid, idlen, op);
+	if (node == NULL) {
+		node = sfs_insert_request_node(filter_tree, op, uid, keyid,
+		    idlen, NULL, callback);
+		if (node == NULL)
+			return -ENOMEM;
 	}
-	if (t->result) {
-		if (opts & SFSSIG_OPT_VERBOSE2)
-			fprintf(stderr, "%s: Has no entry\n", arg);
-		anoubis_transaction_destroy(t);
-		return 0;
-	}
-	if (op == ANOUBIS_CHECKSUM_OP_GET2) {
-		len = anoubis_extract_sig_type(t->msg, ANOUBIS_SIG_TYPE_CS,
-		    &data);
-	} else if (upgraded) {
-		len = anoubis_extract_sig_type(t->msg,
-		    ANOUBIS_SIG_TYPE_UPGRADECS, &data);
-	} else {
-		len = anoubis_extract_sig_type(t->msg, ANOUBIS_SIG_TYPE_SIG,
-		    &data);
-	}
-	anoubis_transaction_destroy(t);
-	return (len > 0);
+
+	error = anoubis_csmulti_add(node->req, tmp, NULL, 0);
+	if (error != 0)
+		return -error;
+
+	if (opts & SFSSIG_OPT_DEBUG)
+		fprintf(stderr, "<filter_request_add\n");
+
+	return 1;
 }
 
 int
-filter_one_file(char *arg, char *prefix, uid_t uid, struct anoubis_sig *as)
+filter_a_file(char *arg, char *prefix, uid_t uid, struct anoubis_sig *as)
 {
 	int		 ret = 1;
 	char		*altpath;
 	struct stat	 sb;
 
 	if (opts & SFSSIG_OPT_DEBUG)
-		fprintf(stderr, ">filter_one_file: %s\n", arg);
+		fprintf(stderr, ">filter_a_file: %s\n", arg);
 
 	if (!arg)
 		return 0;
@@ -185,20 +239,21 @@ filter_one_file(char *arg, char *prefix, uid_t uid, struct anoubis_sig *as)
 			ret = !!S_ISREG(sb.st_mode);
 		}
 	}
+
 	if ((opts & SFSSIG_OPT_HASSUM) && ret)
-		ret = filter_hassum(altpath, uid);
+		ret = filter_sum(altpath, uid, filter_hassum_callback);
 	if ((opts & SFSSIG_OPT_NOSUM) && ret)
-		ret = filter_hasnosum(altpath, uid);
+		ret = filter_sum(altpath, uid, filter_hasnosum_callback);
 	if ((opts & SFSSIG_OPT_HASSIG) && ret)
-		ret = filter_hassig(altpath, as);
+		ret = filter_sig(altpath, as, filter_hassig_callback);
 	if ((opts & SFSSIG_OPT_NOSIG) && ret)
-		ret = filter_hasnosig(altpath, as);
+		ret = filter_sig(altpath, as, filter_hasnosig_callback);
 	if ((opts & SFSSIG_OPT_UPGRADED) && ret)
-		ret = filter_isupgraded(altpath, as);
+		ret = filter_sig(altpath, as, filter_upgraded_callback);
 	if (prefix)
 		free(altpath);
 	if (opts & SFSSIG_OPT_DEBUG)
-		fprintf(stderr, "<filter_one_file: %d\n", ret);
+		fprintf(stderr, "<filter_a_file: %d\n", ret);
 
 	return ret;
 }

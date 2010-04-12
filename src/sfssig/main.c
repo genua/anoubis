@@ -51,16 +51,18 @@ static int	 sfs_tree(char *, int op, uid_t);
 static int	 sfs_add_tree(char *, int op, uid_t);
 
 /* These are helper functions for the sfs commandos */
-static int			 _export(char *, FILE *, int, uid_t);
-static int			 __sfs_get(char *, uid_t, sumop_callback_t);
-static int			 create_channel(void);
-static void			 destroy_channel(void);
-static int			 add_entry(struct sfs_entry *);
-static int			 list(char *arg, uid_t sfs_uid);
-static struct sfs_entry		*get_entry(char *, unsigned char *, int, uid_t);
-void				 usage(void) __dead;
-static int			 process_a_request(struct sfs_request_node *n);
+static int	 _export(char *, FILE *, int, uid_t);
+static int	 __sfs_get(char *, uid_t, sumop_callback_t);
+static int	 create_channel(void);
+static void	 destroy_channel(void);
+static int	 add_entry(struct sfs_entry *);
+static int	 list(char *arg, uid_t sfs_uid);
+static int	 get_entry(char *, unsigned char *, int, uid_t);
+void		 usage(void) __dead;
+static int	 process_a_request(struct sfs_request_node *n);
+static int	 filter_file_list(int, char **, uid_t, char *);
 
+static int filter_result(struct sfs_request_node *, int, char **, char *);
 
 typedef int (*func_int_t)(void);
 typedef int (*func_char_t)(char *, uid_t);
@@ -83,12 +85,14 @@ static struct achat_channel	*channel;
 struct anoubis_client		*client;
 static const char		*anoubis_socket = PACKAGE_SOCKET;
 static char			*out_file = NULL;
+static FILE			*out_fd = NULL;
 static struct anoubis_sig	*as = NULL;
 static char			*sfs_cert = NULL;
 static char			*sfs_key = NULL;
 static struct sfs_request_tree	*req_tree = NULL;
-static int			 request_error	= 0;
+static int			 request_error = 0;
 
+struct sfs_request_tree	*filter_tree = NULL;
 unsigned int		 opts = 0;
 extern char		*__progname;
 
@@ -207,6 +211,7 @@ main(int argc, char *argv[])
 	char		*linkfile = NULL;
 	char		 linkpath[PATH_MAX];
 	char		 realarg[PATH_MAX];
+	char		**tmp_argv = NULL;
 	char		**sfs_argv = NULL;
 	int		 ch;
 	int		 j;
@@ -425,12 +430,12 @@ main(int argc, char *argv[])
 		/* Cannot have command line arguments _and_ an infile via -f */
 		if (argc)
 			usage();
-		sfs_argv = file_input(&sfs_argc, sfs_infile);
-		if (sfs_argv == NULL) {
+		tmp_argv = file_input(&sfs_argc, sfs_infile);
+		if (tmp_argv == NULL) {
 			fprintf(stderr, "Cannot open %s\n", sfs_infile);
 		}
 	} else {
-		sfs_argv = argv;
+		tmp_argv = argv;
 		sfs_argc = argc;
 	}
 
@@ -484,45 +489,72 @@ main(int argc, char *argv[])
 		goto finish;
 	}
 
+	filter_tree = sfs_init_request_tree();
+	if (filter_tree == NULL) {
+		syslog(LOG_WARNING, "Cannot initilize filter tree\n");
+		done = 1;
+		goto finish;
+	}
+
+	/*
+	 * To avoid the cost of calling sfs_realpath multiple times
+	 * we do it once... NOW.
+	 */
+	sfs_argv = calloc(sfs_argc, sizeof(char *));
+	if (sfs_argv == NULL) {
+		fprintf(stderr, "%s", anoubis_strerror(ENOMEM));
+		return 1;
+	}
+	for(j = 0; j < sfs_argc; j++) {
+		sfs_cmdarg = tmp_argv[j];
+		if (opts & SFSSIG_OPT_LN) {
+			for (k = strlen(sfs_cmdarg); k > 0; k--) {
+				if (sfs_cmdarg[k] == '/')
+					break;
+			}
+			if (k == 0 && sfs_cmdarg[0] != '/') {
+				linkpath[0] = '.';
+				linkpath[1] = '/';
+				linkpath[2] = '\0';
+				linkfile = sfs_cmdarg;
+			} else {
+				k++;
+				strlcpy(linkpath, sfs_cmdarg, PATH_MAX);
+				linkpath[k] = '\0';
+				linkfile = sfs_cmdarg + k;
+			}
+			if (sfs_realpath(linkpath, realarg) == NULL) {
+				perror(linkpath);
+				goto finish;
+			}
+			sfs_cmdarg = build_path(realarg, linkfile);
+			errno = ENOMEM;
+		} else {
+			sfs_cmdarg = sfs_realpath(sfs_cmdarg, realarg);
+		}
+		if (!sfs_cmdarg) {
+			perror(tmp_argv[i]);
+			continue;
+		}
+		sfs_argv[j] = strdup(sfs_cmdarg);
+		if (sfs_argv[j] == NULL) {
+			fprintf(stderr, "%s", anoubis_strerror(ENOMEM));
+			goto finish;
+		}
+	}
+
+	if (dofilter) {
+		filter_file_list(sfs_argc, sfs_argv, sfs_uid, NULL);
+		done = 1;
+	}
+
 	for (i = 0; i < sizeof(commands)/sizeof(struct cmd); i++) {
 		if(strcmp(sfs_command, commands[i].command) != 0)
 			continue;
 		for (j = 0; j < sfs_argc; j++) {
+			if (sfs_argv[j] == NULL)
+				continue;
 			sfs_cmdarg = sfs_argv[j];
-			if (dofilter && !filter_one_file(sfs_cmdarg,
-			    NULL, sfs_uid, as)) {
-				done = 1;
-				continue;
-			}
-			if (opts & SFSSIG_OPT_LN) {
-				for (k = strlen(sfs_cmdarg); k > 0; k--) {
-					if (sfs_cmdarg[k] == '/')
-						break;
-				}
-				if (k == 0 && sfs_cmdarg[0] != '/') {
-					linkpath[0] = '.';
-					linkpath[1] = '/';
-					linkpath[2] = '\0';
-					linkfile = sfs_cmdarg;
-				} else {
-					k++;
-					strlcpy(linkpath, sfs_cmdarg, PATH_MAX);
-					linkpath[k] = '\0';
-					linkfile = sfs_cmdarg + k;
-				}
-				if (sfs_realpath(linkpath, realarg) == NULL) {
-					perror(linkpath);
-					return 1;
-				}
-				sfs_cmdarg = build_path(realarg, linkfile);
-				errno = ENOMEM;
-			} else {
-				sfs_cmdarg = sfs_realpath(sfs_cmdarg, realarg);
-			}
-			if (!sfs_cmdarg) {
-				perror(sfs_argv[j]);
-				continue;
-			}
 			if (opts & SFSSIG_OPT_TREE &&
 			    (strcmp(sfs_command, "list") != 0)) {
 				error = sfs_tree(sfs_cmdarg, commands[i].opt,
@@ -555,9 +587,19 @@ finish:
 	if (client)
 		destroy_channel();
 
+	if (sfs_argv) {
+		for (j = 0; j < sfs_argc; j++) {
+			if (sfs_argv[j])
+				free(sfs_argv[j]);
+		}
+		free(sfs_argv);
+	}
+
+	if (out_fd)
+		fclose(out_fd);
+
 	if (done == 0)
 		usage();
-
 
 	return (ret||request_error);
 }
@@ -572,10 +614,10 @@ sfs_csumop(const char *file, int op, uid_t uid, u_int8_t *keyid, int idlen,
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, ">sfs_csumop\n");
 
-	node = sfs_find_request(req_tree, uid, keyid, idlen);
+	node = sfs_find_request(req_tree, uid, keyid, idlen, op);
 	if (node == NULL) {
 		node = sfs_insert_request_node(req_tree, op, uid, keyid, idlen,
-		    callback);
+		    callback, NULL);
 		if (node == NULL) {
 			fprintf(stderr, "sfs_insert_request_node > ERROR\n");
 			return -ENOMEM;
@@ -583,8 +625,10 @@ sfs_csumop(const char *file, int op, uid_t uid, u_int8_t *keyid, int idlen,
 	}
 
 	error = anoubis_csmulti_add(node->req, file, cs, cslen);
-	if (error < 0)
+	if (error < 0) {
 		fprintf(stderr, "%s", anoubis_strerror(-error));
+		return (-error);
+	}
 
 	if (node->req->nreqs >= REQUESTS_MAX)
 		request_error = process_a_request(node);
@@ -592,47 +636,6 @@ sfs_csumop(const char *file, int op, uid_t uid, u_int8_t *keyid, int idlen,
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, "<sfs_csumop\n");
 	return 0;
-}
-
-struct anoubis_transaction *
-sfs_sumop2(const char *file, int operation, u_int8_t *cs, int cslen, int idlen,
-    uid_t uid, unsigned int flags)
-{
-	struct anoubis_transaction      *t;
-	int			      len = 0;
-
-	if (opts & SFSSIG_OPT_DEBUG)
-		fprintf(stderr, ">sfs_sumop2\n");
-
-	if (cs) {
-		if (operation == ANOUBIS_CHECKSUM_OP_ADDSUM)
-			len = ANOUBIS_CS_LEN;
-		else
-			len = cslen;
-	}
-	if (opts & SFSSIG_OPT_DEBUG2)
-		fprintf(stderr, "start checksum request: op=%d file=%s "
-		    "len=%d idlen=%d uid=%d flags=%x\n",
-		    operation, file, len, idlen, uid, flags);
-	t = anoubis_client_csumrequest_start(client, operation, file, cs, len,
-	    idlen, uid, flags);
-	if (t == NULL) {
-		fprintf(stderr, "%s: Cannot send checksum request\n", file);
-		return NULL;
-	}
-	while(1) {
-		int ret = anoubis_client_wait(client);
-		if (ret <= 0) {
-			anoubis_transaction_destroy(t);
-			syslog(LOG_WARNING, "Checksum request interrupted");
-			return NULL;
-		}
-		if (t->flags & ANOUBIS_T_DONE)
-			break;
-	}
-	if (opts & SFSSIG_OPT_DEBUG)
-		fprintf(stderr, "<sfs_sumop2\n");
-	return t;
 }
 
 struct anoubis_transaction *
@@ -863,6 +866,73 @@ sfs_get_callback(struct anoubis_csmulti_request *req,
 			printf("\n");
 		}
 	}
+	return 0;
+}
+
+/**
+ * Callback function that handles the result of GET and GETSIG request
+ * when doing an export request.
+ * This function expects a csmulit_record and the matching request
+ *
+ * @param req The request which was send to the daemon
+ * @param rec The record which contains the result from the daemon
+ * @return Zero in case of success. A negative error code in case of an error.
+ */
+static int
+sfs_export_callback(struct anoubis_csmulti_request *req,
+    struct anoubis_csmulti_record *rec)
+{
+	struct sfs_entry	*export = NULL;
+	unsigned char		*cs = NULL;
+	unsigned char		*sig = NULL;
+	unsigned char		*keyid = NULL;
+	int			 ret, cslen = 0, idlen = 0, siglen = 0;
+	uid_t			 uid = 0;
+
+	if (req == NULL || rec == NULL || rec->path == NULL)
+		return -EINVAL;
+
+	if (rec->error != 0) {
+		if (rec->error == ENOENT) {
+			if (opts & SFSSIG_OPT_VERBOSE)
+				fprintf(stderr, "No entry found for %s\n",
+				    rec->path);
+			return 0;
+		}
+		if (opts & SFSSIG_OPT_DEBUG)
+			fprintf(stderr, "Checksum Request failed: %s\n",
+			    anoubis_strerror(rec->error));
+		return (-rec->error);
+	}
+
+	if (req->uid)
+		uid = req->uid;
+	if (req->keyid) {
+		keyid = req->keyid;
+		idlen = req->idlen;
+	}
+	if (rec->u.get.csum) {
+		cs = (u_int8_t *)rec->u.get.csum->csdata;
+		cslen = get_value(rec->u.get.csum->cslen);
+	}
+	if (rec->u.get.sig) {
+		sig = (u_int8_t *)rec->u.get.sig->csdata;
+		siglen = get_value(rec->u.get.sig->cslen);
+	}
+
+	export = anoubis_build_entry(rec->path, cs, cslen, sig, siglen, uid,
+	    keyid, idlen);
+	if (export == NULL) {
+		fprintf(stderr, "%s: %s\n", rec->path,
+		    anoubis_strerror(ENOMEM));
+		return 1;
+	}
+
+	if ((ret = anoubis_print_entries(out_fd, &export, 1)) != 0) {
+		fprintf(stderr, "Error in export entries: %s\n",
+		    anoubis_strerror(ret));
+	}
+
 	return 0;
 }
 
@@ -1258,6 +1328,9 @@ sfs_list(char *arg, uid_t sfs_uid)
 	if (list(arg, sfs_uid) == 0) {
 		request_error = 0;
 		return 0;
+	/* If we list recursively we can expect that *arg is not a file */
+	} else if (opts & SFSSIG_OPT_TREE) {
+		return 0;
 	} else {
 		/* sfs_get with / produces Invalid Argument */
 		if (strcmp(arg, "/") != 0)
@@ -1272,7 +1345,7 @@ list(char *arg, uid_t sfs_uid)
 {
 	struct anoubis_transaction	 *t;
 	char				**result = NULL;
-	char				 *new_dir = NULL;
+	char				 *new = NULL;
 	int				  sfs_cnt = 0;
 	int				  len;
 	uid_t				  thisuid;
@@ -1310,7 +1383,6 @@ list(char *arg, uid_t sfs_uid)
 	t = sfs_listop(arg, thisuid, thisas, flags);
 	if (t == NULL)
 		return 1;
-
 	if (t->result) {
 		if (t->result == ENOENT) {
 			anoubis_transaction_destroy(t);
@@ -1330,30 +1402,36 @@ list(char *arg, uid_t sfs_uid)
 	}
 	anoubis_transaction_destroy(t);
 
+	if (opts & SFSSIG_OPT_FILTER)
+		filter_file_list(sfs_cnt, result, thisuid, arg);
+
 	for (i = 0; i < sfs_cnt; i++) {
+		if (result[i] == NULL)
+			continue;
 		len = strlen(result[i]) - 1;
 		if (opts & SFSSIG_OPT_DEBUG2)
 			fprintf(stderr, "sfs_list: got file %s\n", result[i]);
 		if (result[i][len] == '/') {
 			if (opts & SFSSIG_OPT_TREE) {
-				new_dir = build_path(arg,result[i]);
-				if (new_dir == NULL)
+				new = build_path(arg,result[i]);
+				if (new == NULL)
 					return 1;
-				list(new_dir, sfs_uid);
-				free(new_dir);
+				list(new, sfs_uid);
+				free(new);
 			}
 			continue;
 		}
-		if (!filter_one_file(result[i], arg, sfs_uid, as))
-			continue;
 		/* Avoid double slash at the beginning of root-dir */
 		if (strcmp(arg, "/") != 0)
 			printf("%s/%s\n", arg, result[i]);
 		else
 			printf("/%s\n", result[i]);
 	}
-	for (i = 0; i < sfs_cnt; i++)
+	for (i = 0; i < sfs_cnt; i++) {
+		if (result[i] == NULL)
+			continue;
 		free(result[i]);
+	}
 	free(result);
 
 	if (opts & SFSSIG_OPT_DEBUG)
@@ -1368,9 +1446,11 @@ sfs_add_tree(char *path, int op, uid_t sfs_uid)
 	struct dirent	*d_ent;
 	struct stat	 sb;
 	char		*tmp = NULL;
+	char		**result = NULL;
+	char		**alloc = NULL;
 	DIR		*dirp;
 	int		 ret = 0;
-	int		 len;
+	int		 i, len, res_cnt = 0;
 
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, ">sfs_add_tree\n");
@@ -1403,6 +1483,7 @@ sfs_add_tree(char *path, int op, uid_t sfs_uid)
 			return 0;
 		}
 	}
+
 	while ((d_ent = readdir(dirp)) != NULL) {
 		if (!strcmp(d_ent->d_name, ".") ||
 		    !strcmp(d_ent->d_name, ".."))
@@ -1430,11 +1511,18 @@ sfs_add_tree(char *path, int op, uid_t sfs_uid)
 				goto out;
 			break;
 		case DT_REG:
-			if (opts & SFSSIG_OPT_FILTER) {
-				if (!filter_one_file(tmp, NULL, sfs_uid, as))
-					break;
+			alloc = realloc(result, (res_cnt+1) * sizeof(char *));
+			if (alloc == NULL) {
+				ret = 1;
+				goto out;
 			}
-			ret = sfs_add(tmp, sfs_uid);
+			result = alloc;
+			result[res_cnt] = strdup(tmp);
+			if (result[res_cnt] == NULL) {
+				ret = 1;
+				goto out;
+			}
+			res_cnt++;
 			break;
 		default:
 			ret = 0;
@@ -1443,11 +1531,33 @@ sfs_add_tree(char *path, int op, uid_t sfs_uid)
 		if (tmp)
 			free(tmp);
 		tmp = NULL;
+
+	}
+
+	if (opts & SFSSIG_OPT_FILTER)
+		filter_file_list(res_cnt, result, sfs_uid, NULL);
+
+	for (i = 0; i < res_cnt; i++) {
+		if (result[i] == NULL)
+			continue;
+		if (sfs_add(result[i], sfs_uid) != 0) {
+			ret = 1;
+			break;
+		}
 	}
 out:
 	closedir(dirp);
 	if (tmp)
 		free(tmp);
+
+	if (result) {
+		for (i = 0; i < res_cnt; i++) {
+			if (result[i] == NULL)
+				continue;
+			free(result[i]);
+		}
+		free(result);
+	}
 
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, "<sfs_add_tree\n");
@@ -1467,7 +1577,7 @@ sfs_tree(char *path, int op, uid_t sfs_uid)
 	char		**tmpalloc = NULL;
 	int		 ret = 0;
 	int		 len;
-	int		 k = 0;
+	int		 list_cnt = 0;
 	int		 j, cnt;
 
 	if (opts & SFSSIG_OPT_DEBUG)
@@ -1530,8 +1640,8 @@ sfs_tree(char *path, int op, uid_t sfs_uid)
 			return 1;
 		}
 
-		result = anoubis_csum_list(t->msg, &k);
-		if (!result && k < 0) {
+		result = anoubis_csum_list(t->msg, &list_cnt);
+		if (!result && list_cnt < 0) {
 			ret = 1;
 			goto out;
 		} else if (!result) {
@@ -1549,32 +1659,13 @@ sfs_tree(char *path, int op, uid_t sfs_uid)
 			if (!strcmp(d_ent->d_name, ".") ||
 			    !strcmp(d_ent->d_name, ".."))
 				continue;
-			if ((tmp = build_path(path, d_ent->d_name)) == NULL)
-				goto out;
-			if (opts & SFSSIG_OPT_SIG) {
-				if (!filter_hassig(tmp, as)) {
-					free(tmp);
-					tmp = NULL;
-					continue;
-				}
-			} else {
-				if (!filter_hassum(tmp, sfs_uid)) {
-					free(tmp);
-					tmp = NULL;
-					continue;
-				}
-			}
-			ret = 0;
-			free(tmp);
-			tmp = NULL;
-
-			k++;
-			tmpalloc = realloc(result, k * sizeof(char *));
+			list_cnt++;
+			tmpalloc = realloc(result, list_cnt * sizeof(char *));
 			if (!tmpalloc)
 				goto out;
 			result = tmpalloc;
-			result[k-1] = strdup(d_ent->d_name);
-			if (!result[k-1])
+			result[list_cnt-1] = strdup(d_ent->d_name);
+			if (!result[list_cnt-1])
 				goto out;
 
 		}
@@ -1584,7 +1675,10 @@ sfs_tree(char *path, int op, uid_t sfs_uid)
 		free(tmp);
 	tmp = NULL;
 
-	for (j = 0; j < k; j++) {
+	if (opts & SFSSIG_OPT_FILTER)
+		filter_file_list(list_cnt, result, sfs_uid, path);
+
+	for (j = 0; j < list_cnt; j++) {
 		ret = 0;
 		if ((tmp = build_path(path, result[j])) == NULL) {
 			ret = 1;
@@ -1603,11 +1697,6 @@ sfs_tree(char *path, int op, uid_t sfs_uid)
 			continue;
 		}
 		ret = 0;
-
-		if (opts & SFSSIG_OPT_FILTER) {
-			if (!filter_one_file(result[j], path, sfs_uid, as))
-				continue;
-		}
 
 		switch (op) {
 		case ANOUBIS_CHECKSUM_OP_DEL:
@@ -1637,8 +1726,10 @@ out:
 	if (tmp)
 		free(tmp);
 	if (result) {
-		for (j = 0; j < k; j++)
-			free(result[j]);
+		for (j = 0; j < list_cnt; j++) {
+			if (result[j] != NULL)
+				free(result[j]);
+		}
 		free(result);
 	}
 	if (opts & SFSSIG_OPT_DEBUG)
@@ -1650,8 +1741,6 @@ out:
 int
 sfs_export(char *arg, uid_t uid)
 {
-	static FILE	*out_fd = NULL;
-
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, ">sfs_export\n");
 	if (!out_file) {
@@ -1670,15 +1759,12 @@ int
 _export(char *arg, FILE *out_fd, int rec, uid_t sfs_uid)
 {
 	struct anoubis_transaction	*t = NULL;
-	struct sfs_entry		**export = NULL;
-	struct sfs_entry		**alloc = NULL;
-	struct sfs_entry		*tmp = NULL;
 	uid_t				*uid_result = NULL;
 	char				*path = NULL;
 	char				**result = NULL;
 	unsigned char			**keyid_result = NULL;
 	unsigned char			*keyid = NULL;
-	int				 i, cnt = 0, sfs_cnt = 0;
+	int				 i, sfs_cnt = 0;
 	int				 j, len, uid_cnt = 0;
 	int				 keyid_cnt = 0, idlen = 0;
 	int				 *ids = NULL, ret = 0;
@@ -1688,15 +1774,8 @@ _export(char *arg, FILE *out_fd, int rec, uid_t sfs_uid)
 	if (opts & SFSSIG_OPT_DEBUG2)
 		fprintf(stderr, "arg: %s\n", arg);
 	if (!rec && (strcmp(arg, "/") != 0)) {
-		cnt = 1;
-		if ((export = calloc(1, sizeof(struct sfssig_entry *))) == NULL)
-			return 1;
-		export[0] = get_entry(arg, NULL, 0, sfs_uid);
-		if (!export[0]) {
-			cnt = 0;
-			free(export);
-			export = NULL;
-		}
+		if (get_entry(arg, NULL, 0, sfs_uid) < 0)
+			/* XXX KM: What to do ??? ? */ return 1;
 	}
 	if (opts & (SFSSIG_OPT_ALLUID | SFSSIG_OPT_ALLCERT)) {
 		t = sfs_listop(arg, 0, NULL, ANOUBIS_CSUM_ALL
@@ -1737,74 +1816,29 @@ _export(char *arg, FILE *out_fd, int rec, uid_t sfs_uid)
 			if (uid_cnt > 0 && uid_result) {
 				for (j = 0; j < uid_cnt; j++) {
 					sfs_uid = uid_result[j];
-					tmp = get_entry(path, NULL, 0, sfs_uid);
-					if (!tmp)
-						continue;
-					cnt++;
-					alloc = realloc(export, sizeof(
-					    struct sfssig_entry *) * cnt);
-					if (alloc == NULL)
-						goto err;
-					export = alloc;
-					export[cnt-1] = tmp;
-					tmp = NULL;
+					get_entry(path, NULL, 0, sfs_uid);
 				}
 			}
 		}
 		if (opts & SFSSIG_OPT_ALLCERT) {
-			/*
-			 * XXX CEH: keyid_cnt < 0 indicates an error.
-			 * XXX CEH: we should probably give some kind of
-			 * XXX CEH: message in this case.
-			 */
 			keyid_cnt = request_keyids(path, &keyid_result, &ids);
 			if (keyid_cnt > 0) {
 				for (j = 0; j < keyid_cnt; j++) {
 					keyid = keyid_result[j];
 					idlen = ids[j];
-					tmp = get_entry(path, keyid, idlen,
-					    sfs_uid);
-					if (!tmp)
-						continue;
-					cnt++;
-					alloc = realloc(export, sizeof(
-					    struct sfssig_entry *) * cnt);
-					if (alloc == NULL)
-						goto err;
-					export = alloc;
-					export[cnt-1] = tmp;
-					tmp = NULL;
+					get_entry(path, keyid, idlen, sfs_uid);
 				}
 				for(j = 0; j < keyid_cnt; j++)
 					free(keyid_result[j]);
 				free(keyid_result);
 				keyid_result = NULL;
-			}
+			} else if ((keyid_cnt < 0) && (opts & SFSSIG_OPT_DEBUG))
+				fprintf(stderr, "Requesting keyids failed %s\n",
+				    anoubis_strerror(-keyid_cnt));
 		}
-		if ((opts & (SFSSIG_OPT_ALLUID | SFSSIG_OPT_ALLCERT)) == 0) {
-			tmp = get_entry(path, NULL, 0, sfs_uid);
-			if (!tmp)
-				continue;
-			cnt++;
-			alloc = realloc(export, sizeof(struct sfssig_entry *) *
-			    cnt);
-			if (alloc == NULL)
-				goto err;
-			export = alloc;
-			export[cnt-1] = tmp;
-			tmp = NULL;
-		}
+		if ((opts & (SFSSIG_OPT_ALLUID | SFSSIG_OPT_ALLCERT)) == 0)
+			get_entry(path, NULL, 0, sfs_uid);
 		free(path);
-	}
-	if (export) {
-		if ((ret = anoubis_print_entries(out_fd, export, cnt)) != 0) {
-			fprintf(stderr, "Error in export entries: %s\n",
-			    anoubis_strerror(ret));
-			goto err;
-		}
-		for (i = 0; i < cnt; i++)
-			anoubis_entry_free(export[i]);
-		free(export);
 	}
 
 	if (opts & SFSSIG_OPT_DEBUG)
@@ -1820,11 +1854,6 @@ err:
 		for(i = 0; i < keyid_cnt; i++)
 			free(keyid_result[i]);
 		free(keyid_result);
-	}
-	if (export) {
-		for (i = 0; i < cnt; i++)
-			anoubis_entry_free(export[i]);
-		free(export);
 	}
 	return 1;
 }
@@ -1940,16 +1969,12 @@ add_entry(struct sfs_entry *entry)
 	return sigerr;
 }
 
-static struct sfs_entry *
+static int
 get_entry(char *file, unsigned char *keyid_p, int idlen_p, uid_t sfs_uid)
 {
-	struct anoubis_transaction	*t_sig = NULL,
-					*t_sum = NULL;
-	struct sfs_entry		*se = NULL;
-	int				siglen = 0,
-					idlen = 0;
 	unsigned char			*keyid = NULL;
-	const unsigned char		*sig = NULL, *csum = NULL;
+	int				 idlen = 0;
+	int				 ret = 0;
 
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, ">get_entry\n");
@@ -1966,94 +1991,19 @@ get_entry(char *file, unsigned char *keyid_p, int idlen_p, uid_t sfs_uid)
 		keyid = NULL;
 		idlen = 0;
 	}
+
 	if (keyid) {
-		t_sig = sfs_sumop2(file, ANOUBIS_CHECKSUM_OP_GETSIG2,
-		    keyid, 0 /* siglen */, idlen,
-		    0 /* sfs_uid */, 0 /* flags */);
-		if (t_sig == NULL) {
-			return NULL;
-		} else if (t_sig->result) {
-			if (t_sig->result == ENOENT) {
-				if (opts & SFSSIG_OPT_VERBOSE)
-					fprintf(stderr, "No entry found for "
-					     "%s\n", file);
-			}
-			if (opts & SFSSIG_OPT_DEBUG)
-				fprintf(stderr, "Checksum Request failed: %s\n",
-				    anoubis_strerror(t_sig->result));
-		} else {
-			const void	*sigdata = NULL;
-
-			siglen = anoubis_extract_sig_type(t_sig->msg,
-			    ANOUBIS_SIG_TYPE_SIG, &sigdata);
-			if (siglen == 0) {
-				if (opts & SFSSIG_OPT_VERBOSE)
-					fprintf(stderr, "No entry found for "
-					    "%s\n", file);
-			} else if (siglen <= ANOUBIS_CS_LEN) {
-				fprintf(stderr, "Bad checksum in reply "
-				    "(len=%d)\n", siglen);
-				anoubis_transaction_destroy(t_sig);
-				return NULL;
-			} else {
-				sig = sigdata;
-			}
-		}
+		sfs_csumop(file, ANOUBIS_CHECKSUM_OP_GETSIG2, 0,
+		    keyid, idlen, NULL, 0, sfs_export_callback);
 	}
-	t_sum = sfs_sumop2(file, ANOUBIS_CHECKSUM_OP_GET2,
-	    NULL /* payload */, 0 /* siglen */, 0 /* idlen */,
-	    sfs_uid, ANOUBIS_CSUM_UID);
-	if (t_sum == NULL) {
-		if (t_sig)
-			anoubis_transaction_destroy(t_sig);
-		return NULL;
-	} else if (t_sum->result) {
-		if (t_sum->result == ENOENT) {
-			if (opts & SFSSIG_OPT_VERBOSE)
-				fprintf(stderr, "No entry found for %s\n",
-				    file);
-			goto out;
-		}
-		fprintf(stderr, "Checksum Request failed: %s\n",
-		    anoubis_strerror(t_sum->result));
-		goto out;
-	} else {
-		int		 cslen;
-		const void	*csdata = NULL;
 
-		cslen = anoubis_extract_sig_type(t_sum->msg,
-		    ANOUBIS_SIG_TYPE_CS, &csdata);
-		if (cslen == 0) {
-			if (opts & SFSSIG_OPT_VERBOSE)
-				fprintf(stderr, "No entry found for %s\n",
-				    file);
-			goto out;
-		}
-		if (cslen != ANOUBIS_CS_LEN) {
-			fprintf(stderr, "Bad checksum in reply (len=%d)\n",
-			    cslen);
-			anoubis_transaction_destroy(t_sum);
-			if (t_sig)
-				anoubis_transaction_destroy(t_sig);
-			return NULL;
-		}
-		csum = csdata;
-	}
-out:
-	if (sfs_uid == 0)
-		sfs_uid = geteuid();
-	se = anoubis_build_entry(file, csum, SHA256_DIGEST_LENGTH,
-	    sig, siglen, sfs_uid, keyid, idlen);
-
-	if (t_sum)
-		anoubis_transaction_destroy(t_sum);
-	if (t_sig)
-		anoubis_transaction_destroy(t_sig);
+	ret = sfs_csumop(file, ANOUBIS_CHECKSUM_OP_GET2, sfs_uid, NULL, 0, NULL,
+	    0, sfs_export_callback);
 
 	if (opts & SFSSIG_OPT_DEBUG)
 		fprintf(stderr, "<get_entry\n");
 
-	return (se);
+	return (ret);
 }
 
 /**
@@ -2072,7 +2022,7 @@ process_a_request(struct sfs_request_node *n)
 	int ret, result = 0;
 
 	if (opts & SFSSIG_OPT_DEBUG)
-		fprintf(stderr, ">process_a_requests\n");
+		fprintf(stderr, ">process_a_request\n");
 
 req_again:
 	t = anoubis_client_csmulti_start(client, n->req);
@@ -2104,8 +2054,8 @@ req_again:
 		goto req_again;
 
 	TAILQ_FOREACH(rec, &n->req->reqs, next) {
-		if (n->callback) {
-			ret = (* n->callback)(n->req, rec);
+		if (n->sumop_callback) {
+			ret = (* n->sumop_callback)(n->req, rec);
 			if (ret != 0) {
 				result = ret;
 			}
@@ -2115,9 +2065,161 @@ req_again:
 	sfs_delete_request(req_tree, n);
 
 	if (opts & SFSSIG_OPT_DEBUG)
-		fprintf(stderr, ">process_a_request\n");
+		fprintf(stderr, "<process_a_request\n");
 
 	return result;
+}
+
+/**
+ * Starts a single filter request
+ *
+ * @param node of the request
+ * @return 0 or 1 in case of an error
+ */
+static int
+process_filter_request(struct sfs_request_node *n)
+{
+	struct anoubis_transaction *t = NULL;
+	int ret;
+
+	if (opts & SFSSIG_OPT_DEBUG)
+		fprintf(stderr, ">process_filter_request\n");
+
+req_again:
+	t = anoubis_client_csmulti_start(client, n->req);
+	if (t == NULL) {
+		fprintf(stderr, "Error while starting transaction\n");
+		sfs_delete_request(filter_tree, n);
+		return 1;
+	}
+	while ((t->flags & ANOUBIS_T_DONE) == 0) {
+		ret = anoubis_client_wait(client);
+		if (ret < 0) {
+			fprintf(stderr, "Error while waiting for "
+			    "request %s\n",
+			    anoubis_strerror(-ret));
+			sfs_delete_request(filter_tree, n);
+			return 1;
+		}
+	}
+	ret = t->result;
+	anoubis_transaction_destroy(t);
+	if (ret) {
+		fprintf(stderr, "Transaction error (%d): %s\n",
+		    ret, anoubis_strerror(ret));
+		sfs_delete_request(filter_tree, n);
+		return 1;
+	}
+
+	if (n->req->openreqs)
+		goto req_again;
+
+	if (opts & SFSSIG_OPT_DEBUG)
+		fprintf(stderr, "<process_filter_request\n");
+	return 0;
+}
+
+/**
+ * @param count of files in second parameter
+ * @param list of files which should be filtered
+ * @param uid for the filtering
+ * @param path to the files if file liste of second parameter just containing
+ *	  filenames
+ * @return 0 or 1 in case of an error
+ */
+static int
+filter_file_list(int cnt, char **list, uid_t sfs_uid, char *path)
+{
+	struct sfs_request_node *node = NULL;
+	int i, ret = 0, len;
+
+	if (opts & SFSSIG_OPT_DEBUG)
+		fprintf(stderr, ">filter_file_list\n");
+
+	if (cnt <= 0 || list == NULL)
+		return 0;
+
+	for (i = 0; i < cnt; i++) {
+		/* Skip empty entries... */
+		if((len = strlen(list[i])) == 0)
+			continue;
+		/* ...and directories */
+		if (list[i][len-1] == '/')
+			continue;
+		ret = filter_a_file(list[i], path, sfs_uid, as);
+		if (ret < 0) {
+			fprintf(stderr, "Filter error: %s\n",
+			    anoubis_strerror(-ret));
+			return -ret;
+		} else if (ret == 0) {
+			free(list[i]);
+			list[i] = NULL;
+		}
+	}
+	while((node = sfs_first_request(filter_tree)) != NULL) {
+		if ((ret = process_filter_request(node)) != 0)
+			return ret;
+		filter_result(node, cnt, list, path);
+		sfs_delete_request(filter_tree, node);
+	}
+	if (opts & SFSSIG_OPT_DEBUG)
+		fprintf(stderr, "<filter_file_list\n");
+	return 0;
+}
+
+/**
+ * This function filters the result of the request. It goes through the
+ * file list and calls for every file the filter callbacks and delets or keeps
+ * the file depending of the result of the callback.
+ *
+ * @param node containing the result of one request
+ * @param count of the file list
+ * @param file list which is to be filtered
+ * @param path to files in the file list, if file list contains filenames.
+ * @return 0 or 1 in case of an errror
+ */
+static int
+filter_result(struct sfs_request_node *node, int cnt, char **list, char *path)
+{
+	struct anoubis_csmulti_record *rec = NULL;
+	char *arg;
+	int i;
+
+	if (opts & SFSSIG_OPT_DEBUG)
+		fprintf(stderr, ">filter_result\n");
+	if (node == NULL || list == NULL)
+		return 1;
+
+	for (i = 0; i < cnt; i++) {
+		if (list[i] == NULL)
+			continue;
+
+		if (path) {
+			if ((arg = build_path(path, list[i])) == NULL)
+				return 1;
+		} else {
+			arg = list[i];
+		}
+
+		TAILQ_FOREACH(rec, &node->req->reqs, next) {
+			if (strcmp(rec->path, arg) != 0)
+				continue;
+			/*
+			 * If callback returns 1 we keep the file in the list
+			 * If callback returns 0 we removed from the list
+			 */
+			if ((* node->filter_callback)(node->req, rec) == 0) {
+				free(list[i]);
+				list[i] = NULL;
+				break;
+			}
+		}
+		if (path)
+			free(arg);
+	}
+	if (opts & SFSSIG_OPT_DEBUG)
+		fprintf(stderr, "<filter_result\n");
+	return 0;
 }
 
 static int

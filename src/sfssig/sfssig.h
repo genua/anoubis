@@ -114,15 +114,19 @@
 
 typedef int (*sumop_callback_t) (struct anoubis_csmulti_request *,
     struct anoubis_csmulti_record *);
+typedef int (*filter_callback_t) (struct anoubis_csmulti_request *,
+    struct anoubis_csmulti_record *);
 
 struct sfs_request_node
 {
   RB_ENTRY(sfs_request_node) entry;
   struct anoubis_csmulti_request *req;
   struct anoubis_transaction *t;
-  char *key;
+  sumop_callback_t sumop_callback;
+  filter_callback_t filter_callback;
   unsigned long idx;
-  sumop_callback_t callback;
+  char *key;
+  int op;
 };
 
 struct sfs_request_tree
@@ -130,12 +134,9 @@ struct sfs_request_tree
   RB_HEAD(rb_request_tree, sfs_request_node) head;
 };
 
-int filter_one_file(char *path, char *prefix, uid_t uid,
-    struct anoubis_sig *as);
-int filter_hassum(char *arg, uid_t uid);
-int filter_hassig(char *arg, struct anoubis_sig *as);
 struct anoubis_sig *load_keys(int priv_key, int show_err, char *cert,
     char *keyfile);
+
 char **file_input(int *file_cnt, char *file);
 char *sfs_realpath(const char *path, char resolved[PATH_MAX]);
 char *build_path(const char *path, const char *file);
@@ -149,33 +150,28 @@ int syssig_remove(int argc, char *argv[]);
 int skipsum_update(char *file, int op);
 int str2hash(const char *s, unsigned char dest[SHA256_DIGEST_LENGTH]);
 
-/* XXX KM: Depracated, but in time of switching still needed */
-struct anoubis_transaction *sfs_sumop2(const char *file, int operation,
-    u_int8_t *cs, int cslen, int idlen, uid_t uid, unsigned int);
-
-
 /**
- * This adds a checksumrequest to a request-node of the request-tree.
+ * This adds a checksum request to a request-node of the request-tree.
  * If no request-node is found for this uid/keyid a new one will be
  * created and add to the request tree.
  *
- * @param file The target filen name.
+ * @param file The target file name.
  * @param op The operation which is to be performed on the target file
  * @param keyid keyid of the certificate used for this transaction
- * @param idlen Is the len of the keyid stored in keyid.
+ * @param idlen Is the length of the keyid stored in keyid.
  * @param uid of the user in which name the operation on the file should be
  *        done.
  * @param cs checksum buffer which can hold keyid and/or checksum and signature.
- * @param cslen Is the len of the complete buffer.
- * @param callback function of the realated operation, which is to be
+ * @param cslen Is the length of the complete buffer.
+ * @param callback function of the related operation, which is to be
  *        called after receiving the answer of the request.
- * @return 0 on sucess and a negativ errno in case of error.
+ * @return 0 on success and a negative errno in case of error.
  */
 int sfs_csumop(const char *file, int op, uid_t uid, u_int8_t *keyid, int idlen,
     u_int8_t *cs, int cslen, sumop_callback_t callback);
 
 /**
- * Initilize the Red-Black Request-Tree which holds anoubis_csmulti_requests.
+ * Initialize the Red-Black Request-Tree which holds anoubis_csmulti_requests.
  *
  * @return An empty sfs_request_tree or NULL in case of an error.
  */
@@ -192,33 +188,36 @@ struct sfs_request_tree *sfs_init_request_tree(void);
  * @param keyid of the user in which name the operation on the file should be
  *        done.
  * @param idlen length of the keyid
- * @param callback function of the realated operation, which is to be
- *        called after receiving the answer of the request.
+ * @param sumop-callback function of the related operation, which is to be
+ *        called after receiving the answer of the sumop request.
+ * @param filter-callback function of the related operation, which is to be
+ *        called after receiving the answer of the filter request.
  * @return the resulting node or NULL in case of an error.
  */
 struct sfs_request_node *sfs_insert_request_node(struct sfs_request_tree
     *tree, int op, uid_t uid, u_int8_t * keyid, int idlen,
-    sumop_callback_t cb);
+    sumop_callback_t scb, filter_callback_t fcb);
 
 /**
  * Find a request inside of the tree.
  *
  * @param tree which should be searched in.
- * @param uid which indentifies the desired request, if the request is based
+ * @param uid which identifies the desired request, if the request is based
  *        on a uid otherwise 0.
- * @param key which indentifies the desired request, if the request is based
+ * @param key which identifies the desired request, if the request is based
  *        on a keyid otherwise NULL.
  * @param idlen is the length of the keyid. The parameter must be 0 if the
  *        request is based on uid.
+ * @param operation of the desired node
  * @return The desired node or NULL if no matched node could be found.
  */
 struct sfs_request_node *sfs_find_request(struct sfs_request_tree *t,
-    uid_t uid, u_int8_t * keyid, int idlen);
+    uid_t uid, u_int8_t * keyid, int, int);
 
 /**
  * Destroys a request tree
  *
- * @param the tree that should be destroied.
+ * @param the tree that should be destroyed.
  * @return Nothing
  */
 void sfs_destroy_request_tree(struct sfs_request_tree *t);
@@ -252,6 +251,95 @@ struct sfs_request_node *sfs_first_request(struct sfs_request_tree *);
 struct sfs_request_node *sfs_next_request(struct sfs_request_tree *,
     struct sfs_request_node *);
 
+/**
+ * Callback function which handles a filter request for the hassum
+ * filter. It will get an request and record to find out if a the
+ * file got a checksum registered.
+ *
+ * @param anoubis_csumlti_request structure which which is related to the
+ *	  record
+ * @param anoubis_csumlti_record structure which contains the result
+ *	  for a file.
+ * @return 1 to keep the file
+ *	   0 to delete the file form the results
+ */
+int filter_hassum_callback(struct anoubis_csmulti_request *,
+    struct anoubis_csmulti_record *);
+
+/**
+ * Callback function which handles a filter request for the hasnosum
+ * filter. It will get an request and record to find out if a the
+ * file got no checksum registered.
+ *
+ * @param anoubis_csumlti_request structure which which is related to the
+ *	  record
+ * @param anoubis_csumlti_record structure which contains the result
+ *	  for a file.
+ * @return 1 to keep the file
+ *	   0 to delete the file form the results
+ */
+int filter_hasnosum_callback(struct anoubis_csmulti_request *,
+    struct anoubis_csmulti_record *);
+
+/**
+ * Callback function which handles a filter request for the hassig
+ * filter. It will get an request and record to find out if a the
+ * file got a signature registered.
+ *
+ * @param anoubis_csumlti_request structure which which is related to the
+ *	  record
+ * @param anoubis_csumlti_record structure which contains the result
+ *	  for a file.
+ * @return 1 to keep the file
+ *	   0 to delete the file form the results
+ */
+int filter_hassig_callback(struct anoubis_csmulti_request *,
+    struct anoubis_csmulti_record *);
+
+/**
+ * Callback function which handles a filter request for the hasnosig
+ * filter. It will get an request and record to find out if a the
+ * file got no signature registered.
+ *
+ * @param anoubis_csumlti_request structure which which is related to the
+ *	  record
+ * @param anoubis_csumlti_record structure which contains the result
+ *	  for a file.
+ * @return 1 to keep the file
+ *	   0 to delete the file form the results
+ */
+int filter_hasnosig_callback(struct anoubis_csmulti_request *,
+    struct anoubis_csmulti_record *);
+
+/**
+ * Callback function which handles a filter request for the upgraded
+ * filter. It will get an request and record to find out if a the
+ * file got a signature registered AND was upgraded.
+ *
+ * @param anoubis_csumlti_request structure which which is related to the
+ *	  record
+ * @param anoubis_csumlti_record structure which contains the result
+ *	  for a file.
+ * @return 1 to keep the file
+ *	   0 to delete the file form the results
+ */
+int filter_upgraded_callback(struct anoubis_csmulti_request *,
+    struct anoubis_csmulti_record *);
+
+/**
+ * Add a file to the filter request. If the filter can be done now
+ * (e.g orphan/not file) it will return the expected result.
+ *
+ * @param file/path which should be filtered
+ * @param path to the file if 1. parameter is just a file otherwise NULL
+ * @param uid which registered a checksum
+ * @param anoubis_sig structure holding keyid for the registered signature
+ * @return 1 to keep a file
+ *	   0 if file can already be deleted from file list
+ */
+int filter_a_file(char *, char *, uid_t, struct anoubis_sig *);
+
+extern struct sfs_request_tree *filter_tree;
 extern unsigned int opts;
 
 #endif /* _SFSSIG_H_ */

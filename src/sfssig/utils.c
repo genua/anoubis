@@ -42,8 +42,12 @@ RB_GENERATE_STATIC(rb_request_tree, sfs_request_node, entry, hashcmp);
 static int
 hashcmp(struct sfs_request_node *e1, struct sfs_request_node *e2)
 {
-	if (e1->idx == e2->idx)
-		return strcmp(e1->key, e2->key);
+	if (e1->idx == e2->idx) {
+		if (e1->op == e2->op)
+			return strcmp(e1->key, e2->key);
+		else
+			return (e1->op - e2->op);
+	}
 	return (e1->idx - e2->idx);
 }
 
@@ -393,7 +397,8 @@ sfs_init_request_tree(void)
 
 struct sfs_request_node  *
 sfs_insert_request_node(struct sfs_request_tree *t, int op, uid_t uid,
-    u_int8_t *keyid, int idlen, sumop_callback_t callback)
+    u_int8_t *keyid, int idlen, sumop_callback_t sumop_callback,
+    filter_callback_t filter_callback)
 {
 	struct sfs_request_node *n = NULL, *other = NULL;
 	struct anoubis_csmulti_request *req = NULL;
@@ -431,7 +436,9 @@ sfs_insert_request_node(struct sfs_request_tree *t, int op, uid_t uid,
 	n->idx = hash_fn(n->key, strlen(n->key));
 	n->req = req;
 	n->t = NULL;
-	n->callback = callback;
+	n->sumop_callback = sumop_callback;
+	n->filter_callback = filter_callback;
+	n->op = op;
 
 	other = RB_INSERT(rb_request_tree, &t->head, n);
 	if (other) {
@@ -446,7 +453,7 @@ sfs_insert_request_node(struct sfs_request_tree *t, int op, uid_t uid,
 
 struct sfs_request_node *
 sfs_find_request(struct sfs_request_tree *t, uid_t uid, u_int8_t *keyid,
-    int idlen)
+    int idlen, int op)
 {
 	struct sfs_request_node n, *res = NULL;
 	char *key = NULL;
@@ -464,6 +471,7 @@ sfs_find_request(struct sfs_request_tree *t, uid_t uid, u_int8_t *keyid,
 
 	n.key = key;
 	n.idx = hash_fn(key, strlen(key));
+	n.op = op;
 	res = RB_FIND(rb_request_tree, &t->head, &n);
 	return res;
 }
