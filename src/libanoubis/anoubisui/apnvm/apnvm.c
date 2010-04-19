@@ -486,6 +486,7 @@ apnvm_getuser(apnvm *vm, struct apnvm_user_head *user_list)
 		user->username = strdup(de->d_name);
 		if (user->username == NULL) {
 			closedir(dir);
+			free(user);
 			return (APNVM_OOM);
 		}
 

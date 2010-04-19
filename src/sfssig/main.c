@@ -1670,6 +1670,7 @@ sfs_tree(char *path, int op, uid_t sfs_uid)
 
 		}
 		closedir(dirp);
+		dirp = NULL;
 	}
 	if (tmp)
 		free(tmp);
@@ -1723,6 +1724,8 @@ sfs_tree(char *path, int op, uid_t sfs_uid)
 		tmp = NULL;
 	}
 out:
+	if (dirp)
+		closedir(dirp);
 	if (tmp)
 		free(tmp);
 	if (result) {

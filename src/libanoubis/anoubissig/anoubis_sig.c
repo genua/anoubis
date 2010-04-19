@@ -111,6 +111,7 @@ anoubis_sig_verify_policy_file(const char *filename, EVP_PKEY *sigkey)
 	while ((ret = read(fd, sigbuf, siglen)) > 0) {
 		if (ret == -1) {
 			close(fd);
+			free(sigbuf);
 			return (-4);
 		}
 	}
@@ -294,6 +295,7 @@ anoubis_sign_policy(struct anoubis_sig *as, char *file, unsigned int *len)
 	EVP_MD_CTX_init(&ctx);
 	if (EVP_SignInit(&ctx, as->type) == 0) {
 		EVP_MD_CTX_cleanup(&ctx);
+		close(fd);
 		free(sigbuf);
 		return NULL;
 	}
