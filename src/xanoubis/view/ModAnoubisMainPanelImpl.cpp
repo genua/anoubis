@@ -658,26 +658,29 @@ ModAnoubisMainPanelImpl::update(void)
 		s.Printf(wxT("%d"), elementNo + 1);
 	tx_currNumber->SetLabel(s);
 
-	if ((maxElementNo > 0) && (elementNo == 0)) {
-		bt_first->Disable();
-		bt_previous->Disable();
-		bt_next->Enable();
-		bt_last->Enable();
-	} else if (maxElementNo == 0) {
-		bt_first->Disable();
-		bt_previous->Disable();
-		bt_next->Disable();
-		bt_last->Disable();
-	} else if ((maxElementNo == elementNo + 1) && (elementNo > 0)) {
+	/*
+	 * If the list is not empty and the current element is not the
+	 * first element in the list enable buttons for previous and first
+	 * element.
+	 */
+	if (maxElementNo > 0 && elementNo > 0) {
 		bt_first->Enable();
 		bt_previous->Enable();
-		bt_next->Disable();
-		bt_last->Disable();
 	} else {
-		bt_first->Enable();
-		bt_previous->Enable();
+		bt_first->Disable();
+		bt_previous->Disable();
+	}
+	/*
+	 * If the list is not empty and the current element is not the
+	 * last element in the list enable buttons for the next and last
+	 * element.
+	 */
+	if (maxElementNo > 0 && elementNo + 1 < maxElementNo) {
 		bt_next->Enable();
 		bt_last->Enable();
+	} else {
+		bt_next->Disable();
+		bt_last->Disable();
 	}
 
 	/*

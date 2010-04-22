@@ -308,7 +308,7 @@ Notification::getOperation(void)
 			operation += wxT(" (SCTP)");
 			break;
 		default:
-			operation += wxT(" (unknown protocol)");
+			operation += _(" (unknown protocol)");
 		}
 	} else if (module_ == wxT("SFS") || module_ == wxT("SANDBOX")) {
 		/* XXX CEH: Should verify that evlen >= sizeof(*sfs) */
@@ -323,6 +323,22 @@ Notification::getOperation(void)
 		}
 		if (sfs->flags & ANOUBIS_OPEN_FLAG_EXEC) {
 			operation += wxT("exec ");
+		}
+		if (module_ == wxT("SFS")) {
+			switch(get_value(notify_->u.notify->sfsmatch)) {
+			case ANOUBIS_SFS_VALID:
+				operation +=
+				    _(" (valid checksum/signature)");
+				break;
+			case ANOUBIS_SFS_INVALID:
+				operation +=
+				     _(" (invalid checksum/signature)");
+				break;
+			case ANOUBIS_SFS_UNKNOWN:
+				operation +=
+				    _(" (unknown checksum/signature)");
+				break;
+			}
 		}
 	} else {
 		operation = _("unknown module");
