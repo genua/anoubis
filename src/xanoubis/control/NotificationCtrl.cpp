@@ -215,10 +215,14 @@ NotificationCtrl::onDaemonDisconnect(wxCommandEvent & event)
 		stats_.removeId(stats_.getId(0));
 	}
 	//XXX ch: fix this while cleaning MVC-pattern
-	wxGetApp().getModule(ALF)->update();
-	wxGetApp().getModule(SFS)->update();
-	wxGetApp().getModule(SB)->update();
-	wxGetApp().getModule(ANOUBIS)->update();
+	if (wxGetApp().getModule(ALF))
+		wxGetApp().getModule(ALF)->update();
+	if (wxGetApp().getModule(SFS))
+		wxGetApp().getModule(SFS)->update();
+	if (wxGetApp().getModule(SB))
+		wxGetApp().getModule(SB)->update();
+	if (wxGetApp().getModule(ANOUBIS))
+		wxGetApp().getModule(ANOUBIS)->update();
 }
 
 void

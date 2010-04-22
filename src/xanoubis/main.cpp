@@ -129,6 +129,14 @@ bool AnoubisGuiApp::OnInit()
 	}
 
 	/*
+	 * Initialize all modules with zero early on. This is important
+	 * to avoid bogus return values from wxGetApp().getModule(...)
+	 * during startup.
+	 */
+	for (int i=0; i<ANOUBIS_MODULESNO; ++i)
+		modules_[i] = NULL;
+
+	/*
 	 * Initilize config dirctory and check version of the config
 	 * directory.
 	 */
