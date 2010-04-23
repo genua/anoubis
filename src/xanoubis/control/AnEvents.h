@@ -413,6 +413,8 @@ BEGIN_DECLARE_EVENT_TYPES()
 	 * Broadcast event about the number of open/new alerts.
 	 *
 	 * @param GetInt() The count of open ALERTS.
+	 * @param GetExtraLong() True if a new alert was added,
+	 *     false otherwise.
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_OPEN_ALERTS, wxNewEventType())
 
@@ -421,6 +423,8 @@ BEGIN_DECLARE_EVENT_TYPES()
 	 * Broadcast event about the number of new/not answered escalations.
 	 *
 	 * @param GetInt() The count of open ESCALATIONS.
+	 * @param GetExtraLong() True if this event notifies us about a
+	 *     new escalation, false if an escalation was answered/removed.
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_OPEN_ESCALATIONS, wxNewEventType())
 

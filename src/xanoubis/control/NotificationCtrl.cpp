@@ -165,6 +165,7 @@ NotificationCtrl::answerEscalationNotify(EscalationNotify *notify,
 		}
 		wxCommandEvent  showEvent(anEVT_OPEN_ESCALATIONS);
 		showEvent.SetInt(escalationsNotAnswered_.getSize());
+		showEvent.SetExtraLong(0);
 		wxPostEvent(anEvents, showEvent);
 	}
 }
@@ -311,6 +312,7 @@ NotificationCtrl::addEscalationNotify(Notification *notification)
 
 	wxCommandEvent  showEvent(anEVT_OPEN_ESCALATIONS);
 	showEvent.SetInt(escalationsNotAnswered_.getSize());
+	showEvent.SetExtraLong(1);
 	wxPostEvent(anEvents, showEvent);
 }
 
@@ -340,6 +342,7 @@ NotificationCtrl::addAlertNotify(Notification *notification)
 	allNotifications_.addId(notification->getId());
 
 	showEvent.SetInt(messages_.getSize());
+	showEvent.SetExtraLong(true);
 	wxPostEvent(AnEvents::instance(), showEvent);
 }
 

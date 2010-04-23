@@ -620,6 +620,7 @@ ModAnoubisMainPanelImpl::update(void)
 	   == tb_MainAnoubisNotification) {
 		wxCommandEvent	showEvent(anEVT_OPEN_ALERTS);
 		showEvent.SetInt(0);
+		showEvent.SetExtraLong(false);
 		wxPostEvent(AnEvents::getInstance(), showEvent);
 	}
 

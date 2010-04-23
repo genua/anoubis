@@ -163,6 +163,7 @@ DlgLogViewer::onShow(wxCommandEvent &event)
 {
 	wxCommandEvent	showEvent(anEVT_OPEN_ALERTS);
 	showEvent.SetInt(0);
+	showEvent.SetExtraLong(false);
 	wxPostEvent(AnEvents::getInstance(), showEvent);
 
 	this->Show(event.GetInt());

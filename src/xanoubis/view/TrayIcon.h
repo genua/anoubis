@@ -54,7 +54,14 @@ class TrayIcon : public wxTaskBarIcon
 		wxProcess		*dBusProc_;
 		bool			acceptActions_;
 
-		void		 update(void);
+		/**
+		 * True if the notification is no longer showing. Do not
+		 * update the notification balloon unless there really are
+		 * new events if this is true.
+		 */
+		bool			closed_;
+
+		void		 update(bool increase);
 		bool		 systemNotify(const gchar*, const gchar*,
 		    NotifyUrgency, const int);
 
@@ -65,6 +72,12 @@ class TrayIcon : public wxTaskBarIcon
 	public:
 		TrayIcon(void);
 		~TrayIcon(void);
+
+		/**
+		 * Called by the notification callbacks if the notification
+		 * is closed, either manually or due to a timeout.
+		 */
+		void		 notifyClosed(void);
 
 		void OnConnectionStateChange(wxCommandEvent&);
 		void OnOpenAlerts(wxCommandEvent&);
