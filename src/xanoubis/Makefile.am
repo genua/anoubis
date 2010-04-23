@@ -531,7 +531,8 @@ libGUIcomponents_so_CPPFLAGS = $(xanoubis_CPPFLAGS)
 libGUIcomponents_so_CXXFLAGS = $(shared_AM_CXXFLAGS) $(xanoubis_cxxflags)
 libGUIcomponents_so_LDFLAGS  = $(shared_AM_LDFLAGS) $(SSL_LDFLAGS) \
 	-Wl,-soname,$@
-libGUIcomponents_so_LDADD    = $(xanoubis_ldadd) $(libanoubis_so)
+libGUIcomponents_so_LDADD    = $(xanoubis_ldadd) \
+	-L $(libanoubisbuilddir) -lanoubis
 libGUIcomponents_so_LINK     = $(CXX) $(libGUIcomponents_so_LDFLAGS) -o $@
 endif
 endif
