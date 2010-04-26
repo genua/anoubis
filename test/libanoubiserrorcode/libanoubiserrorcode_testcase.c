@@ -32,10 +32,12 @@
 #define CATSTRING	"LC_MESSAGES"
 #define CATEGORY	LC_MESSAGES
 
-#ifndef OPENBSD
-#define LOCALE		"de_DE"
+static char		*delocale;
+
+#ifdef OPENBSD
+#define DEFAULTLOCALE	"de"
 #else
-#define LOCALE		"de"
+#define	DEFAULTLOCALE	"de_DE"
 #endif
 
 #include <check.h>
@@ -57,19 +59,21 @@ libanoubiserrorcode_tc_setup(void)
 	char cmd[200], *tmp, *catalog;
 	int errno;
 
-	catalog= getenv("CATALOG");
-	if (catalog == NULL)  {
-		catalog = (char *) "src/anoubis/po/de.gmo";
-	}
+	catalog = getenv("CATALOG");
+	delocale = getenv("DELOCALE");
+	if (catalog == NULL)
+		catalog = "src/anoubis/po/de.gmo";
+	if (delocale == NULL)
+		delocale = DEFAULTLOCALE;
 
 	tmpdir = strdup("/tmp/tc_de_testXXXXXX");
 	tmp = mkdtemp(tmpdir);
 
 	snprintf(cmd, 200, "mkdir -p %s/%s/%s",
-		tmpdir, LOCALE, CATSTRING);
+		tmpdir, delocale, CATSTRING);
 	errno = system(cmd);
 	snprintf(cmd, 200, "cp %s %s/%s/%s/anoubis.mo",
-		catalog, tmpdir, LOCALE, CATSTRING);
+		catalog, tmpdir, delocale, CATSTRING);
 	errno = system(cmd);
 }
 
@@ -96,14 +100,14 @@ run_test(char * predicted_error_string[])
 	/* case errnum < 0 */
 	teststring = anoubis_strerror(-1);
 	fail_if(strcmp(teststring, predicted_error_string[0]) != 0,
-		"errorcode < 0 didn't match error_text: \"%s\"",
-		teststring);
+		"errorcode < 0 didn't match error_text: \"%s\" vs \"%s\"",
+		teststring, predicted_error_string[0]);
 
 	/* case error from errno */
 	teststring = anoubis_strerror(2);
 	fail_if(strcmp(teststring, predicted_error_string[1]) != 0,
-		"errorcode 2 didn't match error_text: \"%s\"",
-		teststring);
+		"errorcode 2 didn't match error_text: \"%s\" vs \"%s\"",
+		teststring, predicted_error_string[1]);
 
 	/* case unspecified anoubis error */
 	teststring = anoubis_strerror(1226);
@@ -157,12 +161,12 @@ START_TEST(testcase_de)
 	printf("domain: %s\n", textdomain("anoubis"));
 
 	dir = bindtextdomain("anoubis", tmpdir);
-	#ifndef OPENBSD
-	printf("locale: %s\n", setlocale(CATEGORY, LOCALE));
-	#else
+#ifndef OPENBSD
+	printf("locale: %s\n", setlocale(CATEGORY, delocale));
+#else
 	dir = bindtextdomain("libc", "/usr/share/nls/");
-	setenv("LANG",LOCALE,1);
-	#endif
+	setenv("LANG", delocale, 1);
+#endif
 
 	run_test(predicted_error_string);
 	setlocale(CATEGORY, (const char *) locale);

@@ -42,21 +42,23 @@
 #include "accbuffer.h"
 #include "accutils.h"
 
-static size_t
-acc_read(int fd, void *buf, size_t nbyte)
+static ssize_t
+acc_read(int fd, void *buf, ssize_t nbyte)
 {
-	size_t num = 0;
+	ssize_t num = 0;
 
+	if (nbyte < 0)
+		return -1;
 	while (num < nbyte) {
-		int result;
+		ssize_t		result;
 
 		result = read(fd, buf + num, nbyte - num);
 
-		if (result == -1) {
+		if (result < 0) {
 			if (errno == EINTR)
 				continue;
 			else
-				return (num == 0) ? (size_t)-1 : num;
+				return (num == 0) ? -1 : num;
 		}
 
 		num += result;
@@ -68,21 +70,23 @@ acc_read(int fd, void *buf, size_t nbyte)
 	return num;
 }
 
-static size_t
-acc_write(int fd, void *buf, size_t nbyte)
+static ssize_t
+acc_write(int fd, void *buf, ssize_t nbyte)
 {
-	size_t num = 0;
+	ssize_t num = 0;
 
+	if (nbyte < 0)
+		return -1;
 	while (num < nbyte) {
 		int result;
 
 		result = write(fd, buf + num, nbyte - num);
 
-		if (result == -1) {
+		if (result < 0) {
 			if (errno == EINTR)
 				continue;
 			else
-				return (num == 0) ? (size_t)-1 : num;
+				return (num == 0) ? -1 : num;
 		}
 
 		num += result;
@@ -95,20 +99,22 @@ achat_rc
 acc_flush(struct achat_channel *chan)
 {
 	void		*buf;
-	size_t		 bsize, bwritten;
+	ssize_t		 bwritten, bsize;
 	achat_rc	 ret;
+	int		 error;
 
 	ACC_CHKPARAM(chan != NULL);
 
 	buf = acc_bufferptr(chan->sendbuffer);
 	bsize = acc_bufferlen(chan->sendbuffer);
 
-	if (bsize == 0) {
+	if (bsize <= 0) {
 		/* Nothing to do */
 		return ACHAT_RC_OK;
 	}
 
 	bwritten = acc_write(chan->fd, buf, bsize);
+	error = errno;
 
 	if (bwritten > 0) {
 		achat_rc rc;
@@ -120,8 +126,8 @@ acc_flush(struct achat_channel *chan)
 			return ACHAT_RC_ERROR;
 	}
 
-	if (bwritten == (unsigned int)-1)
-		ret = (errno == EAGAIN) ? ACHAT_RC_PENDING : ACHAT_RC_ERROR;
+	if (bwritten < 0)
+		ret = (error == EAGAIN) ? ACHAT_RC_PENDING : ACHAT_RC_ERROR;
 	else /* bwritten > 0 */
 		ret = (bwritten == bsize) ? ACHAT_RC_OK : ACHAT_RC_PENDING;
 	if (ret == ACHAT_RC_PENDING && chan->event)
@@ -132,7 +138,7 @@ acc_flush(struct achat_channel *chan)
 achat_rc
 acc_sendmsg(struct achat_channel *acc, const char *msg, size_t size)
 {
-	u_int32_t	pkgsize;
+	uint32_t	pkgsize;
 	achat_rc	rc;
 
 	ACC_CHKPARAM(acc  != NULL);
@@ -140,7 +146,7 @@ acc_sendmsg(struct achat_channel *acc, const char *msg, size_t size)
 	ACC_CHKPARAM(0 < size && size <= ACHAT_MAX_MSGSIZE);
 
 	/* Can only send a message, if you have an open socket */
-	if (acc->fd == -1)
+	if (acc->fd < 0)
 		return (ACHAT_RC_ERROR);
 
 	/* (1) Size of following message (in network byte order!) */
@@ -165,10 +171,11 @@ static achat_rc
 acc_fillrecvbuffer(struct achat_channel *acc, size_t size)
 {
 	const size_t	bsize = acc_bufferlen(acc->recvbuffer);
-	size_t		nread;
+	ssize_t		nread;
 	char		*readbuf;
 	int		mincnt = size;
-	unsigned int	needcnt;
+	int		needcnt;
+	int		error;
 
 	if (acc->blocking == ACC_NON_BLOCKING) {
 		/* Read at least 4k */
@@ -177,6 +184,7 @@ acc_fillrecvbuffer(struct achat_channel *acc, size_t size)
 	}
 
 	ACC_CHKPARAM(mincnt <= ACHAT_MAX_MSGSIZE);
+	ACC_CHKPARAM(mincnt >= 0);
 
 	needcnt = mincnt - bsize;
 	if (needcnt <= 0) {
@@ -190,14 +198,15 @@ acc_fillrecvbuffer(struct achat_channel *acc, size_t size)
 		return (ACHAT_RC_ERROR);
 
 	nread = acc_read(acc->fd, readbuf, needcnt);
+	error = errno;
 
-	if (nread == (unsigned int)-1) {
+	if (nread < 0) {
 		/* Buffer not filled, remove allocated space again */
 		achat_rc rc = acc_buffertrunc(acc->recvbuffer, needcnt);
 		if (rc != ACHAT_RC_OK)
 			return (ACHAT_RC_ERROR);
 
-		return (errno == EAGAIN) ? ACHAT_RC_PENDING : ACHAT_RC_ERROR;
+		return (error == EAGAIN) ? ACHAT_RC_PENDING : ACHAT_RC_ERROR;
 	}
 
 	if (nread < needcnt) {
@@ -215,14 +224,14 @@ achat_rc
 acc_receivemsg(struct achat_channel *acc, char *msg, size_t *size)
 {
 	size_t		bsize;
-	u_int32_t	pkgsize = 0;
+	uint32_t	pkgsize = 0;
 
 	ACC_CHKPARAM(acc  != NULL);
 	ACC_CHKPARAM(msg  != NULL);
 	ACC_CHKPARAM(0 < *size && *size <=  ACHAT_MAX_MSGSIZE);
 
 	/* Can only receive a message, if you have an open socket */
-	if (acc->fd == -1)
+	if (acc->fd < 0)
 		return (ACHAT_RC_ERROR);
 
 	bsize =  acc_bufferlen(acc->recvbuffer);

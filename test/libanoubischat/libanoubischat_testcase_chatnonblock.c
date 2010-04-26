@@ -47,6 +47,8 @@ char raw_msg[] = {
 	'H', 'a', 'l', 'l', 'o', ' ', 'W', 'e', 'l', 't'
 };
 
+char long_buffer[1024] = "";
+
 static struct achat_channel*
 tc_chatnb_channel_init(int *port)
 {
@@ -726,7 +728,7 @@ START_TEST(tc_chatnb_write_only)
 			anoubis_strerror(errno));
 
 		while (do_send_msg > 0) {
-			rc = acc_sendmsg(cc, raw_msg + 4, sizeof(raw_msg) - 4);
+			rc = acc_sendmsg(cc, long_buffer, sizeof(long_buffer));
 			num_msg++;
 
 			if (rc == ACHAT_RC_ERROR) {
@@ -742,22 +744,9 @@ START_TEST(tc_chatnb_write_only)
 				"Failed to send message #%i (%i): %s",
 				num_msg, rc, anoubis_strerror(errno));
 
-			while (rc != ACHAT_RC_OK) {
-				rc = acc_flush(cc);
-
-				if (rc == ACHAT_RC_ERROR) {
-					/* Buffer is full */
-					fail_if(num_msg < 2,
-					"Could not flush a message: %i (%s)",
-					rc, anoubis_strerror(errno));
-
-					do_send_msg = 0;
-					break;
-				}
-				else if (rc != ACHAT_RC_OK)
-					fail("Unexpected flush-result: %i",
-						rc);
-			}
+			rc = acc_flush(cc);
+			fail_if(rc != ACHAT_RC_OK && rc != ACHAT_RC_PENDING,
+			    "Unexpected flush-result: %i", rc);
 
 			mark_point();
 		}

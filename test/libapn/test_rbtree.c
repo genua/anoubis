@@ -87,9 +87,9 @@ int main()
 	for (try = 0; cnt || try < 1000000; ++try) {
 		int idx = rand() % NENT;
 		if (try > 1000000)
-			for (; e[idx].key == (unsigned int)-1;
+			for (; e[idx].key == (unsigned long)-1;
 			    idx = (idx+1) % NENT);
-		if (e[idx].key == (unsigned int)-1) {
+		if (e[idx].key == (unsigned long)-1) {
 			e[idx].key = idx;
 			assert(rb_insert_entry(&root, e+idx));
 			cnt++;

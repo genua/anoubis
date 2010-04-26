@@ -46,7 +46,13 @@ char *__dstr = NULL;
 
 #define ASSERT(X)							\
 	if (!(X)) {							\
+		unsigned int i;						\
 		printf("Broken Message at %d (%s)\n", __LINE__, #X);	\
+		printf("RAW DATA:");					\
+		for (i=0; i<m->length; ++i)				\
+			printf(" %02x",					\
+			    ((unsigned char *)(m->u.buf))[i]);		\
+		printf("\n");						\
 		return;							\
 	}
 #define CASE(X, SEL)							\
@@ -360,7 +366,7 @@ dump_statusnotify(Anoubis_StatusNotifyMessage *m, size_t len __used)
 
 void __anoubis_dump(struct anoubis_msg * m, const char * pre, char **pstr)
 {
-	u_int32_t opcode;
+	uint32_t opcode;
 
 	__dstr = malloc(BUFSIZ);
 	if (!__dstr)

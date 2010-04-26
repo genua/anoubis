@@ -27,12 +27,16 @@
 #ifndef ANOUBIS_CRC32_H
 #define ANOUBIS_CRC32_H
 
-#define POLY 0x04C11DB7UL
+#include <stdint.h>
+#include <sys/types.h>
 
-static inline unsigned long _crc32_do(unsigned char * buf, int len)
+static const uint32_t	POLY = 0x04C11DB7;
+
+static inline uint32_t _crc32_do(unsigned char * buf, int len)
 {
-	unsigned long sum = sum = 0xFFFFFFFFUL;
+	uint32_t	sum = 0xFFFFFFFFUL;
 	int i;
+
 	for (i=0; i<len; buf++,i++) {
 		unsigned char byte = *buf;
 		unsigned char mask;
@@ -48,7 +52,7 @@ static inline unsigned long _crc32_do(unsigned char * buf, int len)
 }
 
 /*@unused@*/
-static inline unsigned long crc32_get(void * buf, int len)
+static inline uint32_t crc32_get(void * buf, int len)
 {
 	return _crc32_do(buf, len);
 }
