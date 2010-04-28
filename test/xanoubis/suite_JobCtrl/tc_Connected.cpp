@@ -366,25 +366,26 @@ START_TEST(test_csum)
 
 	/* Remove checksum: Success */
 	TaskEventSpy del_spy(jobCtrl, anTASKEVT_CSUM_DEL);
-	ComCsumDelTask del_task;
-	del_task.setPath(fileName);
+	ComCsumDelTask	*del_task = new ComCsumDelTask();
+	del_task->addPath(fileName);
 	mark_point();
 
-	jobCtrl->addTask(&del_task);
+	jobCtrl->addTask(del_task);
 	del_spy.waitForInvocation(1);
 	mark_point();
 
-	fail_unless(del_task.getComTaskResult() == ComTask::RESULT_SUCCESS,
+	fail_unless(del_task->getComTaskResult() == ComTask::RESULT_SUCCESS,
 	    "Failed to remove a checksum!\n"
 	    "ComTaskResult = %i\n"
 	    "ResultDetails = %i\n",
-	    del_task.getComTaskResult(), del_task.getResultDetails());
+	    del_task->getComTaskResult(), del_task->getResultDetails());
 	mark_point();
-	fail_unless(del_task.haveKeyId() == false, "A key-id is assigned");
-	fail_unless(del_task.getResultDetails() == 0,
+	fail_unless(del_task->haveKeyId() == false, "A key-id is assigned");
+	fail_unless(del_task->getResultDetails() == 0,
 	    "ResultDetails: %s (%i)",
-	    anoubis_strerror(del_task.getResultDetails()),
-	    del_task.getResultDetails());
+	    anoubis_strerror(del_task->getResultDetails()),
+	    del_task->getResultDetails());
+	delete del_task;
 	mark_point();
 
 	delete get_task;
@@ -756,25 +757,26 @@ START_TEST(test_signature)
 
 	/* Remove signature: Success */
 	TaskEventSpy del_spy(jobCtrl, anTASKEVT_CSUM_DEL);
-	ComCsumDelTask del_task;
-	del_task.setPath(fileName);
-	fail_unless(del_task.setKeyId(raw_cert->keyid, raw_cert->idlen),
+	ComCsumDelTask	*del_task = new ComCsumDelTask;
+	del_task->addPath(fileName);
+	fail_unless(del_task->setKeyId(raw_cert->keyid, raw_cert->idlen),
 	    "Failed to setup task with key-id.");
 	mark_point();
 
-	jobCtrl->addTask(&del_task);
+	jobCtrl->addTask(del_task);
 	del_spy.waitForInvocation(1);
 	mark_point();
 
-	fail_unless(del_task.getComTaskResult() == ComTask::RESULT_SUCCESS,
+	fail_unless(del_task->getComTaskResult() == ComTask::RESULT_SUCCESS,
 	    "Failed to remove a checksum!\nComTaskResult = %i\n"
-	    "ResultDetails = %i\n", del_task.getComTaskResult(),
-	    del_task.getResultDetails());
-	fail_unless(del_task.getResultDetails() == 0,
+	    "ResultDetails = %i\n", del_task->getComTaskResult(),
+	    del_task->getResultDetails());
+	fail_unless(del_task->getResultDetails() == 0,
 	    "ResultDetails: %s (%i)\n",
-	    anoubis_strerror(del_task.getResultDetails()),
-	    del_task.getResultDetails());
-	fail_unless(del_task.haveKeyId(), "No key-id is assigned");
+	    anoubis_strerror(del_task->getResultDetails()),
+	    del_task->getResultDetails());
+	fail_unless(del_task->haveKeyId(), "No key-id is assigned");
+	delete del_task;
 
 	mark_point();
 	delete get_task;

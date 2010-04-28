@@ -41,6 +41,7 @@
 #include "TaskEvent.h"
 #include "ComCsumAddTask.h"
 #include "ComCsumGetTask.h"
+#include "ComCsumDelTask.h"
 
 /**
  * Array is a list of indexes.
@@ -584,19 +585,14 @@ class SfsCtrl : public wxEvtHandler
 		void createComCsumAddTask(struct sfs_entry *);
 
 		/**
-		 * Schedules ComCsumDelTasks for the specified SfsEntry.
+		 * Create a task that removes the checksums and potentially
+		 * the signatures for files. The task is only created but
+		 * not queued for job execution.
+		 * Usa task->addPath(...) to  add files to the task.
 		 *
-		 * No task is scheduled, if it is absolutely clear, that no
-		 * checksum/signature is registered.
-		 *
-		 * @param entry The SfsEntry, where the checksum/signature
-		 *              should be removed.
-		 * @param doSig Generate signature tasks, too.
-		 * @return Number of scheduled tasks. Might be 0 (nothing was
-		 *         scheduled), 1 or 2 (task for checksum and/or
-		 *         signature).
+		 * @param 1st True if signatures should be removed, too.
 		 */
-		int createComCsumDelTasks(SfsEntry *entry, bool doSig);
+		ComCsumDelTask *createComCsumDelTask(bool);
 
 		/**
 		 * Create checksum and signature list tasks for a uid

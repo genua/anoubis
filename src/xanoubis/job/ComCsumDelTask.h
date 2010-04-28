@@ -28,17 +28,23 @@
 #ifndef _COMCSUMDELTASK_H_
 #define _COMCSUMDELTASK_H_
 
-#include "ComCsumHandler.h"
 #include "ComTask.h"
 #include <anoubis_transaction.h>
+
+#include <sys/types.h>
+#include <vector>
 
 /**
  * Task to delete the checksum of a file from anoubisd.
  *
- * You have to specify the filename with ComCsumDelTask::setFile().
+ * Before the task gets schedule, you mstu specify the files names you of
+ * the checksum that should be deleted using ComCsumDelTask::addFile().
  *
- * You can bind the operation to a certificate. In this case, the checksum of
- * the file is removed, which is signed by the configured certificate.
+ * You can add a keyid to the request, too. In this case unsigned checksums
+ * and signatures fore the files are removed.
+ *
+ * If the task was successfully executed, you can ask for the results for
+ * each file.
  *
  * Supported error-codes:
  * - <code>RESULT_COM_ERROR</code> Communication error. Failed to create a
@@ -49,23 +55,41 @@
  *   failed. getResultDetails() will return the remote error-code and can be
  *   evaluated by anoubis_strerror(3) or similar.
  */
-class ComCsumDelTask : public ComTask, public ComCsumHandler
+class ComCsumDelTask : public ComTask
 {
 	public:
 		/**
-		 * Default c'tor.
-		 *
-		 * You explicity need to set the filename by calling setFile().
+		 * Default constructor.
 		 */
 		ComCsumDelTask(void);
 
 		/**
-		 * Constructs a ComCsumDelTask with an assigned filename.
-		 *
-		 * @param file The source-file
-		 * @see setFile()
+		 * Destructor.
 		 */
-		ComCsumDelTask(const wxString &);
+		~ComCsumDelTask(void);
+
+		/**
+		 * Add a path to the DEL request.
+		 *
+		 * @param 1st The path.
+		 * @retrun None.
+		 */
+		void addPath(const wxString);
+
+		/**
+		 * Return the number of paths in this CsumDelTask.
+		 *
+		 * @return The number of paths.
+		 */
+		unsigned int getPathCount(void) const;
+
+		/**
+		 * Return the path associated with an index in the request.
+		 *
+		 * @param idx the index.
+		 * @return The path.
+		 */
+		wxString getPath(unsigned int idx) const;
 
 		/**
 		 * Implementation of Task::getEventType().
@@ -81,8 +105,68 @@ class ComCsumDelTask : public ComTask, public ComCsumHandler
 		 * Implementation of ComTask::done().
 		 */
 		bool done(void);
+
+		/**
+		 * Returns the result of the checksum del request for the
+		 * path with the given index.
+		 *
+		 * @param idx The index.
+		 * @return The error code. Zero if the checksum was removed.
+		 */
+		int getChecksumError(unsigned int idx) const;
+
+		/**
+		 * Returns the result of the signature del requst for the
+		 * path with the given index.
+		 *
+		 * @param idx The index.
+		 * @return The error code. Zero if the signature was removed.
+		 */
+		int getSignatureError(unsigned int idx) const;
+
+		/**
+		 * Assign a keyid to the request.
+		 *
+		 * @param 1st The keyid.
+		 * @param 2nd The length of the keyid.
+		 * @return True if successful.
+		 */
+		bool setKeyId(const uint8_t *keyid, unsigned int kidlen);
+
+		/**
+		 * Return true if a keyid is assigned to the request.
+		 *
+		 * @param None.
+		 * @return True if there is a keyid.
+		 */
+		bool haveKeyId(void) const;
+
 	private:
-		struct anoubis_transaction	*ta_;
+		std::vector<wxString>		 paths_;
+		struct anoubis_csmulti_request	*csreq_;
+		struct anoubis_csmulti_request	*sigreq_;
+		uint8_t				*keyid_;
+		unsigned int			 kidlen_;
+		anoubis_transaction		*ta_;
+
+		/**
+		 * Create the neccessary checksum and signature requests
+		 * if the do not exist.
+		 */
+		void createRequests(void);
+
+		/**
+		 * Add a new path to a single request. If this fails add
+		 * an error request.
+		 *
+		 * @param 1st The request.
+		 * @param 2nd The path.
+		 * @return Zero if something was added to the request.
+		 *     An error code (ENOMEM) if neither the request nor
+		 *     an error request could be added.
+		 */
+		int addPathToRequest(struct anoubis_csmulti_request *,
+		    const char *path);
 };
 
 #endif	/* _COMCSUMDELTASK_H_ */

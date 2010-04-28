@@ -219,9 +219,10 @@ SfsCtrl::validate(const IndexArray &arr)
 		 * Progress calculation 2*#Elements:
 		 * - One for each path in a GET task.
 		 * - One for each checksum calculation.
+		 * - One for each iteration through this loop
 		 * - One extra count for each GET task added below.
 		 */
-		startSfsOp(2 * arr.Count());
+		startSfsOp(3 * arr.Count());
 		for (size_t i = 0; i < arr.Count(); i++) {
 			unsigned int idx = arr.Item(i);
 
@@ -252,7 +253,7 @@ SfsCtrl::validate(const IndexArray &arr)
 				createCsumCalcTask(entry->getPath());
 			}
 			/* No progress but allow abort. */
-			if (!updateSfsOp(0)) {
+			if (!updateSfsOp(1)) {
 				if (task)
 					delete task;
 				task = NULL;
@@ -306,11 +307,12 @@ SfsCtrl::registerChecksum(const IndexArray &arr)
 		/*
 		 * Progress calculation:
 		 * - one for each entry in the path list.
+		 * - one for each iteration through this loop.
 		 * - one more for each task that is actually sent
 		 *   (handled inside the loop).
 		 */
 		bool	doSig = isSignatureEnabled();
-		startSfsOp(arr.Count());
+		startSfsOp(2*arr.Count());
 		for (size_t i = 0; i < arr.Count(); i++) {
 			idx = arr.Item(i);
 
@@ -343,7 +345,7 @@ SfsCtrl::registerChecksum(const IndexArray &arr)
 				pushTask(task, 1);
 				task = NULL;
 			}
-			if (!updateSfsOp(0)) {
+			if (!updateSfsOp(1)) {
 				if (task)
 					delete task;
 				task = NULL;
@@ -370,44 +372,55 @@ SfsCtrl::registerChecksum(unsigned int idx)
 SfsCtrl::CommandResult
 SfsCtrl::unregisterChecksum(const IndexArray &arr)
 {
+	bool		 doSig;
+	ComCsumDelTask	*task = NULL;
+
 	if (!taskList_.empty() || inProgress_)
 		return (RESULT_BUSY);
 
-	if (comEnabled_) {
-		int	numScheduled = 0;
-		bool	doSig = isSignatureEnabled();
+	if (!comEnabled_)
+		return RESULT_NOTCONNECTED;
 
-		/*
-		 * Progress accounting:
-		 * - two for each createComCsumDelTasks
-		 */
-		startSfsOp(2 * arr.Count());
-		for (size_t i = 0; i < arr.Count(); i++) {
-			unsigned int idx = arr.Item(i);
+	doSig = isSignatureEnabled();
 
-			if (idx >= sfsDir_.getNumEntries()) {
-				/* Out of range */
-				endSfsOp();
-				return (RESULT_INVALIDARG);
-			}
+	/*
+	 * Progress accounting:
+	 * - one for each entry in the path list.
+	 * - one for each iteration through this loop
+	 * - one more for each task that is actually sent
+	 *     (handled inside the loop).
+	 */
+	startSfsOp(2*arr.Count());
+	for (size_t i = 0; i < arr.Count(); i++) {
+		unsigned int	idx = arr.Item(i);
 
-			SfsEntry *entry = sfsDir_.getEntry(idx);
-
-			/* Remove checksum from anoubisd */
-			numScheduled += createComCsumDelTasks(entry, doSig);
-
-			if (!doSig) {
-				/* Reset signed checksums in model */
-				entry->setChecksumMissing(
-				    SfsEntry::SFSENTRY_SIGNATURE);
-			}
-			if (!updateSfsOp(0))
-				break;
+		if (idx >= sfsDir_.getNumEntries()) {
+			/* Out of range */
+			endSfsOp();
+			return RESULT_INVALIDARG;
 		}
-		endSfsOp();
-		return (numScheduled == 0) ? RESULT_NOOP : RESULT_EXECUTE;
-	} else
-		return (RESULT_NOTCONNECTED);
+
+		SfsEntry *entry = sfsDir_.getEntry(idx);
+
+		if (!task)
+			task = createComCsumDelTask(doSig);
+		task->addPath(entry->getPath());
+		/* Add one to the progress bar for the new task. */
+		if (task->getPathCount() >= 1000) {
+			pushTask(task, 1);
+			task = NULL;
+		}
+		if (!updateSfsOp(1)) {
+			if (task)
+				delete task;
+			task = NULL;
+			break;
+		}
+	}
+	if (task)
+		pushTask(task, 1);
+	endSfsOp();
+	return RESULT_EXECUTE;
 }
 
 SfsCtrl::CommandResult
@@ -1084,13 +1097,16 @@ SfsCtrl::OnCsumAdd(TaskEvent &event)
 
 /*
  * Progress caluclation:
- * A CsumDel Task make a progress of one and ends an SFS operation.
  */
 void
 SfsCtrl::OnCsumDel(TaskEvent &event)
 {
-	ComCsumDelTask	*task = dynamic_cast<ComCsumDelTask*>(event.getTask());
-	PopTaskHelper	taskHelper(this, task);
+	ComCsumDelTask		*task =
+	    dynamic_cast<ComCsumDelTask*>(event.getTask());
+	PopTaskHelper		 taskHelper(this, task);
+	ComTask::ComTaskResult	 taskResult;
+	const char		*err;
+	wxString		 message;
 
 	if (task == 0) {
 		/* No ComCsumAddTask -> stop propagating */
@@ -1106,72 +1122,69 @@ SfsCtrl::OnCsumDel(TaskEvent &event)
 
 	event.Skip(false); /* "My" task -> stop propagating */
 
-	/* Search for SfsEntry */
-	int idx = sfsDir_.getIndexOf(task->getPath());
-	if (idx == -1) {
-		wxString message = wxString::Format(
-		    _("%ls not found in file-list!"), task->getPath().c_str());
+	/* Account for the finished task. */
+	updateSfsOp(1);
+	taskResult = task->getComTaskResult();
+	if (taskResult == ComTask::RESULT_COM_ERROR) {
+		message = wxString::Format(_("Communication error while "
+		    "removing the checksums/signatures."));
 		errorList_.Add(message);
-		updateSfsOp(1);
+	} else if (taskResult == ComTask::RESULT_REMOTE_ERROR) {
+		err = anoubis_strerror(task->getResultDetails());
+		message = wxString::Format(_("Communication error while "
+		    "removing checksums/signature."));
+		errorList_.Add(message);
+	} else if (taskResult == ComTask::RESULT_LOCAL_ERROR) {
+		err = anoubis_strerror(task->getResultDetails());
+		message = wxString::Format(_("Failed to remove checksums/"
+		    "signatures: %hs"), err);
+		errorList_.Add(message);
+	} else if (taskResult != ComTask::RESULT_SUCCESS) {
+		err = anoubis_strerror(task->getResultDetails());
+		message = wxString::Format(_("An unexpected error occured "
+		    "while removing checksums/signature: %hs"), err);
+		errorList_.Add(message);
+	}
+	if (taskResult != ComTask::RESULT_SUCCESS) {
+		updateSfsOp(task->getPathCount());
 		endSfsOp();
 		return;
 	}
 
-	SfsEntry::ChecksumType type = task->haveKeyId() ?
-	    SfsEntry::SFSENTRY_SIGNATURE : SfsEntry::SFSENTRY_CHECKSUM;
+	for (unsigned int idx = 0; idx < task->getPathCount(); ++idx) {
+		int		 modelindex, error;
+		SfsEntry	*entry;
+		wxString	 path = task->getPath(idx);
 
-	if (task->getComTaskResult() == ComTask::RESULT_COM_ERROR) {
-		wxString message;
-
-		if (type == SfsEntry::SFSENTRY_CHECKSUM)
-			message = wxString::Format(_("Communication error "
-			    "while removing the checksum for %ls."),
-			    task->getPath().c_str());
-		else
-			message = wxString::Format(_("Communication error "
-			    "while removing the signature for %ls."),
-			    task->getPath().c_str());
-
-		errorList_.Add(message);
-	} else if (task->getComTaskResult() == ComTask::RESULT_REMOTE_ERROR) {
-		wxString message;
-
-		if (type == SfsEntry::SFSENTRY_CHECKSUM)
+		/* Finish processing even if cancel was pressed. */
+		updateSfsOp(1);
+		modelindex = sfsDir_.getIndexOf(path);
+		if (modelindex < 0) {
+			message = wxString::Format(
+			    _("%ls not found in file list!"), path.c_str());
+			errorList_.Add(message);
+			continue;
+		}
+		entry = sfsDir_.getEntry(modelindex);
+		error = task->getChecksumError(idx);
+		if (error == 0 || error == ENOENT || error == ENOTDIR) {
+			entry->setChecksumMissing(SfsEntry::SFSENTRY_CHECKSUM);
+		} else {
 			message = wxString::Format(_("Got error from daemon "
-			    "(%hs) while removing the checksum for %ls."),
-			    anoubis_strerror(task->getResultDetails()),
-			    task->getPath().c_str());
-		else
-			message = wxString::Format(_("Got error from daemon "
-			    "(%hs) while removing the signature for %ls."),
-			    anoubis_strerror(task->getResultDetails()),
-			    task->getPath().c_str());
-
-		errorList_.Add(message);
-	} else if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
-		wxString message;
-
-		if (type == SfsEntry::SFSENTRY_CHECKSUM)
-			message = wxString::Format(_("An unexpected error "
-			    "occured (%hs) while removing the checksum for "
-			    "%ls."), anoubis_strerror(task->getComTaskResult()),
-			    task->getPath().c_str());
-		else
-			message = wxString::Format(_("An unexpected error "
-			    "occured (%hs) while removing the signature for "
-			    "%ls."), anoubis_strerror(task->getComTaskResult()),
-			    task->getPath().c_str());
-
-		errorList_.Add(message);
+			    "while removing the checksum for %ls: %hs"),
+			    entry->getPath().c_str(), anoubis_strerror(error));
+			errorList_.Add(message);
+		}
+		if (task->haveKeyId()) {
+			error = task->getSignatureError(idx);
+			if (error == 0 || error == ENOENT || error == ENOTDIR) {
+				entry->setChecksumMissing(
+				    SfsEntry::SFSENTRY_SIGNATURE);
+			}
+		}
+		if (!entry->fileExists() && !entry->haveChecksum())
+			sfsDir_.removeEntry(idx);
 	}
-
-	/* Update model */
-	SfsEntry *entry = sfsDir_.getEntry(idx);
-	entry->setChecksumMissing(type);
-
-	if (!entry->fileExists() && !entry->haveChecksum())
-		sfsDir_.removeEntry(idx);
-	updateSfsOp(1);
 	endSfsOp();
 }
 
@@ -1257,7 +1270,7 @@ SfsCtrl::createComCsumGetTask(bool doSig)
 }
 
 /*
- * This creates a CSMulit add task.
+ * This creates a CSMulti add task.
  * This function does not modify the progress counts in any way.
  */
 ComCsumAddTask *
@@ -1296,48 +1309,22 @@ SfsCtrl::createComCsumAddTask(struct sfs_entry *entry)
 }
 
 /*
- * Creates up to two tasks that the caller must account for.
- * Start an SFS operation for each task that _is_ created.
- * The caller must account for a progress of two. This progress is either
- * made by the task if created or by this function directory.
+ * This creates a CSMulti del task. This function does not modify
+ * the progress counts in any way.
  */
-int
-SfsCtrl::createComCsumDelTasks(SfsEntry *entry, bool doSig)
+ComCsumDelTask *
+SfsCtrl::createComCsumDelTask(bool doSig)
 {
-	int count = 0;
+	ComCsumDelTask	*ret = new ComCsumDelTask;
 
-	SfsEntry::ChecksumState csState =
-	    entry->getChecksumState(SfsEntry::SFSENTRY_CHECKSUM);
-	if (csState != SfsEntry::SFSENTRY_MISSING) {
-		ComCsumDelTask *csTask = new ComCsumDelTask;
-		csTask->setPath(entry->getPath());
-		csTask->setCalcLink(true);
-
-		pushTask(csTask, 0);
-		count++;
-	} else {
-		updateSfsOp(1);
-	}
-
-	SfsEntry::ChecksumState sigState =
-	    entry->getChecksumState(SfsEntry::SFSENTRY_SIGNATURE);
-	if ((sigState != SfsEntry::SFSENTRY_MISSING) && doSig) {
+	if (doSig) {
 		KeyCtrl *keyCtrl = KeyCtrl::instance();
 		LocalCertificate &cert = keyCtrl->getLocalCertificate();
 		struct anoubis_sig *raw_cert = cert.getCertificate();
 
-		ComCsumDelTask *sigTask = new ComCsumDelTask;
-		sigTask->setPath(entry->getPath());
-		sigTask->setCalcLink(true);
-		sigTask->setKeyId(raw_cert->keyid, raw_cert->idlen);
-
-		pushTask(sigTask, 0);
-		count++;
-	} else {
-		updateSfsOp(1);
+		ret->setKeyId(raw_cert->keyid, raw_cert->idlen);
 	}
-
-	return (count);
+	return ret;
 }
 
 /*
