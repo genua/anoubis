@@ -44,6 +44,7 @@
 #include <string.h>
 #include <strings.h>
 #include <ctype.h>
+#include <sys/statvfs.h>
 
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
@@ -867,6 +868,82 @@ sfs_need_upgrade_data(const struct abuf_buffer updata,
 	return 0;
 }
 
+/**
+ * Estimate the number of sfs writes that can be performed without
+ * reaching the file sytem limit.
+ *
+ * Rules for the estimation:
+ * - We estimate the number of writes possible. These writes are performed
+ *   without looking a the file system again. Thus lots of writes from a
+ *   different source can still lead to a full file system.
+ * - The estimate is limited to 10000 writes, i.e. we consult the file
+ *   system at least once per 10000 writes.
+ * - We never touch the last percent of blocks and/or inodes.
+ * - We assume that a single write consumes at most 3 blocks and 3 inodes.
+ * - If statvfs(2) is not supported, we assume that the file system has
+ *   enough space.
+ * - If the checksum changeroot directory does not yet exist, we allow
+ *   a few writes.
+ *
+ * @param None.
+ * @return Zero if writing is ok, a negative error code (ENOSPC) otherwise.
+ */
+static int
+sfs_space_available(void)
+{
+	/*
+	 * This static variable stores a previous estimate of the total
+	 * number of writes that are possible. As long as this value is
+	 * not zero, it is decremented and the file system is not checked.
+	 */
+	static int		sfs_free_writes = 0;
+
+	struct statvfs		buf;
+	int			ret;
+	long long		tmp;
+
+	if (sfs_free_writes) {
+		--sfs_free_writes;
+		return 0;
+	}
+	ret = statvfs(SFS_CHECKSUMROOT, &buf);
+	if (ret < 0) {
+		switch (errno) {
+		case ENOSYS:
+			/* Not supported: Allow many writes. */
+			sfs_free_writes = 10000;
+			return 0;
+		case ENOENT:
+		case ENOTDIR:
+			/* No SFS-Tree yet: Allow a few writes */
+			sfs_free_writes = 10;
+			return 0;
+		default:
+			return -errno;
+		}
+	}
+	if (buf.f_blocks / buf.f_bfree > 100
+	    || buf.f_files / buf.f_ffree > 100)
+		/* Less than one percent free blocks/inodes */
+		return -ENOSPC;
+
+	sfs_free_writes = 10000;
+	/* Allow at most one sfs write for evry 3 blocks above one precent. */
+	tmp = (buf.f_bfree - buf.f_blocks / 100) / 3;
+	if (tmp < sfs_free_writes)
+		sfs_free_writes = tmp;
+	/* Allow at most one sfs write for every 3 inodes above one precent. */
+	tmp = (buf.f_ffree - buf.f_files / 100) / 3;
+	if (tmp < sfs_free_writes)
+		sfs_free_writes = tmp;
+	/* Should not happen... */
+	if (sfs_free_writes < 0) {
+		sfs_free_writes = 0;
+		return -ENOSPC;
+	}
+	return 0;
+}
+
 /*
  * NOTE: Might free the contents of sfsdata->upgradecsdata.
  * NOTE: sfsdata->csdata and sfsdata->sigdata is not touched.
@@ -887,6 +964,9 @@ sfs_writesfsdata(const char *csum_file, const char *csum_path,
 	if (sfsdata == NULL || csum_file == NULL || csum_path == NULL)
 		return -EINVAL;
 
+	ret = sfs_space_available();
+	if (ret < 0)
+		return ret;
 	if (!sfs_need_upgrade_data(sfsdata->upgradecsdata, sfsdata->csdata)
 	    && !sfs_need_upgrade_data(sfsdata->upgradecsdata,
 	    sfsdata->sigdata)) {
