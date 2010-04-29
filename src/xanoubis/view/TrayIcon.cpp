@@ -49,6 +49,7 @@
 #endif
 
 #include "AnEvents.h"
+#include "AnIconList.h"
 #include "Debug.h"
 #include "JobCtrl.h"
 #include "main.h"
@@ -57,6 +58,21 @@
 #define MAX_MESSAGE	128
 #define MAX_PATH	1024
 #define ONE_SECOND	1000
+
+#define SELECT_ICON_ID(id, basename, size) \
+	do { \
+		switch (size) { \
+		case ICON_SIZE_NONE: \
+			id = AnIconList::basename; \
+			break; \
+		case ICON_SIZE_16: \
+			id = AnIconList::basename; \
+			break; \
+		case ICON_SIZE_48: \
+			id = AnIconList::basename##_48; \
+			break; \
+		} \
+	} while (0)
 
 BEGIN_EVENT_TABLE(TrayIcon, wxTaskBarIcon)
 	EVT_MENU(GUI_EXIT, TrayIcon::OnGuiExit)
@@ -76,11 +92,6 @@ TrayIcon::TrayIcon(void)
 	AnEvents	*anEvents;
 	JobCtrl		*jobCtrl;
 	GList		*capabilities;
-
-	iconNormal_    = wxGetApp().loadIcon(wxT("ModAnoubis_black_48.png"));
-	iconMsgProblem_ = wxGetApp().loadIcon(wxT("ModAnoubis_alert_48.png"));
-	iconMsgQuestion_ =
-	    wxGetApp().loadIcon(wxT("ModAnoubis_question_48.png"));
 
 	messageAlertCount_ = 0;
 	messageEscalationCount_ = 0;
@@ -102,6 +113,7 @@ TrayIcon::TrayIcon(void)
 	acceptActions_ = false;
 
 	initDBus();
+	initIcon();
 
 	notify_init("Anoubis");
 	/*
@@ -168,10 +180,6 @@ TrayIcon::~TrayIcon(void)
 	anEvents->Disconnect(anEVT_ALERTNOTIFY_OPTIONS,
 	    wxCommandEventHandler(TrayIcon::OnAlertSettingsChanged), NULL,
 	    this);
-
-	delete iconNormal_;
-	delete iconMsgProblem_;
-	delete iconMsgQuestion_;
 }
 
 void
@@ -276,7 +284,6 @@ TrayIcon::update(bool increase)
 {
 	wxString tooltip;
 	wxString connection;
-	wxIcon *icon;
 	char message[MAX_MESSAGE];
 	tooltip = _("Messages: ");
 
@@ -293,10 +300,9 @@ TrayIcon::update(bool increase)
 		tooltip += wxString::Format(wxT("%d\n"),
 		    messageEscalationCount_);
 		tooltip += connection;
-		icon = iconMsgQuestion_;
 		sprintf(message, "Received Escalations: %d\n",
 		    messageEscalationCount_);
-		SetIcon(*icon, tooltip);
+		SetIcon(getIcon(ICON_TYPE_QUESTION), tooltip);
 		if (sendEscalation_ && (increase || !closed_)) {
 			if (!systemNotify("ESCALATION", message,
 			    NOTIFY_URGENCY_CRITICAL, escalationTimeout_))
@@ -307,10 +313,9 @@ TrayIcon::update(bool increase)
 			tooltip += wxString::Format(wxT("%d\n"),
 			    messageAlertCount_);
 			tooltip += connection;
-			icon = iconMsgProblem_;
 			sprintf(message, "Received Alerts: %d\n",
 			    messageAlertCount_);
-			SetIcon(*icon, tooltip);
+			SetIcon(getIcon(ICON_TYPE_ALERT), tooltip);
 			if (sendAlert_ && (increase || !closed_)) {
 				if (!systemNotify("ALERT", message,
 				    NOTIFY_URGENCY_NORMAL,
@@ -321,8 +326,7 @@ TrayIcon::update(bool increase)
 		} else {
 			tooltip = _("No messages\n");
 			tooltip += connection;
-			icon = iconNormal_;
-			SetIcon(*icon, tooltip);
+			SetIcon(getIcon(ICON_TYPE_NORMAL), tooltip);
 			/* enforce hiding of the system notifier popup */
 			notify_notification_close(notification, NULL);
 		}
@@ -482,4 +486,156 @@ TrayIcon::initDBus(void)
 			/* Do nothing with 'export' line. */
 		}
 	}
+}
+
+void
+TrayIcon::initIcon(void)
+{
+	wxIcon		 initIcon;
+	wxSize		 windowSize;
+	wxWindow	*iconWindow;
+
+	orientation_ = TRAY_ORIENTATION_NONE;
+
+	/* Set icon to initialize window within taskbar. */
+	initIcon = AnIconList::getInstance()->GetIcon(
+	    AnIconList::ICON_ANOUBIS_BLACK);
+	wxTaskBarIcon::SetIcon(initIcon);
+
+	/*
+	 * m_iconWnd is a wxTaskBarIconArea and only known by a forward
+	 * declaration. No matter which flavour of wxWidgets been used,
+	 * wxTaskBarIconArea is inhereted form wxWidnow.
+	 */
+	iconWindow = (wxWindow *)m_iconWnd;
+	if (iconWindow != NULL) {
+		iconWindow->Connect(wxEVT_SIZE,
+		    wxSizeEventHandler(TrayIcon::onSize), NULL, this);
+	}
+}
+
+void
+TrayIcon::onSize(wxSizeEvent &event)
+{
+	event.Skip();
+
+	if (cachedIconWindowSize_.y != event.GetSize().y) {
+		/* Height compared. */
+		orientation_ = TRAY_ORIENTATION_HORIZONTAL;
+	} else if (cachedIconWindowSize_.x != event.GetSize().x) {
+		/* Width compared. */
+		orientation_ = TRAY_ORIENTATION_VERTICAL;
+	}
+
+	cachedIconWindowSize_ = event.GetSize();
+	update(true);
+}
+
+int
+TrayIcon::detectTraySize(void) const
+{
+	int		 traySize;
+	wxSize		 iconWindowSize;
+	wxWindow	*iconWindow;
+
+	traySize = -1;
+	iconWindow = (wxWindow *)m_iconWnd;
+	if (iconWindow != NULL) {
+		iconWindowSize = iconWindow->GetSize();
+		switch (orientation_) {
+		case TRAY_ORIENTATION_VERTICAL:
+			traySize = iconWindowSize.GetWidth();
+			break;
+		case TRAY_ORIENTATION_HORIZONTAL:
+			traySize = iconWindowSize.GetHeight();
+			break;
+		case TRAY_ORIENTATION_NONE:
+			traySize = -1;
+			break;
+		}
+	}
+
+	return (traySize);
+}
+
+TrayIcon::IconSize
+TrayIcon::translateToIconSize(int traySize) const
+{
+	enum IconSize iconSize;
+
+	/*
+	 * To avoid placement offset done by wxWidgets we delay switching to
+	 * new icon size until icon is smaller than window size.
+	 */
+	if (traySize < 48 + 1) {
+		iconSize = ICON_SIZE_16;
+	} else {
+		iconSize = ICON_SIZE_48;
+	}
+
+	return (iconSize);
+}
+
+wxIcon
+TrayIcon::getIcon(IconType type) const
+{
+	enum IconSize		size;
+	enum AnIconList::IconId	iconId;
+
+	size   = translateToIconSize(detectTraySize());
+	iconId = AnIconList::ICON_NONE;
+
+	switch (type) {
+	case ICON_TYPE_NONE:
+		iconId = AnIconList::ICON_NONE;
+		break;
+	case ICON_TYPE_NORMAL:
+		SELECT_ICON_ID(iconId, ICON_ANOUBIS_BLACK, size);
+		break;
+	case ICON_TYPE_ALERT:
+		SELECT_ICON_ID(iconId, ICON_ANOUBIS_ALERT, size);
+		break;
+	case ICON_TYPE_QUESTION:
+		SELECT_ICON_ID(iconId, ICON_ANOUBIS_QUESTION, size);
+		break;
+	}
+
+	return (AnIconList::getInstance()->GetIcon(iconId));
+}
+
+bool
+TrayIcon::SetIcon(const wxIcon& icon, const wxString& tooltip)
+{
+	int		 traySize;
+	int		 iconSize;
+	wxWindow	*iconWindow;
+
+	/* The icon is square shaped, width/height makes no difference. */
+	iconSize = icon.GetWidth();
+	traySize = detectTraySize();
+	iconWindow = (wxWindow *)m_iconWnd;
+
+	/* wxWindow->SetSize() does not work. Force size by gtk-call. */
+#ifdef __WXGTK__
+	if (iconWindow != NULL) {
+		/*
+		 * Depending on orientation, we want to limit the iconWindow
+		 * to the size of the embedded icon.
+		 */
+		switch (orientation_) {
+		case TRAY_ORIENTATION_VERTICAL:
+			gtk_widget_set_size_request(iconWindow->m_widget,
+			    traySize, iconSize);
+			break;
+		case TRAY_ORIENTATION_HORIZONTAL:
+			gtk_widget_set_size_request(iconWindow->m_widget,
+			    iconSize, traySize);
+			break;
+		case TRAY_ORIENTATION_NONE:
+			break;
+		}
+	}
+#endif /* __WXGTK__ */
+
+	return (wxTaskBarIcon::SetIcon(icon, tooltip));
 }

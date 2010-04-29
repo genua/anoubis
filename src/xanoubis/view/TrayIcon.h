@@ -43,9 +43,6 @@ class TrayIcon : public wxTaskBarIcon
 		unsigned int		messageByHandNo_;
 		unsigned int		messageAlertCount_;
 		unsigned int		messageEscalationCount_;
-		wxIcon			*iconNormal_;
-		wxIcon			*iconMsgProblem_;
-		wxIcon			*iconMsgQuestion_;
 		bool			sendAlert_;
 		bool			sendEscalation_;
 		unsigned int            escalationTimeout_;
@@ -62,10 +59,100 @@ class TrayIcon : public wxTaskBarIcon
 		bool			closed_;
 
 		void		 update(bool increase);
+
+		/**
+		 * Cache icon window size
+		 */
+		wxSize cachedIconWindowSize_;
+
+		/**
+		 * Enumeration to classify orientation.
+		 */
+		enum TrayOrientation {
+			TRAY_ORIENTATION_NONE = -1,
+			TRAY_ORIENTATION_HORIZONTAL,
+			TRAY_ORIENTATION_VERTICAL,
+		};
+
+		/**
+		 * Enumeration to classify icon sizes.
+		 */
+		enum IconSize {
+			ICON_SIZE_NONE = -1,
+			ICON_SIZE_16,
+			ICON_SIZE_48,
+		};
+
+		/**
+		 * Enumeration to classify icon types.
+		 */
+		enum IconType {
+			ICON_TYPE_NONE = -1,
+			ICON_TYPE_NORMAL,
+			ICON_TYPE_ALERT,
+			ICON_TYPE_QUESTION,
+		};
+
+		/**
+		 * Store current tray orientation.
+		 */
+		TrayOrientation orientation_;
+
 		bool		 systemNotify(const gchar*, const gchar*,
 		    NotifyUrgency, const int);
 
 		void initDBus(void);
+
+		/**
+		 * Initialize icon.
+		 * Set the first icon to initialize wxTaskBarIconArea and
+		 * anything related to the icon.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void initIcon(void);
+
+		/**
+		 * Handle size events.
+		 * This method is called if window size of icon has changed.
+		 * @param[in] 1st The size event.
+		 * @return Nothing.
+		 */
+		virtual void onSize(wxSizeEvent &);
+
+		/**
+		 * Detect size of tray.
+		 * This method uses the internal tray icon area and query it
+		 * for it's size. This can be done because its a child of
+		 * wxWindow. As we get width and height from this window we use
+		 * orientation from a previous size-event to decide which one to
+		 * count on.
+		 * @param None.
+		 * @return The number of pixel or -1 if no window or no
+		 *	orientation exists.
+		 */
+		int detectTraySize(void) const;
+
+		/**
+		 * Translate size to icon size.
+		 * This method translates the given size (of the tray) to a
+		 * fixed value of enum IconSize. This is used by getIcon()
+		 * to return an icon of correct size.
+		 * @param[in] 1st The size in question.
+		 * @return The matching icon size.
+		 */
+		enum IconSize translateToIconSize(int) const;
+
+		/**
+		 * Get icon.
+		 * Use this method to get an icon. The given type of icon and
+		 * the size of the tray (by detectTraySize() and
+		 * translateToIconSize() is used to calculate the concerning
+		 * icon index. This index is feed to AnIconList to get the icon.
+		 * @param[in] 1st The type of icon.
+		 * @return The concerning wxIcon.
+		 */
+		wxIcon getIcon(IconType) const;
 
 		ANEVENTS_IDENT_BCAST_METHOD_DECLARATION;
 
@@ -90,6 +177,18 @@ class TrayIcon : public wxTaskBarIcon
 		void systemNotifyCallback(void);
 
 		virtual wxMenu *CreatePopupMenu(void);
+
+		/**
+		 * Set icon.
+		 * This is an overlay to the original wxTaskBarIcon::SetIcon().
+		 * Before the icon is set to the tray, the responcible window
+		 * is forcibly and depending on the orientation resized by
+		 * gtk-call.
+		 * @param[in] 1st The new icon.
+		 * @param[in] 2nd The new tooltip.
+		 * @return True on success.
+		 */
+		virtual bool SetIcon(const wxIcon&, const wxString&);
 
 	DECLARE_EVENT_TABLE()
 
