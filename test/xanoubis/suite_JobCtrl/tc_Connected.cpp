@@ -486,7 +486,7 @@ START_TEST(test_csum_orphaned)
 	    "ResultDetails: %s (%i)\n",
 	    anoubis_strerror(add_task.getResultDetails()),
 	    add_task.getResultDetails());
-	fail_unless(add_task.haveSignatures() == false, "A key-id is assigned");
+	fail_unless(add_task.haveKeyId() == false, "A key-id is assigned");
 	mark_point();
 
 	/* Remove file -> orphaned */
@@ -559,7 +559,7 @@ START_TEST(test_csum_symlink)
 	    "ResultDetails: %s (%i)\n",
 	    anoubis_strerror(add_task.getResultDetails()),
 	    add_task.getResultDetails());
-	fail_unless(add_task.haveSignatures() == false, "A key-id is assigned");
+	fail_unless(add_task.haveKeyId() == false, "A key-id is assigned");
 	mark_point();
 
 	/* Symlink the file */
@@ -650,7 +650,7 @@ START_TEST(test_csum_symlink_link)
 	    "ResultDetails: %s (%i)\n",
 	    anoubis_strerror(add_task.getResultDetails()),
 	    add_task.getResultDetails());
-	fail_unless(add_task.haveSignatures() == false, "A key-id is assigned");
+	fail_unless(add_task.haveKeyId() == false, "A key-id is assigned");
 	mark_point();
 
 	/* Receive from daemon: success */

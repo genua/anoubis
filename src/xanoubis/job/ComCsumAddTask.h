@@ -41,7 +41,7 @@
 #include <dev/anoubis.h>
 #endif
 
-#include "ComTask.h"
+#include "ComCSMultiTask.h"
 #include <anoubis_transaction.h>
 
 /**
@@ -65,27 +65,13 @@
  *   failed. getResultDetails() will return the remote error-code and can be
  *   evaluated by anoubis_strerror(3) or similar.
  */
-class ComCsumAddTask : public ComTask
+class ComCsumAddTask : public ComCSMultiTask
 {
 	public:
 		/**
-		 * Default c'tor.
-		 *
-		 * You explicity need to set the filename by calling setFile().
+		 * Default constructor.
 		 */
 		ComCsumAddTask(void);
-
-		/**
-		 * D'tor.
-		 */
-		~ComCsumAddTask(void);
-
-		/**
-		 * Add a path to the request.
-		 *
-		 * @param 1st The new path.
-		 */
-		void addPath(const wxString);
 
 		/**
 		 * Configures a private-key.
@@ -141,87 +127,7 @@ class ComCsumAddTask : public ComTask
 		 */
 		size_t getCsum(unsigned int idx, u_int8_t *, size_t) const;
 
-		/**
-		 * Return the error received for the checksum request
-		 * with the given index.
-		 *
-		 * @param idx The index.
-		 * @return Zero if the checksum was sent successfully,
-		 *     an error code (positive!) otherwise.
-		 */
-		int getChecksumError(unsigned int idx) const;
-
-		/**
-		 * Return the error received for the signature request
-		 * with the given index.
-		 *
-		 * @param idx The index.
-		 * @return Zero if the signature was sent successfully,
-		 *     an error code (positive!) otherwise.
-		 */
-		int getSignatureError(unsigned int idx) const;
-
-		/**
-		 * Return the number of paths in this CsumAddTask.
-		 *
-		 * @return The number of paths.
-		 */
-		unsigned int getPathCount(void) const;
-
-		/**
-		 * Return the path associated with an index in the request.
-		 *
-		 * @param idx The index.
-		 * @return The path.
-		 */
-		wxString getPath(unsigned int idx) const;
-
-		/**
-		 * Assign a key-ID to the request.
-		 *
-		 * @param 1st The keyid data.
-		 * @param 2nd The length of the keyid.
-		 * @return True is case of success, false if memory
-		 *     allocation failed.
-		 */
-		bool setKeyId(const u_int8_t *, unsigned int);
-
-		/**
-		 * Return true if signatures where calculated in this task.
-		 *
-		 * @return True if signature requests were sent.
-		 */
-		bool haveSignatures(void);
-
-	protected:
-		/**
-		 * Implementation of ComTask::done()
-		 */
-		bool done(void);
-
 	private:
-
-		/**
-		 * Helper function for ::exec and ::done: Create the
-		 * checksum requests neccessary for this tassk.
-		 */
-		void createRequests(void);
-
-		/**
-		 * Add one record to a request. If this fails try to
-		 * add an error record to the request.
-		 *
-		 * @param 1st The request.
-		 * @param 2nd The path name.
-		 * @param 3rd The checksum/signature data.
-		 * @param 4th The length of the checksum/signature data.
-		 * @return Zero if a record was added, a negative error
-		 *     code in case of an error.
-		 * NOTE: The only valid error should be ENOMEM.
-		 */
-		int addPathToRequest(struct anoubis_csmulti_request *,
-		    const char *path, u_int8_t *csdata, unsigned int cslen);
-
 		/**
 		 * Add an error record to both the checksum and the
 		 * signature request.
@@ -234,12 +140,7 @@ class ComCsumAddTask : public ComTask
 		 */
 		int addErrorPath(const char *path, int error);
 
-		std::vector<wxString>		 paths_;
-		struct anoubis_csmulti_request	*csreq_, *sigreq_;
 		PrivKey				*privKey_;
-		struct anoubis_transaction	*ta_;
-		u_int8_t			*keyId_;
-		unsigned int			 kidLen_;
 };
 
 #endif	/* _COMCSUMADDTASK_H_ */

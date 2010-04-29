@@ -467,6 +467,8 @@ xanoubis_SOURCES= \
 	widgets/AnPickFromFs.h \
 	widgets/AnStatusBar.cpp \
 	widgets/AnStatusBar.h \
+	job/ComCSMultiTask.h \
+	job/ComCSMultiTask.cpp \
 	job/ComCsumAddTask.cpp \
 	job/ComCsumAddTask.h \
 	job/ComCsumDelTask.cpp \

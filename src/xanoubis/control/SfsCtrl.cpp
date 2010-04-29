@@ -1042,7 +1042,7 @@ SfsCtrl::OnCsumAdd(TaskEvent &event)
 		return;
 	}
 
-	sigs = task->haveSignatures();
+	sigs = task->haveKeyId();
 	for (unsigned int i=0; i<task->getPathCount(); ++i) {
 		int	error;
 

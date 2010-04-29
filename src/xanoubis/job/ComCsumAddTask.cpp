@@ -50,33 +50,10 @@
 #include "ComCsumAddTask.h"
 #include "TaskEvent.h"
 
-ComCsumAddTask::ComCsumAddTask(void)
+ComCsumAddTask::ComCsumAddTask(void) : ComCSMultiTask()
 {
 	type_ = Task::TYPE_CSUMCALC;
-	privKey_ = 0;
-	csreq_ = NULL;
-	sigreq_ = NULL;
-	keyId_ = NULL;
-	kidLen_ = 0;
-	ta_ = NULL;
-}
-
-ComCsumAddTask::~ComCsumAddTask(void)
-{
-	if (csreq_)
-		anoubis_csmulti_destroy(csreq_);
-	if (sigreq_)
-		anoubis_csmulti_destroy(sigreq_);
-	if (keyId_)
-		free(keyId_);
-	if (ta_)
-		anoubis_transaction_destroy(ta_);
-}
-
-void
-ComCsumAddTask::addPath(wxString path)
-{
-	paths_.push_back(path);
+	privKey_ = NULL;
 }
 
 void
@@ -89,47 +66,6 @@ wxEventType
 ComCsumAddTask::getEventType(void) const
 {
 	return anTASKEVT_CSUM_ADD;
-}
-
-void
-ComCsumAddTask::createRequests(void)
-{
-	if (csreq_ == NULL) {
-		csreq_ = anoubis_csmulti_create(ANOUBIS_CHECKSUM_OP_ADDSUM,
-		    geteuid(), NULL, 0);
-		if (csreq_ == NULL)
-			goto nomem;
-	}
-	if (sigreq_ == NULL && keyId_ && kidLen_) {
-		sigreq_ = anoubis_csmulti_create(ANOUBIS_CHECKSUM_OP_ADDSIG,
-		    0, keyId_, kidLen_);
-		if (sigreq_ == NULL)
-			goto nomem;
-	}
-	return;
-
-nomem:
-	setComTaskResult(RESULT_LOCAL_ERROR);
-	setResultDetails(ENOMEM);
-}
-
-int
-ComCsumAddTask::addPathToRequest(struct anoubis_csmulti_request *req,
-    const char *path, u_int8_t *csdata, unsigned int cslen)
-{
-	int	ret;
-
-	if (req == NULL)
-		return 0;
-	if (csdata) {
-		ret = anoubis_csmulti_add(req, path, csdata, cslen);
-		if (ret == 0)
-			return 0;
-	} else {
-		ret = -ENOMEM;
-	}
-	ret = anoubis_csmulti_add_error(req, path, -ret);
-	return ret;
 }
 
 int
@@ -157,7 +93,7 @@ ComCsumAddTask::exec(void)
 
 	/* Checksum calculation is done in the checksum thread. */
 	if (type_ == Task::TYPE_CSUMCALC) {
-		createRequests();
+		createRequests(ANOUBIS_CHECKSUM_OP_ADDSUM);
 		if (getComTaskResult() != RESULT_INIT)
 			return;
 		type_ = Task::TYPE_COM;
@@ -207,58 +143,17 @@ ComCsumAddTask::exec(void)
 	}
 
 	/* This is required if in case of an import. */
-	createRequests();
+	createRequests(ANOUBIS_CHECKSUM_OP_ADDSUM);
 	/* createRequests failed or some earlier error occured. We're done. */
 	if (getComTaskResult() != RESULT_INIT)
 		return;
 
-	ta_ = NULL;
 	done();
 	return;
 
 fatal:
 	setComTaskResult(RESULT_LOCAL_ERROR);
 	setResultDetails(-ret);
-}
-
-bool
-ComCsumAddTask::done(void)
-{
-	/* An error occured. We are done. */
-	if (getComTaskResult() != RESULT_INIT)
-		return true;
-	if (ta_ && (ta_->flags & ANOUBIS_T_DONE) == 0) {
-		return false;
-	} else if (ta_) {
-		if (ta_->result) {
-			setComTaskResult(RESULT_REMOTE_ERROR);
-			setResultDetails(ta_->result);
-			anoubis_transaction_destroy(ta_);
-			ta_ = NULL;
-			return true;
-		}
-		anoubis_transaction_destroy(ta_);
-		ta_ = NULL;
-	}
-	if (csreq_ && csreq_->openreqs) {
-		ta_ = anoubis_client_csmulti_start(getClient(), csreq_);
-		if (ta_ == NULL)
-			goto nomem;
-		return false;
-	}
-	if (sigreq_ && sigreq_->openreqs) {
-		ta_ = anoubis_client_csmulti_start(getClient(), sigreq_);
-		if (ta_ == NULL)
-			goto nomem;
-		return false;
-	}
-	setComTaskResult(RESULT_SUCCESS);
-	return true;
-
-nomem:
-	setComTaskResult(RESULT_LOCAL_ERROR);
-	setResultDetails(ENOMEM);
-	return true;
 }
 
 size_t
@@ -277,66 +172,7 @@ ComCsumAddTask::getCsum(unsigned int idx, u_int8_t *csum, size_t size) const
 	return ANOUBIS_CS_LEN;
 }
 
-int
-ComCsumAddTask::getChecksumError(unsigned int idx) const
-{
-	struct anoubis_csmulti_record	*record;
-
-	if (!csreq_)
-		return 0;
-	record = anoubis_csmulti_find(csreq_, idx);
-	if (!record)
-		return 0;
-	return record->error;
-}
-
-int
-ComCsumAddTask::getSignatureError(unsigned int idx) const
-{
-	struct anoubis_csmulti_record	*record;
-
-	if (!sigreq_)
-		return 0;
-	record = anoubis_csmulti_find(sigreq_, idx);
-	if (!record)
-		return 0;
-	return record->error;
-}
-
-unsigned int
-ComCsumAddTask::getPathCount(void) const
-{
-	return paths_.size();
-}
-
-wxString
-ComCsumAddTask::getPath(unsigned int idx) const
-{
-	if (idx < paths_.size())
-		return paths_[idx];
-	return wxEmptyString;
-}
-
-bool
-ComCsumAddTask::setKeyId(const u_int8_t *id, unsigned int len)
-{
-	if (keyId_)
-		free(keyId_);
-	keyId_ = (u_int8_t*)malloc(len);
-	if (keyId_ == NULL)
-		return false;
-	kidLen_ = len;
-	memcpy(keyId_, id, len);
-	return true;
-}
-
-bool
-ComCsumAddTask::haveSignatures(void)
-{
-	return sigreq_ != NULL;
-}
-
-/* XXX CEH: This should pack multiple request into on CSMULTI request. */
+/* XXX CEH: This should pack multiple requests into one CSMULTI request. */
 void
 ComCsumAddTask::setSfsEntry(const struct sfs_entry *entry)
 {
@@ -348,7 +184,7 @@ ComCsumAddTask::setSfsEntry(const struct sfs_entry *entry)
 	addPath(wxString::FromAscii(entry->name));
 	if (entry->signature && entry->keyid && entry->keylen)
 		setKeyId(entry->keyid, entry->keylen);
-	createRequests();
+	createRequests(ANOUBIS_CHECKSUM_OP_ADDSUM);
 	if (entry->checksum)
 		addPathToRequest(csreq_, paths_[0].fn_str(),
 		    entry->checksum, ANOUBIS_CS_LEN);

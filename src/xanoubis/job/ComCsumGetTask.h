@@ -40,7 +40,7 @@
 #include <dev/anoubis.h>
 #endif
 
-#include "ComTask.h"
+#include "ComCSMultiTask.h"
 #include <anoubis_transaction.h>
 
 /**
@@ -67,40 +67,9 @@
  *   failed. getResultDetails() will return the remote error-code and can be
  *   evaluated by anoubis_strerror.
  */
-class ComCsumGetTask : public ComTask
+class ComCsumGetTask : public ComCSMultiTask
 {
 	public:
-		/**
-		 * Default constructor.
-		 */
-		ComCsumGetTask(void);
-
-		/**
-		 * Destructor.
-		 */
-		~ComCsumGetTask(void);
-
-		/**
-		 * Add a path to the GET request.
-		 *
-		 * @param 1st The file.
-		 * @return none.
-		 */
-		void addPath(const wxString &);
-
-		/**
-		 * Return the path associated with the given index.
-		 *
-		 * @param 1st The index.
-		 * @return The path.
-		 */
-		wxString getPath(unsigned int idx) const;
-
-		/**
-		 * Return the total number of paths in this request.
-		 */
-		size_t getPathCount(void) const;
-
 		/**
 		 * Implementation of Task::getEventType().
 		 */
@@ -110,29 +79,6 @@ class ComCsumGetTask : public ComTask
 		 * Implementation of Task::exec().
 		 */
 		void exec(void);
-
-		/**
-		 * Implementation of ComTask::done().
-		 */
-		bool done(void);
-
-		/**
-		 * Returns the result of the checksum get request for
-		 * the path with the given index.
-		 *
-		 * @param idx The index.
-		 * @return The error code. Zero if a checksum was received.
-		 */
-		int getChecksumError(unsigned int idx) const;
-
-		/**
-		 * Return the result of the signature get request for
-		 * the path with the given index.
-		 *
-		 * @param idx The index.
-		 * @return The error code. Zero if a signature was received.
-		 */
-		int getSignatureError(unsigned int idx) const;
 
 		/**
 		 * Returns the size of a checksum/signature.
@@ -157,50 +103,7 @@ class ComCsumGetTask : public ComTask
 		bool getChecksumData(unsigned int idx, int type,
 		    const u_int8_t *&buffer, size_t &len) const;
 
-		/**
-		 * Assign a keyid to the request.
-		 *
-		 * @param 1st The keyid.
-		 * @param 2nd The length of the keyid.
-		 * @return True if successful.
-		 */
-		bool setKeyId(const u_int8_t *keyid, unsigned int kidlen);
-
-		/**
-		 * Return true if a keyid is assigned to the request.
-		 *
-		 * @param None.
-		 * @return True if there is a keyid.
-		 */
-		bool haveKeyId(void) const;
-
 	private:
-		std::vector<wxString>		 paths_;
-		struct anoubis_csmulti_request	*csreq_;
-		struct anoubis_csmulti_request	*sigreq_;
-		u_int8_t			*keyid_;
-		unsigned int			 kidlen_;
-		anoubis_transaction		*ta_;
-
-		/**
-		 * Create the neccessary checksum and signature request
-		 * if they do not exist.
-		 */
-		void createRequests(void);
-
-		/**
-		 * Add a new path to a single request. If this fails add
-		 * an error request.
-		 *
-		 * @param 1st The request.
-		 * @param 2nd The path.
-		 * @return Zero if something was added to the request.
-		 *     An error code (ENOMEM) if neither the request nor
-		 *     an error request could be added.
-		 */
-		int addPathToRequest(struct anoubis_csmulti_request *,
-		    const char *path);
-
 		/**
 		 * Return a pointer to the checksum entry structure of the
 		 * specified type or NULL if no checksum of that type was
