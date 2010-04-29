@@ -32,12 +32,10 @@
 #define CATSTRING	"LC_MESSAGES"
 #define CATEGORY	LC_MESSAGES
 
-static char		*delocale;
-
 #ifdef OPENBSD
-#define DEFAULTLOCALE	"de"
+#define LOCALE	"de"
 #else
-#define	DEFAULTLOCALE	"de_DE"
+#define	LOCALE	"de_DE"
 #endif
 
 #include <check.h>
@@ -60,20 +58,19 @@ libanoubiserrorcode_tc_setup(void)
 	int errno;
 
 	catalog = getenv("CATALOG");
-	delocale = getenv("DELOCALE");
 	if (catalog == NULL)
 		catalog = "src/anoubis/po/de.gmo";
-	if (delocale == NULL)
-		delocale = DEFAULTLOCALE;
 
 	tmpdir = strdup("/tmp/tc_de_testXXXXXX");
 	tmp = mkdtemp(tmpdir);
 
 	snprintf(cmd, 200, "mkdir -p %s/%s/%s",
-		tmpdir, delocale, CATSTRING);
+		tmpdir, LOCALE, CATSTRING);
+	errno = system(cmd);
+	snprintf(cmd, 200, "ln -s %s %s/%s.utf8", LOCALE, tmpdir, LOCALE);
 	errno = system(cmd);
 	snprintf(cmd, 200, "cp %s %s/%s/%s/anoubis.mo",
-		catalog, tmpdir, delocale, CATSTRING);
+		catalog, tmpdir, LOCALE, CATSTRING);
 	errno = system(cmd);
 }
 
@@ -162,10 +159,15 @@ START_TEST(testcase_de)
 
 	dir = bindtextdomain("anoubis", tmpdir);
 #ifndef OPENBSD
-	printf("locale: %s\n", setlocale(CATEGORY, delocale));
+	{
+		char	*loc = setlocale(CATEGORY, LOCALE);
+		if (loc == NULL)
+			loc = setlocale(CATEGORY, LOCALE ".utf8");
+		printf("locale: %s\n", loc);
+	}
 #else
 	dir = bindtextdomain("libc", "/usr/share/nls/");
-	setenv("LANG", delocale, 1);
+	setenv("LANG", LOCALE, 1);
 #endif
 
 	run_test(predicted_error_string);
