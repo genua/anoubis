@@ -239,7 +239,7 @@ TrayIcon::OnGuiRestore(wxCommandEvent&)
 void
 TrayIcon::OnGuiExit(wxCommandEvent&)
 {
-	MainFrame *mf = wxDynamicCast(wxGetApp().GetTopWindow(), MainFrame);
+	MainFrame *mf = dynamic_cast<MainFrame*>(wxGetApp().GetTopWindow());
 	if (mf != 0)
 		mf->exitApp();
 }

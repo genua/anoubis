@@ -58,8 +58,8 @@ DlgRuleEditorFilterActionPage::update(Subject *subject)
 		showLog();
 	}
 	if ((subject == defaultPathPicker) &&
-	    (filterPolicy_->IsKindOf(CLASSINFO(SfsDefaultFilterPolicy)))) {
-		sfs = wxDynamicCast(filterPolicy_, SfsDefaultFilterPolicy);
+	    (dynamic_cast<SfsDefaultFilterPolicy*>(filterPolicy_))) {
+		sfs = dynamic_cast<SfsDefaultFilterPolicy*>(filterPolicy_);
 		sfs->setPath(defaultPathPicker->getFileName());
 	}
 }
@@ -70,17 +70,17 @@ DlgRuleEditorFilterActionPage::select(Policy *policy)
 	SfsDefaultFilterPolicy	*sfs;
 	PolicyRuleSet		*ruleSet;
 
-	if (policy->IsKindOf(CLASSINFO(AlfFilterPolicy)) ||
-	    policy->IsKindOf(CLASSINFO(AlfCapabilityFilterPolicy)) ||
-	    policy->IsKindOf(CLASSINFO(SbAccessFilterPolicy)) ||
-	    policy->IsKindOf(CLASSINFO(DefaultFilterPolicy)) ||
-	    policy->IsKindOf(CLASSINFO(SfsDefaultFilterPolicy)) ) {
+	if (dynamic_cast<AlfFilterPolicy*>(policy) ||
+	    dynamic_cast<AlfCapabilityFilterPolicy*>(policy) ||
+	    dynamic_cast<SbAccessFilterPolicy*>(policy) ||
+	    dynamic_cast<DefaultFilterPolicy*>(policy) ||
+	    dynamic_cast<SfsDefaultFilterPolicy*>(policy) ) {
 		ruleSet = policy->getParentRuleSet();
-		filterPolicy_ = wxDynamicCast(policy, FilterPolicy);
+		filterPolicy_ = dynamic_cast<FilterPolicy*>(policy);
 		DlgRuleEditorPage::select(policy);
 
-		if (policy->IsKindOf(CLASSINFO(SfsDefaultFilterPolicy))) {
-			sfs = wxDynamicCast(policy, SfsDefaultFilterPolicy);
+		if (dynamic_cast<SfsDefaultFilterPolicy*>(policy)) {
+			sfs = dynamic_cast<SfsDefaultFilterPolicy*>(policy);
 			defaultPathPicker->Show();
 			defaultPathPicker->setFileName(sfs->getPath());
 		} else {

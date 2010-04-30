@@ -96,24 +96,24 @@ DlgRuleEditorFilterSubjectPage::update(Subject *subject)
 void
 DlgRuleEditorFilterSubjectPage::select(Policy *policy)
 {
-	if (policy->IsKindOf(CLASSINFO(SfsFilterPolicy))) {
-		sfsPolicy_ = wxDynamicCast(policy, SfsFilterPolicy);
+	if (dynamic_cast<SfsFilterPolicy*>(policy)) {
+		sfsPolicy_ = dynamic_cast<SfsFilterPolicy*>(policy);
 		DlgRuleEditorPage::select(policy);
 		pathPicker->setMode(AnPickFromFs::MODE_BOTH);
 		pathPicker->setTitle(_("Path:"));
 		Enable(enable_);
 		Show();
 	}
-	if (policy->IsKindOf(CLASSINFO(SbAccessFilterPolicy))) {
-		sbPolicy_ = wxDynamicCast(policy, SbAccessFilterPolicy);
+	if (dynamic_cast<SbAccessFilterPolicy*>(policy)) {
+		sbPolicy_ = dynamic_cast<SbAccessFilterPolicy*>(policy);
 		DlgRuleEditorPage::select(policy);
 		pathPicker->setMode(AnPickFromFs::MODE_BOTH);
 		pathPicker->setTitle(_("Path:"));
 		Enable(enable_);
 		Show();
 	}
-	if (policy->IsKindOf(CLASSINFO(AppPolicy))) {
-		appPolicy_ = wxDynamicCast(policy, AppPolicy);
+	if (dynamic_cast<AppPolicy*>(policy)) {
+		appPolicy_ = dynamic_cast<AppPolicy*>(policy);
 		DlgRuleEditorPage::select(policy);
 		pathPicker->setMode(AnPickFromFs::MODE_FILE);
 		pathPicker->setTitle(_("Binary:"));
@@ -124,8 +124,8 @@ DlgRuleEditorFilterSubjectPage::select(Policy *policy)
 			Enable(enable_);
 		Show();
 	}
-	if (policy->IsKindOf(CLASSINFO(ContextFilterPolicy))) {
-		ctxPolicy_ = wxDynamicCast(policy, ContextFilterPolicy);
+	if (dynamic_cast<ContextFilterPolicy*>(policy)) {
+		ctxPolicy_ = dynamic_cast<ContextFilterPolicy*>(policy);
 		DlgRuleEditorPage::select(policy);
 		pathPicker->setMode(AnPickFromFs::MODE_FILE);
 		pathPicker->setTitle(_("Binary:"));

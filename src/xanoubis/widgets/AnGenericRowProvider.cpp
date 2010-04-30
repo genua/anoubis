@@ -208,7 +208,7 @@ AnGenericRowProvider::getSize(void) const
 void
 AnGenericRowProvider::update(Subject *subject)
 {
-	AnListClass *c = wxDynamicCast(subject, AnListClass);
+	AnListClass *c = dynamic_cast<AnListClass*>(subject);
 
 	if (c != 0) {
 		int	idx = getRowIndex(c);
@@ -219,7 +219,7 @@ AnGenericRowProvider::update(Subject *subject)
 void
 AnGenericRowProvider::updateDelete(Subject *subject)
 {
-	AnListClass *c = wxDynamicCast(subject, AnListClass);
+	AnListClass *c = dynamic_cast<AnListClass*>(subject);
 
 	if (c != 0) {
 		int idx = getRowIndex(c);

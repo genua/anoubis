@@ -203,7 +203,7 @@ DlgRuleEditor::update(Subject *subject)
 {
 	PolicyRuleSet *ruleSet;
 
-	ruleSet = wxDynamicCast(subject, PolicyRuleSet);
+	ruleSet = dynamic_cast<PolicyRuleSet*>(subject);
 	if (ruleSet != NULL) {
 		updateFooter();
 		return;
@@ -381,11 +381,11 @@ DlgRuleEditor::onAppGridCellSelect(wxGridEvent &event)
 		return;
 	}
 	item = rowProvider->getRow(event.GetRow());
-	appPolicy = wxDynamicCast(item, AppPolicy);
-	alfApp = wxDynamicCast(item, AlfAppPolicy);
-	sfsApp = wxDynamicCast(item, SfsAppPolicy);
-	ctxApp = wxDynamicCast(item, ContextAppPolicy);
-	sbApp  = wxDynamicCast(item, SbAppPolicy);
+	appPolicy = dynamic_cast<AppPolicy*>(item);
+	alfApp = dynamic_cast<AlfAppPolicy*>(item);
+	sfsApp = dynamic_cast<SfsAppPolicy*>(item);
+	ctxApp = dynamic_cast<ContextAppPolicy*>(item);
+	sbApp  = dynamic_cast<SbAppPolicy*>(item);
 
 	/* Update filter table and type choice. */
 	filterListTypeChoice->Clear();
@@ -480,7 +480,7 @@ DlgRuleEditor::onFilterGridCellSelect(wxGridEvent &event)
 	PolicyRuleSet		*ruleSet;
 	FilterPolicy		*policy;
 
-	table = wxDynamicCast(filterGrid->GetTable(), AnTable);
+	table = dynamic_cast<AnTable*>(filterGrid->GetTable());
 	if (table == NULL) {
 		return;
 	}
@@ -491,7 +491,7 @@ DlgRuleEditor::onFilterGridCellSelect(wxGridEvent &event)
 	}
 
 	item = rowProvider->getRow(event.GetRow());
-	policy = wxDynamicCast(item, FilterPolicy);
+	policy = dynamic_cast<FilterPolicy*>(item);
 	if (policy == NULL) {
 		return;
 	}
@@ -862,7 +862,7 @@ DlgRuleEditor::onFilterListCreateButton(wxCommandEvent &)
 	policyCtrl  = PolicyCtrl::getInstance();
 
 	policy = getSelectedPolicy(appGrid);
-	parent = wxDynamicCast(policy, AppPolicy);
+	parent = dynamic_cast<AppPolicy*>(policy);
 	if (parent == NULL) {
 		/* Can't create filter without app parent */
 		return;
@@ -902,7 +902,7 @@ DlgRuleEditor::onFilterListCreateButton(wxCommandEvent &)
 	} else if (typeSelection.Cmp(wxT("SB")) == 0) {
 		type = APN_SB_ACCESS;
 	} else if (typeSelection.Cmp(wxT("Default")) == 0) {
-		if (parent->IsKindOf(CLASSINFO(SfsAppPolicy))) {
+		if (dynamic_cast<SfsAppPolicy*>(parent)) {
 			type = APN_SFS_DEFAULT;
 		} else {
 			type = APN_DEFAULT;
@@ -1106,7 +1106,7 @@ DlgRuleEditor::getSelectedPolicy(wxGrid *grid)
 	AnTable		*table;
 	AnRowProvider	*rowProvider;
 
-	table = wxDynamicCast(grid->GetTable(), AnTable);
+	table = dynamic_cast<AnTable*>(grid->GetTable());
 	if (table == NULL) {
 		return (NULL);
 	}
@@ -1116,7 +1116,7 @@ DlgRuleEditor::getSelectedPolicy(wxGrid *grid)
 	}
 
 	idx = grid->GetGridCursorRow();
-	policy = wxDynamicCast(rowProvider->getRow(idx), Policy);
+	policy = dynamic_cast<Policy*>(rowProvider->getRow(idx));
 
 	return (policy);
 }

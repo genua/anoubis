@@ -53,7 +53,7 @@ RuleWizardPage::GetNext(void) const
 	RuleWizard		*wizard;
 
 	nextPage   = NULL;
-	wizard     = wxDynamicCast(GetParent(), RuleWizard);
+	wizard     = dynamic_cast<RuleWizard*>(GetParent());
 
 	if (wizard != NULL) {
 		nextPageNo = wizard->forwardTransition(pageNo_);
@@ -83,7 +83,7 @@ RuleWizardPage::GetPrev(void) const
 	RuleWizard		*wizard;
 
 	previousPage   = NULL;
-	wizard = wxDynamicCast(GetParent(), RuleWizard);
+	wizard = dynamic_cast<RuleWizard*>(GetParent());
 
 	if (wizard != NULL) {
 		previousPageNo = wizard->backwardTransition(pageNo_);
@@ -96,7 +96,7 @@ RuleWizardPage::GetPrev(void) const
 bool
 RuleWizardPage::isButtonEnabled(long id) const
 {
-	wxWizard *wizard = wxDynamicCast(GetParent(), RuleWizard);
+	wxWizard *wizard = dynamic_cast<RuleWizard*>(GetParent());
 	if (wizard == NULL) {
 		/* Wrong parent, rarely possible */
 		return (false);
@@ -114,7 +114,7 @@ RuleWizardPage::isButtonEnabled(long id) const
 void
 RuleWizardPage::setButtonEnabled(long id, bool enabled)
 {
-	wxWizard *wizard = wxDynamicCast(GetParent(), RuleWizard);
+	wxWizard *wizard = dynamic_cast<RuleWizard*>(GetParent());
 	if (wizard == NULL) {
 		/* Wrong parent, rarely possible */
 		return;

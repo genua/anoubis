@@ -133,11 +133,11 @@ PolicyRuleSet::addRuleInformation(EscalationNotify *escalation)
 	seeker = new RuleSetSearchPolicyVisitor(escalation->getRuleId());
 	this->accept(*seeker);
 	if (seeker->hasMatchingPolicy()) {
-		filter = wxDynamicCast(seeker->getMatchingPolicy(),
-		    FilterPolicy);
+		filter = dynamic_cast<FilterPolicy*>(
+		    seeker->getMatchingPolicy());
 		if (filter) {
-			parent = wxDynamicCast(filter->getParentPolicy(),
-			    AppPolicy);
+			parent = dynamic_cast<AppPolicy*>(
+			    filter->getParentPolicy());
 		}
 	}
 	delete seeker;
@@ -359,32 +359,32 @@ PolicyRuleSet::getPolicyAt(unsigned int idx) const
 
 	if (idx < alfList_.size()) {
 		policy = alfList_[idx];
-		return (wxDynamicCast(policy, AppPolicy));
+		return (dynamic_cast<AppPolicy*>(policy));
 	}
 	idx -= alfList_.size();
 
 	if (idx < sfsList_.size()) {
 		policy = sfsList_[idx];
-		return (wxDynamicCast(policy, AppPolicy));
+		return (dynamic_cast<AppPolicy*>(policy));
 	}
 	idx -= sfsList_.size();
 
 	if (idx < ctxList_.size()) {
 		policy = ctxList_[idx];
-		return (wxDynamicCast(policy, AppPolicy));
+		return (dynamic_cast<AppPolicy*>(policy));
 	}
 	idx -= ctxList_.size();
 
 	if (idx < sbList_.size()) {
 		policy = sbList_[idx];
-		return (wxDynamicCast(policy, AppPolicy));
+		return (dynamic_cast<AppPolicy*>(policy));
 	}
 
 	if (policy == NULL) {
 		return (NULL);
 	}
 
-	return (wxDynamicCast(policy, AppPolicy));
+	return (dynamic_cast<AppPolicy*>(policy));
 }
 
 int
@@ -395,7 +395,7 @@ PolicyRuleSet::getIndexOfPolicy(AppPolicy *policy) const
 	if (policy == 0)
 		return (-1);
 
-	if (policy->IsKindOf(CLASSINFO(AlfAppPolicy))) {
+	if (dynamic_cast<AlfAppPolicy*>(policy)) {
 		for (unsigned int i = 0; i < alfList_.size(); i++) {
 			if (alfList_[i] == policy)
 				return (i);
@@ -406,7 +406,7 @@ PolicyRuleSet::getIndexOfPolicy(AppPolicy *policy) const
 
 	idx += alfList_.size();
 
-	if (policy->IsKindOf(CLASSINFO(SfsAppPolicy))) {
+	if (dynamic_cast<SfsAppPolicy*>(policy)) {
 		for (unsigned int i = 0; i < sfsList_.size(); i++) {
 			if (sfsList_[i] == policy)
 				return (idx + i);
@@ -417,7 +417,7 @@ PolicyRuleSet::getIndexOfPolicy(AppPolicy *policy) const
 
 	idx += sfsList_.size();
 
-	if (policy->IsKindOf(CLASSINFO(ContextAppPolicy))) {
+	if (dynamic_cast<ContextAppPolicy*>(policy)) {
 		for (unsigned int i = 0; i < ctxList_.size(); i++) {
 			if (ctxList_[i] == policy)
 				return (idx + i);
@@ -428,7 +428,7 @@ PolicyRuleSet::getIndexOfPolicy(AppPolicy *policy) const
 
 	idx += ctxList_.size();
 
-	if (policy->IsKindOf(CLASSINFO(SbAppPolicy))) {
+	if (dynamic_cast<SbAppPolicy*>(policy)) {
 		for (unsigned int i = 0; i < sbList_.size(); i++) {
 			if (sbList_[i] == policy)
 				return (idx + i);
@@ -451,7 +451,7 @@ PolicyRuleSet::searchAlfAppPolicy(wxString binary) const
 
 	rule = apn_match_appname(&(ruleSet_->alf_queue), binary.To8BitData());
 	if (rule != NULL) {
-		result = wxDynamicCast(rule->userdata, AlfAppPolicy);
+		result = dynamic_cast<AlfAppPolicy*>((Policy*) rule->userdata);
 	}
 	if (result != NULL) {
 		list = result->getBinaryList();
@@ -474,7 +474,8 @@ PolicyRuleSet::searchContextAppPolicy(wxString binary) const
 
 	rule = apn_match_appname(&(ruleSet_->ctx_queue), binary.To8BitData());
 	if (rule != NULL) {
-		result = wxDynamicCast(rule->userdata, ContextAppPolicy);
+		result = dynamic_cast<ContextAppPolicy*>(
+		    (Policy*) rule->userdata);
 	}
 	if (result != NULL) {
 		list = result->getBinaryList();
@@ -497,7 +498,7 @@ PolicyRuleSet::searchSandboxAppPolicy(wxString binary) const
 
 	rule = apn_match_appname(&(ruleSet_->sb_queue), binary.To8BitData());
 	if (rule != NULL) {
-		result = wxDynamicCast(rule->userdata, SbAppPolicy);
+		result = dynamic_cast<SbAppPolicy*>((Policy*) rule->userdata);
 	}
 	if (result != NULL) {
 		list = result->getBinaryList();
@@ -591,11 +592,11 @@ PolicyRuleSet::prependAppPolicy(AppPolicy *app)
 	}
 	setModified();
 
-	if (app->IsKindOf(CLASSINFO(ContextAppPolicy))) {
+	if (dynamic_cast<ContextAppPolicy*>(app)) {
 		ctxList_.insert(ctxList_.begin(), app);
-	} else if (app->IsKindOf(CLASSINFO(AlfAppPolicy))) {
+	} else if (dynamic_cast<AlfAppPolicy*>(app)) {
 		alfList_.insert(alfList_.begin(), app);
-	} else if (app->IsKindOf(CLASSINFO(SbAppPolicy))) {
+	} else if (dynamic_cast<SbAppPolicy*>(app)) {
 		sbList_.insert(sbList_.begin(), app);
 	} else {
 		return (false);
@@ -754,7 +755,8 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 	triggerrule = apn_find_rule(rs, triggerid);
 	if (!triggerrule)
 		return;
-	triggerPolicy = wxDynamicCast(triggerrule->userdata, FilterPolicy);
+	triggerPolicy = dynamic_cast<FilterPolicy*>(
+	    (Policy*) triggerrule->userdata);
 	if (!triggerPolicy)
 		return;
 	parentPolicy = triggerPolicy->getParentPolicy();

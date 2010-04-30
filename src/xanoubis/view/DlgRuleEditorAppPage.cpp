@@ -59,7 +59,7 @@ DlgRuleEditorAppPage::update(Subject *subject)
 	if (subject == appPolicy_ || subject == ctxPolicy_)
 		setBinary();
 
-	if (subject && subject->IsKindOf(CLASSINFO(ContextAppPolicy))) {
+	if (subject && dynamic_cast<ContextAppPolicy*>(subject)) {
 		setDisableSFS();
 	}
 }
@@ -67,8 +67,8 @@ DlgRuleEditorAppPage::update(Subject *subject)
 void
 DlgRuleEditorAppPage::select(Policy *policy)
 {
-	if (policy->IsKindOf(CLASSINFO(AppPolicy))) {
-		appPolicy_ = wxDynamicCast(policy, AppPolicy);
+	if (dynamic_cast<AppPolicy*>(policy)) {
+		appPolicy_ = dynamic_cast<AppPolicy*>(policy);
 		DlgRuleEditorPage::select(policy);
 		if (appPolicy_->getTypeID() == APN_SFS) {
 			enable_ = false;
@@ -76,8 +76,8 @@ DlgRuleEditorAppPage::select(Policy *policy)
 		subjPage->select(policy);
 		Enable(enable_);
 	}
-	if (policy->IsKindOf(CLASSINFO(ContextFilterPolicy))) {
-		ctxPolicy_ = wxDynamicCast(policy, ContextFilterPolicy);
+	if (dynamic_cast<ContextFilterPolicy*>(policy)) {
+		ctxPolicy_ = dynamic_cast<ContextFilterPolicy*>(policy);
 		DlgRuleEditorPage::select(policy);
 		subjPage->select(policy);
 		Enable(enable_);
@@ -88,7 +88,7 @@ DlgRuleEditorAppPage::select(Policy *policy)
 	 * Context applications
 	 */
 	noSfsCheckbox->Show(policy &&
-	    policy->IsKindOf(CLASSINFO(ContextAppPolicy)));
+	    dynamic_cast<ContextAppPolicy*>(policy));
 }
 
 void
@@ -110,7 +110,7 @@ void
 DlgRuleEditorAppPage::onNoSfsClicked(wxCommandEvent &event)
 {
 	if (appPolicy_ != 0 &&
-	    appPolicy_->IsKindOf(CLASSINFO(ContextAppPolicy))) {
+	    dynamic_cast<ContextAppPolicy*>(appPolicy_)) {
 		appPolicy_->setFlag(APN_RULE_NOSFS, event.IsChecked());
 	}
 
@@ -140,7 +140,7 @@ DlgRuleEditorAppPage::setBinary(void)
 		return;
 
 	while(win) {
-		parentNotebook = wxDynamicCast(win, wxNotebook);
+		parentNotebook = dynamic_cast<wxNotebook*>(win);
 		if (parentNotebook)
 			break;
 		win = win->GetParent();

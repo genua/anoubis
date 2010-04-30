@@ -98,7 +98,7 @@ ModAlf::update(Subject *subject)
 	NotificationCtrl	*notifyCtrl;
 	NotificationPerspective	*perspective;
 
-	perspective = wxDynamicCast(subject, NotificationPerspective);
+	perspective = dynamic_cast<NotificationPerspective*>(subject);
 	if (perspective == NULL) {
 		return;
 	}

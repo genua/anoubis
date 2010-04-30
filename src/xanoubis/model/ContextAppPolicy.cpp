@@ -124,7 +124,7 @@ ContextAppPolicy::prependFilterPolicy(FilterPolicy *filter)
 	}
 
 	/* Reject invalid filter types. */
-	if (!filter->IsKindOf(CLASSINFO(ContextFilterPolicy))) {
+	if (!dynamic_cast<ContextFilterPolicy*>(filter)) {
 		return (false);
 	}
 

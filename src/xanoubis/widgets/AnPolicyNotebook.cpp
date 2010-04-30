@@ -67,23 +67,23 @@ AnPolicyNotebook::~AnPolicyNotebook(void)
 void
 AnPolicyNotebook::select(Policy *policy)
 {
-	if (policy->IsKindOf(CLASSINFO(AppPolicy))) {
-		appPolicy_ = wxDynamicCast(policy, AppPolicy);
+	if (dynamic_cast<AppPolicy*>(policy)) {
+		appPolicy_ = dynamic_cast<AppPolicy*>(policy);
 		selectAppPolicy(appPolicy_);
-	} else if (policy->IsKindOf(CLASSINFO(AlfFilterPolicy))) {
+	} else if (dynamic_cast<AlfFilterPolicy*>(policy)) {
 		selectAlfFilterPolicy(policy);
-	} else if (policy->IsKindOf(CLASSINFO(AlfCapabilityFilterPolicy))) {
+	} else if (dynamic_cast<AlfCapabilityFilterPolicy*>(policy)) {
 		selectAlfCapabilityFilterPolicy(policy);
-	} else if (policy->IsKindOf(CLASSINFO(DefaultFilterPolicy))) {
+	} else if (dynamic_cast<DefaultFilterPolicy*>(policy)) {
 		selectDefaultFilterPolicy(policy);
-	} else if (policy->IsKindOf(CLASSINFO(SfsFilterPolicy))) {
+	} else if (dynamic_cast<SfsFilterPolicy*>(policy)) {
 		selectSfsFilterPolicy(policy);
-	} else if (policy->IsKindOf(CLASSINFO(SfsDefaultFilterPolicy))) {
+	} else if (dynamic_cast<SfsDefaultFilterPolicy*>(policy)) {
 		selectSfsDefaultFilterPolicy(policy);
-	} else if (policy->IsKindOf(CLASSINFO(ContextFilterPolicy))) {
-		ctxPolicy_ = wxDynamicCast(policy, ContextFilterPolicy);
+	} else if (dynamic_cast<ContextFilterPolicy*>(policy)) {
+		ctxPolicy_ = dynamic_cast<ContextFilterPolicy*>(policy);
 		selectContextFilterPolicy(policy);
-	} else if (policy->IsKindOf(CLASSINFO(SbAccessFilterPolicy))) {
+	} else if (dynamic_cast<SbAccessFilterPolicy*>(policy)) {
 		selectSbAccessFilterPolicy(policy);
 	} else {
 		/* Unknown policy type - nothing to do */
@@ -299,7 +299,7 @@ AnPolicyNotebook::selectContextFilterPolicy(Policy *policy)
 		return;
 	}
 
-	filterPolicy = wxDynamicCast(policy, ContextFilterPolicy);
+	filterPolicy = dynamic_cast<ContextFilterPolicy*>(policy);
 	if (filterPolicy == NULL) {
 		return;
 	}

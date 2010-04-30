@@ -49,8 +49,8 @@ DlgRuleEditorFilterSfsPage::update(Subject *subject)
 void
 DlgRuleEditorFilterSfsPage::select(Policy *policy)
 {
-	if (policy->IsKindOf(CLASSINFO(SfsFilterPolicy))) {
-		filterPolicy_ = wxDynamicCast(policy, SfsFilterPolicy);
+	if (dynamic_cast<SfsFilterPolicy*>(policy)) {
+		filterPolicy_ = dynamic_cast<SfsFilterPolicy*>(policy);
 		DlgRuleEditorPage::select(policy);
 		Enable(enable_);
 		Show();

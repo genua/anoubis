@@ -71,7 +71,7 @@ DlgRuleEditorAttrProvider::GetAttr(int row, int col,
 		return (attr);
 	}
 
-	policy = wxDynamicCast(rowProvider->getRow(row), Policy);
+	policy = dynamic_cast<Policy*>(rowProvider->getRow(row));
 	if (policy == NULL) {
 		/* Can't get row information. */
 		return (attr);

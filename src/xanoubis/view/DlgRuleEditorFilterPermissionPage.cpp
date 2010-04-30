@@ -47,8 +47,8 @@ DlgRuleEditorFilterPermissionPage::update(Subject *subject)
 void
 DlgRuleEditorFilterPermissionPage::select(Policy *policy)
 {
-	if (policy->IsKindOf(CLASSINFO(SbAccessFilterPolicy))) {
-		filterPolicy_ = wxDynamicCast(policy, SbAccessFilterPolicy);
+	if (dynamic_cast<SbAccessFilterPolicy*>(policy)) {
+		filterPolicy_ = dynamic_cast<SbAccessFilterPolicy*>(policy);
 		DlgRuleEditorPage::select(policy);
 		Enable(enable_);
 		Show();

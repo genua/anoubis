@@ -131,9 +131,9 @@ AlfAppPolicy::prependFilterPolicy(FilterPolicy *filter)
 	}
 
 	/* Reject invalid filter types. */
-	if (!filter->IsKindOf(CLASSINFO(AlfFilterPolicy)) &&
-	    !filter->IsKindOf(CLASSINFO(AlfCapabilityFilterPolicy)) &&
-	    !filter->IsKindOf(CLASSINFO(DefaultFilterPolicy))) {
+	if (!dynamic_cast<AlfFilterPolicy*>(filter) &&
+	    !dynamic_cast<AlfCapabilityFilterPolicy*>(filter) &&
+	    !dynamic_cast<DefaultFilterPolicy*>(filter)) {
 		return (false);
 	}
 

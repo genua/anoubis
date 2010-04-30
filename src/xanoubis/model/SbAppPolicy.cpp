@@ -128,8 +128,8 @@ SbAppPolicy::prependFilterPolicy(FilterPolicy *filter)
 	}
 
 	/* Reject invalid filter types. */
-	if (!filter->IsKindOf(CLASSINFO(SbAccessFilterPolicy)) &&
-	    !filter->IsKindOf(CLASSINFO(DefaultFilterPolicy))) {
+	if (!dynamic_cast<SbAccessFilterPolicy*>(filter) &&
+	    !dynamic_cast<DefaultFilterPolicy*>(filter)) {
 		return (false);
 	}
 

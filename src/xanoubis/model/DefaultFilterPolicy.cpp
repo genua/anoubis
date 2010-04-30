@@ -87,14 +87,14 @@ DefaultFilterPolicy::createApnInserted(AppPolicy *parent, unsigned int id)
 		id = parent->getApnRuleId();
 	}
 
-	if (parent->IsKindOf(CLASSINFO(AlfAppPolicy))) {
+	if (dynamic_cast<AlfAppPolicy*>(parent)) {
 		rc = apn_insert_alfrule(ruleSet->getApnRuleSet(), rule, id);
-	} else if (parent->IsKindOf(CLASSINFO(SfsAppPolicy))) {
+	} else if (dynamic_cast<SfsAppPolicy*>(parent)) {
 		/* Sfs has it's own default policies */
 		rc = -1;
-	} else if (parent->IsKindOf(CLASSINFO(ContextAppPolicy))) {
+	} else if (dynamic_cast<ContextAppPolicy*>(parent)) {
 		rc = apn_insert_ctxrule(ruleSet->getApnRuleSet(), rule, id);
-	} else if (parent->IsKindOf(CLASSINFO(SbAppPolicy))) {
+	} else if (dynamic_cast<SbAppPolicy*>(parent)) {
 		rc = apn_insert_sbrule(ruleSet->getApnRuleSet(), rule, id);
 	} else {
 		/* Unknown parent type - nothing to do */

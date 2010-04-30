@@ -47,9 +47,9 @@ DlgRuleEditorFilterCapabilityPage::update(Subject *subject)
 void
 DlgRuleEditorFilterCapabilityPage::select(Policy *policy)
 {
-	if (policy->IsKindOf(CLASSINFO(AlfCapabilityFilterPolicy))) {
-		filterPolicy_ = wxDynamicCast(policy,
-		    AlfCapabilityFilterPolicy);
+	if (dynamic_cast<AlfCapabilityFilterPolicy*>(policy)) {
+		filterPolicy_ = dynamic_cast
+		    <AlfCapabilityFilterPolicy*>(policy);
 		DlgRuleEditorPage::select(policy);
 		Enable(enable_);
 		Show();

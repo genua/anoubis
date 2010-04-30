@@ -96,14 +96,14 @@ DlgRuleEditorListProperty::getText(AnListClass *item) const
 	ContextFilterPolicy		*ctxFilter;
 	SbAccessFilterPolicy		*sbFilter;
 
-	app = wxDynamicCast(item, AppPolicy);
-	alfFilter = wxDynamicCast(item, AlfFilterPolicy);
-	alfCapability = wxDynamicCast(item, AlfCapabilityFilterPolicy);
-	sfsDefault = wxDynamicCast(item, SfsDefaultFilterPolicy);
-	sfsFilter = wxDynamicCast(item, SfsFilterPolicy);
-	defaultFilter = wxDynamicCast(item, DefaultFilterPolicy);
-	ctxFilter = wxDynamicCast(item, ContextFilterPolicy);
-	sbFilter = wxDynamicCast(item, SbAccessFilterPolicy);
+	app = dynamic_cast<AppPolicy*>(item);
+	alfFilter = dynamic_cast<AlfFilterPolicy*>(item);
+	alfCapability = dynamic_cast<AlfCapabilityFilterPolicy*>(item);
+	sfsDefault = dynamic_cast<SfsDefaultFilterPolicy*>(item);
+	sfsFilter = dynamic_cast<SfsFilterPolicy*>(item);
+	defaultFilter = dynamic_cast<DefaultFilterPolicy*>(item);
+	ctxFilter = dynamic_cast<ContextFilterPolicy*>(item);
+	sbFilter = dynamic_cast<SbAccessFilterPolicy*>(item);
 
 	if (app != NULL) {
 		text = examineAppPolicy(app);

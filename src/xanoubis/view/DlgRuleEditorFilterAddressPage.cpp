@@ -48,8 +48,8 @@ DlgRuleEditorFilterAddressPage::update(Subject *subject)
 void
 DlgRuleEditorFilterAddressPage::select(Policy *policy)
 {
-	if (policy->IsKindOf(CLASSINFO(AlfFilterPolicy))) {
-		filterPolicy_ = wxDynamicCast(policy, AlfFilterPolicy);
+	if (dynamic_cast<AlfFilterPolicy*>(policy)) {
+		filterPolicy_ = dynamic_cast<AlfFilterPolicy*>(policy);
 		DlgRuleEditorPage::select(policy);
 		Enable(enable_);
 		Show();

@@ -99,8 +99,8 @@ SfsAppPolicy::prependFilterPolicy(FilterPolicy *filter)
 	}
 
 	/* Reject invalid filter types. */
-	if (!filter->IsKindOf(CLASSINFO(SfsFilterPolicy)) &&
-	    !filter->IsKindOf(CLASSINFO(SfsDefaultFilterPolicy))) {
+	if (!dynamic_cast<SfsFilterPolicy*>(filter) &&
+	    !dynamic_cast<SfsDefaultFilterPolicy*>(filter)) {
 		return (false);
 	}
 

@@ -48,8 +48,8 @@ DlgRuleEditorFilterContextPage::update(Subject *subject)
 void
 DlgRuleEditorFilterContextPage::select(Policy *policy)
 {
-	if (policy->IsKindOf(CLASSINFO(ContextFilterPolicy))) {
-		filterPolicy_ = wxDynamicCast(policy, ContextFilterPolicy);
+	if (dynamic_cast<ContextFilterPolicy*>(policy)) {
+		filterPolicy_ = dynamic_cast<ContextFilterPolicy*>(policy);
 		DlgRuleEditorPage::select(policy);
 		appPage->setBinaryIndex(binaryIndex_);
 		appPage->select(policy);

@@ -50,7 +50,7 @@ RuleWizardProgramPage::RuleWizardProgramPage(wxWindow *parent,
 	programPicker->setTitle(wxT("")); /* Title shown as extra label. */
 	programPicker->setMode(AnPickFromFs::MODE_FILE);
 
-	RuleWizardPage *page = wxDynamicCast(parent, RuleWizardPage);
+	RuleWizardPage *page = dynamic_cast<RuleWizardPage*>(parent);
 
 	page->Connect(wxEVT_WIZARD_PAGE_CHANGING,
 	    wxWizardEventHandler(RuleWizardProgramPage::onPageChanging),
@@ -400,5 +400,5 @@ RuleWizardProgramPage::updateNavi(void)
 inline RuleWizardPage *
 RuleWizardProgramPage::getWizardPage(void) const
 {
-	return (wxDynamicCast(GetParent(), RuleWizardPage));
+	return (dynamic_cast<RuleWizardPage*>(GetParent()));
 }
