@@ -122,7 +122,7 @@ alf {
 		# DNS
 		allow connect tcp from any to any port domain
 		allow send udp from any to any port domain
-		allow receive udp from any port domain  to any
+		allow receive udp from any port domain to any
 
 		# X
 		allow connect tcp from any to 127.0.0.1 port 6000 - 6099
@@ -160,9 +160,10 @@ sandbox {
 	# TrueCrypt
 	@truecrypt@ {
 		allow path "/" rw
-		allow path "@sudo@" rx
-		allow path "@mkfs.ext2@" rx
-		allow path "@mkfs.ext3@" rx
+		allow path "/bin" rx
+		allow path "/usr/bin" rx
+		allow path "/sbin" rx
+		allow path "/usr/sbin" rx
 		default ask
 	}
 
@@ -180,10 +181,10 @@ sandbox {
 
 	# daemon socket
 	any {
-	    deny log path "/var/run/anoubisd.sock" rwx
+		deny log path "/var/run/anoubisd.sock" rwx
 	}
-}
 
+}
 context {
 	# Anoubis software
 	/sbin/anoubisctl nosfs {

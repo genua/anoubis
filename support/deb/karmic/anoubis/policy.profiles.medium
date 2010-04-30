@@ -107,7 +107,9 @@ alf {
 		allow connect tcp from any to 127.0.0.1 port 6000 - 6099
 		allow connect tcp from any to ::1 port 6000 - 6099
 
+		# Http
 		allow connect tcp from any to any port { http, https }
+		# Ask for Proxies
 		ask connect tcp from any to any port { 8000, 8080 }
 
 		default ask
@@ -160,9 +162,10 @@ sandbox {
 	# TrueCrypt
 	@truecrypt@ {
 		allow path "/" rw
-		allow path "@sudo@" rx
-		allow path "@mkfs.ext2@" rx
-		allow path "@mkfs.ext3@" rx
+		allow path "/bin" rx
+		allow path "/usr/bin" rx
+		allow path "/sbin" rx
+		allow path "/usr/sbin" rx
 		default ask
 	}
 
@@ -182,8 +185,8 @@ sandbox {
 	any {
 		deny log path "/var/run/anoubisd.sock" rwx
 	}
-
 }
+
 context {
 	# Anoubis software
 	/sbin/anoubisctl nosfs {
@@ -203,7 +206,7 @@ context {
 
 	# TrueCrypt
 	@truecrypt@ {
-		# no context new for sudo
+		# No context new for sudo
 	}
 
 	/usr/sbin/sshd  {
