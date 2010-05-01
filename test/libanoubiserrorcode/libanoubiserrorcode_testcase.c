@@ -30,7 +30,6 @@
 #endif
 
 #define CATSTRING	"LC_MESSAGES"
-#define CATEGORY	LC_MESSAGES
 
 #ifdef OPENBSD
 #define LOCALE	"de"
@@ -142,36 +141,50 @@ END_TEST
 
 START_TEST(testcase_de)
 {
-	char *predicted_error_string[] = {
-		"Ungueltige Fehlernummer",
+	char	*predicted_error_string_iso[] = {
+		"Ung\xfcltige Fehlernummer",
+		"Datei oder Verzeichnis nicht gefunden",
+		"Unbekannte Anoubis-Fehlernummer",
+		"Unbekannte Anoubis-Fehlernummer",
+		"Operation nicht erlaubt: Kein Zertifikat gefunden"
+	};
+	char	*predicted_error_string_utf8[] = {
+		"Ung\xc3\xbcltige Fehlernummer",
 		"Datei oder Verzeichnis nicht gefunden",
 		"Unbekannte Anoubis-Fehlernummer",
 		"Unbekannte Anoubis-Fehlernummer",
 		"Operation nicht erlaubt: Kein Zertifikat gefunden"
 	};
 
-	char *locale = setlocale(CATEGORY, NULL);
-	char *domain = textdomain(NULL);
-	char *dir;
+	char	*locale = setlocale(LC_ALL, NULL);
+	char	 *domain = textdomain(NULL);
+	char	*dir;
+	char	*loc;
+	int	 is_utf8 = 0;
 
 	printf("testing german error codes\n");
 	printf("domain: %s\n", textdomain("anoubis"));
 
 	dir = bindtextdomain("anoubis", tmpdir);
 #ifndef OPENBSD
-	{
-		char	*loc = setlocale(CATEGORY, LOCALE);
-		if (loc == NULL)
-			loc = setlocale(CATEGORY, LOCALE ".utf8");
-		printf("locale: %s\n", loc);
+	loc = setlocale(LC_ALL, LOCALE);
+	if (loc == NULL) {
+		is_utf8 = 1;
+		loc = setlocale(LC_ALL, LOCALE ".utf8");
 	}
+	printf("locale: %s\n", loc);
 #else
+	setenv("LANG", "de", 1);
 	dir = bindtextdomain("libc", "/usr/share/nls/");
-	setenv("LANG", LOCALE, 1);
+	loc = setlocale(LC_ALL, "de_DE.ISO8859-15");
+	printf("locale: %s\n", loc);
 #endif
 
-	run_test(predicted_error_string);
-	setlocale(CATEGORY, (const char *) locale);
+	if (is_utf8 == 1)
+		run_test(predicted_error_string_utf8);
+	else
+		run_test(predicted_error_string_iso);
+	setlocale(LC_ALL, (const char *) locale);
 	textdomain( (const char *) domain);
 }
 END_TEST

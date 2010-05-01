@@ -50,7 +50,7 @@ msgstr "Operation nicht erlaubt: Kein Zertifikat gefunden"
 msgid "Operation not permitted: User ID and certificate's User ID do not match"
 msgstr ""
 "Operation nicht erlaubt: User ID und User ID des Zertifikates stimmen nicht "
-"ueberein"
+"überein"
 
 #: src/libanoubis/anoubiserrorcode/anoubis_errno.c:40
 #: src/xanoubis/view/ModSfsMainPanelImpl.cpp:195
@@ -59,7 +59,7 @@ msgstr "Fehler beim Laden des privaten Schlüssels."
 
 #: src/libanoubis/anoubiserrorcode/anoubis_errno.c:56
 msgid "invalid error code"
-msgstr "Ungueltige Fehlernummer"
+msgstr "Ungültige Fehlernummer"
 
 #: src/libanoubis/anoubiserrorcode/anoubis_errno.c:72
 msgid "undefined anoubis error code"
