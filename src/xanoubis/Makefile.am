@@ -79,6 +79,7 @@ dist_util_SCRIPTS = utils/xanoubis_guessApp.sh
 dist_icon_DATA = \
 	icons/General_alert_16.png \
 	icons/General_alert_48.png \
+	icons/General_downarrow_16.png \
 	icons/General_error_16.png \
 	icons/General_error_48.png \
 	icons/General_ok_16.png \
@@ -87,10 +88,9 @@ dist_icon_DATA = \
 	icons/General_problem_48.png \
 	icons/General_question_16.png \
 	icons/General_question_48.png \
+	icons/General_rightarrow_16.png \
 	icons/General_symlink_16.png \
 	icons/General_symlink_48.png \
-	icons/General_downarrow_16.png \
-	icons/General_rightarrow_16.png \
 	icons/ModAlf_alert_16.png \
 	icons/ModAlf_alert_48.png \
 	icons/ModAlf_black_16.png \
@@ -106,18 +106,39 @@ dist_icon_DATA = \
 	icons/ModAlf_question_16.png \
 	icons/ModAlf_question_48.png \
 	icons/ModAnoubis_alert_16.png \
+	icons/ModAnoubis_alert_20.png \
+	icons/ModAnoubis_alert_24.png \
+	icons/ModAnoubis_alert_32.png \
 	icons/ModAnoubis_alert_48.png \
 	icons/ModAnoubis_black_16.png \
+	icons/ModAnoubis_black_20.png \
+	icons/ModAnoubis_black_24.png \
+	icons/ModAnoubis_black_32.png \
 	icons/ModAnoubis_black_48.png \
 	icons/ModAnoubis_error_16.png \
+	icons/ModAnoubis_error_20.png \
+	icons/ModAnoubis_error_24.png \
+	icons/ModAnoubis_error_32.png \
 	icons/ModAnoubis_error_48.png \
 	icons/ModAnoubis_grey_16.png \
+	icons/ModAnoubis_grey_20.png \
+	icons/ModAnoubis_grey_24.png \
+	icons/ModAnoubis_grey_32.png \
 	icons/ModAnoubis_grey_48.png \
 	icons/ModAnoubis_ok_16.png \
+	icons/ModAnoubis_ok_20.png \
+	icons/ModAnoubis_ok_24.png \
+	icons/ModAnoubis_ok_32.png \
 	icons/ModAnoubis_ok_48.png \
 	icons/ModAnoubis_problem_16.png \
+	icons/ModAnoubis_problem_20.png \
+	icons/ModAnoubis_problem_24.png \
+	icons/ModAnoubis_problem_32.png \
 	icons/ModAnoubis_problem_48.png \
 	icons/ModAnoubis_question_16.png \
+	icons/ModAnoubis_question_20.png \
+	icons/ModAnoubis_question_24.png \
+	icons/ModAnoubis_question_32.png \
 	icons/ModAnoubis_question_48.png \
 	icons/ModOverview_alert_16.png \
 	icons/ModOverview_alert_48.png \
@@ -151,6 +172,7 @@ dist_icon_DATA = \
 	icons/ModSfs_question_16.png \
 	icons/ModSfs_question_48.png \
 	icons/xanoubis.png
+
 dist_profile_SCRIPTS = \
 	profiles/high \
 	profiles/medium \

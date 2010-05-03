@@ -60,11 +60,20 @@ class AnIconList : public wxImageList, public Singleton<AnIconList>
 			ICON_PROBLEM_48,	/*!< Big exclamation icon */
 			ICON_SYMLINK,		/*!< Symlink icon */
 			ICON_ANOUBIS_BLACK,	/*!< Basic Anoubis icon */
+			ICON_ANOUBIS_BLACK_20,	/*!< Basic Anoubis icon 20x20 */
+			ICON_ANOUBIS_BLACK_24,	/*!< Basic Anoubis icon 24x24 */
+			ICON_ANOUBIS_BLACK_32,	/*!< Basic Anoubis icon 32x32 */
 			ICON_ANOUBIS_BLACK_48,	/*!< Basic Anoubis icon 48x48 */
 			ICON_ANOUBIS_ALERT,	/*!< Anoubis alert-icon */
+			ICON_ANOUBIS_ALERT_20,	/*!< Anoubis alert-icon 20x20 */
+			ICON_ANOUBIS_ALERT_24,	/*!< Anoubis alert-icon 24x24 */
+			ICON_ANOUBIS_ALERT_32,	/*!< Anoubis alert-icon 32x32 */
 			ICON_ANOUBIS_ALERT_48,	/*!< Anoubis alert-icon 48x48 */
-			ICON_ANOUBIS_QUESTION,	/*!< Anoubis question-icon */
-			ICON_ANOUBIS_QUESTION_48/*!< Anoubis question-icon */
+			ICON_ANOUBIS_QUESTION,	 /*!< Anoubis question-icon */
+			ICON_ANOUBIS_QUESTION_20,/*!< Anoubis question-icon */
+			ICON_ANOUBIS_QUESTION_24,/*!< Anoubis question-icon */
+			ICON_ANOUBIS_QUESTION_32,/*!< Anoubis question-icon */
+			ICON_ANOUBIS_QUESTION_48,/*!< Anoubis question-icon */
 		};
 
 		/**

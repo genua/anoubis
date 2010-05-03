@@ -80,6 +80,9 @@ class TrayIcon : public wxTaskBarIcon
 		enum IconSize {
 			ICON_SIZE_NONE = -1,
 			ICON_SIZE_16,
+			ICON_SIZE_20,
+			ICON_SIZE_24,
+			ICON_SIZE_32,
 			ICON_SIZE_48,
 		};
 

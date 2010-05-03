@@ -68,6 +68,15 @@
 		case ICON_SIZE_16: \
 			id = AnIconList::basename; \
 			break; \
+		case ICON_SIZE_20: \
+			id = AnIconList::basename##_20; \
+			break; \
+		case ICON_SIZE_24: \
+			id = AnIconList::basename##_24; \
+			break; \
+		case ICON_SIZE_32: \
+			id = AnIconList::basename##_32; \
+			break; \
 		case ICON_SIZE_48: \
 			id = AnIconList::basename##_48; \
 			break; \
@@ -567,8 +576,14 @@ TrayIcon::translateToIconSize(int traySize) const
 	 * To avoid placement offset done by wxWidgets we delay switching to
 	 * new icon size until icon is smaller than window size.
 	 */
-	if (traySize < 48 + 1) {
+	if (traySize < 20 + 1) {
 		iconSize = ICON_SIZE_16;
+	} else if (traySize < 24 + 1) {
+		iconSize = ICON_SIZE_20;
+	} else if (traySize < 32 + 1) {
+		iconSize = ICON_SIZE_24;
+	} else if (traySize < 48 + 1) {
+		iconSize = ICON_SIZE_32;
 	} else {
 		iconSize = ICON_SIZE_48;
 	}
