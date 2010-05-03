@@ -31,6 +31,7 @@
 #include <vector>
 
 #include "PolicyVisitor.h"
+#include <typeinfo>
 
 class SimpleOverviewRow;
 
@@ -50,7 +51,7 @@ class SimpleOverviewVisitor : public PolicyVisitor
 		 *
 		 * @param classInfo Type of AppPolicy to visit
 		 */
-		SimpleOverviewVisitor(wxClassInfo *);
+		SimpleOverviewVisitor(const std::type_info *);
 
 		/**
 		 * D'tor.
@@ -109,9 +110,9 @@ class SimpleOverviewVisitor : public PolicyVisitor
 		std::vector<SimpleOverviewRow *> filterList_;
 
 		/**
-		 * Type-information about AppPolicy to scan
+		 *
 		 */
-		wxClassInfo *classInfo_;
+		const std::type_info * typeInfo_;
 
 		/**
 		 * The currently scanned ruleset.

@@ -32,12 +32,13 @@
 #include "SimpleOverviewTable.h"
 #include "SimpleOverviewVisitor.h"
 
-SimpleOverviewTable::SimpleOverviewTable(wxClassInfo *classInfo)
+SimpleOverviewTable::SimpleOverviewTable(const std::type_info &typeInfo)
     : Observer(0)
 {
 	userRuleSetId_ = -1;
 	adminRuleSetId_ = -1;
-	visitor_ = new SimpleOverviewVisitor(classInfo);
+	visitor_ = new SimpleOverviewVisitor(
+	    (const std::type_info *) &typeInfo);
 
 	AnEvents::getInstance()->Connect(anEVT_LOAD_RULESET,
 	    wxCommandEventHandler(SimpleOverviewTable::onLoadRuleSet),

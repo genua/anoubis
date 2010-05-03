@@ -30,9 +30,10 @@
 #include "SbAppPolicy.h"
 #include "SbOverviewTable.h"
 #include "SimpleOverviewRow.h"
+#include <typeinfo>
 
 SbOverviewTable::SbOverviewTable(void)
-    : SimpleOverviewTable(CLASSINFO(SbAppPolicy))
+    : SimpleOverviewTable(typeid(SbAppPolicy))
 {
 }
 
@@ -148,12 +149,12 @@ SbOverviewTable::getFilterText(int col, SimpleOverviewRow *row) const
 	if (policy == 0)
 		return (wxEmptyString);
 
-	if (policy->IsKindOf(CLASSINFO(SbAccessFilterPolicy))) {
+	if (dynamic_cast<SbAccessFilterPolicy*>(policy)) {
 		return (getSbAccessText(col,
-		    wxDynamicCast(policy, SbAccessFilterPolicy)));
-	} else if (policy->IsKindOf(CLASSINFO(DefaultFilterPolicy))) {
+		    dynamic_cast<SbAccessFilterPolicy*>(policy)));
+	} else if (dynamic_cast<DefaultFilterPolicy*>(policy)) {
 		return (getDefaultText(col,
-		    wxDynamicCast(policy, DefaultFilterPolicy)));
+		    dynamic_cast<DefaultFilterPolicy*>(policy)));
 	} else {
 		return _("???");
 	}

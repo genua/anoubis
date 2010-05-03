@@ -32,6 +32,7 @@
 #include <wx/grid.h>
 
 #include <vector>
+#include <typeinfo>
 
 #include "PolicyVisitor.h"
 
@@ -89,7 +90,7 @@ class SimpleOverviewTable : public wxGridTableBase,
 		 * @param classInfo Type-information about application-policies
 		 *                  to be displayed.
 		 */
-		SimpleOverviewTable(wxClassInfo *);
+		SimpleOverviewTable(const std::type_info &);
 
 	private:
 		/**

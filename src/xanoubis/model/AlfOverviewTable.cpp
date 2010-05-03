@@ -28,9 +28,10 @@
 #include "AlfOverviewTable.h"
 #include "main.h"
 #include "SimpleOverviewRow.h"
+#include <typeinfo>
 
 AlfOverviewTable::AlfOverviewTable(void)
-    : SimpleOverviewTable(CLASSINFO(AlfAppPolicy))
+    : SimpleOverviewTable(typeid(AlfAppPolicy))
 {
 }
 
@@ -143,15 +144,15 @@ AlfOverviewTable::getFilterText(int col, SimpleOverviewRow *row) const
 	if (policy == 0)
 		return (wxEmptyString);
 
-	if (policy->IsKindOf(CLASSINFO(AlfFilterPolicy))) {
+	if (dynamic_cast<AlfFilterPolicy*>(policy)) {
 		return (getAlfText(col,
-		    wxDynamicCast(policy, AlfFilterPolicy)));
-	} else if (policy->IsKindOf(CLASSINFO(AlfCapabilityFilterPolicy))) {
+		    dynamic_cast<AlfFilterPolicy*>(policy)));
+	} else if (dynamic_cast<AlfCapabilityFilterPolicy*>(policy)) {
 		return (getAlfCapabilityText(col,
-		    wxDynamicCast(policy, AlfCapabilityFilterPolicy)));
-	} else if (policy->IsKindOf(CLASSINFO(DefaultFilterPolicy))) {
+		    dynamic_cast<AlfCapabilityFilterPolicy*>(policy)));
+	} else if (dynamic_cast<DefaultFilterPolicy*>(policy)) {
 		return (getDefaultText(col,
-		    wxDynamicCast(policy, DefaultFilterPolicy)));
+		    dynamic_cast<DefaultFilterPolicy*>(policy)));
 	} else {
 		return _("???");
 	}

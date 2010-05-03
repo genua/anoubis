@@ -28,10 +28,11 @@
 #include "Debug.h"
 #include "SimpleOverviewRow.h"
 #include "SimpleOverviewVisitor.h"
+#include <typeinfo>
 
-SimpleOverviewVisitor::SimpleOverviewVisitor(wxClassInfo *classInfo)
+SimpleOverviewVisitor::SimpleOverviewVisitor(const std::type_info *typeInfo)
 {
-	classInfo_ = classInfo;
+	typeInfo_ = typeInfo;
 	currentRuleSet_ = 0;
 	currentApp_ = 0;
 	appIndex_ = 0;
@@ -142,12 +143,15 @@ SimpleOverviewVisitor::visitSfsDefaultFilterPolicy(
 void
 SimpleOverviewVisitor::visitAppPolicy(AppPolicy *policy)
 {
-	if (policy->IsKindOf(classInfo_)) {
-		Debug::trace(wxT("(%ls) Visiting application %ls"),
-		    classInfo_->GetClassName(),
-		    policy->GetClassInfo()->GetClassName());
+	wxString className = wxString::From8BitData(
+	    &(typeInfo_->name())[2]);
+	wxString policyName = wxString::From8BitData(
+	    &(typeid(*policy).name())[2]);
 
+	if (typeid(*policy) == *typeInfo_) {
 		/* This is an application-policies you are looking for */
+		Debug::trace(wxT("(%ls) Visiting application %ls"),
+		    className.c_str(), policyName.c_str());
 		currentApp_ = policy;
 		appIndex_++;
 		filterIndex_ = 0;
@@ -168,7 +172,8 @@ SimpleOverviewVisitor::visitAppPolicy(AppPolicy *policy)
 			for (unsigned int i = 0; i < count; i++) {
 				Debug::trace(
 				    wxT("(%ls) Appending application"),
-				    classInfo_->GetClassName());
+				    className.c_str());
+
 
 				SimpleOverviewRow *row = new SimpleOverviewRow(
 				    currentRuleSet_, appIndex_ - 1,
@@ -182,8 +187,7 @@ SimpleOverviewVisitor::visitAppPolicy(AppPolicy *policy)
 		 * corresponding filter.
 		 */
 		Debug::trace(wxT("(%ls) Skipping application %ls"),
-		    classInfo_->GetClassName(),
-		    policy->GetClassInfo()->GetClassName());
+		    className.c_str(), policyName.c_str());
 
 		setPropagation(false);
 	}
@@ -192,15 +196,18 @@ SimpleOverviewVisitor::visitAppPolicy(AppPolicy *policy)
 void
 SimpleOverviewVisitor::visitFilterPolicy(FilterPolicy *policy)
 {
+	wxString className = wxString::From8BitData(
+	    &(typeInfo_->name())[2]);
+	wxString policyName = wxString::From8BitData(
+	    &(typeid(*policy).name())[2]);
+
 	Debug::trace(wxT("(%ls) Visiting filter %ls"),
-	    classInfo_->GetClassName(),
-	    policy->GetClassInfo()->GetClassName());
+	    className.c_str(), policyName.c_str());
 
 	SimpleOverviewRow *row = new SimpleOverviewRow(currentRuleSet_,
 	    appIndex_ - 1, currentApp_, filterIndex_, policy);
 	filterList_.push_back(row);
-	Debug::trace(wxT("(%ls) Appending filter"),
-	    classInfo_->GetClassName());
+	Debug::trace(wxT("(%ls) Appending filter"), className.c_str());
 
 	filterIndex_++;
 
@@ -217,7 +224,7 @@ SimpleOverviewVisitor::visitFilterPolicy(FilterPolicy *policy)
 			filterList_.push_back(row);
 
 			Debug::trace(wxT("(%ls) Appending extra filter"),
-			    classInfo_->GetClassName());
+			    className.c_str());
 
 			filterIndex_++;
 		}

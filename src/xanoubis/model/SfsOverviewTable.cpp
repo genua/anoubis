@@ -30,9 +30,10 @@
 #include "SfsAppPolicy.h"
 #include "SfsOverviewTable.h"
 #include "SimpleOverviewRow.h"
+#include <typeinfo>
 
 SfsOverviewTable::SfsOverviewTable(void)
-    : SimpleOverviewTable(CLASSINFO(SfsAppPolicy))
+    : SimpleOverviewTable(typeid(SfsAppPolicy))
 {
 }
 
@@ -115,12 +116,12 @@ SfsOverviewTable::getFilterText(int col, SimpleOverviewRow *row) const
 	if (policy == 0)
 		return (wxEmptyString);
 
-	if (policy->IsKindOf(CLASSINFO(SfsFilterPolicy))) {
+	if (dynamic_cast<SfsFilterPolicy*>(policy)) {
 		return (getSfsText(col,
-		    wxDynamicCast(policy, SfsFilterPolicy)));
-	} else if (policy->IsKindOf(CLASSINFO(SfsDefaultFilterPolicy))) {
+		    dynamic_cast<SfsFilterPolicy*>(policy)));
+	} else if (dynamic_cast<SfsDefaultFilterPolicy*>(policy)) {
 		return (getSfsDefaultText(col,
-		    wxDynamicCast(policy, SfsDefaultFilterPolicy)));
+		    dynamic_cast<SfsDefaultFilterPolicy*>(policy)));
 	} else {
 		return _("???");
 	}
