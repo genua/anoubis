@@ -876,18 +876,19 @@ sfs_need_upgrade_data(const struct abuf_buffer updata,
  * - We estimate the number of writes possible. These writes are performed
  *   without looking a the file system again. Thus lots of writes from a
  *   different source can still lead to a full file system.
- * - The estimate is limited to 10000 writes, i.e. we consult the file
- *   system at least once per 10000 writes.
+ * - The estimate is limited to SFS_FREE_WRITES writes, i.e. we consult the
+ *   file system at least once per SFS_FREE_WRITES write operations.
  * - We never touch the last percent of blocks and/or inodes.
  * - We assume that a single write consumes at most 3 blocks and 3 inodes.
  * - If statvfs(2) is not supported, we assume that the file system has
  *   enough space.
  * - If the checksum changeroot directory does not yet exist, we allow
- *   a few writes.
+ *   a few writes (SFS_INITIAL_FREE_WRITES).
  *
  * @param None.
  * @return Zero if writing is ok, a negative error code (ENOSPC) otherwise.
  */
+
 static int
 sfs_space_available(void)
 {
@@ -898,11 +899,15 @@ sfs_space_available(void)
 	 */
 	static int		sfs_free_writes = 0;
 
+	/* Parameters for the free space calculation */
+	static const int	SFS_FREE_WRITES = 1000;
+	static const int	SFS_INITIAL_FREE_WRITES = 10;
+
 	struct statvfs		buf;
 	int			ret;
 	long long		tmp;
 
-	if (sfs_free_writes) {
+	if (sfs_free_writes > 0) {
 		--sfs_free_writes;
 		return 0;
 	}
@@ -911,29 +916,28 @@ sfs_space_available(void)
 		switch (errno) {
 		case ENOSYS:
 			/* Not supported: Allow many writes. */
-			sfs_free_writes = 10000;
+			sfs_free_writes = SFS_FREE_WRITES;
 			return 0;
 		case ENOENT:
 		case ENOTDIR:
 			/* No SFS-Tree yet: Allow a few writes */
-			sfs_free_writes = 10;
+			sfs_free_writes = SFS_INITIAL_FREE_WRITES;
 			return 0;
 		default:
 			return -errno;
 		}
 	}
-	if (buf.f_blocks / buf.f_bfree > 100
-	    || buf.f_files / buf.f_ffree > 100)
-		/* Less than one percent free blocks/inodes */
+	/* Less than one percent free blocks/inodes? */
+	if (buf.f_blocks/100 > buf.f_bavail || buf.f_files/100 > buf.f_favail)
 		return -ENOSPC;
 
-	sfs_free_writes = 10000;
-	/* Allow at most one sfs write for evry 3 blocks above one precent. */
-	tmp = (buf.f_bfree - buf.f_blocks / 100) / 3;
+	sfs_free_writes = SFS_FREE_WRITES;
+	/* Allow at most one sfs write for every 3 blocks above one precent. */
+	tmp = (buf.f_bavail - buf.f_blocks / 100) / 3;
 	if (tmp < sfs_free_writes)
 		sfs_free_writes = tmp;
 	/* Allow at most one sfs write for every 3 inodes above one precent. */
-	tmp = (buf.f_ffree - buf.f_files / 100) / 3;
+	tmp = (buf.f_favail - buf.f_files / 100) / 3;
 	if (tmp < sfs_free_writes)
 		sfs_free_writes = tmp;
 	/* Should not happen... */
