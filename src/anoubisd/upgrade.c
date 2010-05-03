@@ -275,8 +275,6 @@ dispatch_upgrade(anoubisd_msg_t *msg, struct event_info_upgrade *ev_info)
 		log_warnx("dispatch_upgrade: short message");
 		return;
 	}
-	/* Force NUL-termination of strings in umsg->chunk */
-	umsg->chunk[umsg->chunksize-1] = 0;
 	switch(umsg->upgradetype) {
 	case ANOUBISD_UPGRADE_START:
 		send_upgrade_message(ANOUBISD_UPGRADE_CHUNK_REQ, ev_info);
@@ -286,6 +284,8 @@ dispatch_upgrade(anoubisd_msg_t *msg, struct event_info_upgrade *ev_info)
 			send_upgrade_message(ANOUBISD_UPGRADE_END, ev_info);
 			break;
 		}
+		/* Force NUL-termination of strings in umsg->chunk */
+		umsg->chunk[umsg->chunksize-1] = 0;
 		pos = 0;
 		while (pos < umsg->chunksize) {
 			send_checksum(umsg->chunk + pos, ev_info);
