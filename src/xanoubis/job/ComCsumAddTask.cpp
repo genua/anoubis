@@ -54,6 +54,7 @@ ComCsumAddTask::ComCsumAddTask(void) : ComCSMultiTask()
 {
 	type_ = Task::TYPE_CSUMCALC;
 	privKey_ = NULL;
+	checksumsCalculated_ = false;
 }
 
 void
@@ -139,6 +140,7 @@ ComCsumAddTask::exec(void)
 				goto fatal;
 		}
 		privKey_ = NULL;
+		checksumsCalculated_ = true;
 		return;
 	}
 
@@ -161,8 +163,10 @@ ComCsumAddTask::getCsum(unsigned int idx, u_int8_t *csum, size_t size) const
 {
 	struct anoubis_csmulti_record	*record;
 
-	if (getComTaskResult() != RESULT_SUCCESS)
+	if (getComTaskResult() != RESULT_SUCCESS
+	    && getComTaskResult() != RESULT_REMOTE_ERROR)
 		return 0;
+	/* Only report a local checksum if we actually calculated one. */
 	record = anoubis_csmulti_find(csreq_, idx);
 	if (!record || record->error)
 		return 0;
@@ -170,6 +174,12 @@ ComCsumAddTask::getCsum(unsigned int idx, u_int8_t *csum, size_t size) const
 		return 0;
 	memcpy(csum, record->u.add.csdata, ANOUBIS_CS_LEN);
 	return ANOUBIS_CS_LEN;
+}
+
+bool
+ComCsumAddTask::isLocalChecksum(void) const
+{
+	return checksumsCalculated_;
 }
 
 /* XXX CEH: This should pack multiple requests into one CSMULTI request. */
@@ -181,6 +191,7 @@ ComCsumAddTask::setSfsEntry(const struct sfs_entry *entry)
 	 * calculate the checksum.
 	 */
 	type_ = Task::TYPE_COM;
+	checksumsCalculated_ = false;
 	addPath(wxString::FromAscii(entry->name));
 	if (entry->signature && entry->keyid && entry->keylen)
 		setKeyId(entry->keyid, entry->keylen);

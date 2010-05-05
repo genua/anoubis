@@ -127,6 +127,18 @@ class ComCsumAddTask : public ComCSMultiTask
 		 */
 		size_t getCsum(unsigned int idx, u_int8_t *, size_t) const;
 
+		/**
+		 * Returns true if the checksums returned by getCsum is
+		 * calculated from the local file system. False if it
+		 * was specified explicitly.
+		 * The return value should be true for normal register
+		 * jobs and false in case of an import that specifies
+		 * its own checksum.
+		 * @param None.
+		 * @return True if the checksums were calculated locally.
+		 */
+		bool isLocalChecksum(void) const;
+
 	private:
 		/**
 		 * Add an error record to both the checksum and the
@@ -141,6 +153,7 @@ class ComCsumAddTask : public ComCSMultiTask
 		int addErrorPath(const char *path, int error);
 
 		PrivKey				*privKey_;
+		bool				 checksumsCalculated_;
 };
 
 #endif	/* _COMCSUMADDTASK_H_ */

@@ -1558,9 +1558,12 @@ anoubis_client_csmulti_steps(struct anoubis_transaction *t,
 	case ANOUBIS_P_CSMULTIREPLY:
 		if (!VERIFY_LENGTH(m, sizeof(Anoubis_CSMultiReplyMessage)))
 			goto out;
-		if (!get_value(m->u.csmultireply->operation) == request->op)
-			goto out;
 		ret = -get_value(m->u.csmultireply->error);
+		if (ret != 0)
+			break;
+		/* This check is only valid if there is no error! */
+		if (get_value(m->u.csmultireply->operation) != request->op)
+			goto out;
 		break;
 	default:
 		goto out;

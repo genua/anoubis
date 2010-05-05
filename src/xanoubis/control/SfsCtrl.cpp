@@ -426,8 +426,6 @@ SfsCtrl::unregisterChecksum(const IndexArray &arr)
 SfsCtrl::CommandResult
 SfsCtrl::importChecksums(const wxString &path)
 {
-	ComCsumGetTask	*task = NULL;
-
 	if (!taskList_.empty() || inProgress_)
 		return (RESULT_BUSY);
 
@@ -435,7 +433,6 @@ SfsCtrl::importChecksums(const wxString &path)
 		FILE *fh;
 		struct sfs_entry *entries, *entry;
 		int total = 0;
-		bool	doSig = isSignatureEnabled();
 
 		/*
 		 * Wrap the file read in a dummy SfsOp because the caller
@@ -473,13 +470,9 @@ SfsCtrl::importChecksums(const wxString &path)
 		 * Progress accounting:
 		 * - each createComCsumAddTask(SfsEntry) requires a
 		 *   progress of two.
-		 * - each path in a createComCsumGetTask will make
-		 *   progress of one.
 		 * - each createCsumCalcTask requires a progress of 1
-		 * - additionally, each ComCsumGetTask that is scheduled
-		 *   makes another progress of one (handled inside the loop).
 		 */
-		startSfsOp(4 * total);
+		startSfsOp(3 * total);
 		while (entry != 0) {
 			createComCsumAddTask(entry);
 			int idx = sfsDir_.getIndexOf(
@@ -492,27 +485,13 @@ SfsCtrl::importChecksums(const wxString &path)
 					createCsumCalcTask(e->getPath());
 				else
 					updateSfsOp(1);
-
-				if (!task)
-					task = createComCsumGetTask(doSig);
-				task->addPath(e->getPath());
-				if (task->getPathCount() >= 1000) {
-					pushTask(task, 1);
-					task = NULL;
-				}
 			} else {
-				updateSfsOp(3);
+				updateSfsOp(1);
 			}
 			entry = entry->next;
-			if (!updateSfsOp(0)) {
-				if (task)
-					delete task;
-				task = NULL;
+			if (!updateSfsOp(0))
 				break;
-			}
 		}
-		if (task)
-			pushTask(task, 1);
 		endSfsOp();
 		return (RESULT_EXECUTE);
 	} else
@@ -852,7 +831,7 @@ SfsCtrl::processOneCsumGet(ComCsumGetTask *task, unsigned int idx,
 		error = entry->setChecksumMissing(type);
 	} else if (error == EINVAL) {
 		error = entry->setChecksumInvalid(type);
-	} else {
+	} else if (error != EAGAIN) {
 		message = wxString::Format(_("Got error from daemon while "
 		    "fetching the checksum for %ls: %hs"),
 		    entry->getPath().c_str(), anoubis_strerror(error));
@@ -867,6 +846,8 @@ SfsCtrl::processOneCsumGet(ComCsumGetTask *task, unsigned int idx,
 		entry->setChecksumMissing(type);
 	} else if (error == EINVAL) {
 		entry->setChecksumInvalid(type);
+	} else if (error == EAGAIN) {
+		/* Nothing */
 	} else if (error) {
 		message = wxString::Format(_("Got error from "
 		    "daemon while fetching the signature for %ls: %hs"),
@@ -950,7 +931,8 @@ SfsCtrl::OnCsumGet(TaskEvent &event)
 		    "while fetching checksums/signatures: %hs"), err);
 		errorList_.Add(message);
 	}
-	if (taskResult != ComTask::RESULT_SUCCESS) {
+	if (taskResult != ComTask::RESULT_SUCCESS
+	    && taskResult != ComTask::RESULT_REMOTE_ERROR) {
 		/* We will abort, account for Progress. */
 		updateSfsOp(task->getPathCount());
 		endSfsOp();
@@ -1036,7 +1018,8 @@ SfsCtrl::OnCsumAdd(TaskEvent &event)
 		errorList_.Add(message);
 	}
 	/* Stop processing in case of errors */
-	if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
+	if (task->getComTaskResult() != ComTask::RESULT_SUCCESS
+	    && task->getComTaskResult() != ComTask::RESULT_REMOTE_ERROR) {
 		updateSfsOp(task->getPathCount());
 		endSfsOp();
 		return;
@@ -1047,7 +1030,7 @@ SfsCtrl::OnCsumAdd(TaskEvent &event)
 		int	error;
 
 		error = task->getChecksumError(i);
-		if (error) {
+		if (error && error != EAGAIN) {
 			wxString	message;
 
 			message = wxString::Format(
@@ -1056,7 +1039,7 @@ SfsCtrl::OnCsumAdd(TaskEvent &event)
 			errorList_.Add(message);
 		}
 		error = task->getSignatureError(i);
-		if (error) {
+		if (error && error != EAGAIN) {
 			wxString	message;
 
 			message = wxString::Format(
@@ -1064,7 +1047,7 @@ SfsCtrl::OnCsumAdd(TaskEvent &event)
 			    task->getPath(i).c_str(), anoubis_strerror(error));
 			errorList_.Add(message);
 		}
-		/* Finish processing even the operation is canceled. */
+		/* Finish processing even if the operation is canceled. */
 		updateSfsOp(1);
 		/*
 		 * Search for SfsEntry. Do _not_ report an error if the
@@ -1083,7 +1066,8 @@ SfsCtrl::OnCsumAdd(TaskEvent &event)
 
 		if (task->getCsum(i, cs, sizeof(cs)) != ANOUBIS_CS_LEN)
 			continue;
-		entry->setLocalCsum(cs);
+		if (task->isLocalChecksum())
+			entry->setLocalCsum(cs);
 		if (task->getChecksumError(i) == 0)
 			entry->setChecksum(SfsEntry::SFSENTRY_CHECKSUM, cs,
 			    ANOUBIS_CS_LEN);
@@ -1145,7 +1129,12 @@ SfsCtrl::OnCsumDel(TaskEvent &event)
 		    "while removing checksums/signature: %hs"), err);
 		errorList_.Add(message);
 	}
-	if (taskResult != ComTask::RESULT_SUCCESS) {
+	/*
+	 * Process successful operations even in case of a remote error.
+	 * Unprocessed entries will return EAGAIN.
+	 */
+	if (taskResult != ComTask::RESULT_SUCCESS
+	    && taskResult != ComTask::RESULT_REMOTE_ERROR) {
 		updateSfsOp(task->getPathCount());
 		endSfsOp();
 		return;
@@ -1169,7 +1158,7 @@ SfsCtrl::OnCsumDel(TaskEvent &event)
 		error = task->getChecksumError(idx);
 		if (error == 0 || error == ENOENT || error == ENOTDIR) {
 			entry->setChecksumMissing(SfsEntry::SFSENTRY_CHECKSUM);
-		} else {
+		} else if (error != EAGAIN) {
 			message = wxString::Format(_("Got error from daemon "
 			    "while removing the checksum for %ls: %hs"),
 			    entry->getPath().c_str(), anoubis_strerror(error));
@@ -1180,6 +1169,11 @@ SfsCtrl::OnCsumDel(TaskEvent &event)
 			if (error == 0 || error == ENOENT || error == ENOTDIR) {
 				entry->setChecksumMissing(
 				    SfsEntry::SFSENTRY_SIGNATURE);
+			} else if (error != EAGAIN) {
+				message = wxString::Format(_("Got error from "
+				    "daemon while removing the signature for "
+				    "%ls: %hs"), entry->getPath().c_str(),
+				    anoubis_strerror(error));
 			}
 		}
 		if (!entry->fileExists() && !entry->haveChecksum())
