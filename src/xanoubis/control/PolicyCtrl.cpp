@@ -169,7 +169,7 @@ PolicyCtrl::removeProfile(const wxString &name)
 	return (false);
 }
 
-bool
+int
 PolicyCtrl::exportToProfile(const wxString &name)
 {
 	/* The user policy */
@@ -177,12 +177,12 @@ PolicyCtrl::exportToProfile(const wxString &name)
 
 	if (rs == 0) {
 		/* No such policy */
-		return (false);
+		return (-A_RULESET_NOT_LOADED);
 	}
 
 	if (getProfileSpec(name) == Profile::DEFAULT_PROFILE) {
 		/* Only export to user-profile allowed */
-		return (false);
+		return (-A_RULESET_WRONG_PROFILE);
 	}
 
 	/*
@@ -207,15 +207,15 @@ PolicyCtrl::exportToProfile(const wxString &name)
 	}
 
 	if (!rs->exportToFile(file))
-		return (false);
+		return (-A_RULESET_MISSING_RIGHTS);
 
 	/* Make a backup by putting the policy into version-control */
 	if (!makeBackup(name))
-		return (false);
+		return (-A_RULESET_NO_BACKUP);
 
 	updateProfileList();
 
-	return (true);
+	return (0);
 }
 
 bool

@@ -45,6 +45,8 @@
 #include <dev/anoubis_sfs.h>
 #endif
 
+#include <anoubis_errno.h>
+
 #include <wx/filedlg.h>
 #include <wx/tooltip.h>
 
@@ -389,6 +391,9 @@ ModAnoubisMainPanelImpl::OnProfileLoadClicked(wxCommandEvent &)
 void
 ModAnoubisMainPanelImpl::OnProfileSaveClicked(wxCommandEvent &)
 {
+	int errnum;
+	wxString error_msg;
+
 	DlgProfileSelection *dlg =
 	    new DlgProfileSelection(loadedProfile, this);
 
@@ -406,12 +411,14 @@ ModAnoubisMainPanelImpl::OnProfileSaveClicked(wxCommandEvent &)
 			return;
 		}
 
-		if (policyCtrl->exportToProfile(profile)) {
+		if ((errnum = policyCtrl->exportToProfile(profile)) == 0) {
 			profileTabUpdate();
 		} else {
+			error_msg = wxString::From8BitData(
+			    anoubis_strerror(-errnum));
 			anMessageBox(
-			    wxString::Format(_("Failed to export to \"%ls\"."),
-			       profile.c_str()),
+			    wxString::Format(_("Failed to export to \"%ls\": "
+				"%ls."), profile.c_str(), error_msg.c_str()),
 			    _("Save profile"), wxOK | wxICON_ERROR, this);
 		}
 	}

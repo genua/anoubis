@@ -38,7 +38,13 @@ static const char *a_error_str[] = {
 	[A_EPERM_UID_MISMATCH - A_ERRORCODE_BASE] = _("Operation not "
 	    "permitted: User ID and certificate's User ID do not match"),
 	[A_KEYLOADFAIL - A_ERRORCODE_BASE ] = _("Failed to load private key"),
-
+	[A_RULESET_NOT_LOADED - A_ERRORCODE_BASE] = _("No Ruleset has been "
+	    "loaded"),
+	[A_RULESET_WRONG_PROFILE - A_ERRORCODE_BASE] = _("Only export to "
+	    "user-profile may be allowed"),
+	[A_RULESET_MISSING_RIGHTS - A_ERRORCODE_BASE] = _("Could not open "
+	    "for writing"),
+	[A_RULESET_NO_BACKUP - A_ERRORCODE_BASE] = _("Could not create backup")
 };
 #else
 /*

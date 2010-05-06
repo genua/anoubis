@@ -33,7 +33,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: anoubis. 10.972.C388\n"
 "Report-Msgid-Bugs-To: anoubis@lists.anoubis.org\n"
-"POT-Creation-Date: 2010-04-19 11:06+0200\n"
+"POT-Creation-Date: 2010-04-29 19:26+0200\n"
 "PO-Revision-Date: 2010-02-11 16:23+0100\n"
 "Last-Translator: Martin Weber <mweber@anoubis.genua.de>\n"
 "Language-Team: German <translation-team-de@lists.sourceforge.net>\n"
@@ -57,11 +57,27 @@ msgstr ""
 msgid "Failed to load private key"
 msgstr "Fehler beim Laden des privaten Schlüssels."
 
-#: src/libanoubis/anoubiserrorcode/anoubis_errno.c:56
+#: src/libanoubis/anoubiserrorcode/anoubis_errno.c:41
+msgid "No Ruleset has been loaded"
+msgstr "Kein Regelsatz ist geladen"
+
+#: src/libanoubis/anoubiserrorcode/anoubis_errno.c:43
+msgid "Only export to user-profile may be allowed"
+msgstr "Nur Speichern des eigenen Benutzerprofils ist erlaubt "
+
+#: src/libanoubis/anoubiserrorcode/anoubis_errno.c:45
+msgid "Could not open for writing"
+msgstr "Konnte nicht zum Schreiben öffnen"
+
+#: src/libanoubis/anoubiserrorcode/anoubis_errno.c:46
+msgid "Could not create backup"
+msgstr "Konnte kein Backup erstellen"
+
+#: src/libanoubis/anoubiserrorcode/anoubis_errno.c:61
 msgid "invalid error code"
 msgstr "Ungültige Fehlernummer"
 
-#: src/libanoubis/anoubiserrorcode/anoubis_errno.c:72
+#: src/libanoubis/anoubiserrorcode/anoubis_errno.c:77
 msgid "undefined anoubis error code"
 msgstr "Unbekannte Anoubis-Fehlernummer"
 
@@ -116,8 +132,8 @@ msgstr "Benutzer"
 #: src/xanoubis/model/SfsOverviewTable.cpp:93
 #: src/xanoubis/model/SfsOverviewTable.cpp:125
 #: src/xanoubis/model/SfsOverviewTable.cpp:135
-#: src/xanoubis/view/DlgLogViewer.cpp:223
-#: src/xanoubis/view/DlgLogViewer.cpp:241
+#: src/xanoubis/view/DlgLogViewer.cpp:224
+#: src/xanoubis/view/DlgLogViewer.cpp:242
 #: src/xanoubis/view/DlgRuleEditorListProperty.cpp:125
 #: src/xanoubis/view/ModSfsListProperty.cpp:105
 #: src/xanoubis/view/ModSfsListProperty.cpp:125
@@ -441,8 +457,8 @@ msgstr "fortführen"
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:815
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:844
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:873
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:337
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:342
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:339
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:344
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:435
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:462
 msgid "none"
@@ -512,16 +528,16 @@ msgstr "Regelsatz speichern"
 msgid "Log Viewer"
 msgstr "LogViewer"
 
-#: src/xanoubis/view/DlgLogViewer.cpp:218
+#: src/xanoubis/view/DlgLogViewer.cpp:219
 #: src/xanoubis/view/VersionListCtrl.cpp:102
 msgid "Time"
 msgstr "Zeit"
 
-#: src/xanoubis/view/DlgLogViewer.cpp:219
+#: src/xanoubis/view/DlgLogViewer.cpp:220
 msgid "Module"
 msgstr "Modul"
 
-#: src/xanoubis/view/DlgLogViewer.cpp:220
+#: src/xanoubis/view/DlgLogViewer.cpp:221
 msgid "Message"
 msgstr "Nachricht"
 
@@ -1039,9 +1055,9 @@ msgstr "Konnte Regeldatei nicht importieren: Sie enthält Fehler."
 
 #: src/xanoubis/view/DlgRuleEditor.cpp:947 src/xanoubis/view/MainFrame.cpp:526
 #: src/xanoubis/view/MainFrame.cpp:792
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1526
-#: src/xanoubis/view/ModSfsGenerateKeyDlg.cpp:192 src/xanoubis/main.cpp:137
-#: src/xanoubis/main.cpp:398 src/xanoubis/main.cpp:406
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1534
+#: src/xanoubis/view/ModSfsGenerateKeyDlg.cpp:192 src/xanoubis/main.cpp:145
+#: src/xanoubis/main.cpp:406 src/xanoubis/main.cpp:414
 msgid "Error"
 msgstr "Fehler"
 
@@ -1061,7 +1077,7 @@ msgstr "Regelsatz exportieren"
 
 #: src/xanoubis/view/DlgRuleEditor.cpp:1058
 #: src/xanoubis/view/DlgRuleEditor.cpp:1081
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:454
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:461
 #: src/xanoubis/view/ModSfsMainPanelImpl.cpp:502
 #: src/xanoubis/view/RuleWizard.cpp:415
 msgid "The entered password is incorrect."
@@ -1103,7 +1119,7 @@ msgstr "Standard Pfad:"
 #: src/xanoubis/view/DlgRuleEditorFilterSubjectPage.cpp:48
 #: src/xanoubis/view/DlgRuleEditorFilterSubjectPage.cpp:103
 #: src/xanoubis/view/DlgRuleEditorFilterSubjectPage.cpp:111
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:555
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:562
 #: src/xanoubis/view/ModSfsPanelsBase.cpp:506
 msgid "Path:"
 msgstr "Pfad:"
@@ -1418,7 +1434,7 @@ msgid "Choose a policy file:"
 msgstr "Wähle eine Regeldatei:"
 
 #: src/xanoubis/view/MainFrame.cpp:534
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1247
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1255
 msgid "Choose a file to write the policies to:"
 msgstr "Wähle eine Datei um Regeln dort hinein zu schreiben:"
 
@@ -1450,7 +1466,7 @@ msgstr ""
 #: src/xanoubis/view/ModAlfOverviewPanelImpl.cpp:70
 #: src/xanoubis/view/ModSfsOverviewPanelImpl.cpp:68
 #: src/xanoubis/view/ModSbOverviewPanelImpl.cpp:69
-#: src/xanoubis/view/TrayIcon.cpp:269
+#: src/xanoubis/view/TrayIcon.cpp:292
 msgid "not connected"
 msgstr "Nicht verbunden"
 
@@ -1489,52 +1505,52 @@ msgstr "offene Anfragen (ALF):"
 msgid "everything OK"
 msgstr "alles OK"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:367
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:369
 #, c-format
 msgid "Failed to remove \"%ls\"."
 msgstr "Konnte \"%ls\" nicht entfernen."
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:369
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:371
 msgid "Remove profile"
 msgstr "Profil entfernt"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:383
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:431
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:385
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:438
 #, c-format
 msgid "Failed to import from \"%ls\"."
 msgstr "Konnte \"%ls\" nicht importieren."
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:385
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:387
 msgid "Load profile"
 msgstr "Profil laden"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:402
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:407
 #, c-format
 msgid "The profile \"%ls\" is not writable!"
 msgstr "Das Profil \"%ls\" ist nicht beschreibbar!"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:404
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:415
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:409
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:422
 msgid "Save profile"
 msgstr "Profil speichern"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:413
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:419
 #, c-format
-msgid "Failed to export to \"%ls\"."
-msgstr "Konnte nicht nach \"%ls\" exportieren."
+msgid "Failed to export to \"%ls\": %ls."
+msgstr "Konnte nicht nach \"%ls\" exportieren: %ls."
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:433
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:441
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:450
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:455
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:440
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:448
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:457
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:462
 msgid "Activate profile"
 msgstr "Profil aktivieren"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:440
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:447
 msgid "Could not obtain user-policy."
 msgstr "Benutzerprofil nicht verfügbar."
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:448
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:455
 msgid ""
 "Could not activate user-policy.\n"
 "No connection to anoubisd."
@@ -1542,109 +1558,109 @@ msgstr ""
 "Konnte Benutzerprofil nicht aktivieren.\n"
 "Keine Verbindung zu anoubisd."
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:520
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:527
 msgid "Repository not initialized."
 msgstr "Repository nicht initalisiert."
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:521
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:527
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:535
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:528
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:534
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:542
 msgid "Update versions"
 msgstr "Aktualisierung Versionsverwaltung"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:526
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:533
 msgid "Failed to prepare versioning system."
 msgstr "Konnte Versionssystem nicht vorbereiten."
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:534
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:541
 msgid "Failed to fetch versioning information."
 msgstr "Konnte Versionsinforamtion nicht abrufen."
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:548
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:555
 msgid "Time:"
 msgstr "Zeit:"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:549
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:556
 msgid "Module:"
 msgstr "Modul:"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:550
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:557
 #: src/xanoubis/view/RuleWizardHistory.cpp:442
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:293
 msgid "Program:"
 msgstr "Programm:"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:551
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:558
 msgid "On behalf of:"
 msgstr "Im Auftrag von:"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:553
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:560
 msgid "Traffic:"
 msgstr "Verkehr:"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:557
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:564
 msgid "Operation:"
 msgstr "Operation:"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1182
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1190
 msgid "No profile selected"
 msgstr "Kein Profil ausgewählt"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1182
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1199
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1209
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1216
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1222
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1190
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1207
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1217
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1224
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1230
 msgid "Restore version"
 msgstr "Version wiederherstellen"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1193
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1201
 msgid "Failed to fetch the active policy."
 msgstr "Konnte aktive Regel nicht abfragen."
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1196
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1204
 #, c-format
 msgid ""
 "Failed to fetch the policy\n"
 "of the \"%ls\" profile"
 msgstr "Abholen des Profils \"%ls\" fehlgeschlagen."
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1208
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1216
 msgid "Failed to import the active policy."
 msgstr "Konnte aktive Regel nicht importieren."
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1213
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1221
 #, c-format
 msgid ""
 "Failed to import the policy\n"
 "of the \"%ls\" profile"
 msgstr "Einlesen des Profils \"%ls\" fehlgeschlagen."
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1220
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1228
 msgid "automatically created by restore"
 msgstr "durch Wiederherstellung automatisch erzeugt"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1221
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1229
 msgid "Old version imported but could not create a new version"
 msgstr "Alte Version eingelesen konnte jedoch keine Neue erzeugen"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1254
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1262
 msgid "Failed to export a version!"
 msgstr "Konnte Version nicht exportieren!"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1255
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1263
 msgid "Export version"
 msgstr "Schreibe Version"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1275
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1283
 msgid "Failed to remove the selected version!"
 msgstr "Konnte ausgewählte Version nicht entfernen!"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1277
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1285
 msgid "Remove version"
 msgstr "Entferne Version"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1525
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1533
 msgid "Failed to create a rule from escalation"
 msgstr "Auf Basis der Eskalation konnte die Regel nicht erzeugt werden!"
 
@@ -2649,7 +2665,7 @@ msgstr ""
 
 #: src/xanoubis/view/RuleWizardProgramPage.cpp:277
 #: src/xanoubis/view/RuleWizardProgramPage.cpp:319
-#: src/xanoubis/control/SfsCtrl.cpp:802
+#: src/xanoubis/control/SfsCtrl.cpp:815
 #, c-format
 msgid "Failed to calculate the checksum for %ls: %hs"
 msgstr "Konnte Prüfsumme für %ls nicht berechnen: %hs"
@@ -3396,31 +3412,31 @@ msgstr "neu erstellte Regeln aktivieren?"
 msgid "Rule wizard add service"
 msgstr "Wizard Dienst hinzufügen"
 
-#: src/xanoubis/view/TrayIcon.cpp:252
+#: src/xanoubis/view/TrayIcon.cpp:276
 msgid "&Restore xanoubis"
 msgstr "&Wiederherstellen von xanoubis"
 
-#: src/xanoubis/view/TrayIcon.cpp:253
+#: src/xanoubis/view/TrayIcon.cpp:277
 msgid "E&xit xanoubis"
 msgstr "&Beende xanoubis"
 
-#: src/xanoubis/view/TrayIcon.cpp:265
+#: src/xanoubis/view/TrayIcon.cpp:288
 msgid "Messages: "
 msgstr "Nachrichten: "
 
-#: src/xanoubis/view/TrayIcon.cpp:271
+#: src/xanoubis/view/TrayIcon.cpp:294
 msgid "connected with "
 msgstr "Verbunden mit "
 
-#: src/xanoubis/view/TrayIcon.cpp:287
+#: src/xanoubis/view/TrayIcon.cpp:309
 msgid "Couldn't send Escalation"
 msgstr "Konnte Eskalation nicht verschicken"
 
-#: src/xanoubis/view/TrayIcon.cpp:302
+#: src/xanoubis/view/TrayIcon.cpp:323
 msgid "Couldn't send Alert"
 msgstr "Konnte Alarm nicht verschicken"
 
-#: src/xanoubis/view/TrayIcon.cpp:306
+#: src/xanoubis/view/TrayIcon.cpp:327
 msgid "No messages\n"
 msgstr "Keine Nachrichten\n"
 
@@ -3440,31 +3456,31 @@ msgstr "Datum"
 msgid "Version"
 msgstr "Version"
 
-#: src/xanoubis/control/SfsCtrl.cpp:436
+#: src/xanoubis/control/SfsCtrl.cpp:449
 #, c-format
 msgid "Failed to open %ls for reading: %hs"
 msgstr "Konnte %ls nicht zum Lesen öffnen: %hs"
 
-#: src/xanoubis/control/SfsCtrl.cpp:445
+#: src/xanoubis/control/SfsCtrl.cpp:458
 #, c-format
 msgid "Failed to parse %ls!"
 msgstr "Konnte %ls nicht parsen!"
 
-#: src/xanoubis/control/SfsCtrl.cpp:657
+#: src/xanoubis/control/SfsCtrl.cpp:670
 #, c-format
 msgid "Communication error while fetching list of checksumed files of %ls."
 msgstr ""
 "Kommunikationsfehler bei der Abfrage der Liste von Dateien mit Prüfsumme von "
 "%ls."
 
-#: src/xanoubis/control/SfsCtrl.cpp:662
+#: src/xanoubis/control/SfsCtrl.cpp:675
 #, c-format
 msgid "Communication error while fetching list of signed files of %ls."
 msgstr ""
 "Kommunikationsfehler bei der Abfrage der Liste von Dateien mit Signaturen "
 "von %ls."
 
-#: src/xanoubis/control/SfsCtrl.cpp:671
+#: src/xanoubis/control/SfsCtrl.cpp:684
 #, c-format
 msgid ""
 "Got error from daemon (%hs) while fetching the list of checksumed files of %"
@@ -3473,7 +3489,7 @@ msgstr ""
 "Fehler vom Daemon (%hs) beim Abfragen der Liste der Dateien mit Prüfsumme "
 "von %ls."
 
-#: src/xanoubis/control/SfsCtrl.cpp:676
+#: src/xanoubis/control/SfsCtrl.cpp:689
 #, c-format
 msgid ""
 "Got error from daemon (%hs) while fetching the list of signed files of %ls."
@@ -3481,7 +3497,7 @@ msgstr ""
 "Fehler vom Daemon (%hs) beim Abfragen der Liste der signierten Dateien von %"
 "ls."
 
-#: src/xanoubis/control/SfsCtrl.cpp:682
+#: src/xanoubis/control/SfsCtrl.cpp:695
 #, c-format
 msgid ""
 "An unexpected error occured (%i) while fetching the list of checksumed files "
@@ -3490,7 +3506,7 @@ msgstr ""
 "Ein unerwarteter Fehler (%i) ist beim Abfragen der Liste der Dateien mit "
 "Prüfsumme von %ls aufgetreten."
 
-#: src/xanoubis/control/SfsCtrl.cpp:688
+#: src/xanoubis/control/SfsCtrl.cpp:701
 #, c-format
 msgid ""
 "An unexpected error occured (%i) while fetching the list of signed files of %"
@@ -3499,133 +3515,127 @@ msgstr ""
 "Ein unerwarteter Fehler (%i) ist beim Abfragen der Liste der signierten "
 "Dateien von %ls aufgetreten."
 
-#: src/xanoubis/control/SfsCtrl.cpp:797 src/xanoubis/control/SfsCtrl.cpp:957
-#: src/xanoubis/control/SfsCtrl.cpp:1113
+#: src/xanoubis/control/SfsCtrl.cpp:810 src/xanoubis/control/SfsCtrl.cpp:970
 #, c-format
 msgid "%ls not found in file-list!"
 msgstr "%ls nicht in der Dateilisten gefunden!"
 
-#: src/xanoubis/control/SfsCtrl.cpp:834
+#: src/xanoubis/control/SfsCtrl.cpp:847
 #, c-format
 msgid "An unexpected checksum was fetched for %ls"
 msgstr "Unerwartete Prüfrumme  für %ls wurde abgefragt."
 
-#: src/xanoubis/control/SfsCtrl.cpp:843
+#: src/xanoubis/control/SfsCtrl.cpp:856
 #, c-format
 msgid "Got error from daemon while fetching the checksum for %ls: %hs"
 msgstr "Fehler vom Daemon beim Abfragen der Prüfsumme für %ls: %hs."
 
-#: src/xanoubis/control/SfsCtrl.cpp:858
+#: src/xanoubis/control/SfsCtrl.cpp:871
 #, c-format
 msgid "Got error from daemon while fetching the signature for %ls: %hs"
 msgstr "Fehler vom Daemon beim Abfragen der Signatur für %ls: %hs."
 
-#: src/xanoubis/control/SfsCtrl.cpp:867
+#: src/xanoubis/control/SfsCtrl.cpp:880
 #, c-format
 msgid "An unexpected signature was fetched for %ls"
 msgstr "Unerwartete Signatur für %ls wurde abgefragt."
 
-#: src/xanoubis/control/SfsCtrl.cpp:922
+#: src/xanoubis/control/SfsCtrl.cpp:935
 #, c-format
 msgid "Got error from daemon while fetching checksums/signatures: %hs"
 msgstr "Fehler vom Daemon beim Abfragen von Prüfsummen/Signaturen: %hs"
 
-#: src/xanoubis/control/SfsCtrl.cpp:926
+#: src/xanoubis/control/SfsCtrl.cpp:939
 msgid "Communication error while fetching checksums/signatures"
 msgstr "Kommunikationsfehler beim Abfragen von Prüfsummen/Signaturen"
 
-#: src/xanoubis/control/SfsCtrl.cpp:931
+#: src/xanoubis/control/SfsCtrl.cpp:944
 #, c-format
 msgid "Failed to retrieve checksums/signatures: %hs"
 msgstr "Fehler beim Abfragen von Prüfsummen/Signaturen: %hs"
 
-#: src/xanoubis/control/SfsCtrl.cpp:936
+#: src/xanoubis/control/SfsCtrl.cpp:949
 #, c-format
 msgid "An unexpected error occured while fetching checksums/signatures: %hs"
-msgstr ""
-"Unerwarteter Fehler beim Abfragen von Prüfsummen/Signaturen: %hs"
+msgstr "Unerwarteter Fehler beim Abfragen von Prüfsummen/Signaturen: %hs"
 
-#: src/xanoubis/control/SfsCtrl.cpp:1001
+#: src/xanoubis/control/SfsCtrl.cpp:1014
 #, c-format
 msgid "Failed to add checksums/signatures: %hs"
 msgstr "Fehler beim Hinzufügen von Prüfsummen/Signature: %hs"
 
-#: src/xanoubis/control/SfsCtrl.cpp:1007
+#: src/xanoubis/control/SfsCtrl.cpp:1020
 msgid "Communication error while register the checksums/signatures."
 msgstr "Kommunikationsfehler beim Registrieren von Prüfsummen/Signaturen."
 
-#: src/xanoubis/control/SfsCtrl.cpp:1013
+#: src/xanoubis/control/SfsCtrl.cpp:1026
 #, c-format
 msgid "Got error from daemon (%hs) while registering checksums/signautres."
 msgstr "Fehler vom Daemon (%hs) beim Registrieren von Prüfsummen/Signaturen."
 
-#: src/xanoubis/control/SfsCtrl.cpp:1020
+#: src/xanoubis/control/SfsCtrl.cpp:1033
 #, c-format
 msgid ""
 "An unexpected error occured (%hs) while registering checksums/signatures."
 msgstr ""
-"Ein unerwarteter Fehler (%hs) ist beim Registrieren von "
-"Prüfsummen/Signaturen aufgetreten."
+"Ein unerwarteter Fehler (%hs) ist beim Registrieren von Prüfsummen/"
+"Signaturen aufgetreten."
 
-#: src/xanoubis/control/SfsCtrl.cpp:1041
+#: src/xanoubis/control/SfsCtrl.cpp:1054
 #, c-format
 msgid "Failed to add checksum for %ls: %hs"
 msgstr "Konnte Prüfsumme für %ls nicht registrieren: %hs"
 
-#: src/xanoubis/control/SfsCtrl.cpp:1050
+#: src/xanoubis/control/SfsCtrl.cpp:1063
 #, c-format
 msgid "Failed to add signature for %ls: %hs"
 msgstr "Konnte Signatur für %ls nicht registrieren: %hs"
 
-#: src/xanoubis/control/SfsCtrl.cpp:1127
-#, c-format
-msgid "Communication error while removing the checksum for %ls."
-msgstr "Kommunikationsfehler beim Entfernen der Prüfsumme für %ls."
+#: src/xanoubis/control/SfsCtrl.cpp:1129
+#, fuzzy
+msgid "Communication error while removing the checksums/signatures."
+msgstr "Kommunikationsfehler beim Registrieren von Prüfsummen/Signaturen."
 
-#: src/xanoubis/control/SfsCtrl.cpp:1131
-#, c-format
-msgid "Communication error while removing the signature for %ls."
-msgstr "Kommunikationsfehler beim Entfernen der Signatur für %ls."
+#: src/xanoubis/control/SfsCtrl.cpp:1134
+#, fuzzy
+msgid "Communication error while removing checksums/signature."
+msgstr "Kommunikationsfehler beim Abfragen von Prüfsummen/Signaturen"
 
-#: src/xanoubis/control/SfsCtrl.cpp:1140
-#, c-format
-msgid "Got error from daemon (%hs) while removing the checksum for %ls."
-msgstr "Fehler vom Daemon (%hs) beim Entfernen der Prüfsumme für %ls."
+#: src/xanoubis/control/SfsCtrl.cpp:1139
+#, fuzzy, c-format
+msgid "Failed to remove checksums/signatures: %hs"
+msgstr "Fehler beim Abfragen von Prüfsummen/Signaturen: %hs"
 
-#: src/xanoubis/control/SfsCtrl.cpp:1145
-#, c-format
-msgid "Got error from daemon (%hs) while removing the signature for %ls."
-msgstr "Fehler vom Daemon (%hs) beim Entfernen der Signatur für %ls."
+#: src/xanoubis/control/SfsCtrl.cpp:1144
+#, fuzzy, c-format
+msgid "An unexpected error occured while removing checksums/signature: %hs"
+msgstr "Unerwarteter Fehler beim Abfragen von Prüfsummen/Signaturen: %hs"
 
-#: src/xanoubis/control/SfsCtrl.cpp:1155
-#, c-format
-msgid "An unexpected error occured (%hs) while removing the checksum for %ls."
-msgstr ""
-"Unerwarteter Fehler (%hs) ist beim Entfernen der Prüfsumme für %ls "
-"aufgetreten."
+#: src/xanoubis/control/SfsCtrl.cpp:1164
+#, fuzzy, c-format
+msgid "%ls not found in file list!"
+msgstr "%ls nicht in der Dateilisten gefunden!"
 
-#: src/xanoubis/control/SfsCtrl.cpp:1160
-#, c-format
-msgid "An unexpected error occured (%hs) while removing the signature for %ls."
-msgstr ""
-"Unerwarteter Fehler (%hs) ist beim Entfernen der Signatur für %ls "
-"aufgetreten."
+#: src/xanoubis/control/SfsCtrl.cpp:1173
+#, fuzzy, c-format
+msgid "Got error from daemon while removing the checksum for %ls: %hs"
+msgstr "Fehler vom Daemon beim Abfragen der Prüfsumme für %ls: %hs."
 
-#: src/xanoubis/control/SfsCtrl.cpp:1438
+#: src/xanoubis/control/SfsCtrl.cpp:1425
 #, c-format
 msgid "Failed to open %ls for writing: %hs"
 msgstr "Konnte %ls nicht zum Schreiben öffnen: %hs"
 
-#: src/xanoubis/control/SfsCtrl.cpp:1447
+#: src/xanoubis/control/SfsCtrl.cpp:1434
 #, c-format
 msgid "Failed to flush the content of %ls: %hs"
 msgstr "Konnte Inhalt von %ls nicht zurückschreiben: %hs"
 
-#: src/xanoubis/control/SfsCtrl.cpp:1539
+#: src/xanoubis/control/SfsCtrl.cpp:1526
 msgid "SFS operation"
 msgstr "SFS Operation"
 
-#: src/xanoubis/control/SfsCtrl.cpp:1540
+#: src/xanoubis/control/SfsCtrl.cpp:1527
 msgid "SFS operation in Progress. Please wait ..."
 msgstr "Eine SFS Operation wird bearbeitet. Bitte warten ..."
 
@@ -3865,11 +3875,11 @@ msgstr "Nachrichtvom Daemon wird verworfen (zu kurz)"
 msgid "Unkown status message key=%x value=%d"
 msgstr "Unbekannter Status der Nachricht key=%x value=%d"
 
-#: src/xanoubis/main.cpp:136
+#: src/xanoubis/main.cpp:144
 msgid "Error while initialising anoubis_ui"
 msgstr "Konnte anoubis_ui-Bibliothek nicht initialisieren."
 
-#: src/xanoubis/main.cpp:141
+#: src/xanoubis/main.cpp:149
 #, c-format
 msgid ""
 "Unsupported version (%d) found of HOME/.xanoubis\n"
@@ -3878,15 +3888,15 @@ msgstr ""
 "Es wurde eine nicht unterstützte Version (%d) von HOME/.xanoubis gefunden.\n"
 "Xanoubis wird sich nun beenden.\n"
 
-#: src/xanoubis/main.cpp:144 src/xanoubis/main.cpp:237
+#: src/xanoubis/main.cpp:152 src/xanoubis/main.cpp:245
 msgid "Warning"
 msgstr "Warnung"
 
-#: src/xanoubis/main.cpp:202
+#: src/xanoubis/main.cpp:210
 msgid "Language setting: "
 msgstr "Spracheinstellungen:"
 
-#: src/xanoubis/main.cpp:234
+#: src/xanoubis/main.cpp:242
 msgid ""
 "The Boot Loader configuration has been updated. Please make sure to boot an "
 "Anoubis Kernel."
@@ -3894,32 +3904,32 @@ msgstr ""
 "Die Konfiguration des Boot-Loaders hat sich geändert. Bitte stellen sie "
 "sicher, dass der Anoubis-Kernel beim Start geladen wird."
 
-#: src/xanoubis/main.cpp:284
+#: src/xanoubis/main.cpp:292
 msgid "this help"
 msgstr "diese Hilfe"
 
-#: src/xanoubis/main.cpp:291
+#: src/xanoubis/main.cpp:299
 msgid "communication socket of anoubis daemon"
 msgstr "Kommunikationssockel des Anoubis Daemons"
 
-#: src/xanoubis/main.cpp:298
+#: src/xanoubis/main.cpp:306
 msgid "Debug output with 'num' als level"
 msgstr "Debug Ausgabe mit 'num' als Ebene"
 
-#: src/xanoubis/main.cpp:305
+#: src/xanoubis/main.cpp:313
 msgid "Disable TrayIcon"
 msgstr "TrayIcon deaktivieren"
 
-#: src/xanoubis/main.cpp:312
+#: src/xanoubis/main.cpp:320
 msgid "Do not show the main window"
 msgstr "Haupfenster nicht anzeigen"
 
-#: src/xanoubis/main.cpp:396 src/xanoubis/main.cpp:404
+#: src/xanoubis/main.cpp:404 src/xanoubis/main.cpp:412
 #, c-format
 msgid "Couldn't remove Autostart file: %ls"
 msgstr "Kann Autostart Datei nicht entfernen: %ls"
 
-#: src/xanoubis/main.cpp:579
+#: src/xanoubis/main.cpp:587
 #, c-format
 msgid ""
 "Enter the passphrase of your private key:\n"
@@ -3928,11 +3938,11 @@ msgstr ""
 "Eingabe des Passwords zum privaten Schlüssel:\n"
 " %ls"
 
-#: src/xanoubis/main.cpp:581 src/xanoubis/main.cpp:586
+#: src/xanoubis/main.cpp:589 src/xanoubis/main.cpp:594
 msgid "Enter passphrase for: "
 msgstr "Eingabe des Passworts: "
 
-#: src/xanoubis/main.cpp:584
+#: src/xanoubis/main.cpp:592
 #, c-format
 msgid ""
 "The entered passphrase was wrong!\n"
@@ -3942,6 +3952,30 @@ msgstr ""
 "Das eingegebene Passwort war falsch!\n"
 "Eingabe des Passwortes für:\n"
 "%ls"
+
+#~ msgid "Communication error while removing the checksum for %ls."
+#~ msgstr "Kommunikationsfehler beim Entfernen der Prüfsumme für %ls."
+
+#~ msgid "Communication error while removing the signature for %ls."
+#~ msgstr "Kommunikationsfehler beim Entfernen der Signatur für %ls."
+
+#~ msgid "Got error from daemon (%hs) while removing the checksum for %ls."
+#~ msgstr "Fehler vom Daemon (%hs) beim Entfernen der Prüfsumme für %ls."
+
+#~ msgid "Got error from daemon (%hs) while removing the signature for %ls."
+#~ msgstr "Fehler vom Daemon (%hs) beim Entfernen der Signatur für %ls."
+
+#~ msgid ""
+#~ "An unexpected error occured (%hs) while removing the checksum for %ls."
+#~ msgstr ""
+#~ "Unerwarteter Fehler (%hs) ist beim Entfernen der Prüfsumme für %ls "
+#~ "aufgetreten."
+
+#~ msgid ""
+#~ "An unexpected error occured (%hs) while removing the signature for %ls."
+#~ msgstr ""
+#~ "Unerwarteter Fehler (%hs) ist beim Entfernen der Signatur für %ls "
+#~ "aufgetreten."
 
 #~ msgid "Change ..."
 #~ msgstr "Wechsle ..."

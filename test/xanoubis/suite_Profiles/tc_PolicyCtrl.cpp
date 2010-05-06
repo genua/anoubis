@@ -34,6 +34,8 @@
 
 #include <check.h>
 
+#include <anoubis_errno.h>
+
 #include <PolicyRuleSet.h>
 #include <PolicyCtrl.h>
 
@@ -587,22 +589,23 @@ END_TEST
 
 START_TEST(PolicyCtrl_exportUserProfile)
 {
-	bool result = pc->exportToProfile(wxT("user1"));
-	fail_unless(result == true, "Export to \"user1\" failed");
+	int result = pc->exportToProfile(wxT("user1"));
+	fail_unless(result == 0, "Export to \"user1\" failed");
 }
 END_TEST
 
 START_TEST(PolicyCtrl_exportDefaultProfile)
 {
-	bool result = pc->exportToProfile(wxT("default1"));
-	fail_unless(result == false, "Export to \"default1\" was successful");
+	int result = pc->exportToProfile(wxT("default1"));
+	fail_unless(result == -A_RULESET_NOT_LOADED,
+	    "Export to \"default1\" was successful");
 }
 END_TEST
 
 START_TEST(PolicyCtrl_exportNewProfile)
 {
-	bool export_result = pc->exportToProfile(wxT("foobar"));
-	fail_unless(export_result == true, "Export to \"foobar\" failed.");
+	int export_result = pc->exportToProfile(wxT("foobar"));
+	fail_unless(export_result == 0, "Export to \"foobar\" failed.");
 
 	wxArrayString profiles;
 	for (int i = 0; i < pc->getSize(); i++)

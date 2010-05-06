@@ -199,9 +199,9 @@ class PolicyCtrl : public Singleton<PolicyCtrl>, public AnRowProvider
 		 * is overwritten.
 		 *
 		 * @param name Name of profile
-		 * @return true on success, false otherwise.
+		 * @return 0 on success, negative anoubis_errorcode else
 		 */
-		bool exportToProfile(const wxString &);
+		int exportToProfile(const wxString &);
 
 		/**
 		 * Exports the currently loaded user-policy into an arbitrary
