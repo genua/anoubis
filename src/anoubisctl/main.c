@@ -32,6 +32,8 @@
 #include "splint-includes.h"
 #endif
 
+#define __STDC_FORMAT_MACROS	1
+
 #include <sys/file.h>
 #include <sys/param.h>
 #include <sys/types.h>
@@ -56,6 +58,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <syslog.h>
+#include <stdint.h>
+#include <inttypes.h>
 
 #include <openssl/rand.h>
 
@@ -102,6 +106,7 @@ static void	destroy_channel(void);
 static int	fetch_versions(int *, int *);
 static int	moo(void);
 static int	verify(const char *file, const char *signature);
+static int	kernel_stat(void);
 
 typedef int (*func_int_t)(void);
 typedef int (*func_arg_t)(char *, uid_t, unsigned int);
@@ -130,6 +135,7 @@ struct cmd {
 	{ "passphrase",	send_passphrase,	0 },
 	{ "load",	(func_int_t)load,	1 },
 	{ "dump",	(func_int_t)dump,	2 },
+	{ "stat",	kernel_stat,		3 },
 };
 
 static const char		 def_cert[] = ".xanoubis/default.crt";
@@ -1608,5 +1614,75 @@ verify(const char *filename, const char *signature)
 	free(sigbuf);
 	EVP_PKEY_free(pubkey);
 	printf("Signature verification ok\n");
+	return 0;
+}
+
+static int
+kernel_stat(void)
+{
+	static anoubis_token_t		 nexttok = 1;
+	int				 error;
+	struct anoubis_transaction	*ta;
+	struct anoubis_msg		*m;
+
+	error = create_channel(0);
+	if (error < 0) {
+		fprintf(stderr, "Cannot connect to anoubis daemon\n");
+		return 5;
+	}
+	ta = anoubis_client_register_start(client, ++nexttok, 0, 0,
+	    ANOUBIS_SOURCE_STAT);
+	if (ta == NULL) {
+		fprintf(stderr, "Cannot register for notificiations\n");
+		destroy_channel();
+		return 5;
+	}
+	while(1) {
+		error = anoubis_client_wait(client);
+		if (error <= 0) {
+			anoubis_transaction_destroy(ta);
+			destroy_channel();
+			return 5;
+		}
+		if (ta->flags & ANOUBIS_T_DONE)
+			break;
+	}
+	if (ta->result) {
+		fprintf(stderr, "Notify registration failed with %d (%s)\n",
+		    ta->result, anoubis_strerror(ta->result));
+		anoubis_transaction_destroy(ta);
+		destroy_channel();
+		return 5;
+	}
+	anoubis_transaction_destroy(ta);
+	if (anoubis_client_wait(client) <= 0) {
+		fprintf(stderr, "message receive failed\n");
+		destroy_channel();
+		return 5;
+	}
+	while((m = anoubis_client_getnotify(client))) {
+		int				 i, len;
+		struct anoubis_stat_message	*statmsg;
+
+		len = sizeof(Anoubis_NotifyMessage)
+		    + sizeof(struct anoubis_stat_message);
+		if (get_value(m->u.general->type) != ANOUBIS_N_NOTIFY
+		    || !VERIFY_LENGTH(m, len)) {
+			fprintf(stderr, "Broken message\n");
+			destroy_channel();
+			return 5;
+		}
+		len = PAYLOAD_LEN(m, notify, payload);
+		len -= sizeof(struct anoubis_stat_message);
+		len /= sizeof(struct anoubis_stat_value);
+		statmsg = (struct anoubis_stat_message*)m->u.notify->payload;
+		for (i=0; i<len; ++i) {
+			printf("STAT: key=%d/%d value=%" PRIu64 "\n",
+			    statmsg->vals[i].subsystem,
+			    statmsg->vals[i].key,
+			    statmsg->vals[i].value);
+		}
+	}
+	destroy_channel();
 	return 0;
 }
