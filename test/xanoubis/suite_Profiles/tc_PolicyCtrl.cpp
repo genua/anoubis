@@ -94,7 +94,7 @@ make_dir(const char *dir, ...)
 	if (result == -1)
 		return (0);
 
-	result = asprintf(&cmd, "mkdir -p \"%s\"", result_dir);
+	result = asprintf(&cmd, "mkdir -p '%s'", result_dir);
 	if (result == -1) {
 		free(result_dir);
 		return (0);
@@ -154,7 +154,7 @@ remove_dir(const char *dir, ...)
 	if (result == -1)
 		return (0);
 
-	result = asprintf(&cmd, "rm -rf \"%s\"", path);
+	result = asprintf(&cmd, "rm -rf '%s'", path);
 	if (result == -1) {
 		free(path);
 		return (0);
@@ -314,25 +314,25 @@ START_TEST(PolicyCtrl_ProfileList)
 	    "Expected: 10", result.GetCount());
 
 	fail_if(result.Index(wxT("default1")) == wxNOT_FOUND,
-	   "Profile \"default1\" not in list");
+	   "Profile 'default1' not in list");
 	fail_if(result.Index(wxT("default2")) == wxNOT_FOUND,
-	   "Profile \"default2\" not in list");
+	   "Profile 'default2' not in list");
 	fail_if(result.Index(wxT("default3")) == wxNOT_FOUND,
-	   "Profile \"default3\" not in list");
+	   "Profile 'default3' not in list");
 	fail_if(result.Index(wxT("default4")) == wxNOT_FOUND,
-	   "Profile \"default4\" not in list");
+	   "Profile 'default4' not in list");
 	fail_if(result.Index(wxT("user1")) == wxNOT_FOUND,
-	   "Profile \"user1\" not in list");
+	   "Profile 'user1' not in list");
 	fail_if(result.Index(wxT("user2")) == wxNOT_FOUND,
-	   "Profile \"user2\" not in list");
+	   "Profile 'user2' not in list");
 	fail_if(result.Index(wxT("user3")) == wxNOT_FOUND,
-	   "Profile \"user3\" not in list");
+	   "Profile 'user3' not in list");
 	fail_if(result.Index(wxT("user4")) == wxNOT_FOUND,
-	   "Profile \"user4\" not in list");
+	   "Profile 'user4' not in list");
 	fail_if(result.Index(wxT("user5")) == wxNOT_FOUND,
-	   "Profile \"user5\" not in list");
+	   "Profile 'user5' not in list");
 	fail_if(result.Index(wxT("user6")) == wxNOT_FOUND,
-	   "Profile \"user6\" not in list");
+	   "Profile 'user6' not in list");
 }
 END_TEST
 
@@ -355,57 +355,57 @@ START_TEST(PolicyCtrl_ProfileListUserRemoveProfiles)
 	    "Expected: 5", result.GetCount());
 
 	fail_if(result.Index(wxT("default1")) == wxNOT_FOUND,
-	   "Profile \"default1\" not in list");
+	   "Profile 'default1' not in list");
 	fail_if(result.Index(wxT("default2")) == wxNOT_FOUND,
-	   "Profile \"default2\" not in list");
+	   "Profile 'default2' not in list");
 	fail_if(result.Index(wxT("default3")) == wxNOT_FOUND,
-	   "Profile \"default3\" not in list");
+	   "Profile 'default3' not in list");
 	fail_if(result.Index(wxT("default4")) == wxNOT_FOUND,
-	   "Profile \"default4\" not in list");
+	   "Profile 'default4' not in list");
 	fail_if(result.Index(wxT("user2")) == wxNOT_FOUND,
-	   "Profile \"user2\" not in list");
+	   "Profile 'user2' not in list");
 }
 END_TEST
 
 START_TEST(PolicyCtrl_haveDefaultProfile)
 {
 	bool result = pc->haveProfile(wxT("default2"));
-	fail_unless(result == true, "Profile \"default2\" not found");
+	fail_unless(result == true, "Profile 'default2' not found");
 }
 END_TEST
 
 START_TEST(PolicyCtrl_haveUserProfile)
 {
 	bool result = pc->haveProfile(wxT("user4"));
-	fail_unless(result == true, "Profile \"user4\" not found");
+	fail_unless(result == true, "Profile 'user4' not found");
 }
 END_TEST
 
 START_TEST(PolicyCtrl_haveNoProfile)
 {
 	bool result = pc->haveProfile(wxT("foobar"));
-	fail_unless(result == false, "Profile \"foobar\" exists");
+	fail_unless(result == false, "Profile 'foobar' exists");
 }
 END_TEST
 
 START_TEST(PolicyCtrl_isWritableUser)
 {
 	bool result = pc->isProfileWritable(wxT("user5"));
-	fail_unless(result == true, "Profile \"user5\" is not writable.");
+	fail_unless(result == true, "Profile 'user5' is not writable.");
 }
 END_TEST
 
 START_TEST(PolicyCtrl_isWritableDefault)
 {
 	bool result = pc->isProfileWritable(wxT("default1"));
-	fail_unless(result == false, "Profile \"default1\" is writable.");
+	fail_unless(result == false, "Profile 'default1' is writable.");
 }
 END_TEST
 
 START_TEST(PolicyCtrl_isWritableNoSuchFile)
 {
 	bool result = pc->isProfileWritable(wxT("foobar"));
-	fail_unless(result == true, "Profile \"foobar\" is writable.");
+	fail_unless(result == true, "Profile 'foobar' is writable.");
 }
 END_TEST
 
@@ -414,10 +414,10 @@ START_TEST(PolicyCtrl_removeUserProfile)
 	bool result;
 
 	result = pc->removeProfile(wxT("user1"));
-	fail_unless(result == true, "Failed to remove \"user1\"");
+	fail_unless(result == true, "Failed to remove 'user1'");
 
 	result = pc->haveProfile(wxT("user1"));
-	fail_unless(result == false, "Profile \"user1\" still exists.");
+	fail_unless(result == false, "Profile 'user1' still exists.");
 
 	wxArrayString profileList;
 	for (int i = 0; i < pc->getSize(); i++)
@@ -429,7 +429,7 @@ START_TEST(PolicyCtrl_removeUserProfile)
 
 	result = (profileList.Index(wxT("user1")) == wxNOT_FOUND);
 	fail_unless(result == true,
-	    "Profile \"user1\" still in profile-list.");
+	    "Profile 'user1' still in profile-list.");
 }
 END_TEST
 
@@ -439,10 +439,10 @@ START_TEST(PolicyCtrl_removeDefaultProfile)
 
 	result = pc->removeProfile(wxT("default1"));
 	fail_unless(result == false,
-	    "Removing of \"default1\" was successful.");
+	    "Removing of 'default1' was successful.");
 
 	result = pc->haveProfile(wxT("default1"));
-	fail_unless(result == true, "No such profile: \"defaull1\"");
+	fail_unless(result == true, "No such profile: 'default1'");
 
 	wxArrayString profileList;
 	for (int i = 0; i < pc->getSize(); i++)
@@ -454,7 +454,7 @@ START_TEST(PolicyCtrl_removeDefaultProfile)
 
 	result = (profileList.Index(wxT("default1")) == wxNOT_FOUND);
 	fail_unless(result == false,
-	    "Profile \"default1\" not in profile-list.");
+	    "Profile 'default1' not in profile-list.");
 }
 END_TEST
 
@@ -462,7 +462,7 @@ START_TEST(PolicyCtrl_removeUnknownProfile)
 {
 	bool result = pc->removeProfile(wxT("foobar"));
 	fail_unless(result == false,
-	    "Removing of unknown profile \"foobar\" was successful.");
+	    "Removing of unknown profile 'foobar' was successful.");
 
 	wxArrayString profileList;
 	for (int i = 0; i < pc->getSize(); i++)
@@ -530,7 +530,7 @@ START_TEST(PolicyCtrl_getRuleSetGarbage)
 	oldRs->lock();
 
 	bool result = pc->importFromProfile(wxT("user1"));
-	fail_unless(result == true, "Import from \"user1\" failed");
+	fail_unless(result == true, "Import from 'user1' failed");
 
 	long newId = pc->getUserId();
 
@@ -560,7 +560,7 @@ START_TEST(PolicyCtrl_importUserProfile)
 {
 	int oldId = userPolicy->getRuleSetId();
 	bool result = pc->importFromProfile(wxT("user5"));
-	fail_unless(result == true, "Import from \"user5\" failed");
+	fail_unless(result == true, "Import from 'user5' failed");
 
 	int id = pc->getUserId();
 	fail_unless(id != oldId,
@@ -572,7 +572,7 @@ START_TEST(PolicyCtrl_importDefaultProfile)
 {
 	int oldId = userPolicy->getRuleSetId();
 	bool result = pc->importFromProfile(wxT("default2"));
-	fail_unless(result == true, "Import from \"default2\" failed");
+	fail_unless(result == true, "Import from 'default2' failed");
 
 	int id = pc->getUserId();
 	fail_unless(id != oldId,
@@ -583,29 +583,29 @@ END_TEST
 START_TEST(PolicyCtrl_exportNoProfile)
 {
 	bool result = pc->importFromProfile(wxT("foobar"));
-	fail_unless(result == false, "Import from \"foobar\" was successful");
+	fail_unless(result == false, "Import from 'foobar' was successful");
 }
 END_TEST
 
 START_TEST(PolicyCtrl_exportUserProfile)
 {
 	int result = pc->exportToProfile(wxT("user1"));
-	fail_unless(result == 0, "Export to \"user1\" failed");
+	fail_unless(result == 0, "Export to 'user1' failed");
 }
 END_TEST
 
 START_TEST(PolicyCtrl_exportDefaultProfile)
 {
 	int result = pc->exportToProfile(wxT("default1"));
-	fail_unless(result == -A_RULESET_NOT_LOADED,
-	    "Export to \"default1\" was successful");
+	fail_unless(result == -A_RULESET_WRONG_PROFILE,
+	    "Export to 'default1' should have failed");
 }
 END_TEST
 
 START_TEST(PolicyCtrl_exportNewProfile)
 {
 	int export_result = pc->exportToProfile(wxT("foobar"));
-	fail_unless(export_result == 0, "Export to \"foobar\" failed.");
+	fail_unless(export_result == 0, "Export to 'foobar' failed.");
 
 	wxArrayString profiles;
 	for (int i = 0; i < pc->getSize(); i++)
@@ -616,34 +616,34 @@ START_TEST(PolicyCtrl_exportNewProfile)
 	    "Expected: 11", profiles.GetCount());
 
 	fail_if(profiles.Index(wxT("default1")) == wxNOT_FOUND,
-	   "Profile \"default1\" not in list");
+	   "Profile 'default1' not in list");
 	fail_if(profiles.Index(wxT("default2")) == wxNOT_FOUND,
-	   "Profile \"default2\" not in list");
+	   "Profile 'default2' not in list");
 	fail_if(profiles.Index(wxT("default3")) == wxNOT_FOUND,
-	   "Profile \"default3\" not in list");
+	   "Profile 'default3' not in list");
 	fail_if(profiles.Index(wxT("default4")) == wxNOT_FOUND,
-	   "Profile \"default4\" not in list");
+	   "Profile 'default4' not in list");
 	fail_if(profiles.Index(wxT("user1")) == wxNOT_FOUND,
-	   "Profile \"user1\" not in list");
+	   "Profile 'user1' not in list");
 	fail_if(profiles.Index(wxT("user2")) == wxNOT_FOUND,
-	   "Profile \"user2\" not in list");
+	   "Profile 'user2' not in list");
 	fail_if(profiles.Index(wxT("user3")) == wxNOT_FOUND,
-	   "Profile \"user3\" not in list");
+	   "Profile 'user3' not in list");
 	fail_if(profiles.Index(wxT("user4")) == wxNOT_FOUND,
-	   "Profile \"user4\" not in list");
+	   "Profile 'user4' not in list");
 	fail_if(profiles.Index(wxT("user5")) == wxNOT_FOUND,
-	   "Profile \"user5\" not in list");
+	   "Profile 'user5' not in list");
 	fail_if(profiles.Index(wxT("user6")) == wxNOT_FOUND,
-	   "Profile \"user6\" not in list");
+	   "Profile 'user6' not in list");
 	fail_if(profiles.Index(wxT("foobar")) == wxNOT_FOUND,
-	   "Profile \"foobar\" not in list");
+	   "Profile 'foobar' not in list");
 }
 END_TEST
 
 START_TEST(PolicyCtrl_getUserRuleSet)
 {
 	PolicyRuleSet *rs = pc->getRuleSet(wxT("user2"));
-	fail_unless(rs != 0, "Failed to fetch policy of \"user2\"");
+	fail_unless(rs != 0, "Failed to fetch policy of 'user2'");
 
 	delete rs;
 }
@@ -652,7 +652,7 @@ END_TEST
 START_TEST(PolicyCtrl_getAdminRuleSet)
 {
 	PolicyRuleSet *rs = pc->getRuleSet(wxT("default2"));
-	fail_unless(rs != 0, "Failed to fetch policy of \"default2\"");
+	fail_unless(rs != 0, "Failed to fetch policy of 'default2'");
 
 	delete rs;
 }
@@ -661,7 +661,7 @@ END_TEST
 START_TEST(PolicyCtrl_getUnknownRuleSet)
 {
 	PolicyRuleSet *rs = pc->getRuleSet(wxT("foobar"));
-	fail_unless(rs == 0, "Failed to fetch policy of \"foobar\"");
+	fail_unless(rs == 0, "Failed to fetch policy of 'foobar'");
 
 	delete rs;
 }

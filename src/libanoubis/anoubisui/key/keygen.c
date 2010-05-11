@@ -115,7 +115,7 @@ anoubis_keysubject_defaults(void)
 	pw = getpwuid(getuid());
 	if (pw) {
 		/*
-		 * Gecos is comma seperated. Since we are only intrested
+		 * Gecos is comma seperated. Since we are only interested
 		 * in the name we cut away everything after first comma found
 		 */
 		ret->name = strdup(pw->pw_gecos);

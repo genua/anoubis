@@ -34,6 +34,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <pwd.h>
 #include <anoubis_keygen.h>
 #include <anoubis_errno.h>
 
@@ -44,7 +47,13 @@ START_TEST(subject_default)
 {
 	struct anoubis_keysubject	*subject = NULL;
 	int				 i;
+	struct passwd			*pw;
 
+	/* only run the test if username lookups work */
+	pw = getpwuid(getuid());
+	if (pw == NULL)
+		return;
+ 
 	/* Do it several times to catch more potential memory errors. */
 	for (i=0; i<50; ++i) {
 		subject = anoubis_keysubject_defaults();
