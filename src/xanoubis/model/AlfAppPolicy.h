@@ -42,8 +42,6 @@
  */
 class AlfAppPolicy : public AppPolicy
 {
-	DECLARE_CLASS(AlfAppPolicy)
-
 	public:
 		/**
 		 * Constructor of a AlfAppPolicy.

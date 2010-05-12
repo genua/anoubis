@@ -40,8 +40,6 @@ class SbAppPolicy;
  */
 class SbAccessFilterPolicy : public FilterPolicy
 {
-	DECLARE_CLASS(SbAccessFilterPolicy)
-
 	public:
 		/**
 		 * Constructor of a SbAccessFilterPolicy.

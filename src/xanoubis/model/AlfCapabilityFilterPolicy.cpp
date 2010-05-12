@@ -29,8 +29,6 @@
 #include "PolicyVisitor.h"
 #include "PolicyRuleSet.h"
 
-IMPLEMENT_CLASS(AlfCapabilityFilterPolicy, FilterPolicy);
-
 AlfCapabilityFilterPolicy::AlfCapabilityFilterPolicy(AppPolicy *parent,
     struct apn_rule *rule) : FilterPolicy(parent, rule)
 {

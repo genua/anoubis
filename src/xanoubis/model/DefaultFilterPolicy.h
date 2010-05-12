@@ -39,8 +39,6 @@
  */
 class DefaultFilterPolicy : public FilterPolicy
 {
-	DECLARE_CLASS(DefaultFilterPolicy)
-
 	public:
 		/**
 		 * Constructor of a DefaultFilterPolicy.

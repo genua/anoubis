@@ -40,8 +40,6 @@ class SfsAppPolicy;
  */
 class SfsDefaultFilterPolicy : public FilterPolicy
 {
-	DECLARE_CLASS(SfsDefaultFilterPolicy)
-
 	public:
 		/**
 		 * Constructor of a SfsDefaultFilterPolicy.

@@ -27,8 +27,6 @@
 
 #include "FilterPolicy.h"
 
-IMPLEMENT_CLASS(FilterPolicy, Policy);
-
 FilterPolicy::FilterPolicy(AppPolicy *parent, struct apn_rule *rule)
     : Policy((parent==NULL ? NULL : parent->getParentRuleSet()), rule)
 {

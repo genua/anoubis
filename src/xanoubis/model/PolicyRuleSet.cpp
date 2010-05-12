@@ -41,8 +41,6 @@
 #include "RuleSetSearchPolicyVisitor.h"
 #include "RuleSetClearModifiedVisitor.h"
 
-IMPLEMENT_CLASS(PolicyRuleSet, Subject);
-
 PolicyRuleSet::PolicyRuleSet(int priority, uid_t uid,
     struct apn_ruleset *ruleSet)
 {

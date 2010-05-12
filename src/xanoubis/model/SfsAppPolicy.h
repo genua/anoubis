@@ -41,8 +41,6 @@
  */
 class SfsAppPolicy : public AppPolicy
 {
-	DECLARE_CLASS(SfsAppPolicy)
-
 	public:
 		/**
 		 * Constructor of a SfsAppPolicy.

@@ -40,8 +40,6 @@
  */
 class ContextAppPolicy : public AppPolicy
 {
-	DECLARE_CLASS(ContextAppPolicy)
-
 	public:
 		/**
 		 * Constructor of a ContextAppPolicy.

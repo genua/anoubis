@@ -41,8 +41,6 @@
  */
 class SbAppPolicy : public AppPolicy
 {
-	DECLARE_CLASS(SbAppPolicy)
-
 	public:
 		/**
 		 * Constructor of a SbAppPolicy.

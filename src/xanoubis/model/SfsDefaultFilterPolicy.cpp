@@ -29,8 +29,6 @@
 #include "PolicyVisitor.h"
 #include "PolicyRuleSet.h"
 
-IMPLEMENT_CLASS(SfsDefaultFilterPolicy, FilterPolicy);
-
 SfsDefaultFilterPolicy::SfsDefaultFilterPolicy(AppPolicy *parentPolicy,
     struct apn_rule *rule) : FilterPolicy(parentPolicy, rule)
 {

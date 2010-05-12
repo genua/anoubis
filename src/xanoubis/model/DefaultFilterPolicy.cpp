@@ -30,8 +30,6 @@
 #include "PolicyVisitor.h"
 #include "PolicyRuleSet.h"
 
-IMPLEMENT_CLASS(DefaultFilterPolicy, FilterPolicy);
-
 DefaultFilterPolicy::DefaultFilterPolicy(AppPolicy *parentPolicy,
     struct apn_rule *rule) : FilterPolicy(parentPolicy, rule)
 {

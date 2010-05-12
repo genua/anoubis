@@ -34,8 +34,6 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-IMPLEMENT_CLASS(Policy, AnListClass);
-
 Policy::Policy(PolicyRuleSet *ruleSet, struct apn_rule *rule)
 {
 	modified_	= false;

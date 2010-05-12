@@ -35,8 +35,6 @@
 #include "PolicyVisitor.h"
 #include "PolicyRuleSet.h"
 
-IMPLEMENT_CLASS(AlfFilterPolicy, FilterPolicy);
-
 AlfFilterPolicy::AlfFilterPolicy(AppPolicy *parentPolicy, struct apn_rule *rule)
     : FilterPolicy(parentPolicy, rule)
 {

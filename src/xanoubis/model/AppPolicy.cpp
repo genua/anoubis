@@ -32,8 +32,6 @@
 #include "PolicyRowProvider.h"
 #include "PolicyRuleSet.h"
 
-IMPLEMENT_CLASS(AppPolicy, Policy);
-
 AppPolicy::AppPolicy(PolicyRuleSet *ruleSet, struct apn_rule *rule)
     : Policy(ruleSet, rule)
 {

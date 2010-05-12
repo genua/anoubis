@@ -39,8 +39,6 @@
  */
 class SfsFilterPolicy : public FilterPolicy
 {
-	DECLARE_CLASS(SfsFilterPolicy)
-
 	public:
 		/**
 		 * Constructor of SfsFilterPolicy.

@@ -43,8 +43,6 @@
  */
 class FilterPolicy : public Policy
 {
-	DECLARE_CLASS(FilterPolicy)
-
 	public:
 		/**
 		 * Constructor of a FilterPolicy.

@@ -62,8 +62,6 @@
  */
 class Subject : public wxObject
 {
-	DECLARE_CLASS(Subject)
-
 	public:
 		/**
 		 * Constructor of subject object.

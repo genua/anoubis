@@ -50,8 +50,6 @@ class PolicyRowProvider;
  */
 class AppPolicy : public Policy
 {
-	DECLARE_CLASS(AppPolicy)
-
 	public:
 		/**
 		 * Constructor of a AppPolicy.

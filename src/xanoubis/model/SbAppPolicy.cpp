@@ -29,8 +29,6 @@
 #include "PolicyVisitor.h"
 #include "PolicyRuleSet.h"
 
-IMPLEMENT_CLASS(SbAppPolicy, AppPolicy);
-
 SbAppPolicy::SbAppPolicy(PolicyRuleSet *ruleSet, struct apn_rule *rule)
     : AppPolicy(ruleSet, rule)
 {

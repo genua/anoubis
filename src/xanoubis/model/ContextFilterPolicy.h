@@ -41,8 +41,6 @@ class ContextAppPolicy;
  */
 class ContextFilterPolicy : public FilterPolicy
 {
-	DECLARE_CLASS(ContextFilterPolicy)
-
 	public:
 		/**
 		 * Constructor of a ContextFilterPolicy.

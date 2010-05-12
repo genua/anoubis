@@ -57,8 +57,6 @@
  */
 class PolicyRuleSet : public Subject
 {
-	DECLARE_CLASS(PolicyRuleSet)
-
 	public:
 		/**
 		 * Constructor of PolicyRuleSet.

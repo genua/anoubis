@@ -40,8 +40,6 @@ class AlfAppPolicy;
  */
 class AlfFilterPolicy : public FilterPolicy
 {
-	DECLARE_CLASS(AlfFilterPolicy)
-
 	public:
 		/**
 		 * Constructor of a AlfFilterPolicy.

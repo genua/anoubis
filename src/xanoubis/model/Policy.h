@@ -48,8 +48,6 @@ class PolicyRuleSet;
  */
 class Policy : public AnListClass
 {
-	DECLARE_CLASS(Policy);
-
 	public:
 		/**
 		 * Constructor of a policy.
