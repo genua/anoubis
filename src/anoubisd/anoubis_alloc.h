@@ -227,6 +227,26 @@ extern struct abuf_buffer	abuf_alloc(unsigned int length);
 extern struct abuf_buffer	abuf_zalloc(unsigned int length);
 
 /**
+ * Create an identical copy of a buffer and its associated data.
+ *
+ * @param 1st The source buffer.
+ * @return A buffer of the same length the source buffer that contains
+ *     a copy of the source buffer's data. An empty buffer if memory
+ *     allocation failed.
+ */
+static inline struct abuf_buffer
+abuf_clone(const struct abuf_buffer src)
+{
+	struct abuf_buffer	ret = abuf_alloc(abuf_length(src));
+
+	if (abuf_length(ret) == 0)
+		return ABUF_EMPTY;
+	ASSERT_MEM(abuf_length(ret) == abuf_length(src));
+	memcpy(ret.data, src.data, abuf_length(ret));
+	return ret;
+}
+
+/**
  * Free a buffer that was previously allocated with @see abuf_alloc and
  * friends. Any buffer returned from one of the buffer allocation functions
  * can be freed by this function even if the allocation actually failed.
@@ -282,11 +302,23 @@ extern unsigned int		abuf_limit(struct abuf_buffer *buf,
 extern struct abuf_buffer	abuf_open_frommem(void *data, unsigned int len);
 
 /**
+ * Return true if the buffers have the same length and the same contents.
+ *
+ * @param b1 The first buffer.
+ * @param b2 The second buffer.
+ * @return True if the buffer contents are equal.
+ */
+extern int	 abuf_equal(const struct abuf_buffer b1,
+		     const struct abuf_buffer b2);
+
+/**
  * Compare the contents of two buffers using memcmp. At most cmplen
  * bytes are compared. If any of the buffers is smaller than cmplen,
- * the comparison stops at the end of that buffer. The longer buffer
- * is greater than the shorter buffer the shorter buffer is a prefix
- * of the longer one.
+ * the comparison stops at the end of that buffer. If the first cmplen
+ * bytes of the comparison are the same, the result is zero (equal) even
+ * if the buffers have different length. If one buffer is a prefix of the
+ * other (that is shorter than cmplen bytes) the buffer length is used to
+ * break ties.
  *
  * @param b1 The first buffer.
  * @param b2 The second buffer.

@@ -83,21 +83,19 @@ static inline void		 pe_proc_secure_inherit(struct pe_proc *,
 TAILQ_HEAD(tracker, pe_proc) tracker;
 
 void
-pe_proc_ident_set(struct pe_proc_ident *pident, const u_int8_t *csum,
+pe_proc_ident_set(struct pe_proc_ident *pident, const struct abuf_buffer csum,
     const char *pathhint)
 {
-	if (csum) {
-		if (pident->csum == NULL) {
-			pident->csum = calloc(1, ANOUBIS_SFS_CS_LEN);
-			if (pident->csum == NULL)
+	if (!abuf_empty(csum)) {
+		if (abuf_empty(pident->csum)) {
+			pident->csum = abuf_alloc(ANOUBIS_SFS_CS_LEN);
+			if (abuf_empty(pident->csum))
 				goto oom;
 		}
-		bcopy(csum, pident->csum, ANOUBIS_SFS_CS_LEN);
+		abuf_copy(pident->csum, csum);
 	} else {
-		if (pident->csum) {
-			free(pident->csum);
-			pident->csum = NULL;
-		}
+		abuf_free(pident->csum);
+		pident->csum = ABUF_EMPTY;
 	}
 	if (pident->pathhint) {
 		free(pident->pathhint);
@@ -116,10 +114,8 @@ oom:
 void
 pe_proc_ident_put(struct pe_proc_ident *pident)
 {
-	if (pident->csum) {
-		free(pident->csum);
-		pident->csum = NULL;
-	}
+	abuf_free(pident->csum);
+	pident->csum = ABUF_EMPTY;
 	if (pident->pathhint) {
 		free(pident->pathhint);
 		pident->pathhint = NULL;
@@ -197,7 +193,7 @@ pe_proc_alloc(uid_t uid, anoubis_cookie_t cookie, struct pe_proc_ident *pident)
 	proc->threads = 1;
 #endif
 	proc->ident.pathhint = NULL;
-	proc->ident.csum = NULL;
+	proc->ident.csum = ABUF_EMPTY;
 	if (pident)
 		pe_proc_ident_set(&proc->ident, pident->csum, pident->pathhint);
 	DEBUG(DBG_PE_TRACKER, "pe_proc_alloc: proc %p uid %u cookie 0x%08"
@@ -310,12 +306,10 @@ pe_proc_dump(void)
 		ctx0 = proc->context[0];
 		ctx1 = proc->context[1];
 		log_info("proc %p token 0x%08" PRIx64 " borrow token 0x%08"
-		    PRIx64 " pid %d csum 0x%08x pathhint \"%s\" ctx %p %p "
+		    PRIx64 " pid %d pathhint \"%s\" ctx %p %p "
 		    "alfrules %p %p sbrules %p %p flags 0x%x",
 		    proc, proc->task_cookie,
 		    proc->borrow_cookie, (int)proc->pid,
-		    proc->ident.csum ?
-		    htonl(*(unsigned long *)proc->ident.csum) : 0,
 		    proc->ident.pathhint ? proc->ident.pathhint : "",
 		    ctx0, ctx1,
 		    pe_context_get_alfrule(ctx0), pe_context_get_alfrule(ctx1),
@@ -346,10 +340,8 @@ pe_proc_fork(uid_t uid, anoubis_cookie_t child, anoubis_cookie_t parent_cookie)
 	pe_proc_secure_inherit(proc, pe_proc_is_secure(parent));
 
 	DEBUG(DBG_PE_PROC, "pe_proc_fork: token 0x%08" PRIx64 " pid %d "
-	    "uid %u proc %p csum 0x%08x... parent token 0x%08" PRIx64
+	    "uid %u proc %p parent token 0x%08" PRIx64
 	    " flags 0x%x", child, proc->pid, uid, proc,
-	    proc->ident.csum ?
-	    htonl(*(unsigned long *)proc->ident.csum) : 0,
 	    parent_cookie, proc->flags);
 	pe_proc_put(parent);
 	pe_proc_put(proc);
@@ -438,7 +430,7 @@ pe_proc_remove_thread(anoubis_cookie_t cookie)
  * Update process attributes after an exec system call.
  */
 void pe_proc_exec(anoubis_cookie_t cookie, uid_t uid, pid_t pid,
-    const u_int8_t *csum, const char *pathhint, int secure)
+    const struct abuf_buffer csum, const char *pathhint, int secure)
 {
 	struct pe_proc		*proc = pe_proc_get(cookie);
 	struct pe_context	*ctx0, *ctx1;
@@ -473,10 +465,10 @@ void pe_proc_exec(anoubis_cookie_t cookie, uid_t uid, pid_t pid,
 	ctx1 = pe_proc_get_context(proc, 1);
 	/* Get our policy */
 	DEBUG(DBG_PE_PROC, "pe_proc_exec: using alfrules %p %p sbrules %p %p "
-	    "for %s csum 0x%08x...",
+	    "for %s",
 	    pe_context_get_alfrule(ctx0), pe_context_get_alfrule(ctx1),
 	    pe_context_get_sbrule(ctx0), pe_context_get_sbrule(ctx1),
-	    pathhint ? pathhint : "", csum ? htonl(*(unsigned long *)csum) : 0);
+	    pathhint ? pathhint : "");
 
 	if (uid == 0 &&
 	    anoubisd_config.upgrade_mode == ANOUBISD_UPGRADE_MODE_PROCESS) {
@@ -500,10 +492,10 @@ void pe_proc_exec(anoubis_cookie_t cookie, uid_t uid, pid_t pid,
 
 int
 pe_proc_will_transition(anoubis_cookie_t cookie, uid_t uid,
-    const u_int8_t *csum, const char *pathhint)
+    const struct abuf_buffer csum, const char *pathhint)
 {
 	struct pe_proc		*proc = pe_proc_get(cookie);
-	struct pe_proc_ident	 pident = { NULL, NULL };
+	struct pe_proc_ident	 pident = { ABUF_EMPTY, NULL };
 	int			 ret;
 
 	if (!proc)

@@ -294,7 +294,6 @@ char *
 pe_context_dump(struct eventdev_hdr *hdr, struct pe_proc *proc, int prio)
 {
 	struct pe_context	*ctx;
-	unsigned long		 csumctx;
 	char			*dump, *progctx;
 	struct pe_proc_ident	*pident = NULL;
 	long			 uidctx = -1;
@@ -303,16 +302,12 @@ pe_context_dump(struct eventdev_hdr *hdr, struct pe_proc *proc, int prio)
 	if (hdr == NULL)
 		return (NULL);
 
-	csumctx = 0;
 	progctx = "<none>";
 
 	if (proc && 0 <= prio && prio <= PE_PRIO_MAX) {
 		ctx = pe_proc_get_context(proc, prio);
 
 		if (ctx) {
-			if (ctx->ident.csum)
-				csumctx = htonl(
-				    *(unsigned long *)ctx->ident.csum);
 			if (ctx->ident.pathhint)
 				progctx = ctx->ident.pathhint;
 		}
@@ -320,17 +315,14 @@ pe_context_dump(struct eventdev_hdr *hdr, struct pe_proc *proc, int prio)
 		uidctx = pe_proc_get_uid(proc);
 	}
 
-	if (asprintf(&dump, "uid %hu pid %hu program %s checksum 0x%08x... "
-	    "context uid %ld program %s checksum 0x%08lx...",
+	if (asprintf(&dump, "uid %hu pid %hu program %s "
+	    "context uid %ld program %s",
 	    hdr->msg_uid, hdr->msg_pid,
 	    (pident && pident->pathhint) ? pident->pathhint : "<none>",
-	    (pident && pident->csum) ?
-	    htonl(*(unsigned long *)pident->csum) : 0,
-	    uidctx, progctx, csumctx) == -1) {
+	    uidctx, progctx) == -1)
 		dump = NULL;
-	}
 
-	return (dump);
+	return dump;
 }
 
 /*
@@ -375,8 +367,7 @@ pe_context_subject_match(const struct apn_app *app,
     const struct pe_proc_ident *pident, uid_t uid)
 {
 	const struct apn_subject	*subject;
-	u_int8_t			*csptr = NULL;
-	u_int8_t			 csbuf[ANOUBIS_CS_LEN];
+	struct abuf_buffer		 csum = ABUF_EMPTY;
 	char				*keyid;
 	int				 ret;
 
@@ -397,10 +388,9 @@ pe_context_subject_match(const struct apn_app *app,
 			return 0;
 		if (!app->name)
 			return 0;
-		ret = sfshash_get_uid(app->name, uid, csbuf);
+		ret = sfshash_get_uid(app->name, uid, &csum);
 		if (ret != 0)
 			return 0;
-		csptr = csbuf;
 		break;
 	case APN_CS_KEY:
 	case APN_CS_KEY_SELF:
@@ -411,19 +401,20 @@ pe_context_subject_match(const struct apn_app *app,
 		} else {
 			keyid = subject->value.keyid;
 		}
-		ret = sfshash_get_key(app->name, keyid, csbuf);
+		ret = sfshash_get_key(app->name, keyid, &csum);
 		if (subject->type == APN_CS_KEY_SELF)
 			free(keyid);
 		if (ret != 0)
 			return 0;
-		csptr = csbuf;
 		break;
 	default:
 		return 0;
 	}
-	if (!csptr || !pident->csum)
-		return 0;
-	return (memcmp(csptr, pident->csum, ANOUBIS_CS_LEN) == 0);
+	ret = 0;
+	if (!abuf_empty(csum) && !abuf_empty(pident->csum))
+		ret = abuf_equal(csum, pident->csum);
+	abuf_free(csum);
+	return ret;
 }
 
 static int
@@ -587,7 +578,7 @@ pe_context_open(struct pe_proc *proc, struct eventdev_hdr *hdr)
 	}
 
 	pident.pathhint = sfsmsg->pathhint;
-	pident.csum = sfsmsg->csum;
+	pident.csum = abuf_open_frommem(sfsmsg->csum, sizeof(sfsmsg->csum));
 
 	for (i = 0; i < PE_PRIO_MAX; i++) {
 		if (pe_context_decide(proc, APN_CTX_OPEN, i, &pident,
@@ -687,9 +678,8 @@ pe_context_search(struct apn_ruleset *rs, struct pe_proc_ident *pident,
 {
 	struct pe_context	*context;
 
-	DEBUG(DBG_PE_CTX, "pe_context_search: ruleset %p csum 0x%08x...", rs,
-	    (pident && pident->csum) ?
-	    htonl(*(unsigned long *)pident->csum) : 0);
+	DEBUG(DBG_PE_CTX, "pe_context_search: ruleset %p path %s", rs,
+	    (pident && pident->pathhint) ? pident->pathhint : NULL);
 
 	/*
 	 * We do not check csum and pathhint for being NULL, as we
@@ -734,7 +724,7 @@ pe_context_alloc(struct apn_ruleset *rs, struct pe_proc_ident *pident)
 	ctx->ctxrule = NULL;
 	ctx->ruleset = rs;
 	ctx->refcount = 1;
-	ctx->ident.csum = NULL;
+	ctx->ident.csum = ABUF_EMPTY;
 	ctx->ident.pathhint = NULL;
 	if (pident)
 		pe_proc_ident_set(&ctx->ident, pident->csum, pident->pathhint);
@@ -813,10 +803,8 @@ pe_context_decide(struct pe_proc *proc, int type, int prio,
 		return 0;
 	/* If we reach this point context switching is allowed. */
 	DEBUG(DBG_PE_CTX,
-	    "pe_context_decide: found \"%s\" csum 0x%08x... for "
-	    "type %d priority %d", (hp && hp->name) ? hp->name : "any",
-	    (pident && pident->csum) ?
-	    htonl(*(unsigned long *)pident->csum) : 0, type, prio);
+	    "pe_context_decide: found \"%s\" for type %d priority %d",
+	    (hp && hp->name) ? hp->name : "any", type, prio);
 	return 1;
 }
 

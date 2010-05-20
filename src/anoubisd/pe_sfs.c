@@ -72,9 +72,8 @@ pe_sfs_match_one(struct apn_rule *rule, struct pe_file_event *fevent,
 	static struct apn_default	 tmpresult;
 	char				*prefix = NULL;
 	struct apn_subject		*subject = NULL;
-	u_int8_t			 csum[ANOUBIS_CS_LEN];
-	u_int8_t			*cs = NULL;
-	int				 len, ret;
+	struct abuf_buffer		 csum = ABUF_EMPTY;
+	int				 len;
 
 	if (!pe_in_scope(rule->scope, fevent->cookie, now))
 		return NULL;
@@ -110,38 +109,27 @@ pe_sfs_match_one(struct apn_rule *rule, struct pe_file_event *fevent,
 		return &tmpresult;
 	}
 
-	cs = NULL;
 	switch (subject->type) {
 	case APN_CS_UID:
-		ret = sfshash_get_uid(fevent->path, subject->value.uid, csum);
-		if (ret == 0)
-			cs = csum;
+		sfshash_get_uid(fevent->path, subject->value.uid, &csum);
 		break;
 	case APN_CS_KEY:
-		ret = sfshash_get_key(fevent->path, subject->value.keyid, csum);
-		if (ret == 0)
-			cs = csum;
+		sfshash_get_key(fevent->path, subject->value.keyid, &csum);
 		break;
 	case APN_CS_UID_SELF:
-		ret = sfshash_get_uid(fevent->path, fevent->uid, csum);
-		if (ret == 0)
-			cs = csum;
+		sfshash_get_uid(fevent->path, fevent->uid, &csum);
 		break;
 	case APN_CS_KEY_SELF: {
 		char		*keyid;
 		keyid = cert_keyid_for_uid(fevent->uid);
 		if (!keyid)
 			break;
-		ret = sfshash_get_key(fevent->path, keyid, csum);
+		sfshash_get_key(fevent->path, keyid, &csum);
 		free(keyid);
-		if (ret == 0)
-			cs = csum;
 		break;
 	}
-	default:
-		break;
 	}
-	if (cs == NULL) {
+	if (abuf_empty(csum)) {
 		(*matchp) = ANOUBIS_SFS_UNKNOWN;
 		return &rule->rule.sfsaccess.unknown;
 	}
@@ -154,17 +142,20 @@ pe_sfs_match_one(struct apn_rule *rule, struct pe_file_event *fevent,
 	 * In all other cases continue with normal processing.
 	 */
 	if (fevent->upgrade_flags & PE_UPGRADE_TOUCHED) {
-		if ((fevent->cslen == ANOUBIS_CS_LEN)
+		if ((abuf_length(fevent->csum) == ANOUBIS_CS_LEN)
 		    || (fevent->upgrade_flags & PE_UPGRADE_WRITEOK)) {
+			abuf_free(csum);
 			(*matchp) = ANOUBIS_SFS_VALID;
 			return &rule->rule.sfsaccess.valid;
 		}
 	}
-	if ((fevent->cslen != ANOUBIS_CS_LEN) ||
-	    (memcmp(cs, fevent->cs, ANOUBIS_CS_LEN) != 0)) {
+	if (abuf_length(fevent->csum) != ANOUBIS_CS_LEN ||
+	    !abuf_equal(csum, fevent->csum)) {
+		abuf_free(csum);
 		(*matchp) = ANOUBIS_SFS_INVALID;
 		return &rule->rule.sfsaccess.invalid;
 	}
+	abuf_free(csum);
 	(*matchp) = ANOUBIS_SFS_VALID;
 	return &rule->rule.sfsaccess.valid;
 }
@@ -242,7 +233,8 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
 		if (secure
 		    && pe_context_is_nosfs(pe_proc_get_context(proc, i))) {
 			/* NOSFS enforced by the context. Do nothing. */
-			DEBUG(DBG_PE_SFS," pe_decide_sfs: nosfs enabled for prio %d", i);
+			DEBUG(DBG_PE_SFS," pe_decide_sfs: nosfs enabled for "
+			    "prio %d", i);
 			continue;
 		}
 
@@ -288,8 +280,8 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
 				sfsmatch = match;
 				break;
 			}
-			DEBUG(DBG_PE_SFS," pe_decide_sfs: decision = %d rule %d prio %d",
-			    decision, rule_id, prio);
+			DEBUG(DBG_PE_SFS," pe_decide_sfs: decision = %d "
+			    "rule %d prio %d", decision, rule_id, prio);
 			break;
 		}
 		free(rulelist);
@@ -305,9 +297,12 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
 		int i;
 		context = pe_context_dump(hdr, proc, prio);
 		dump = pe_dump_sfsmsg(fevent);
-		if (fevent->cslen == ANOUBIS_CS_LEN) {
+		if (abuf_length(fevent->csum) == ANOUBIS_CS_LEN) {
+			uint8_t		*ptr;
+
+			ptr = abuf_toptr(fevent->csum, 0, ANOUBIS_CS_LEN);
 			for (i=0; i<ANOUBIS_CS_LEN; ++i)
-				sprintf(&cstext[2*i], "%02x", fevent->cs[i]);
+				sprintf(&cstext[2*i], "%02x", ptr[i]);
 			cstext[2*ANOUBIS_CS_LEN] = 0;
 		}
 	}

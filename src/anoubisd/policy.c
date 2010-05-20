@@ -526,9 +526,7 @@ pident_size(struct pe_proc_ident *pident)
 	int ret;
 	if (!pident)
 		return 0;
-	ret = 0;
-	if (pident->csum)
-		ret += ANOUBIS_CS_LEN;
+	ret = abuf_length(pident->csum);
 	if (pident->pathhint)
 		ret += 1+strlen(pident->pathhint);
 	return ret;
@@ -554,6 +552,18 @@ do_copy(char *buf, int *offp, const void *data, int datalen,
 	*offp += datalen;
 }
 
+/**
+ * The same as do_copy but the data and data length are taken from a
+ * abuf_buffer and not from a pointer.
+ */
+static void
+do_copy_buf(char *buf, int *offp, const struct abuf_buffer data,
+    uint16_t *roffp, uint16_t *rlenp)
+{
+	do_copy(buf, offp, abuf_toptr(data, 0, abuf_length(data)),
+	    abuf_length(data), roffp, rlenp);
+}
+
 /*
  * Copy a proc ident by calling @do_copy twice. Once for the csum and
  * once for the pathhint. The offset pointed to by @offp is updated.
@@ -571,7 +581,7 @@ do_copy_ident(char *buf, int *offp, const struct pe_proc_ident *pident,
 		*rcslenp = *rpathlenp = 0;
 		return;
 	}
-	do_copy(buf, offp, pident->csum, ANOUBIS_CS_LEN, rcsoffp, rcslenp);
+	do_copy_buf(buf, offp, pident->csum, rcsoffp, rcslenp);
 	if (pident->pathhint)
 		plen = strlen(pident->pathhint)+1;
 	do_copy(buf, offp, pident->pathhint, plen, rpathoffp, rpathlenp);

@@ -92,8 +92,7 @@ void	 sfshash_init(void);
 void	 sfshash_flush(void);
 void	 sfshash_invalidate_uid(const char *, uid_t);
 void	 sfshash_invalidate_key(const char *, const char*);
-int	 sfshash_get_uid(const char *, uid_t, u_int8_t cs[ANOUBIS_CS_LEN]);
-int	 sfshash_get_key(const char *, const char *,
-	     u_int8_t cs[ANOUBIS_CS_LEN]);
+int	 sfshash_get_uid(const char *, uid_t, struct abuf_buffer *);
+int	 sfshash_get_key(const char *, const char *, struct abuf_buffer *);
 
 #endif	/* _SFS_H_ */

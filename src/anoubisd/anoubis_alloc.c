@@ -170,6 +170,16 @@ abuf_ncmp(struct abuf_buffer b1, struct abuf_buffer b2,
 	return ret;
 }
 
+int
+abuf_equal(const struct abuf_buffer b1, const struct abuf_buffer b2)
+{
+	if (b1.length != b2.length)
+		return 0;
+	if (b1.length == 0)
+		return 1;
+	return (memcmp(b1.data, b2.data, b1.length) == 0);
+}
+
 unsigned int
 abuf_copy_frombuf(void *dst, const struct abuf_buffer src, unsigned int len)
 {

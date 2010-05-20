@@ -40,13 +40,16 @@
 #include <anoubis_protocol.h>
 #include <anoubis_alloc.h>
 
-struct sfshash_entry;
-
 #define CSTYPE_NEGATIVE		0x1000
 #define CSTYPE_MASK		0xfff
 #define CSTYPE_UID		1
 #define CSTYPE_KEY		2
 
+
+/**
+ * This structure represents a single entry in the sfs checksum cache.
+ * It contains a checksum and the path and uid/key.
+ */
 struct sfshash_entry {
 	TAILQ_ENTRY(sfshash_entry)	hash_link;
 	TAILQ_ENTRY(sfshash_entry)	lru_link;
@@ -57,7 +60,7 @@ struct sfshash_entry {
 		uid_t			 uid;
 	} u;
 	char				*path;
-	u_int8_t			 csum[ANOUBIS_CS_LEN];
+	struct abuf_buffer		 csum;
 };
 
 #define SFSHASH_SHIFT		 (13)
@@ -69,6 +72,11 @@ TAILQ_HEAD(, sfshash_entry)	sfshash_tab[SFSHASH_NRENTRY];
 TAILQ_HEAD(, sfshash_entry)	sfshash_lru;
 int				sfshash_entries;
 
+/**
+ * Initialize the sfshash. This must be called at program startup
+ * before the hash is used for the first time. This hash itself
+ * cannot be destroyed.
+ */
 void
 sfshash_init(void)
 {
@@ -80,19 +88,32 @@ sfshash_init(void)
 	sfshash_entries = 0;
 }
 
-/*
- * NOTE: Keys should be printed hex strings. As such they must be
- * NOTE: handled case insensitive.
+/**
+ * This is the hash function that is used to convert a path and a
+ * Key-ID and User-ID to a hash value. The caller should either specify
+ * the user-ID as (uid_t)-1 or the Key-ID as NULL.
  *
- * XXX CEH: Evaluate hash function
+ * @param path The path name of the file.
+ * @param key The Key-ID of the key that stored this checksum. This value
+ *     can be NULL. If it is not NULL it should be a string of printable hex
+ *     digits. These are treated case insensitive.
+ * @return A value between zero and SFSHASH_MASK (inclusive). If the
+ *     function is called with the same parameters, it will return the
+ *     same value.
+ *
+ * NOTE: As of today not only the key-ID but also the path name is hashed
+ * NOTE: case insensitive. This might be better if a file system does not
+ * NOTE: use case sensitive path names and will probably not lead to
+ * NOTE: more collisions.
  */
 static unsigned long
 sfshash_fn(const char *path, const char * key, uid_t uid)
 {
 	unsigned long ret = uid & SFSHASH_MASK;
 	for (; *path; path++) {
+		char	tmp = tolower(*path);
 		ret <<= 1;
-		ret ^= *path;
+		ret ^= tmp;
 		ret = (ret ^ (ret >> SFSHASH_SHIFT)) & SFSHASH_MASK;
 	}
 	if (key) {
@@ -106,6 +127,11 @@ sfshash_fn(const char *path, const char * key, uid_t uid)
 	return ret & SFSHASH_MASK;
 }
 
+/**
+ * Remove an entry from the sfs hash and free it.
+ *
+ * @param entry The entry to remove. It must be in the sfs hash.
+ */
 static void
 sfshash_remove_entry(struct sfshash_entry *entry)
 {
@@ -122,10 +148,20 @@ sfshash_remove_entry(struct sfshash_entry *entry)
 		free(entry->path);
 	if (is_key)
 		free(entry->u.key);
-	free(entry);
+	abuf_free(entry->csum);
+	abuf_free_type(entry, struct sfshash_entry);
 	sfshash_entries--;
 }
 
+/**
+ * Insert a new entry into the sfs hash. This function does fill the
+ * new entry it simply inserts it into the hash table. If the total number
+ * of entries exceeds the limit SFSHASH_MAX some entries are removed and
+ * freed as a side effect. Entries that have not been used for a long
+ * period of time ar removed first.
+ *
+ * @param entry The new entry.
+ */
 static void
 sfshash_insert_entry(int slot, struct sfshash_entry *entry)
 {
@@ -144,6 +180,16 @@ sfshash_insert_entry(int slot, struct sfshash_entry *entry)
 	}
 }
 
+/**
+ * Move an entry that that has been looked up to the end of the LRU
+ * list (LRU == least recently used). Entries start there life at the end
+ * of this list and are moved to the end if they are looked up. Entries
+ * at the start of the list are removed if some hash entries must be freed.
+ * Additionally, the entry is moved to the front of the list for its
+ * hash slot. This should improve performance in case of collisions.
+ *
+ * @param entry The entry.
+ */
 static void
 sfshash_touch(struct sfshash_entry *entry)
 {
@@ -154,6 +200,12 @@ sfshash_touch(struct sfshash_entry *entry)
 	TAILQ_INSERT_TAIL(&sfshash_lru, entry, lru_link);
 }
 
+/**
+ * Remove all entries from the sfs hash. This can be called after
+ * a large scale checksum update e.g. due to an upgrade. If only
+ * individual checksums are change, the approriate invalidate funcions
+ * should be used.
+ */
 void
 sfshash_flush(void)
 {
@@ -161,80 +213,144 @@ sfshash_flush(void)
 		sfshash_remove_entry(TAILQ_FIRST(&sfshash_lru));
 }
 
+/**
+ * Common code that inserts a new entry into the sfs hash.
+ *
+ * @param path The path name of the file.
+ * @param The checksum. This function takes over ownership for this buffer.
+ *     It will be freed once the entry is removed from the hash. It will
+ *     be freed in case of an error, too.
+ * @param cstype The checksum type: either CSTYPE_UID or CSTYPE_KEY.
+ * @param uid For CSTYPE_UID requests this is the user-ID of the user that
+ *     stored the checksum. It must be (uid_t)-1 for CSTYPE_KEY requests.
+ * @param key For CSTYPE_KEY requests this is the key-ID of the key that
+ *     stored the checksum. It must be NULL for CSTYPE_UID requests and
+ *     a string of printable hex digits for CSTYPE_KEY requests.
+ * @return Zero in case of success, a negative error code in case of an
+ *     error.
+ *
+ * The path name and the key-ID are copied into the sfs entry, i.e. the
+ * caller retains ownership of the memory pointed to by path and key.
+ * However, ownership of the checksum buffer is taken over by this
+ * function and the caller must not free it on its own.
+ *
+ * This function will _not_ remove a pre-existing entry for the same
+ * path/uid or path/key pair. The caller must do a lookup before calling
+ * this function.
+ */
 static int
-sfshash_insert_common(const char *path, const u_int8_t csum[ANOUBIS_CS_LEN],
+sfshash_insert_common(const char *path, struct abuf_buffer csum,
     int cstype, uid_t uid, const char *key)
 {
 	struct sfshash_entry	*entry;
-	int			 slot;
+	int			 slot, ret;
 
-	entry = malloc(sizeof(struct sfshash_entry));
-	if (entry == NULL)
+	entry = abuf_alloc_type(struct sfshash_entry);
+	if (entry == NULL) {
+		abuf_free(csum);
 		return -ENOMEM;
+	}
+	ret = -EINVAL;
 	entry->path = NULL;
 	entry->cstype = cstype;
+	entry->csum = csum;
 	switch(cstype & CSTYPE_MASK) {
 	case CSTYPE_UID:
 		entry->u.uid = uid;
 		break;
 	case CSTYPE_KEY:
-		if (!key) {
-			free(entry);
-			return -EINVAL;
-		}
+		if (!key)
+			goto err;
+		ret = -ENOMEM;
 		entry->u.key = strdup(key);
 		if (entry->u.key == NULL)
-			goto oom;
+			goto err;
 		break;
 	default:
-		free(entry);
-		return -EINVAL;
+		goto err;
 	}
+	ret = -ENOMEM;
 	entry->path = strdup(path);
 	if (entry->path == NULL)
-		goto oom;
+		goto err;
 	slot = sfshash_fn(path, key, uid);
-	if ((cstype & CSTYPE_NEGATIVE) == 0)
-		memcpy(entry->csum, csum, ANOUBIS_CS_LEN);
 	sfshash_insert_entry(slot, entry);
 	return 0;
-oom:
+err:
 	if (entry->path)
 		free(entry->path);
 	if ((entry->cstype & CSTYPE_MASK) == CSTYPE_KEY && entry->u.key)
 		free(entry->u.key);
-	free(entry);
-	return -ENOMEM;
+	abuf_free(entry->csum);
+	abuf_free_type(entry, struct sfshash_entry);
+	return ret;
 }
 
+/**
+ * Insert a new checksum for the given path and user-ID into the
+ * hash.
+ *
+ * @param path The path name.
+ * @param uid The user-ID of the user.
+ * @param csum The checksum. Ownership of the checksum buffer is taken over
+ *     by this function. It must not be freed by the caller.
+ */
 static int
-sfshash_insert_uid(const char *path, uid_t uid,
-    const u_int8_t hash[ANOUBIS_CS_LEN])
+sfshash_insert_uid(const char *path, uid_t uid, struct abuf_buffer csum)
 {
-	return sfshash_insert_common(path, hash, CSTYPE_UID, uid, NULL);
+	return sfshash_insert_common(path, csum, CSTYPE_UID, uid, NULL);
 }
 
+/**
+ * Insert a negative entry into the sfshash for the given path and user-ID.
+ * Subsequent lookups will return -ENOENT for this path/uid pair.
+ *
+ * @param path The path name.
+ * @param uid The user-ID.
+ */
 static int
 sfshash_insert_uid_negative(const char *path, uid_t uid)
 {
-	return sfshash_insert_common(path, NULL, CSTYPE_UID|CSTYPE_NEGATIVE,
-	    uid, NULL);
+	return sfshash_insert_common(path, ABUF_EMPTY,
+	    CSTYPE_UID|CSTYPE_NEGATIVE, uid, NULL);
 }
 
+/**
+ * Insert a new checksum for the given path and key-ID into the hash.
+ *
+ * @param path The path name.
+ * @param key The key-ID of the key as a string of printable hey digits.
+ * @param csum The checksum data. Ownership of the buffer is taken over
+ *     by this function, i.e. the buffer must not be freed by the caller.
+ */
 static int
-sfshash_insert_key(const char *path, const char *key,
-    const u_int8_t hash[ANOUBIS_CS_LEN])
+sfshash_insert_key(const char *path, const char *key, struct abuf_buffer csum)
 {
-	return sfshash_insert_common(path, hash, CSTYPE_KEY, (uid_t)-1, key);
+	return sfshash_insert_common(path, csum, CSTYPE_KEY, (uid_t)-1, key);
 }
 
+/**
+ * Insert a negative entry for the path/key-ID into the hash. Subsequent
+ * lookups will return -ENOENT for this path/uid pair.
+ *
+ * @param path The path name.
+ * @param key The key-ID as a string of printable hex digits.
+ */
 static int
 sfshash_insert_key_negative(const char *path, const char *key)
 {
-	return sfshash_insert_common(path, NULL, CSTYPE_KEY|CSTYPE_NEGATIVE,
-	    (uid_t)-1, key);
+	return sfshash_insert_common(path, ABUF_EMPTY,
+	    CSTYPE_KEY|CSTYPE_NEGATIVE, (uid_t)-1, key);
 }
 
+/**
+ * Search for the hash entry for the given path and user-ID.
+ *
+ * @param path The path name.
+ * @param uid The user-ID.
+ * @return A pointer to the hash entry or NULL if no matching entry
+ *     was found.
+ */
 static struct sfshash_entry *
 sfshash_find_uid(const char *path, uid_t uid)
 {
@@ -254,6 +370,14 @@ sfshash_find_uid(const char *path, uid_t uid)
 	return entry;
 }
 
+/**
+ * Search for the hash entry for the given path and key-ID.
+ *
+ * @param path The path name.
+ * @param key The key-ID as a string of printable hex digits.
+ * @return A pointer to the hash entry or NULL if no matching entry
+ *     was found.
+ */
 static struct sfshash_entry *
 sfshash_find_key(const char *path, const char *key)
 {
@@ -273,6 +397,14 @@ sfshash_find_key(const char *path, const char *key)
 	return entry;
 }
 
+/**
+ * Utility function that converts upper and lower case hex digits to their
+ * corresponding integer value.
+ *
+ * @param ch A character that should represent a hexadecimal digit.
+ * @return The decimal value of the digit or -1 if the character is not
+ *     a hex digit.
+ */
 static int
 chartohex(char ch)
 {
@@ -289,9 +421,29 @@ chartohex(char ch)
 	return -1;
 }
 
+/**
+ * Read the checksum data of the specified type from the on-disk
+ * SFS tree. The checksum data (if any) is stored in a new buffer.
+ * The memory associated with the buffer must be freed by the caller.
+ *
+ * @param path The path name of the file.
+ * @cstype This is either CSTYPE_UID or CSTYPE_KEY
+ * @param key The Key-ID for CSTYPE_KEY request. The key-ID is given in
+ *     human readable form (i.e. a string of printable hex digits). It
+ *     should be NULL if the request type is not CSTYPE_KEY.
+ * @param The user-ID for CSTYPE_UID requests.
+ * @param csum This should point to an emtpy abuf buffer. The buffer
+ *     will be allocated and filled with the checksum data in case of success.
+ *     The caller is responsible for the freeing of the buffer.
+ *     The buffer will only contain the checksum without any associated
+ *     signature data.
+ * @return Zero in case of success, a negative error code in case of an
+ *     an error. The buffer is initialized to ABUF_EMPTY if an error
+ *     occurs.
+ */
 static int
 sfshash_readsum(const char *path, int cstype, const char *key, uid_t uid,
-    u_int8_t csum[ANOUBIS_CS_LEN])
+    struct abuf_buffer *csum)
 {
 	int			 ret;
 	struct abuf_buffer	 sigbuf = ABUF_EMPTY;
@@ -304,6 +456,7 @@ sfshash_readsum(const char *path, int cstype, const char *key, uid_t uid,
 	csop.listflags = 0;
 	csop.auth_uid = 0;
 
+	(*csum) = ABUF_EMPTY;
 	switch(cstype) {
 	case CSTYPE_UID:
 		csop.uid = uid;
@@ -358,19 +511,45 @@ sfshash_readsum(const char *path, int cstype, const char *key, uid_t uid,
 		abuf_free(sigbuf);
 		return -ENOENT;
 	}
-	abuf_copy_frombuf(csum, sigbuf, ANOUBIS_CS_LEN);
-	abuf_free(sigbuf);
+	/*
+	 * Clone the first ANOUBIS_CS_LEN bytes of the buffer if the buffer
+	 * contains additional data.
+	 */
+	if (abuf_length(sigbuf) > ANOUBIS_CS_LEN) {
+		abuf_limit(&sigbuf, ANOUBIS_CS_LEN);
+		(*csum) = abuf_clone(sigbuf);
+		abuf_free(sigbuf);
+		if (abuf_empty(*csum))
+			return -ENOMEM;
+	} else {
+		(*csum) = sigbuf;
+	}
 
 	return 0;
 }
 
+/**
+ * Return the unsigned checksum associated with a given path. The checksum
+ * data (if any) is returned in an abuf_buffer that is allocated by
+ * this function and must be freed by the caller.
+ *
+ * @param path The path of the file.
+ * @param uid The user ID of the user that stored the checksum.
+ * @param csum The checksum data will be returned in this buffer.
+ *     The buffer will be usable but empty if an error is returned.
+ *     The caller is responsible for the memory associated with the buffer.
+ * @return Zero in case of success, a negative error code in case of an
+ *     error.
+ */
 int
-sfshash_get_uid(const char *path, uid_t uid, u_int8_t csum[ANOUBIS_CS_LEN])
+sfshash_get_uid(const char *path, uid_t uid, struct abuf_buffer *csum)
 {
 	struct sfshash_entry	*entry;
 	int			 ret;
 
+
 	DEBUG(DBG_SFSCACHE, ">sfshash_get_uid: %s %d", path, (int)uid);
+	(*csum) = ABUF_EMPTY;
 	entry = sfshash_find_uid(path, uid);
 	if (entry) {
 		if (entry->cstype & CSTYPE_NEGATIVE) {
@@ -378,10 +557,12 @@ sfshash_get_uid(const char *path, uid_t uid, u_int8_t csum[ANOUBIS_CS_LEN])
 			    "%s %d (negative)", path, (int)uid);
 			return -ENOENT;
 		}
-		memcpy(csum, entry->csum, ANOUBIS_CS_LEN);
+		(*csum) = abuf_clone(entry->csum);
 	} else {
-		ret = sfshash_readsum(path, CSTYPE_UID, NULL, uid, csum);
+		struct abuf_buffer	 tmpbuf = ABUF_EMPTY;
+		ret = sfshash_readsum(path, CSTYPE_UID, NULL, uid, &tmpbuf);
 		if (ret < 0) {
+			abuf_free(tmpbuf);
 			if (ret == -ENOENT) {
 				sfshash_insert_uid_negative(path, uid);
 				DEBUG(DBG_SFSCACHE, "<sfshash_get_uid: ok "
@@ -392,17 +573,32 @@ sfshash_get_uid(const char *path, uid_t uid, u_int8_t csum[ANOUBIS_CS_LEN])
 			}
 			return ret;
 		}
-		sfshash_insert_uid(path, uid, csum);
+		(*csum) = abuf_clone(tmpbuf);
+		/* This takes over control of the buffer @tmpbuf. */
+		sfshash_insert_uid(path, uid, tmpbuf);
 	}
-	DEBUG(DBG_SFSCACHE, "<sfshash_get_uid: ok %s %d "
-	    "%02x%02x%02x%02x...", path, (int)uid, csum[0],
-	    csum[1], csum[2], csum[3]);
+	if (abuf_empty(*csum))
+		return -ENOMEM;
+	DEBUG(DBG_SFSCACHE, "<sfshash_get_uid: ok %s %d ", path, (int)uid);
 	return 0;
 }
 
+/**
+ * Return the unsigned signed checksum associated with a given path.
+ * The checksum data (if any) is returned in an abuf_buffer that is
+ * allocated by this function and must be freed by the calle.
+ *
+ * @param path The path of the file.
+ * @param uid The Key-ID of the key that stored the checksum. The Key-ID
+ *     is given as a human readable string of hex digits.
+ * @param csum The checksum data will be returned in this buffer.
+ *     The buffer will be usable but empty if an error is returned.
+ *     The caller is responsible for the memory associated with the buffer.
+ * @return Zero in case of success, a negative error code in case of an
+ *     error.
+ */
 int
-sfshash_get_key(const char *path, const char *key,
-    u_int8_t csum[ANOUBIS_CS_LEN])
+sfshash_get_key(const char *path, const char *key, struct abuf_buffer *csum)
 {
 	struct sfshash_entry	*entry;
 	int			 ret;
@@ -415,9 +611,12 @@ sfshash_get_key(const char *path, const char *key,
 			    "%s %s negative", path, key);
 			return -ENOENT;
 		}
-		memcpy(csum, entry->csum, ANOUBIS_CS_LEN);
+		(*csum) = abuf_clone(entry->csum);
 	} else {
-		ret = sfshash_readsum(path, CSTYPE_KEY, key, (uid_t)-1, csum);
+		struct abuf_buffer	tmpbuf = ABUF_EMPTY;
+
+		ret = sfshash_readsum(path, CSTYPE_KEY, key, (uid_t)-1,
+		    &tmpbuf);
 		if (ret < 0) {
 			if (ret == -ENOENT) {
 				sfshash_insert_key_negative(path, key);
@@ -429,14 +628,23 @@ sfshash_get_key(const char *path, const char *key,
 			}
 			return ret;
 		}
-		sfshash_insert_key(path, key, csum);
+		(*csum) = abuf_clone(tmpbuf);
+		sfshash_insert_key(path, key, tmpbuf);
 	}
-	DEBUG(DBG_SFSCACHE, "<sfshash_get_key: ok %s %s "
-	    "%02x%02x%02x%02x...", path, key, csum[0],
-	    csum[1], csum[2], csum[3]);
+	if (abuf_empty(*csum))
+		return -ENOMEM;
+	DEBUG(DBG_SFSCACHE, "<sfshash_get_key: ok %s %s", path, key);
 	return 0;
 }
 
+/**
+ * Remove an unsigned checksum from the hash (if it exists). This is
+ * used if the checksum data on disk changes.
+ *
+ * @param path The path of the file.
+ * @param uid The user-ID of the user that stored the checksum.
+ * @return None.
+ */
 void
 sfshash_invalidate_uid(const char *path,  uid_t uid)
 {
@@ -446,6 +654,15 @@ sfshash_invalidate_uid(const char *path,  uid_t uid)
 		sfshash_remove_entry(entry);
 }
 
+/**
+ * Remove a signed checksum from the hash (if it exists). This is used if
+ * the checksum data on disk changes.
+ *
+ * @param path The path of the file.
+ * @param key The Key-ID of the key that stored the signature. The Key-ID
+ *     is given as a string of printable hex digits.
+ * @return None.
+ */
 void
 sfshash_invalidate_key(const char *path, const char *key)
 {

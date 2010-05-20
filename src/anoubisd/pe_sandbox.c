@@ -90,11 +90,10 @@ pe_sb_evaluate(struct apn_rule **rulelist, int rulecnt,
 	}
 	for (i=0; i<rulecnt; ++i) {
 		struct apn_rule	*sbrule = rulelist[i];
-		char		*prefix;
-		int		 cstype;
-		u_int8_t	*cs;
-		u_int8_t	 csum[ANOUBIS_CS_LEN];
-		int		 ret;
+		char			*prefix;
+		int			 cstype;
+		struct abuf_buffer	 csum = ABUF_EMPTY;
+		int			 ret;
 
 		if (sbrule->apn_type == APN_DEFAULT) {
 			if (!match)
@@ -132,57 +131,53 @@ pe_sb_evaluate(struct apn_rule **rulelist, int rulecnt,
 		 * No match if checksum required but no checksum present
 		 * in event. Special case during upgrade.
 		 */
-		if ((sbevent->cslen != ANOUBIS_CS_LEN)
+		if (abuf_length(sbevent->csum) != ANOUBIS_CS_LEN
 		    && (sbevent->upgrade_flags & PE_UPGRADE_TOUCHED) == 0)
 			continue;
-		cs = NULL;
+		csum = ABUF_EMPTY;
 		ret = 0;
 		switch (cstype) {
 		case APN_CS_UID_SELF:
 			ret = sfshash_get_uid(sbevent->path,
-			    sbevent->uid, csum);
-			if (ret == 0)
-				cs = csum;
+			    sbevent->uid, &csum);
 			break;
 		case APN_CS_UID:
 			ret = sfshash_get_uid(sbevent->path,
-			    sbrule->rule.sbaccess.cs.value.uid, csum);
-			if (ret == 0)
-				cs = csum;
+			    sbrule->rule.sbaccess.cs.value.uid, &csum);
 			break;
 		case APN_CS_KEY_SELF: {
 			char	*keyid;
 			keyid = cert_keyid_for_uid(sbevent->uid);
 			if (!keyid)
 				break;
-			ret = sfshash_get_key(sbevent->path, keyid, csum);
+			ret = sfshash_get_key(sbevent->path, keyid, &csum);
 			free(keyid);
-			if (ret == 0)
-				cs = csum;
 			break;
 		}
 		case APN_CS_KEY:
 			ret = sfshash_get_key(sbevent->path,
-			    sbrule->rule.sbaccess.cs.value.keyid, csum);
-			if (ret == 0)
-				cs = csum;
+			    sbrule->rule.sbaccess.cs.value.keyid, &csum);
 			break;
 		}
 		if (ret != 0 && ret != -ENOENT)
 			log_warnx("sfshash_get: Error %d", -ret);
-		if (!cs)
+		if (abuf_empty(csum))
 			continue;
 		/* Special upgrade handling. */
 		if (sbevent->upgrade_flags & PE_UPGRADE_TOUCHED) {
+			abuf_free(csum);
 			if ((sbevent->upgrade_flags & PE_UPGRADE_WRITEOK)
-			    || sbevent->cslen == ANOUBIS_CS_LEN) {
+			    || abuf_length(sbevent->csum) == ANOUBIS_CS_LEN) {
 				match = sbrule;
 				goto have_match;
 			}
 			continue;
 		}
-		if (bcmp(cs, sbevent->cs, ANOUBIS_CS_LEN) != 0)
+		if (!abuf_equal(csum, sbevent->csum)) {
+			abuf_free(csum);
 			continue;
+		}
+		abuf_free(csum);
 		match = sbrule;
 		goto have_match;
 	}

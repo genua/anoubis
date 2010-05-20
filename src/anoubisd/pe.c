@@ -327,6 +327,7 @@ static anoubisd_reply_t *
 pe_handle_sfsexec(struct eventdev_hdr *hdr)
 {
 	struct sfs_open_message		*msg;
+	struct abuf_buffer		 csum = ABUF_EMPTY;
 
 	if (hdr == NULL) {
 		log_warnx("pe_handle_sfsexec: empty header");
@@ -338,9 +339,10 @@ pe_handle_sfsexec(struct eventdev_hdr *hdr)
 		return (NULL);
 	}
 	msg = (struct sfs_open_message *)(hdr+1);
+	if (msg->flags & ANOUBIS_OPEN_FLAG_CSUM)
+		csum = abuf_open_frommem(msg->csum, sizeof(msg->csum));
 	pe_proc_exec(msg->common.task_cookie,
-	    hdr->msg_uid, hdr->msg_pid,
-	    (msg->flags & ANOUBIS_OPEN_FLAG_CSUM) ? msg->csum : NULL,
+	    hdr->msg_uid, hdr->msg_pid, csum,
 	    (msg->flags & ANOUBIS_OPEN_FLAG_PATHHINT) ? msg->pathhint : NULL,
 	    (msg->flags & ANOUBIS_OPEN_FLAG_SECUREEXEC));
 
@@ -525,7 +527,7 @@ pe_handle_sfs(struct eventdev_hdr *hdr)
 			anoubis_cookie_t	cookie = fevent->cookie;
 
 			/*
-			 * Use the special value 0 for th cookie if the
+			 * Use the special value 0 for the cookie if the
 			 * modifying process is an upgrade parent. This
 			 * makes sure that modifications of an upgrade parent
 			 * are not pruned even if the upgrade parent still
@@ -560,7 +562,7 @@ pe_handle_sfs(struct eventdev_hdr *hdr)
 	if (fevent->amask & APN_SBA_EXEC && reply->reply == 0
 	    && version >= ANOUBISCORE_LOCK_VERSION
 	    && pe_proc_will_transition(fevent->cookie, fevent->uid,
-	    fevent->cslen ? fevent->cs : NULL, fevent->path)) {
+	    fevent->csum, fevent->path)) {
 		reply->reply |= ANOUBIS_RET_NEED_SECUREEXEC;
 	}
 #endif
@@ -593,6 +595,7 @@ pe_handle_sfs(struct eventdev_hdr *hdr)
 
 	if (fevent->path)
 		free(fevent->path);
+	abuf_free(fevent->csum);
 	free(fevent);
 
 	return(reply);
@@ -725,17 +728,17 @@ pe_parse_file_event(struct eventdev_hdr *hdr)
 		return NULL;
 	kernmsg = (struct sfs_open_message *)(hdr+1);
 	if (hdr->msg_size < sizeof(struct eventdev_hdr))
-		goto err;
+		return NULL;
 	sfslen = hdr->msg_size - sizeof(struct eventdev_hdr);
 	if (sfslen < (int)sizeof(struct sfs_open_message))
-		goto err;
+		return NULL;
 	if (kernmsg->flags & ANOUBIS_OPEN_FLAG_PATHHINT) {
 		pathlen = sfslen - offsetof(struct sfs_open_message, pathhint);
 		for (i=pathlen-1; i >= 0; --i)
 			if (kernmsg->pathhint[i] == 0)
 				break;
 		if (i < 0)
-			goto err;
+			return NULL;
 	} else {
 		kernmsg->pathhint[0] = 0;
 	}
@@ -743,14 +746,23 @@ pe_parse_file_event(struct eventdev_hdr *hdr)
 	if (!ret)
 		return NULL;
 	ret->cookie = kernmsg->common.task_cookie;
-	if (kernmsg->pathhint[0])
+	ret->path = NULL;
+	ret->csum = ABUF_EMPTY;
+	if (kernmsg->pathhint[0]) {
 		ret->path = strdup(kernmsg->pathhint);
-	else
-		ret->path = NULL;
-	ret->cslen = 0;
+		if (ret->path == NULL) {
+			free(ret);
+			return NULL;
+		}
+	}
 	if (kernmsg->flags & ANOUBIS_OPEN_FLAG_CSUM) {
-		ret->cslen = ANOUBIS_CS_LEN;
-		bcopy(kernmsg->csum, ret->cs, ANOUBIS_CS_LEN);
+		ret->csum = abuf_alloc(sizeof(kernmsg->csum));
+		if (abuf_empty(ret->csum)) {
+			free(ret);
+			return NULL;
+		}
+		abuf_copy_tobuf(ret->csum, kernmsg->csum,
+		    sizeof(kernmsg->csum));
 	}
 	ret->amask = 0;
 	/* Treat FOLLOW as a read event. */
@@ -767,10 +779,6 @@ pe_parse_file_event(struct eventdev_hdr *hdr)
 	ret->uid = hdr->msg_uid;
 	ret->upgrade_flags = 0;
 	return ret;
-err:
-	if (ret)
-		free(ret);
-	return NULL;
 }
 
 #ifdef ANOUBIS_SOURCE_SFSPATH

@@ -38,6 +38,8 @@
 #include <dev/eventdev.h>
 #endif
 
+#include <anoubis_alloc.h>
+
 #define PE_PRIO_ADMIN	0
 #define PE_PRIO_USER1	1
 #define PE_PRIO_MAX	2
@@ -75,8 +77,8 @@ struct anoubisd_reply *policy_engine(anoubisd_msg_t *request);
 
 
 struct pe_proc_ident {
-	unsigned char *csum;
-	char *pathhint;
+	struct abuf_buffer	 csum;
+	char			*pathhint;
 };
 
 #define PE_UPGRADE_TOUCHED	0x0001
@@ -85,9 +87,8 @@ struct pe_proc_ident {
 struct pe_file_event {
 	anoubis_cookie_t	 cookie;
 	char			*path;
-	u_int8_t		 cs[ANOUBIS_CS_LEN];
+	struct abuf_buffer	 csum;
 	unsigned int		 amask;
-	int			 cslen;
 	int			 uid;
 	unsigned int		 upgrade_flags;
 };
@@ -100,8 +101,8 @@ struct pe_path_event {
 };
 
 /* Proc Ident management functions. */
-void			 pe_proc_ident_set(struct pe_proc_ident *, const
-			     u_int8_t *, const char *);
+void			 pe_proc_ident_set(struct pe_proc_ident *,
+			     const struct abuf_buffer csum, const char * path);
 void			 pe_proc_ident_put(struct pe_proc_ident *);
 
 /* pe_proc access functions */
@@ -113,10 +114,11 @@ void			 pe_proc_put(struct pe_proc *proc);
 void			 pe_proc_fork(uid_t, anoubis_cookie_t,
 			     anoubis_cookie_t);
 void			 pe_proc_exec(anoubis_cookie_t, uid_t, pid_t,
-			     const u_int8_t *csum, const char *pathhint,
-			     int secure);
+			     const struct abuf_buffer csum,
+			     const char *pathhint, int secure);
 int			 pe_proc_will_transition(anoubis_cookie_t, uid_t,
-			     const u_int8_t *csum, const char *pathhint);
+			     const struct abuf_buffer csum,
+			     const char *pathhint);
 void			 pe_proc_exit(anoubis_cookie_t);
 void			 pe_proc_addinstance(anoubis_cookie_t);
 void			 pe_proc_add_thread(anoubis_cookie_t);
