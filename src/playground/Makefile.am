@@ -1,4 +1,3 @@
-##########################################################################
 # Copyright (c) 2008 GeNUA mbH <info@genua.de>
 #
 # All rights reserved.
@@ -23,25 +22,46 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-##########################################################################
+#
 
-if XANOUBIS
-GUI=xanoubis
+bin_PROGRAMS = playground
+
+LIBS += $(SSL_LIBS)
+
+if STATIC_LINKING
+STATIC = -static
 endif
 
-dist_bin_SCRIPTS = anoubis_keygen/anoubis-keygen
-dist_sbin_SCRIPTS = anoubis_keyinstall/anoubis-keyinstall
+include $(top_srcdir)/src/Makefile.include
 
-# Note:  Libraries must come first as applications might depend on them.
-SUBDIRS = libanoubis anoubisd $(GUI) anoubisctl sfssig playground
+INCLUDES = $(anoubis_cppflags)
 
-flawfinder:
-	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done
+playground_DEPENDENCIES = $(libanoubis)
 
-lint:
-	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done
+playground_LDADD = $(playground_DEPENDENCIES) $(intl_ldadd)
 
-splint:
-	for t in $(SUBDIRS); do cd $$t && make $@ && cd ..; done
+playground_LDFLAGS= $(AM_LDFLAGS) $(STATIC)
 
-linting: flawfinder lint splint
+sources= main.c
+headers = playground.h
+
+playground_SOURCES = $(sources) $(headers)
+
+sources_lint   = \
+	$(sources:%=%_lint)
+sources_splint = \
+	$(sources:%=%_splint) \
+	$(headers:%=%_splint)
+sources_flawfinder = \
+	$(sources:%=%_flawfinder) \
+	$(headers:%=%_flawfinder)
+
+flawfinder_FLAGS=
+# XXX tartler: the playground source needs annotations to
+#     enable splint memory checking effektively. We disable
+#     memory checking for part of anoubis until proper annotations
+#     have been added.
+splint_FLAGS=$(INCLUDES) -memchecks
+lint_FLAGS=$(INCLUDES)
+
+include $(top_srcdir)/lint/Makefile.lint

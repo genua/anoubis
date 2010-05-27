@@ -129,6 +129,7 @@ AC_CONFIG_FILES([
 	src/xanoubis/Makefile
 	src/anoubisctl/Makefile
 	src/sfssig/Makefile
+	src/playground/Makefile
 	support/Makefile
 	test/Makefile
 	test/libanoubischeck/Makefile
