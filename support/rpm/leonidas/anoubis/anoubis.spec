@@ -271,6 +271,7 @@ exit 0
 %{sbindir}/sfssig
 %{sbindir}/anoubis-keyinstall
 %{_bindir}/anoubis-keygen
+%{_bindir}/playground
 %{_datadir}/%{daemon}/*
 %{_datadir}/locale/de/LC_MESSAGES/%{name}.mo
 %attr(0750,root,_anoubisd) %dir %{policydir}
