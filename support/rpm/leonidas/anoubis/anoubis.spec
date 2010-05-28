@@ -278,6 +278,7 @@ exit 0
 %{policydir}/*
 %{_mandir}/man1/anoubis-keygen.1.gz
 %{_mandir}/man1/anoubis-keyinstall.1.gz
+%{_mandir}/man1/playground.1.gz
 %{_mandir}/man4/*
 %{_mandir}/man5/*
 %{_mandir}/man8/*
