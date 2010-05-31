@@ -26,85 +26,82 @@
  */
 
 #include "config.h"
-#include "version.h"
 
 #ifdef S_SPLINT_S
 #include "splint-includes.h"
 #endif
 
-#include <sys/cdefs.h>
-#include <sys/param.h>
-#include <sys/types.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
 
 #include <errno.h>
+#include <fcntl.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <anoubis_playground.h>
 
-#include "playground.h"
+#ifdef LINUX
+#include <linux/anoubis.h>
+#include <bsdcompat.h>
 
-extern char	*__progname;
-
-__dead void
-usage(void)
+int
+playground_setMarker(void)
 {
-	fprintf(stderr, "usage: %s [-h] <command> [<program>]\n", __progname);
-	fprintf(stderr, "    <command>:\n");
-	fprintf(stderr, "	start <program>\n");
+	int fd;
+	int rc;
 
-	exit(1);
+	fd = open(_PATH_DEV "anoubis", O_RDONLY);
+	if (fd < 0) {
+		return (-errno);
+	}
+
+	rc = ioctl(fd, ANOUBIS_CREATE_PLAYGROUND, 0);
+	close(fd);
+	if (rc != 0) {
+		rc = -errno;
+	}
+
+	return (rc);
 }
 
 int
-main(int argc, char *argv[])
+playground_start_exec(char **argv)
 {
-	int		 error = 0;
+	int rc;
 
-#ifdef OPENBSD
-
-	fprintf(stderr, "Anoubis playground is not supported on OpenBSD.\n");
-	fprintf(stderr, "Program %s (%d args) not started.\n", argv[0], argc);
-	error = 1;
-
-#else
-
-	int		 ch;
-	char		*command = NULL;
-
-	if (argc < 2) {
-		usage();
+	rc = playground_setMarker();
+	if (rc != 0) {
+		return (rc);
 	}
 
-	/* Get command line arguments. */
-	while ((ch = getopt(argc, argv, "h")) != -1) {
-		switch (ch) {
-		case 'h':
-			usage();
-			break;
-		default:
-			usage();
-			/* NOTREACHED */
-		}
-	}
-	argc -= optind;
-	argv += optind;
-
-	if (argc <= 0)
-		usage();
-		/* NOTREACHED */
-
-	command = *argv++;
-	argc--;
-
-	/* Run command. */
-	error = 0;
-	if (strcmp(command, "start") == 0) {
-		error = playground_start_exec(argv);
-	}
-
-#endif /* OPENBSD */
-
-	return (error);
+	execvp(argv[0], argv);
+	/* Only reached if execvp returns an error. */
+	return (-errno);
 }
+
+int
+playground_start_fork(char **argv)
+{
+	int	rc  = 0;
+	pid_t	pid = 0;
+
+	if ((pid = fork()) < 0) {
+		return (-errno);
+	}
+
+	if (pid == 0) {
+		/* Child */
+		rc = playground_start_exec(argv);
+		/* Only reached if playground_start_exec returns an error. */
+		exit(1);
+	} else {
+		/* Parent */
+		rc = pid;
+	}
+
+	return (rc);
+}
+
+#endif /* LINUX */

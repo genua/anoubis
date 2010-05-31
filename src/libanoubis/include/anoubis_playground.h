@@ -25,86 +25,49 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "config.h"
-#include "version.h"
+#ifndef _ANOUBIS_PLAYGROUND_H_
+#define _ANOUBIS_PLAYGROUND_H_
 
-#ifdef S_SPLINT_S
-#include "splint-includes.h"
-#endif
-
-#include <sys/cdefs.h>
-#include <sys/param.h>
 #include <sys/types.h>
+#include <sys/cdefs.h>
 
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <anoubis_playground.h>
+#include <config.h>
 
-#include "playground.h"
+#ifdef LINUX
 
-extern char	*__progname;
+__BEGIN_DECLS
 
-__dead void
-usage(void)
-{
-	fprintf(stderr, "usage: %s [-h] <command> [<program>]\n", __progname);
-	fprintf(stderr, "    <command>:\n");
-	fprintf(stderr, "	start <program>\n");
+/**
+ * Set playground marker.
+ * This will enter the playground. It will tell the kernel to mark this
+ * process to be a playground process.
+ * @param None.
+ * @return 0 on success else negative error code.
+ */
+int playground_setMarker(void);
 
-	exit(1);
-}
+/**
+ * Start new process within playground.
+ * This will run given command (and its arguments) by using exec().
+ * The current program is marked and replaced.
+ * @note It is the duty of the caller to close all open file handles!
+ * @see playground_setMarker()
+ * @param[in] 1st List of strings with arguments.
+ * @return error of exec() or return code of command.
+ */
+int playground_start_exec(char **);
 
-int
-main(int argc, char *argv[])
-{
-	int		 error = 0;
+/**
+ * Start new process within playground.
+ * This will create a new child process with fork() and run given command
+ * (playground_start_exec() is used).
+ * @param[in] 1st List of strings with arguments.
+ * @return < 0 if an error occures or > 0 as pid of child.
+ */
+int playground_start_fork(char **);
 
-#ifdef OPENBSD
+__END_DECLS
 
-	fprintf(stderr, "Anoubis playground is not supported on OpenBSD.\n");
-	fprintf(stderr, "Program %s (%d args) not started.\n", argv[0], argc);
-	error = 1;
+#endif /* LINUX */
 
-#else
-
-	int		 ch;
-	char		*command = NULL;
-
-	if (argc < 2) {
-		usage();
-	}
-
-	/* Get command line arguments. */
-	while ((ch = getopt(argc, argv, "h")) != -1) {
-		switch (ch) {
-		case 'h':
-			usage();
-			break;
-		default:
-			usage();
-			/* NOTREACHED */
-		}
-	}
-	argc -= optind;
-	argv += optind;
-
-	if (argc <= 0)
-		usage();
-		/* NOTREACHED */
-
-	command = *argv++;
-	argc--;
-
-	/* Run command. */
-	error = 0;
-	if (strcmp(command, "start") == 0) {
-		error = playground_start_exec(argv);
-	}
-
-#endif /* OPENBSD */
-
-	return (error);
-}
+#endif	/* _ANOUBIS_PLAYGROUND_H_ */

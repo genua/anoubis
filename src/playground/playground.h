@@ -46,14 +46,6 @@
 void usage(void) __dead;
 
 /**
- * Start playground.
- * This function is not yet implemented. This fact is also printed to stderr.
- * @param None.
- * @return -ENOSYS.
- */
-static int playground_start(void);
-
-/**
  * Anoubis playground CLI.
  * This program starts new playgrounds.
  * @param[in] 1st Number of arguments.
