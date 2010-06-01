@@ -42,7 +42,7 @@ include $(top_srcdir)/src/Makefile.include
 
 TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(test_ldpath)
 
-AM_CPPFLAGS = $(test_cppflags) -I$(anoubisdsrcdir)
+AM_CPPFLAGS = $(test_cppflags) -I$(anoubisdsrcdir) -I$(anoubisdbuilddir)
 AM_LDFLAGS = $(test_ldflags)
 LDADD = $(test_ldadd)
 

@@ -69,13 +69,12 @@ struct result {
 };
 
 static void
-pe_sb_evaluate(struct apn_rule **rulelist, int rulecnt,
-    struct pe_file_event *sbevent, struct result *res, unsigned int atype,
-    int prio)
+pe_sb_evaluate(struct apnarr_array rulelist, struct pe_file_event *sbevent,
+    struct result *res, unsigned int atype, int prio)
 {
 	struct apn_rule		*match = NULL;
 	time_t			 now;
-	int			 i;
+	size_t			 i;
 
 	if ((sbevent->amask & atype) == 0) {
 		/* Do not touch rule_id, prio or log level. */
@@ -88,13 +87,14 @@ pe_sb_evaluate(struct apn_rule **rulelist, int rulecnt,
 		log_warn("pe_sb_evaluate: Cannot get current time");
 		goto err;
 	}
-	for (i=0; i<rulecnt; ++i) {
-		struct apn_rule	*sbrule = rulelist[i];
+	for (i=0; i<apnarr_size(rulelist); ++i) {
+		struct apn_rule		*sbrule;
 		char			*prefix;
 		int			 cstype;
 		struct abuf_buffer	 csum = ABUF_EMPTY;
 		int			 ret;
 
+		sbrule = apnarr_access(rulelist, i);
 		if (sbrule->apn_type == APN_DEFAULT) {
 			if (!match)
 				match = sbrule;
@@ -216,10 +216,10 @@ err:
 
 int
 pe_sb_getrules (struct pe_proc *proc, uid_t uid, int prio, const char *path,
-    struct apn_rule	***rulelist)
+    struct apnarr_array *rulelist)
 {
 	struct apn_rule	 *sbrules;
-	int		  rulecnt, error;
+	int		  error;
 
 	/*
 	 * If we do not have a process, find the default rules
@@ -245,6 +245,7 @@ pe_sb_getrules (struct pe_proc *proc, uid_t uid, int prio, const char *path,
 		    "prio %d rules %p", prio, sbrules);
 	}
 
+	(*rulelist) = apnarr_EMPTY;
 	/*
 	 * Give the next priority a chance if we do not have
 	 * any policy. This is default allow.
@@ -257,16 +258,7 @@ pe_sb_getrules (struct pe_proc *proc, uid_t uid, int prio, const char *path,
 		if (error < 0)
 			return error;
 	}
-
-	error = pe_prefixhash_getrules(sbrules->userdata, path,
-	    rulelist, &rulecnt);
-	if (error < 0)
-		return error;
-
-	if (rulecnt == 0)
-		free(*rulelist);
-
-	return (rulecnt);
+	return pe_prefixhash_getrules(sbrules->userdata, path, rulelist);
 }
 
 static char *
@@ -317,31 +309,28 @@ pe_decide_sandbox(struct pe_proc *proc, struct pe_file_event *sbevent,
 	}
 	final.decision = -1;
 	for (i=0; i<PE_PRIO_MAX; ++i) {
-		struct apn_rule		**rulelist = NULL;
-		int			  rulecnt;
+		struct apnarr_array	rulelist;
+		int			error;
 
-		rulecnt = pe_sb_getrules(proc, sbevent->uid, i, sbevent->path,
-					&rulelist);
-
-		if (rulecnt == 0)
-			continue;
-		else if (rulecnt < 0) {
+		error = pe_sb_getrules(proc, sbevent->uid, i, sbevent->path,
+		    &rulelist);
+		if (error < 0) {
 			final.decision = APN_ACTION_DENY;
 			break;
 		}
+		if (apnarr_size(rulelist) == 0)
+			continue;
 
 		/*
 		 * The three results may be pre-initialized from a higher
 		 * priority. However, the only possibilities are
 		 * uniniatilized (-1) or APN_ACTION_ALLOW.
 		 */
-		pe_sb_evaluate(rulelist, rulecnt, sbevent, &res[0],
-		    APN_SBA_READ, i);
-		pe_sb_evaluate(rulelist, rulecnt, sbevent, &res[1],
-		    APN_SBA_WRITE, i);
-		pe_sb_evaluate(rulelist, rulecnt, sbevent, &res[2],
-		    APN_SBA_EXEC, i);
-		free(rulelist);
+		pe_sb_evaluate(rulelist, sbevent, &res[0], APN_SBA_READ, i);
+		pe_sb_evaluate(rulelist, sbevent, &res[1], APN_SBA_WRITE, i);
+		pe_sb_evaluate(rulelist, sbevent, &res[2], APN_SBA_EXEC, i);
+		apnarr_free(rulelist);
+
 		/*
 		 * If any of the events results in DENY we are done here.
 		 * If any of the events results in ASK we are done, too.

@@ -912,76 +912,21 @@ pe_build_prefixhash(struct apn_rule *block)
 	return 0;
 }
 
-int
-pe_compare(struct pe_proc *proc, struct pe_path_event *event, int type,
+static int
+pe_compare_path(struct apnarr_array rulelist, struct pe_path_event *pevent,
     time_t now)
 {
-	int			 decision = APN_ACTION_ALLOW;
-	int			 i, p;
-
-	DEBUG(DBG_PE, ">pe_compare");
-
-	if (!event)
-		return (APN_ACTION_DENY);
-
-	if ((type != APN_SFS_ACCESS) && (type != APN_SB_ACCESS)) {
-		log_warn("Called with unhandled rule type");
-		return (-1);
-	}
-
-	for (i = 0; i < PE_PRIO_MAX; i++) {
-
-		for (p = 0; p < 2; p++) {
-			struct apn_rule		**rulelist = NULL;
-			int			  rulecnt = -1;
-
-			if (type == APN_SFS_ACCESS)
-				rulecnt = pe_sfs_getrules(event->uid, i,
-						event->path[p], &rulelist);
-			else if (type == APN_SB_ACCESS)
-				rulecnt = pe_sb_getrules(proc, event->uid, i,
-						event->path[p], &rulelist);
-
-			DEBUG(DBG_PE, " pe_compare: prio %d rules %d for %s",
-					i, rulecnt, event->path[p]);
-
-			if (rulecnt == 0)
-				continue;
-			else if (rulecnt < 0) {
-				decision = APN_ACTION_DENY;
-				break;
-			}
-
-			if (pe_compare_path(rulelist, rulecnt, event, now) < 0)
-				decision = APN_ACTION_DENY;
-
-			free(rulelist);
-
-			if (decision == APN_ACTION_DENY)
-				break;
-		}
-		if (decision == APN_ACTION_DENY)
-			break;
-	}
-
-	DEBUG(DBG_PE, "<pe_compare");
-	return (decision);
-}
-
-int
-pe_compare_path(struct apn_rule **rulelist, int rulecnt,
-    struct pe_path_event *pevent, time_t now)
-{
-	int i;
+	size_t		i;
 
 	DEBUG(DBG_PE, ">pe_compare_path");
 
-	for (i = 0; i < rulecnt; i++) {
-		struct apn_rule	*rule = rulelist[i];
-		char		*prefix = NULL;
-		int		 len, p;
-		int		 match[2] = { 0, 0 };
+	for (i = 0; i < apnarr_size(rulelist); i++) {
+		struct apn_rule		*rule;
+		char			*prefix = NULL;
+		int			 len, p;
+		int			 match[2] = { 0, 0 };
 
+		rule = apnarr_access(rulelist, i);
 		if (!pe_in_scope(rule->scope, pevent->cookie, now))
 			continue;
 
@@ -1032,6 +977,60 @@ pe_compare_path(struct apn_rule **rulelist, int rulecnt,
 
 	DEBUG(DBG_PE, "<pe_compare_path");
 	return (0);
+}
+
+int
+pe_compare(struct pe_proc *proc, struct pe_path_event *event, int type,
+    time_t now)
+{
+	int			 decision = APN_ACTION_ALLOW;
+	int			 i, p;
+
+	DEBUG(DBG_PE, ">pe_compare");
+
+	if (!event)
+		return (APN_ACTION_DENY);
+
+	if ((type != APN_SFS_ACCESS) && (type != APN_SB_ACCESS)) {
+		log_warn("Called with unhandled rule type");
+		return (-1);
+	}
+
+	for (i = 0; i < PE_PRIO_MAX; i++) {
+
+		for (p = 0; p < 2; p++) {
+			struct apnarr_array	rulelist = apnarr_EMPTY;
+			int			error = 0;
+
+			if (type == APN_SFS_ACCESS)
+				error = pe_sfs_getrules(event->uid, i,
+						event->path[p], &rulelist);
+			else if (type == APN_SB_ACCESS)
+				error = pe_sb_getrules(proc, event->uid, i,
+						event->path[p], &rulelist);
+
+			DEBUG(DBG_PE, " pe_compare: prio %d rules %d for %s",
+			    i, (int)apnarr_size(rulelist), event->path[p]);
+			if (error < 0) {
+				decision = APN_ACTION_DENY;
+				break;
+			}
+			if (apnarr_size(rulelist) == 0)
+				continue;
+
+			if (pe_compare_path(rulelist, event, now) < 0)
+				decision = APN_ACTION_DENY;
+			apnarr_free(rulelist);
+
+			if (decision == APN_ACTION_DENY)
+				break;
+		}
+		if (decision == APN_ACTION_DENY)
+			break;
+	}
+
+	DEBUG(DBG_PE, "<pe_compare");
+	return (decision);
 }
 
 /*

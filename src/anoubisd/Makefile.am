@@ -26,7 +26,11 @@
 
 sbin_PROGRAMS = anoubisd
 
-EXTRA_DIST = README.privsep
+m4headers = apnrules_array.h prefixhash_entry_array.h
+
+EXTRA_DIST = README.privsep anoubis_array.m4
+BUILT_SOURCES = $(m4headers)
+CLEANFILES = $(m4headers)
 
 if STATIC_LINKING
 STATIC = -static
@@ -38,7 +42,7 @@ LIBS += $(SSL_LIBS)
 include $(top_srcdir)/src/Makefile.include
 
 AM_CPPFLAGS = $(anoubis_cppflags) \
-	   -I$(top_srcdir)/src/anoubisd
+	   -I$(top_srcdir)/src/anoubisd -I.
 
 LDADD = $(libanoubis) $(intl_ldadd)
 AM_LDFLAGS += $(STATIC)
@@ -92,6 +96,13 @@ sources_splint = \
 sources_flawfinder = \
 	$(lint_sources:%=%_flawfinder) \
 	$(headers:%=%_flawfinder)
+
+apnrules_array.h:	anoubis_array.m4 Makefile
+	m4 -DTYPE="struct apn_rule *" -DPREFIX=apnarr \
+	    $(srcdir)/anoubis_array.m4 >$@
+prefixhash_entry_array.h:	anoubis_array.m4 Makefile
+	m4 -DTYPE="struct entry *" -DPREFIX=entryarr \
+	    $(srcdir)/anoubis_array.m4 >$@
 
 flawfinder_FLAGS=
 # XXX tartler: -compdestoy, because it causes too many false positives.

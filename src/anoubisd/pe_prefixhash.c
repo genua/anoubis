@@ -25,21 +25,22 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
+/**
+ * \file
  * This file implements a generic hash for apn_rule structures that
  * is used to speed up policy matching of path base policies (Sandbox/SFS).
  *
  * Each rule in a given ruleset either has a path prefix and matching
  * of that rule is restricted to paths below that prefix _or_ the rule
  * simply matches independant of the path.
- * Now each rule can be stored in a hash based on this prefix where
+ * Now, each rule can be stored in a hash based on this prefix where
  * a NULL path corresponds to "no preifx restriction". In addition
  * to the rule itself we also strore the index of the rule within the
  * block. The hash will use this as a sort key. Note that the actual
  * path prefix is not directly stored in the hash, it is only used when
  * inserting into the hash.
  *
- * No assume that an event for the file /a/b/c occurs. We only have to
+ * Now, assume that an event for the file /a/b/c occurs. We only have to
  * consider rules with the following prefixes for this event:
  *     NULL, "/", "/a", "/a/b" and "/a/b/c"
  * The function pe_prefixhash_getrules does this for you: Given a
@@ -61,6 +62,7 @@
 #include <errno.h>
 
 #include <anoubisd.h>
+#include <anoubis_alloc.h>
 #include <pe.h>
 
 /*
@@ -71,20 +73,30 @@ struct entry {
 	struct apn_rule		*rule;
 	int			 idx;
 };
+#include <prefixhash_entry_array.h>
 
-/*
+
+/**
  * The hash datastructure itself. The size of the hash table is
  * determined by the parameter to pe_prefixhash_create.
  */
 struct pe_prefixhash {
 	unsigned int		 tabsize;
-	struct entry		*tab[0];
+	struct entryarr_array	 tab;
 };
 
 
 #define PREFIXHASH_SHIFT	(24)
 #define PREFIXHASH_MASK		((1UL<<PREFIXHASH_SHIFT)-1)
 
+/**
+ * Calculate a path name hash. The hash consideres the first @cnt
+ * bytes of the data. The return value is between zero and PREFIXHASH_MASK
+ * inclusive.
+ *
+ * @param data The data that should be hashed.
+ * @cnt The length of the data to hash.
+ */
 static unsigned long
 hash_fn(const char *data, int cnt)
 {
@@ -99,31 +111,41 @@ hash_fn(const char *data, int cnt)
 	return ret & PREFIXHASH_MASK;
 }
 
-/*
- * Create a new prefix hash with tabsize entries in the hash table.
+/**
+ * Create a new prefix hash with @tabsize entries in the hash table.
+ *
+ * @param tabsize The number of entries in the hash table.
+ * @return A new pe_prefixhash structure or NULL in case of an error.
  */
 struct pe_prefixhash *
 pe_prefixhash_create(unsigned int tabsize)
 {
-	struct pe_prefixhash	*ret;
+	struct pe_prefixhash		*ret;
 	unsigned int			 i;
 
 	if (tabsize > PREFIXHASH_MASK)
 		tabsize = PREFIXHASH_MASK + 1;
 	if (tabsize < 10)
 		tabsize = 10;
-	ret = malloc(sizeof(struct pe_prefixhash)
-	    + tabsize * sizeof(struct entry *));
+	ret = abuf_alloc_type(struct pe_prefixhash);
 	if (!ret)
 		return NULL;
+	ret->tab = entryarr_alloc(tabsize);
+	if (entryarr_size(ret->tab) != tabsize) {
+		pe_prefixhash_destroy(ret);
+		return NULL;
+	}
 	ret->tabsize = tabsize;
 	for (i=0; i<tabsize; ++i)
-		ret->tab[i] = 0;
+		entryarr_access(ret->tab, i) = NULL;
 	return ret;
 }
 
-/*
+/**
  * Free all memory associated with the prefixhash @hash.
+ *
+ * @param hash The prefix hash.
+ * @return None.
  */
 void
 pe_prefixhash_destroy(struct pe_prefixhash *hash)
@@ -132,20 +154,28 @@ pe_prefixhash_destroy(struct pe_prefixhash *hash)
 
 	for (i=0; i<hash->tabsize; ++i) {
 		struct entry	*tmp, *tmp2;
-		tmp = hash->tab[i];
+		tmp = entryarr_access(hash->tab, i);
 		while(tmp) {
 			tmp2 = tmp;
 			tmp = tmp->next;
-			free(tmp2);
+			abuf_free_type(tmp2, struct entry);
 		}
-		hash->tab[i] = NULL;
+		entryarr_access(hash->tab, i) = NULL;
 	}
-	free(hash);
+	entryarr_free(hash->tab);
+	abuf_free_type(hash, struct pe_prefixhash);
 }
 
-/*
- * Add the rule @rule with index @idx to the hash slot corresponding to
- * @str in the hash @hash.
+/**
+ * Add the rule @rule to the prefix hash.
+ *
+ * @param hash The prefix hash.
+ * @param str The path prefix associated with the rule (may be NULL).
+ * @param rule The actual rule.
+ * @param idx The index of the rule. This index is used to sort rule
+ *     candidates.
+ * @return Zero in case of success, a negative error code in case of
+ *     an error.
  */
 int
 pe_prefixhash_add(struct pe_prefixhash *hash, const char *str,
@@ -159,11 +189,11 @@ pe_prefixhash_add(struct pe_prefixhash *hash, const char *str,
 		hv = hash_fn(str, strlen(str)) % hash->tabsize;
 	else
 		hv = hash_fn(NULL, 0) % hash->tabsize;
-	pp = &hash->tab[hv];
+	pp = &entryarr_access(hash->tab, hv);
 	while (*pp) {
 		pp = &(*pp)->next;
 	}
-	n = malloc(sizeof(struct entry));
+	n = abuf_alloc_type(struct entry);
 	if (!n)
 		return -ENOMEM;
 	n->next = NULL;
@@ -173,8 +203,14 @@ pe_prefixhash_add(struct pe_prefixhash *hash, const char *str,
 	return 0;
 }
 
-/*
- * Comparision function for qsort.
+/**
+ * Compare two prefix hash entries according to their respective indexes.
+ * This is a callback function for qsort, both arguments point to
+ * struct sfs_entry structures.
+ *
+ * @param a The first entry.
+ * @param b The second entry.
+ * @return The result of the comparison.
  */
 static int
 cmp_entries(const void *a, const void *b)
@@ -189,80 +225,119 @@ cmp_entries(const void *a, const void *b)
 	return 1;
 }
 
-#define ADDSLOT(ENTRIES, CNT, STR, LEN) do {				\
-	struct entry	**nentries;					\
-	struct entry	 *list, *tmp;					\
-	int		  hv, ncnt = 0;					\
-	hv = hash_fn((STR), (LEN)) % hash->tabsize;			\
-	list = hash->tab[hv];						\
-	if (!list)							\
-		break;							\
-	for (tmp = list; tmp; tmp = tmp->next)				\
-		ncnt++;							\
-	nentries = realloc((ENTRIES),					\
-	    ((CNT) + ncnt) * sizeof(struct entry *));			\
-	if (nentries == NULL) {						\
-		free(ENTRIES);						\
-		return -ENOMEM;						\
-	}								\
-	(ENTRIES) = nentries;						\
-	for (tmp = list; tmp; tmp = tmp->next) {			\
-		(ENTRIES)[(CNT)] = tmp;					\
-		(CNT)++;						\
-	}								\
-} while (0);
+/**
+ * Add all entries in a particular hash slot to the array @arr.
+ *
+ * @param hash The prefix hash.
+ * @param arr The result array that contains the rules. The array must be
+ *     empty at the first call to this function. Memory will be allocated
+ *     and the array grows as neccessary. The caller is responsible for the
+ *     array and must free it if the function returns successfully.
+ * @param str The path prefix that determines the hash slot. This pointer
+ *     can be NULL, @len should be zero in this case.
+ * @param len The length of the path prefix. Only the first @len bytes are
+ *     hashed. The path name must be at least @len bytes long but it may
+ *     be longer.
+ * @return Zero on success, a negative error code in case of an error.
+ *     In case of an error, the memory associated with the array is freed.
+ */
+static inline int
+addslot(struct pe_prefixhash *hash, struct entryarr_array *arr,
+    const char *str, size_t len)
+{
+	int		 hv;
+	size_t		 oldcnt = entryarr_size(*arr);
+	size_t		 ncnt = oldcnt;
+	struct entry	*list, *tmp;
 
+	hv = hash_fn(str, len) % hash->tabsize;
+	list = entryarr_access(hash->tab, hv);
+	if (!list)
+		return 0;
+	for (tmp = list; tmp; tmp = tmp->next)
+		ncnt++;
+	if (oldcnt == 0) {
+		(*arr) = entryarr_alloc(ncnt);
+	} else {
+		(*arr) = entryarr_resize(*arr, ncnt);
+	}
+	if (entryarr_size(*arr) == 0)
+		return -ENOMEM;
+	for (tmp = list; tmp; tmp = tmp->next, oldcnt++)
+		entryarr_access(*arr, oldcnt) = tmp;
+	return 0;
+}
+
+/**
+ * Find all rules registered in the preifx hash that match a given path
+ * name. This function does _not_ check if the rules actually match. However,
+ * it guarantees that all rules that match the path name are within the
+ * list of rule candidates.
+ *
+ * @param hash The prefix hash.
+ * @param str The path name string.
+ * @param rules An apnarr_array that contains pointers to struct apn_rules.
+ *     Each rule is a candidate that might match the path @str. The caller
+ *     must free the array in case of success. No memory is allocated if the
+ *     function returns an error.
+ * @return Zero in case of success, a negative error code in case of an error.
+ */
 int
 pe_prefixhash_getrules(struct pe_prefixhash *hash, const char *str,
-    struct apn_rule ***rulesp, int *rulecnt)
+    struct apnarr_array *rules)
 {
-	int			  i, j, len = 0, cnt = 0, rcnt = 0;
-	struct entry		**entries = NULL;
-	struct apn_rule		**rules;
+	int			 len = 0;
+	struct entryarr_array	 entries = entryarr_EMPTY;
+	size_t			 i, j, rcnt = 0;
+	struct entry		*prev;
 
+	(*rules) = apnarr_EMPTY;
 	if (str && str[0] != '/')
 		return -EINVAL;
 	/* Empty string: No path required at all. */
-	ADDSLOT(entries, cnt, NULL, 0);
+	if (addslot(hash, &entries, NULL, 0) < 0)
+		return -ENOMEM;
 	if (str) {
 		len = strlen(str);
 		/* The whole string */
-		ADDSLOT(entries, cnt, str, len);
+		if (addslot(hash, &entries, str, len) < 0)
+			return -ENOMEM;
 		/* A single slash ('/') is always a valid prefix. */
-		ADDSLOT(entries, cnt, str, 1);
+		if (addslot(hash, &entries, str, 1) < 0)
+			return -ENOMEM;
 	}
 	while(len) {
 		if (str[len] == '/')
-			ADDSLOT(entries, cnt, str, len);
+			if (addslot(hash, &entries, str, len) < 0)
+				return -ENOMEM;
 		len--;
 	}
-	qsort(entries, cnt, sizeof(struct entry *), cmp_entries);
+	if (entryarr_size(entries) == 0)
+		return 0;
+	entryarr_qsort(entries, cmp_entries);
 	/*
 	 * Kill duplicate rules. These can appear if two prefixes of
 	 * a path hash to the same slot. Additionally this handles
 	 * cases like '/' nicely.
 	 */
-	if (cnt) {
-		rcnt = 1;
-		for (i=1; i<cnt; ++i)
-			if (entries[i]->idx != entries[i-1]->idx)
-				rcnt++;
+	rcnt = 1;
+	for (i=1, prev = entryarr_access(entries, 0);
+	    i<entryarr_size(entries); ++i) {
+		struct entry	*cur;
+		cur = entryarr_access(entries, i);
+		if (cur->idx != prev->idx)
+			rcnt++;
+		prev = cur;
 	}
-	/* Avoid zero sized allocations just to be sure. */
-	if (rcnt)
-		rules = malloc(rcnt * sizeof(struct apn_rule *));
-	else
-		rules = malloc(sizeof(struct apn_rule *));
-	for (i=j=0; i<cnt; ++i) {
-		if (i && (entries[i-1]->idx == entries[i]->idx))
+
+	(*rules) = apnarr_alloc(rcnt);
+	for (i=j=0; i<entryarr_size(entries); ++i) {
+		if (i && entryarr_access(entries, i-1)->idx
+		    == entryarr_access(entries, i)->idx)
 			continue;
-		rules[j] = entries[i]->rule;
+		apnarr_access((*rules), j) = entryarr_access(entries, i)->rule;
 		j++;
 	}
-	free(entries);
-	(*rulesp) = rules;
-	(*rulecnt) = rcnt;
+	entryarr_free(entries);
 	return 0;
 }
-
-#undef ADDSLOT

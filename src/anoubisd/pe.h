@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <anoubisd.h>
 #include <apn.h>
+#include <apnrules_array.h>
 #ifdef LINUX
 #include <linux/eventdev.h>
 #endif
@@ -201,8 +202,7 @@ int			 pe_in_scope(struct apn_scope *,
 			     anoubis_cookie_t, time_t);
 int			 pe_compare(struct pe_proc *proc,
 			     struct pe_path_event *, int, time_t);
-int			 pe_compare_path(struct apn_rule **, int,
-			     struct pe_path_event *, time_t);
+
 /* Upgrade related functions. */
 void			 pe_set_upgrade_ok(int);
 void			 pe_upgrade_start(struct pe_proc *);
@@ -219,9 +219,9 @@ anoubisd_reply_t	*pe_decide_sfs(struct pe_proc *,
 anoubisd_reply_t	*pe_decide_sandbox(struct pe_proc *proc,
 			     struct pe_file_event *, struct eventdev_hdr *);
 int			 pe_sfs_getrules(uid_t, int, const char *,
-			     struct apn_rule ***);
+			     struct apnarr_array *);
 int			 pe_sb_getrules(struct pe_proc *, uid_t, int,
-			     const char *, struct apn_rule ***);
+			     const char *, struct apnarr_array *);
 
 
 /* IPC handling */
@@ -235,7 +235,7 @@ void			 pe_prefixhash_destroy(struct pe_prefixhash *);
 int			 pe_prefixhash_add(struct pe_prefixhash *,
 			     const char *str, struct apn_rule *, int idx);
 int			 pe_prefixhash_getrules(struct pe_prefixhash *,
-			     const char *, struct apn_rule ***, int *);
+			     const char *, struct apnarr_array *rulesp);
 int			 pe_build_prefixhash(struct apn_rule *);
 
 /*

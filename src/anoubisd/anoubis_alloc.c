@@ -80,6 +80,31 @@ abuf_alloc(unsigned int length)
 }
 
 struct abuf_buffer
+abuf_realloc(struct abuf_buffer src, size_t newlen)
+{
+	struct abuf_buffer_internal	*intbufp, *newbufp;
+
+	if (newlen <= src.length)
+		return src;
+	intbufp = ((struct abuf_buffer_internal *)(src.data)) - 1;
+	ASSERT_MEM(intbufp->magic == MAGIC_COOKIE);
+	ASSERT_MEM(intbufp->buf.data == src.data);
+	/* Mark buffer as free in case realloc frees the original data. */
+	intbufp->magic = MAGIC_COOKIE_FREE;
+	newbufp = realloc(intbufp,
+	    newlen + sizeof(struct abuf_buffer_internal));
+	if (newbufp == NULL) {
+		intbufp->magic = MAGIC_COOKIE;
+		abuf_free(intbufp->buf);
+		return ABUF_EMPTY;
+	}
+	newbufp->magic = MAGIC_COOKIE;
+	newbufp->buf.data = newbufp+1;
+	newbufp->buf.length = newlen;
+	return newbufp->buf;
+}
+
+struct abuf_buffer
 abuf_open(struct abuf_buffer buf, unsigned int off)
 {
 	ASSERT_MEM(off <= buf.length);

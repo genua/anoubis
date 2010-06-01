@@ -162,12 +162,13 @@ pe_sfs_match_one(struct apn_rule *rule, struct pe_file_event *fevent,
 
 int
 pe_sfs_getrules(uid_t uid, int prio, const char *path,
-	struct apn_rule ***rulelist)
+	struct apnarr_array *rulesp)
 {
 	struct apn_ruleset	*rs;
 	struct apn_rule		*sfsrules;
-	int			 rulecnt, error;
+	int			 error;
 
+	(*rulesp) = apnarr_EMPTY;
 	rs = pe_user_get_ruleset(uid, prio, NULL);
 	if (rs == NULL)
 		return 0;
@@ -186,15 +187,7 @@ pe_sfs_getrules(uid_t uid, int prio, const char *path,
 			return error;
 	}
 
-	error = pe_prefixhash_getrules(sfsrules->userdata, path,
-	    rulelist, &rulecnt);
-	if (error < 0)
-		return error;
-
-	if (rulecnt == 0)
-		free(*rulelist);
-
-	return rulecnt;
+	return pe_prefixhash_getrules(sfsrules->userdata, path, rulesp);
 }
 
 anoubisd_reply_t *
@@ -227,8 +220,8 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
 	}
 
 	for (i = 0; i < PE_PRIO_MAX; i++) {
-		struct apn_rule		**rulelist = NULL;
-		int			  rulecnt, r;
+		struct apnarr_array	  rules = apnarr_EMPTY;
+		size_t			  r, rulecnt;
 
 		if (secure
 		    && pe_context_is_nosfs(pe_proc_get_context(proc, i))) {
@@ -238,22 +231,22 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
 			continue;
 		}
 
-		rulecnt = pe_sfs_getrules(fevent->uid, i, fevent->path,
-					&rulelist);
-
-		if (rulecnt == 0)
-			continue;
-		else if (rulecnt < 0) {
+		if (pe_sfs_getrules(fevent->uid, i, fevent->path, &rules) < 0) {
 			decision = APN_ACTION_DENY;
 			break;
 		}
+		rulecnt = apnarr_size(rules);
+		if (rulecnt == 0)
+			continue;
 
-		DEBUG(DBG_PE_SFS," pe_decide_sfs: %d rules from hash", rulecnt);
+		DEBUG(DBG_PE_SFS," pe_decide_sfs: %d rules from hash",
+		    (int)rulecnt);
 		for (r=0; r<rulecnt; ++r) {
 			struct	apn_default	*res;
-			struct apn_rule		*rule = rulelist[r];
 			int			 match = ANOUBIS_SFS_NONE;
+			struct apn_rule		*rule;
 
+			rule = apnarr_access(rules, r);
 			res = pe_sfs_match_one(rule, fevent, now, &match);
 			if (res == NULL)
 				continue;
@@ -284,7 +277,7 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
 			    "rule %d prio %d", decision, rule_id, prio);
 			break;
 		}
-		free(rulelist);
+		apnarr_free(rules);
 		if (decision != -1 && decision != APN_ACTION_ALLOW)
 			break;
 	}

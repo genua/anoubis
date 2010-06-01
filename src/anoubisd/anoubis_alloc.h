@@ -194,13 +194,12 @@ extern void	__abuf_free_type(void *, unsigned int size);
 		__abuf_free_type(tmpptr, sizeof(*tmpptr));		\
 	} while(0)
 
+#define ABUF_EMPTY_INITIALIZER { 0, NULL }
 /**
  * An empty buffer defined in every module that includes this
  * header file.
  */
-static const struct abuf_buffer ABUF_EMPTY = {
-	0, NULL,
-};
+static const struct abuf_buffer ABUF_EMPTY = ABUF_EMPTY_INITIALIZER;
 
 /**
  * Allocate a new buffer.
@@ -213,6 +212,30 @@ static const struct abuf_buffer ABUF_EMPTY = {
  * This case cannot be destinguished from an allocation of an empty buffer!
  */
 extern struct abuf_buffer	abuf_alloc(unsigned int length);
+
+/**
+ * Change (increase) the size of the data allocated to a particular
+ * buffer. Buffers are not shrinked! Reallocation will return the original
+ * buffer if shrinking is requested. In case of an error, an empty buffer
+ * will be returned and the original buffer will be freed!
+ *
+ * @param BUF The buffer. Callers must assume that abuf_free is called
+ *     on this buffer, i.e. pointers to its memory and other buffers that
+ *     reference the same memory are invalidated.
+ * @param newsize The new size of the buffer.
+ * @return A buffer with the new size or an empty buffer if memory allocation
+ *     fails. The data contained in the original buffer is copied to the
+ *     start of the new buffer. The rest of the buffer remains unchanged.
+ *
+ * NOTE: There are several differences to the libc realloc(3c) function:
+ *  - realloc(3c) does not free the original buffer in case of an error.
+ *  - realloc(3c) can be used to shrink an existing memory region.
+ * If you need to shrink the actual memory size occupied by a buffer use
+ * a sequence like abuf_limit followed by abuf_clone and abuf_free on the
+ * original buffer.
+ */
+extern struct abuf_buffer	abuf_realloc(struct abuf_buffer buf,
+				    size_t newsize);
 
 /**
  * Allocate a new buffer and initialize the data with zero.
