@@ -337,27 +337,8 @@ static void
 dispatch_u2m(int fd, short sig __used, void *arg)
 {
 	struct event_info_upgrade	*ev_info = arg;
-	anoubisd_msg_t			*msg;
-	int				 ret;
 
 	DEBUG(DBG_TRACE, ">dispatch_u2m");
-
-	msg = queue_peek(&eventq_u2m);
-	ret = send_msg(fd, msg);
-
-	if (msg && ret != 0) {
-		dequeue(&eventq_u2m);
-		if (ret < 0) {
-			DEBUG(DBG_QUEUE, " dispatch_u2m: Dropping message "
-			    "(error %d)", ret);
-			/* send_msg frees the message in case of success. */
-			free(msg);
-		}
-	}
-
-	/* If the queue is not empty, we want to be called again */
-	if (queue_peek(&eventq_u2m) || msg_pending(fd))
-		event_add(ev_info->ev_u2m, NULL);
-
+	dispatch_write_queue(&eventq_u2m, fd, ev_info->ev_u2m);
 	DEBUG(DBG_TRACE, "<dispatch_u2m");
 }

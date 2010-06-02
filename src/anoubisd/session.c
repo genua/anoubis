@@ -1596,34 +1596,9 @@ static void
 dispatch_s2m(int fd, short sig __used, void *arg)
 {
 	struct event_info_session	*ev_info = arg;
-	struct eventdev_reply		*ev_rep;
-	anoubisd_msg_t			*msg;
-	int				 ret;
-	eventdev_token			 token = 0;
 
 	DEBUG(DBG_TRACE, ">dispatch_s2m");
-
-	msg = queue_peek(&eventq_s2m);
-	if (msg) {
-		ev_rep = (struct eventdev_reply *)msg->msg;
-		token = ev_rep->msg_token;
-	}
-	ret = send_msg(fd, msg);
-	if (msg && ret != 0) {
-		dequeue(&eventq_s2m);
-		if (ret < 0) {
-			DEBUG(DBG_QUEUE, " <eventq_s2m: dropping %x", token);
-			free(msg);
-		} else if (ret > 0) {
-			/* Success: send_msg frees the message. */
-			DEBUG(DBG_QUEUE, " <eventq_s2m: sent %x", token);
-		}
-	}
-
-	/* If the queue is not empty, we want to be called again */
-	if (queue_peek(&eventq_s2m) || msg_pending(fd))
-		event_add(ev_info->ev_s2m, NULL);
-
+	dispatch_write_queue(&eventq_s2m, fd, ev_info->ev_s2m);
 	DEBUG(DBG_TRACE, "<dispatch_s2m");
 }
 
@@ -1631,35 +1606,9 @@ static void
 dispatch_s2p(int fd, short sig __used, void *arg)
 {
 	struct event_info_session	*ev_info = arg;
-	struct eventdev_reply		*ev_rep;
-	anoubisd_msg_t			*msg;
-	int				 ret;
-	eventdev_token			 token = 0;
 
 	DEBUG(DBG_TRACE, ">dispatch_s2p");
-
-	msg = queue_peek(&eventq_s2p);
-	if (msg) {
-		ev_rep = (struct eventdev_reply *)msg->msg;
-		token = ev_rep->msg_token;
-	}
-	ret = send_msg(fd, msg);
-
-	if (msg && ret != 0) {
-		dequeue(&eventq_s2p);
-		if (ret < 0) {
-			DEBUG(DBG_QUEUE, " <eventq_s2p: dropping %x", token);
-			free(msg);
-		} else {
-			/* Success: send_msg frees the message. */
-			DEBUG(DBG_QUEUE, " <eventq_s2p: sent %x", token);
-		}
-	}
-
-	/* If the queue is not empty, we want to be called again */
-	if (queue_peek(&eventq_s2p) || msg_pending(fd))
-		event_add(ev_info->ev_s2p, NULL);
-
+	dispatch_write_queue(&eventq_s2p, fd, ev_info->ev_s2p);
 	DEBUG(DBG_TRACE, "<dispatch_s2p");
 }
 

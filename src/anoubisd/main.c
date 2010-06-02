@@ -301,7 +301,7 @@ sighandler(int sig, short event __used, void *arg __used)
 			if (!terminate)
 				die = 1;
 		}
-		if (terminate && sig == SIGCHLD)
+		if (terminate && sig == SIGCHLD && arg)
 			signal_del(arg);
 		if (die) {
 			main_shutdown(0);
@@ -1019,41 +1019,16 @@ reconfigure(struct event_info_main *info)
 static void
 dispatch_m2s(int fd, short event __used, /*@dependent@*/ void *arg)
 {
-	anoubisd_msg_t			*msg;
 	struct event_info_main		*ev_info = arg;
-	struct eventdev_hdr		*ev_hdr;
-	int				 ret;
-	eventdev_token			 token = 0;
 
 	DEBUG(DBG_TRACE, ">dispatch_m2s");
 
-	msg = queue_peek(&eventq_m2s);
-	if (msg) {
-		ev_hdr = (struct eventdev_hdr *)msg->msg;
-		token = ev_hdr->msg_token;
-	}
-	ret = send_msg(fd, msg);
-	if (msg) {
-		if (ret < 0) {
-			/* Error: Drop message */
-			dequeue(&eventq_m2s);
-			DEBUG(DBG_QUEUE, " <eventq_m2s: dropping %x", token);
-			free(msg);
-		} else if (ret > 0) {
-			/* Success: send_msg will free the message. */
-			dequeue(&eventq_m2s);
-			DEBUG(DBG_QUEUE, " <eventq_m2s: sent %x", token);
-		}
-	}
-	/* Write was not successful: Check if we lost one of our childs. */
-	if (ret <= 0)
+	if (dispatch_write_queue(&eventq_m2s, fd, ev_info->ev_m2s) <= 0) {
+		/* Write was not successful: Check if we lost a child. */
 		sighandler(SIGCHLD, 0, NULL);
-	/* If the queue is not empty, to be called again */
-	if (queue_peek(&eventq_m2s) || msg_pending(fd))
-		event_add(ev_info->ev_m2s, NULL);
-	else if (terminate >= 2) {
-		shutdown(fd, SHUT_WR);
 	}
+	if (terminate >= 2 && !queue_peek(&eventq_m2s) && !msg_pending(fd))
+		shutdown(fd, SHUT_WR);
 
 	DEBUG(DBG_TRACE, "<dispatch_m2s");
 }
@@ -1775,43 +1750,16 @@ dispatch_s2m(int fd, short event __used, void *arg)
 static void
 dispatch_m2p(int fd, short event __used, /*@dependent@*/ void *arg)
 {
-	anoubisd_msg_t			*msg;
 	struct event_info_main		*ev_info = arg;
-	struct eventdev_hdr		*ev_hdr;
-	int				 ret;
-	eventdev_token			 token = 0;
 
 	DEBUG(DBG_TRACE, ">dispatch_m2p");
 
-	msg = queue_peek(&eventq_m2p);
-	if (msg) {
-		ev_hdr = (struct eventdev_hdr *)msg->msg;
-		token = ev_hdr->msg_token;
-	}
-	ret = send_msg(fd, msg);
-	if (msg) {
-		if (ret < 0) {
-			/* Error: Drop message */
-			dequeue(&eventq_m2p);
-			DEBUG(DBG_QUEUE, " <eventq_m2p: dropping %x", token);
-			free(msg);
-		} else if (ret > 0) {
-			/* Success: send_msg will free the message. */
-			dequeue(&eventq_m2p);
-			DEBUG(DBG_QUEUE, " <eventq_m2p: sent %x", token);
-		}
-	}
-
-	/* Write was not successful. See if we lost one of our childs. */
-	if (ret <= 0)
+	if (dispatch_write_queue(&eventq_m2p, fd, ev_info->ev_m2p) <= 0) {
+		/* Write not successful: Check if we lost a child. */
 		sighandler(SIGCHLD, 0, NULL);
-
-	/* If the queue is not empty, we want to be called again */
-	if (queue_peek(&eventq_m2p) || msg_pending(fd))
-		event_add(ev_info->ev_m2p, NULL);
-	else if (terminate >= 2) {
-		shutdown(fd, SHUT_WR);
 	}
+	if (terminate >= 2 && !queue_peek(&eventq_m2p) && !msg_pending(fd))
+		shutdown(fd, SHUT_WR);
 
 	DEBUG(DBG_TRACE, "<dispatch_m2p");
 }
@@ -1996,37 +1944,16 @@ dispatch_dev2m(int fd, short event __used, void *arg)
 static void
 dispatch_m2u(int fd, short event __used, void *arg)
 {
-	anoubisd_msg_t			*msg;
 	struct event_info_main		*ev_info = arg;
-	int				 ret;
-	int				 type = 0;
 
 	DEBUG(DBG_TRACE, ">dispatch_m2u");
 
-	msg = queue_peek(&eventq_m2u);
-	if (msg)
-		type = msg->mtype;
-	ret = send_msg(fd, msg);
-
-	if (msg && ret != 0) {
-		DEBUG(DBG_QUEUE, " eventq_m2u: Message type %d", type);
-		dequeue(&eventq_m2u);
-		/* In case of success send_msg freed the message. */
-		if (ret < 0) {
-			log_warnx(" eventq_m2u: Dropping Message");
-			free(msg);
-		}
-	}
-	/* Write was not successful: Check if we lost one of our childs. */
-	if (ret <= 0)
+	if (dispatch_write_queue(&eventq_m2u, fd, ev_info->ev_m2u) <= 0) {
+		/* Write not successful. Check if we lost a child. */
 		sighandler(SIGCHLD, 0, NULL);
-
-	/* If the queue is not empty, to be called again */
-	if (queue_peek(&eventq_m2u) || msg_pending(fd))
-		event_add(ev_info->ev_m2u, NULL);
-	else if (terminate >= 2) {
-		shutdown(fd, SHUT_WR);
 	}
+	if (terminate >= 2 && !queue_peek(&eventq_m2u) && !msg_pending(fd))
+		shutdown(fd, SHUT_WR);
 
 	DEBUG(DBG_TRACE, "<dispatch_m2u");
 }

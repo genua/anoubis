@@ -38,6 +38,7 @@
 
 #include <errno.h>
 
+#include "amsg.h"
 #include "aqueue.h"
 
 /*
@@ -200,6 +201,52 @@ queue_delete(Queuep queuep, void *msgp)
 		qep = qep->next;
 	}
 	return 0;
+}
+
+int
+dispatch_write_queue(Queue *q, int fd, struct event *ev)
+{
+	anoubisd_msg_t		*msg;
+	int			 ret = 0;
+
+	DEBUG(DBG_TRACE, ">dispatch_write_queue: %p", q);
+
+	while (queue_peek(q) || msg_pending(fd)) {
+		msg = queue_peek(q);
+		/*
+		 * Call send_msg even if msg == NULL (will flush pending
+		 * message data).
+		 */
+		ret = send_msg(fd, msg);
+		/*
+		 * ret > 0:  send_msg will take over and free the message.
+		 * ret == 0: Buffers flushed but message not sent.
+		 * ret < 0:  Permanent error: Drop message (if any).
+		 */
+		if (ret == 0) {
+			event_add(ev, NULL);
+			break;
+		}
+		if (ret < 0) {
+			if (msg) {
+				/* Permanent error. Dequeue and free. */
+				dequeue(q);
+				DEBUG(DBG_QUEUE,
+				    " Dropping unsent message: %p", msg);
+				free(msg);
+			}
+			event_add(ev, NULL);
+			break;
+		}
+		/*
+		 * Message (if any) sent and probably already freed.
+		 * Remove its ptr from the queue, too.
+		 */
+		if (msg)
+			dequeue(q);
+	}
+	DEBUG(DBG_TRACE, "<dispatch_write_queue: %p", q);
+	return ret;
 }
 
 #ifdef UTEST

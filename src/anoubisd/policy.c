@@ -766,34 +766,10 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 static void
 dispatch_p2m(int fd, short sig __used, void *arg)
 {
-	anoubisd_msg_t			*msg;
 	struct event_info_policy	*ev_info = arg;
-	struct eventdev_reply		*rep;
-	int				 ret;
-	eventdev_token			 token = 0;
 
 	DEBUG(DBG_TRACE, ">dispatch_p2m");
-	msg = queue_peek(&eventq_p2m);
-	if (msg) {
-		rep = (struct eventdev_reply *)msg->msg;
-		token = rep->msg_token;
-	}
-	ret = send_msg(fd, msg);
-
-	if (msg && ret != 0) {
-		dequeue(&eventq_p2m);
-		if (ret < 0) {
-			DEBUG(DBG_QUEUE, " <eventq_p2m: dropping %x", token);
-			free(msg);
-		} else if (ret > 0) {
-			/* Success: send_msg frees the message. */
-			DEBUG(DBG_QUEUE, " <eventq_p2m: sent %x", token);
-		}
-	}
-	/* If the queue is not empty, we want to be called again */
-	if (queue_peek(&eventq_p2m) || msg_pending(fd))
-		event_add(ev_info->ev_p2m, NULL);
-
+	dispatch_write_queue(&eventq_p2m, fd, ev_info->ev_p2m);
 	DEBUG(DBG_TRACE, "<dispatch_p2m");
 }
 
@@ -976,38 +952,12 @@ dispatch_s2p(int fd, short sig __used, void *arg)
 static void
 dispatch_p2s(int fd, short sig __used, void *arg)
 {
-	anoubisd_msg_t			*msg;
 	struct event_info_policy	*ev_info = arg;
-	struct eventdev_hdr		*ev_hdr;
-	int				 ret;
-	eventdev_token			 token = 0;
 
 	DEBUG(DBG_TRACE, ">dispatch_p2s");
-
-	msg = queue_peek(&eventq_p2s);
-	if (msg) {
-		ev_hdr = (struct eventdev_hdr *)msg->msg;
-		token = ev_hdr->msg_token;
-	}
-	ret = send_msg(fd, msg);
-
-	if (msg && ret != 0) {
-		dequeue(&eventq_p2s);
-		if (ret < 0) {
-			DEBUG(DBG_QUEUE, " <eventq_p2s: dropping %x", token);
-			free(msg);
-		} else if (ret > 0) {
-			/* Success: send_msg frees the message. */
-			DEBUG(DBG_QUEUE, " <eventq_p2s: sent %x", token);
-		}
-	}
-
-	/* If the queue is not empty, we want to be called again */
-	if (queue_peek(&eventq_p2s) || msg_pending(fd))
-		event_add(ev_info->ev_p2s, NULL);
-	else if (terminate >= 2)
+	dispatch_write_queue(&eventq_p2s, fd, ev_info->ev_p2s);
+	if (terminate >= 2 && !queue_peek(&eventq_p2s) && !msg_pending(fd))
 		shutdown(fd, SHUT_WR);
-
 	DEBUG(DBG_TRACE, "<dispatch_p2s");
 }
 

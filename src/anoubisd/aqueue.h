@@ -28,7 +28,11 @@
 #ifndef _AQUEUE_H
 #define _AQUEUE_H
 
+#include <sys/time.h>
+#include <event.h>
+
 #include "anoubisd.h"
+#include "amsg.h"
 
 
 struct queue_entry {
@@ -73,5 +77,7 @@ void	*queue_peek(Queuep);
 void	*queue_find(Queuep, void *, int(*cmp)(void *, void *));
 
 int	 queue_delete(Queuep, void *);
+
+int	 dispatch_write_queue(Queue *q, int fd, struct event *);
 
 #endif /* !_AQUEUE_H */

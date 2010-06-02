@@ -422,7 +422,8 @@ send_msg(int fd, anoubisd_msg_t *msg)
 	}
 	if (mbp->wmsg) {
 		_flush_buf(mbp);
-		return 0;
+		if (mbp->wmsg)
+			return 0;
 	}
 	if (!msg)
 		return 1;
