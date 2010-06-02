@@ -71,8 +71,34 @@
 #include "cert.h"
 #include <anoubis_alloc.h>
 
-/*
- * sfsdata file format in sfs checksumroot:
+/**
+ * \file
+ * Management functions for the SFS on disk tree.
+ *
+ * By default the SFS tree is stored on disk in SFS_CHECKSUMROOT. Processes
+ * that are chroot-ed can access the SFS tree via SFS_CHECKSUMROOT_CHROOT.
+ * The current version of the tree is stored in the version file
+ * ANOUBISD_SFS_TREE_VERSIONFILE or ANOUBISD_SFS_TREE_VERSIONFILE_CHROOT.
+ * Individual files in the tree must not have a version that is smaller
+ * than than the version number in this file.
+ *
+ * Checksum and signature for files can be stored in the SFS-tree. For each
+ * file in the system there is corresponding directory in the SFS-tree. The
+ * directory name is constructed as follows:
+ * - Each existing star ('*') in the path name is duplicated
+ * - The final component of the path is prefixed with an additional star.
+ * - SFS_CHECKSUMROOT or SFS_CHECKSUMROOT_CHROOT is prepended.
+ *
+ * This results in a (potentially non-existing) directory in the SFS-tree.
+ * Checksums and signatures for the file are stored in file in this directory.
+ * There are two types of files:
+ * - A file that store unsigned checksums (used-ID file). The name of the
+ *   file is the numeric user-ID of the user that stored the checksum.
+ * - A file that stores signed checksums (signature file). The name of the
+ *   file is the letter 'k' followed by the printable representation of
+ *   the keyid (lower case) that signed this checksum.
+ *
+ * The format of a checksums file is a follows:
  *
  * First the file version (SFSDATA_FORMAT_VERSION):
  *	u_int32_t	version
@@ -83,10 +109,23 @@
  *	u_int32_t	length  (data length)
  *
  * The table of contents ends with an entry with type = SFSDATA_TYPE_EOT.
+ * Other possible types are:
+ * - SFSDATA_TYPE_CS: An unsigned signature (can only appear in user-ID files).
+ * - SFSDATA_TYPE_SIG: A signed checksum (can only appear in signature files).
+ * - SFSDATA_TYPE_UPGRADE_CS: This can only appear in signaturer files, too.
+ *     It is automatically added to a signature file if the file contents
+ *     change during an upgrade and the daemon is configured to adjust
+ *     checksums in such a case. It is the (unsigned) checksum of the
+ *     file contents immediately after the upgrade and cannot be modified
+ *     manually.
  *
  * After that, the data parts are appended. One data part cannot be longer
  * than SFSDATA_MAX_FIELD_LENGTH bytes. Currently, only one entry per
  * type may appear.
+ *
+ * Currently, an individual file contain either
+ * - a checksum and no signature or upgrade data     or
+ * - no checksum, a signature and an optional upgrade checksum.
  */
 
 #define	SFSDATA_TYPE_EOT	0
@@ -95,13 +134,19 @@
 #define	SFSDATA_TYPE_UPGRADE_CS 3
 #define	NUM_SFSDATA_TYPES	4
 
+/* Prototypes. See the implementation for inline documentation. */
 static int	 sfs_writesfsdata(const char *csum_file, const char *csum_path,
-		     struct sfs_data *sfsdata);
+		     const struct sfs_data *sfsdata);
 static int	 sfs_readsfsdata(const char *csum_file,
 		     struct sfs_data *sfsdata);
 static int	 sfs_deletechecksum(const char *csum_file);
 static int	 check_empty_dir(const char *path);
 
+/**
+ * Initialize a struct sfs_data structure.
+ * @param The pre-allocated sfsdata structure.
+ * @return None.
+ */
 void
 sfs_initsfsdata(struct sfs_data *sfsdata)
 {
@@ -110,8 +155,17 @@ sfs_initsfsdata(struct sfs_data *sfsdata)
 	sfsdata->upgradecsdata = ABUF_EMPTY;
 }
 
+/**
+ * Free the buffers in an sfsdata structure. The sfsdata structure itself
+ * is not freed by this function. In fact it is usually allocated on the
+ * stack.
+ *
+ * @param sfsdata A pointer to the sfsdata structure.
+ * @return None.
+ */
 void
-sfs_freesfsdata(struct sfs_data *sfsdata) {
+sfs_freesfsdata(struct sfs_data *sfsdata)
+{
 	if (sfsdata == NULL)
 		return;
 	abuf_free(sfsdata->csdata);
@@ -122,6 +176,16 @@ sfs_freesfsdata(struct sfs_data *sfsdata) {
 	sfsdata->upgradecsdata = ABUF_EMPTY;
 }
 
+/**
+ * Create all components of a path if  they do not exist. It is not an error
+ * if the path already exists. If the path already exists but is not a
+ * directory this function will return success anyway. The caller must
+ * check for this case.
+ *
+ * @param path The path name to create.
+ * @return Zero in case of success. A negative error code if something
+ *     went wrong.
+ */
 static int
 mkpath(const char *path)
 {
@@ -165,6 +229,36 @@ mkpath(const char *path)
 	return 0;
 }
 
+/**
+ * Insert escape characters into a path name for the SFS-tree.
+ * Each star ('*') in the path name is replaced by two stars. Is @dir is
+ * false the last component of the path is prefixed with an additional star.
+ * Memory for the string is allocated using malloc(3c) and must be freed
+ * by the caller.
+ *
+ * @param The original path.
+ * @dir True if the path refers to a directory. In this case the final
+ *     path component must not be prepended with a star. False if the
+ *     path refers to a file.
+ * @return The escaped path name or NULL in case of an error.
+ *
+ * NOTE: All paths returned from this function should be interpreted as
+ *     direcotries in the SFS tree. However, there is a difference between
+ *     SFS tree directories that mirror directories in the system (e.g.
+ *     /usr/bin) and SFS tree directories that correspond to regular files
+ *     in the system (e.g. /usr/bin/vi).
+ *     - "/usr/bin" should be converted with @dir = true. The result is
+ *       is "/usr/bin", too.
+ *     - "/usr/bin/vi" should be converted with @dir = false. The result is
+ *       "/usr/bin/ *vi" (the  space is only there to silence a gcc warning),
+ *       a directory in the SFS-tree that can contain files that store
+ *       checksums.
+ *     - in theory it is possible to convert "/usr/bin" with @dir = false.
+ *       The result would be "/usr/ *bin". Checksums and signatures for the
+ *       directory "/usr/bin" would be stored in this SFS tree directory.
+ *       However, at this time, checksums/signatures for directories are
+ *       not supported.
+ */
 static char *
 insert_escape_seq(const char *path, int dir)
 {
@@ -193,7 +287,8 @@ insert_escape_seq(const char *path, int dir)
 		newpath[k] = path[j];
 	}
 
-	/* If the given path is not a file, then it is a new entry
+	/*
+	 * If the given path is not a file, then it is a new entry
 	 * which has a odd number of stars to mark it as a entry
 	 * to the shadowtree. So we add a star to the beginning
 	 * of the name of the entry.
@@ -214,6 +309,17 @@ insert_escape_seq(const char *path, int dir)
 	return newpath;
 }
 
+/**
+ * Remove any additional stars from an escaped path name component.
+ * The name should not contain any slashes. If the number of stars is
+ * even (i.e. the component refers to a directory name) a slash is appended
+ * to the converted result.
+ * The result is allocated using malloc(3c) and must be freed by the caller.
+ *
+ * @param name The path name.
+ * @return The path name component with the stars removed. NULL in case of
+ *     an error.
+ */
 char *
 remove_escape_seq(const char *name)
 {
@@ -262,6 +368,25 @@ remove_escape_seq(const char *name)
 	return newpath;
 }
 
+/**
+ * Convert a user path name to the corresponding directory name in the
+ * SFS tree. The given path name must be absolute and must not contain
+ * any additional components (.e.g /../, /./, duplicate or trailing slashes).
+ * This prevents path name based attacks via the SFS tree.
+ * This function inserts escape characters as required and prepends the
+ * checksum tree root.
+ *
+ * @param path The original user provided path name.
+ * @param dir A pointer to the result will be stored in dir. The memory
+ *     for the string is allocated using malloc(3c) and must be freed
+ *     by the caller.
+ * @param is_dir True if the user path names a directory (e.g. for list
+ *     operations).
+ * @param is_chroot True if the name conversion should assume that the
+ *     process is chroot-ed and needs a shorted shadow tree preifx.
+ * @return Zero in case of success, a negative error code in case of
+ *     an error.
+ */
 static int
 __convert_user_path(const char * path, char **dir, int is_dir, int is_chroot)
 {
@@ -313,12 +438,41 @@ __convert_user_path(const char * path, char **dir, int is_dir, int is_chroot)
 	return 0;
 }
 
+/**
+ * This function simply calls @see __convert_user_path with the is_chroot
+ * parameter set to false.
+ *
+ * @param path The orignal path name.
+ * @param dir The converted path name is returned here. The memory is
+ *     allocated using malloc(3c) and must be freed by the caller.
+ * @param is_dir True if the path name corresponds to a directory.
+ * @return Zero in case of success. A negative error code in case of errors.
+ */
 int
 convert_user_path(const char * path, char **dir, int is_dir)
 {
 	return __convert_user_path(path, dir, is_dir, 0);
 }
 
+/**
+ * Execute the checksum operation csop. This function always applies the
+ * operation to an individual file even in case of a csmulti operation.
+ * The caller must make sure the the sigbuf and path fields of csop refer
+ * to the proper data.
+ *
+ * In case of a GET or GETSIG operation the result is returned in an
+ * sfsdata structure. The structure itself must be provided by the caller,
+ * the contents are allocated dynamically and must be freed by the caller.
+ *
+ * @param csop The checksum operation
+ * @param data A pointer to the sfsdata structure the hold the results
+ *     for GET/GETSIG requests. Must be NULL for all other request types.
+ * @param is_chroot True if the caller is chroot-ed. This changes the
+ *     path name handling. Only GET/GETSIG requests are allowed if this
+ *     value is true.
+ * @return  True in case of success. A negative error code in case of errors.
+ *     No data must be freed in case of errors.
+ */
 static int
 __sfs_checksumop(const struct sfs_checksumop *csop, struct sfs_data *data,
     int is_chroot)
@@ -333,9 +487,7 @@ __sfs_checksumop(const struct sfs_checksumop *csop, struct sfs_data *data,
 	    csop->op);
 	switch(csop->op) {
 	case ANOUBIS_CHECKSUM_OP_GET2:
-	case _ANOUBIS_CHECKSUM_OP_GET_OLD:
 	case ANOUBIS_CHECKSUM_OP_GETSIG2:
-	case _ANOUBIS_CHECKSUM_OP_GETSIG_OLD:
 		if (!data)
 			return -EINVAL;
 		break;
@@ -355,7 +507,6 @@ __sfs_checksumop(const struct sfs_checksumop *csop, struct sfs_data *data,
 
 	switch(csop->op) {
 	case ANOUBIS_CHECKSUM_OP_ADDSUM:
-	case _ANOUBIS_CHECKSUM_OP_GET_OLD:
 	case ANOUBIS_CHECKSUM_OP_GET2:
 	case ANOUBIS_CHECKSUM_OP_DEL:
 		error = -EPERM;
@@ -371,13 +522,12 @@ __sfs_checksumop(const struct sfs_checksumop *csop, struct sfs_data *data,
 			goto err1;
 		break;
 	case ANOUBIS_CHECKSUM_OP_ADDSIG:
-	case _ANOUBIS_CHECKSUM_OP_GETSIG_OLD:
 	case ANOUBIS_CHECKSUM_OP_GETSIG2:
 	case ANOUBIS_CHECKSUM_OP_DELSIG:
 		error = -EINVAL;
-		if (csop->keyid == NULL)
+		if (abuf_empty(csop->keyid))
 			goto err1;
-		cert = cert_get_by_keyid(csop->keyid, csop->idlen);
+		cert = cert_get_by_keyid(csop->keyid);
 		if (cert == NULL) {
 			error = -A_EPERM_NO_CERTIFICATE;
 			goto err1;
@@ -405,7 +555,7 @@ __sfs_checksumop(const struct sfs_checksumop *csop, struct sfs_data *data,
 			}
 		}
 		error = -ENOMEM;
-		keystring = anoubis_sig_key2char(csop->idlen, csop->keyid);
+		keystring = abuf_convert_tohexstr(csop->keyid);
 		if (keystring == NULL)
 			goto err1;
 		if (asprintf(&csum_file, "%s/k%s", csum_path, keystring) < 0) {
@@ -437,9 +587,7 @@ __sfs_checksumop(const struct sfs_checksumop *csop, struct sfs_data *data,
 			error = -ENOMEM;
 		}
 		break;
-	case _ANOUBIS_CHECKSUM_OP_GET_OLD:
 	case ANOUBIS_CHECKSUM_OP_GET2:
-	case _ANOUBIS_CHECKSUM_OP_GETSIG_OLD:
 	case ANOUBIS_CHECKSUM_OP_GETSIG2:
 		error = sfs_readsfsdata(csum_file, &sfsdata);
 		if (error < 0)
@@ -499,6 +647,22 @@ err1:
 	return error;
 }
 
+/**
+ * Append a checksum record to the buffer.
+ * This is a helper function for @see sfs_checksumop. It adds a
+ * checksum/signature record for GET/GETSIG requests to the buffer at
+ * offset @off. This is the format that is expected by the userland
+ * utilities.
+ *
+ * @param dst The destination buffer.
+ * @param off The offset in the destination buffer where the checksum
+ *     record should be stored.
+ * @param src The checksum/signature data. If this is empty and the record
+ *     type is not the end of list marker (ANOUBIS_SIG_TYPE_EOT) nothing
+ *     is added to the destination buffer.
+ * @param type The record type (ANOBUIS_SIG_TYPE_*).
+ * @return The total number of bytes copied to the destination buffer.
+ */
 static int
 sfs_copy_one_sig_type(struct abuf_buffer dst, unsigned int off,
     const struct abuf_buffer src, int type)
@@ -523,6 +687,20 @@ sfs_copy_one_sig_type(struct abuf_buffer dst, unsigned int off,
 	return off;
 }
 
+/**
+ * Perform a the checksum operation @csop. In case of a GET/GETSIG
+ * request the result is returned in @buf. The contents of the
+ * result buffer are formatted can can be used directly in csmulti reply
+ * messages.
+ * Even in case of csmulti message this function will only perform
+ * a single checksum operation. The caller must set the sigbuf and path
+ * fields of @csop to the desired values.
+ *
+ * @param csop The checksum operation.
+ * @param buf The result buffer. Memory for the buffer is allocated
+ *     dynamically and must be freed by the caller.
+ * @return Zero in case of success, a negative error code in case of errors.
+ */
 int
 sfs_checksumop(const struct sfs_checksumop *csop, struct abuf_buffer *buf)
 {
@@ -533,9 +711,7 @@ sfs_checksumop(const struct sfs_checksumop *csop, struct abuf_buffer *buf)
 
 	sfs_initsfsdata(&tmpdata);
 	switch(csop->op) {
-	case _ANOUBIS_CHECKSUM_OP_GET_OLD:
 	case ANOUBIS_CHECKSUM_OP_GET2:
-	case _ANOUBIS_CHECKSUM_OP_GETSIG_OLD:
 	case ANOUBIS_CHECKSUM_OP_GETSIG2:
 		ret = __sfs_checksumop(csop, &tmpdata, 0);
 		if (ret < 0)
@@ -545,22 +721,6 @@ sfs_checksumop(const struct sfs_checksumop *csop, struct abuf_buffer *buf)
 		return __sfs_checksumop(csop, NULL, 0);
 	}
 	switch(csop->op) {
-	case _ANOUBIS_CHECKSUM_OP_GET_OLD:
-		if (abuf_empty(tmpdata.csdata)) {
-			sfs_freesfsdata(&tmpdata);
-			return -ENOENT;
-		}
-		(*buf) = tmpdata.csdata;
-		tmpdata.csdata = ABUF_EMPTY;
-		break;
-	case _ANOUBIS_CHECKSUM_OP_GETSIG_OLD:
-		if (abuf_empty(tmpdata.sigdata)) {
-			sfs_freesfsdata(&tmpdata);
-			return -ENOENT;
-		}
-		(*buf) = tmpdata.sigdata;
-		tmpdata.sigdata = ABUF_EMPTY;
-		break;
 	case ANOUBIS_CHECKSUM_OP_GET2:
 	case ANOUBIS_CHECKSUM_OP_GETSIG2:
 		if ((csop->op == ANOUBIS_CHECKSUM_OP_GET2
@@ -604,17 +764,35 @@ sfs_checksumop(const struct sfs_checksumop *csop, struct abuf_buffer *buf)
 	return 0;
 }
 
+/**
+ * The same a @see __sfs_checksumop except that the chroot parameter is
+ * always true.
+ *
+ * @param csop The checksum operation.
+ * @param data The result data of the checksum operation.
+ * @return Zero in case of success, a negative error code in case of an error.
+ */
 int
 sfs_checksumop_chroot(const struct sfs_checksumop *csop, struct sfs_data *data)
 {
 	return __sfs_checksumop(csop, data, 1);
 }
 
-/*
- * We go through the directory looking for registered uids and update them.
+/**
+ * Go through the directory looking for registered uids and keyids.
+ * Update all unsigned checksum for all users to the value given by @md
+ * and add (or replace) an upgrade checksum for all keyids. This function
+ * is used during upgrade if checksum/signature updates are configured.
+ *
+ * @param path The file name to be updated.
+ * @param md The new checksum.
+ * @return Zero in case of sucess, a negative error code in case of an
+ *     error. Some errors are only indicated by log messages. In particular,
+ *     a transient error in the update of one file does not prevent updates
+ *     of other files in the directory.
  */
 int
-sfs_update_all(const char *path, u_int8_t *md, unsigned int len)
+sfs_update_all(const char *path, struct abuf_buffer md)
 {
 	DIR		*sfs_dir = NULL;
 	struct dirent	*sfs_ent = NULL;
@@ -625,7 +803,7 @@ sfs_update_all(const char *path, u_int8_t *md, unsigned int len)
 	int		 ret;
 	struct sfs_data	 sfsdata;
 
-	if (path == NULL || md == NULL || len != ANOUBIS_CS_LEN)
+	if (path == NULL || abuf_length(md) != ANOUBIS_CS_LEN)
 		return -EINVAL;
 	ret = convert_user_path(path, &sfs_path, 0);
 	if (ret < 0)
@@ -641,7 +819,6 @@ sfs_update_all(const char *path, u_int8_t *md, unsigned int len)
 		return -ret;
 	}
 	while ((sfs_ent = readdir(sfs_dir)) != NULL) {
-		/* since we updating checksums we skip keyid entries */
 		if (strcmp(sfs_ent->d_name, ".") == 0 ||
 		    strcmp(sfs_ent->d_name, "..") == 0)
 			continue;
@@ -653,8 +830,10 @@ sfs_update_all(const char *path, u_int8_t *md, unsigned int len)
 		}
 		if (sscanf(sfs_ent->d_name, "%u%c", &uid, &testarg) == 1) {
 			sfs_initsfsdata(&sfsdata);
-			sfsdata.csdata = abuf_alloc(len);
-			abuf_copy_tobuf(sfsdata.csdata, md, len);
+			sfsdata.csdata = md;
+			ret = sfs_writesfsdata(csum_file, sfs_path, &sfsdata);
+			sfsdata.csdata = ABUF_EMPTY;
+			sfs_freesfsdata(&sfsdata);
 		} else if (sfs_ent->d_name[0] == 'k') {
 			ret = sfs_readsfsdata(csum_file, &sfsdata);
 			if (ret < 0) {
@@ -668,24 +847,16 @@ sfs_update_all(const char *path, u_int8_t *md, unsigned int len)
 				sfs_freesfsdata(&sfsdata);
 				continue;
 			}
-			if (abuf_length(sfsdata.upgradecsdata) != len) {
+			if (abuf_length(sfsdata.upgradecsdata))
 				abuf_free(sfsdata.upgradecsdata);
-				sfsdata.upgradecsdata = abuf_alloc(len);
-				if (abuf_empty(sfsdata.upgradecsdata)) {
-					free(csum_file);
-					sfs_freesfsdata(&sfsdata);
-					closedir(sfs_dir);
-					free(sfs_path);
-					return -ENOMEM;
-				}
-			}
-			abuf_copy_tobuf(sfsdata.upgradecsdata, md, len);
+			sfsdata.upgradecsdata = md;
+			ret = sfs_writesfsdata(csum_file, sfs_path, &sfsdata);
+			sfsdata.upgradecsdata = ABUF_EMPTY;
+			sfs_freesfsdata(&sfsdata);
 		} else {
 			free(csum_file);
 			continue;
 		}
-		ret = sfs_writesfsdata(csum_file, sfs_path, &sfsdata);
-		sfs_freesfsdata(&sfsdata);
 		if (ret < 0)
 			log_warnx("Cannot update checksum for %s "
 			    "(file=%s, error=%d)", path, sfs_ent->d_name, ret);
@@ -696,17 +867,27 @@ sfs_update_all(const char *path, u_int8_t *md, unsigned int len)
 	return 0;
 }
 
-
-/*
+/**
  * Update the signature assocated with @cert for the file @path.
  * The signature is updated if the corresponding file in the sfs tree
- * exists. The return value is zero in case of success (either the
- * signature file did not exist or it could be updated successfully).
- * If an error occurs a negative errno value is returned.
+ * exists.
+ *
+ * @param path The path name of the file.
+ * @param cert The certificate structure. A private key must be loaded
+ *     for a successful update!
+ * @param md The checksum to sign.
+ * @return The return value is zero in case of success (either the
+ *     signature file did not exist or it could be updated successfully).
+ *     If an error occurs a negative errno value is returned.
+ *
+ * NOTE: This function is used during a system upgrade if the passphrase
+ * NOTE: for the root certificate is configured. This is a supported but
+ * NOTE: potentially dangerous configuration! This function must not be
+ * NOTE: used for anything else.
  */
 int
 sfs_update_signature(const char *path, struct cert *cert,
-    u_int8_t *md, int len)
+    struct abuf_buffer md)
 {
 	int		 ret;
 	char		*sfs_path = NULL, *sfs_file = NULL, *keystr = NULL;
@@ -715,15 +896,15 @@ sfs_update_signature(const char *path, struct cert *cert,
 	struct stat	 statbuf;
 	EVP_MD_CTX	 ctx;
 
-	if (path == NULL || md == NULL || len != ANOUBIS_CS_LEN)
+	if (path == NULL || abuf_length(md) != ANOUBIS_CS_LEN)
 		return -EINVAL;
-	if (!cert->privkey || !cert->kidlen)
+	if (cert->privkey == NULL || abuf_empty(cert->keyid))
 		return -EINVAL;
 	ret = convert_user_path(path, &sfs_path, 0);
 	if (ret < 0)
 		return ret;
 	ret = -ENOMEM;
-	keystr = anoubis_sig_key2char(cert->kidlen, cert->keyid);
+	keystr = abuf_convert_tohexstr(cert->keyid);
 	if (keystr == NULL)
 		goto out;
 	if (asprintf(&sfs_file, "%s/k%s", sfs_path, keystr) < 0) {
@@ -738,19 +919,20 @@ sfs_update_signature(const char *path, struct cert *cert,
 	}
 	sfs_initsfsdata(&sfs_data);
 	siglen = keylen = EVP_PKEY_size(cert->privkey);
-	sfs_data.sigdata = abuf_alloc(len + keylen);
+	sfs_data.sigdata = abuf_alloc(abuf_length(md) + keylen);
 	if (abuf_empty(sfs_data.sigdata))
 		goto out;
 	ret = -EINVAL;
-	abuf_copy_tobuf(sfs_data.sigdata, md, len);
+	abuf_copy_part(sfs_data.sigdata, 0, md, 0, abuf_length(md));
 	EVP_MD_CTX_init(&ctx);
 	if (EVP_SignInit(&ctx, ANOUBIS_SIG_HASH_DEFAULT) == 0) {
 		EVP_MD_CTX_cleanup(&ctx);
 		sfs_freesfsdata(&sfs_data);
 		goto out;
 	}
-	EVP_SignUpdate(&ctx, md, len);
-	if (EVP_SignFinal(&ctx, abuf_toptr(sfs_data.sigdata, len,
+	EVP_SignUpdate(&ctx, abuf_toptr(md, 0, abuf_length(md)),
+	    abuf_length(md));
+	if (EVP_SignFinal(&ctx, abuf_toptr(sfs_data.sigdata, abuf_length(md),
 	    siglen), &siglen, cert->privkey) == 0 || siglen != keylen) {
 		EVP_MD_CTX_cleanup(&ctx);
 		sfs_freesfsdata(&sfs_data);
@@ -769,6 +951,17 @@ out:
 	return ret;
 }
 
+/**
+ * Write the bytes to the file given by @fd. An interrupted or
+ * partial write is resumed. The function only returns after all bytes
+ * have been written or an uncorrectable error occured.
+ *
+ * @param fd The filedescriptor.
+ * @param buf The buffer to write.
+ * @param bytes The number of bytes to write.
+ * @return The number of bytes actually written or a negative error code
+ *     if an error occured.
+ */
 static int
 write_bytes(int fd, void *buf, size_t bytes)
 {
@@ -792,6 +985,15 @@ write_bytes(int fd, void *buf, size_t bytes)
 	return bytes_written;
 }
 
+/**
+ * Write the entire contents of the buffer to the given  file using
+ * @see write_bytes.
+ *
+ * @param fd The file descriptor.
+ * @param buf The data to write.
+ * @return The number of bytes actually written or a negative error code
+ *     if an error occured.
+ */
 static int
 write_buffer(int fd, struct abuf_buffer buf)
 {
@@ -799,6 +1001,30 @@ write_buffer(int fd, struct abuf_buffer buf)
 	    abuf_length(buf));
 }
 
+/**
+ * This function creates special index files that are used to speed
+ * up lookups for upgraded files.
+ * If a directory or one of its sub-directories contains a file with an
+ * upgrade checksum the directory contains an empty file named ".*u_kxxx"
+ * where xxx is the key-ID of the key that has upgraded files. (If more
+ * than one key has upgraded files there is more than one index file)
+ * The file name contains an unescaped star in the middle of the name, i.e.
+ * it cannot be the result of an SFS tree lookup.
+ *
+ * This function creates index files starting at the directory that contains
+ * the given file and continues up to the root of the SFS tree.
+ * It is possible that an index file exists but no upgraded files for the
+ * key exist. The index file will only be deleted during the next list
+ * operation.
+ *
+ * @param csum_path The path name component of @csum_file. The first
+ *     index file is created in the directory that is obtained by stripping
+ *     the final path component.
+ * @param csum_file The full file name that an upgrade checksum was just
+ *     added to. The key-ID is extracted from this path name.
+ * @return Zero in case of success, a negative error code in case of an
+ *     error.
+ */
 static int
 sfs_create_upgradeindex(const char *csum_path, const char *csum_file)
 {
@@ -857,6 +1083,19 @@ sfs_create_upgradeindex(const char *csum_path, const char *csum_file)
 	return 0;
 }
 
+/**
+ * Compare the checksum in @updata with the checksum at the
+ * start of @cmpdata (usually a signature) and return true if
+ * the data differs. The length of @updata determines the length
+ * of the comparison. If either buffer is empty the return value is false.
+ * This function is used to determine if an upgrade checksum must be
+ * written or not. It is not needed if the upgrade checksum does not
+ * differ from the existing signature.
+ *
+ * @param updata The checksum.
+ * @param cmpdata The signature data.
+ * @return True or false depending on the result of the comparison.
+ */
 static int
 sfs_need_upgrade_data(const struct abuf_buffer updata,
     const struct abuf_buffer cmpdata)
@@ -888,7 +1127,6 @@ sfs_need_upgrade_data(const struct abuf_buffer updata,
  * @param None.
  * @return Zero if writing is ok, a negative error code (ENOSPC) otherwise.
  */
-
 static int
 sfs_space_available(void)
 {
@@ -948,13 +1186,22 @@ sfs_space_available(void)
 	return 0;
 }
 
-/*
- * NOTE: Might free the contents of sfsdata->upgradecsdata.
- * NOTE: sfsdata->csdata and sfsdata->sigdata is not touched.
+/**
+ * Write the data in @sfsdata to the disk. The complete file name
+ * is in @csum_file. The directory name of that file is in @csum_path.
+ * This function does not modify @sfsdata in any way.
+ *
+ * @param csum_file The file name that the data should be written to.
+ * @param csum_path The function ensures that this directory exists before
+ *     trying to open @csum_file.
+ * @param sfsdata The sfs data to write. The upgrade checksum (if present)
+ *     is only written if a signature is present and the checksum in the
+ *     signature differs from the upgrade checksum.
+ * @return Zero in case of success, a negative error code in case of errors.
  */
 static int
 sfs_writesfsdata(const char *csum_file, const char *csum_path,
-    struct sfs_data *sfsdata)
+    const struct sfs_data *sfsdata)
 {
 	int		 ret = 0;
 	int		 fd;
@@ -964,6 +1211,7 @@ sfs_writesfsdata(const char *csum_file, const char *csum_path,
 	int		 offset = 0;
 	int		 num_entries = 0;
 	unsigned int	 len;
+	int		 need_upgrade_data;
 
 	if (sfsdata == NULL || csum_file == NULL || csum_path == NULL)
 		return -EINVAL;
@@ -971,12 +1219,8 @@ sfs_writesfsdata(const char *csum_file, const char *csum_path,
 	ret = sfs_space_available();
 	if (ret < 0)
 		return ret;
-	if (!sfs_need_upgrade_data(sfsdata->upgradecsdata, sfsdata->csdata)
-	    && !sfs_need_upgrade_data(sfsdata->upgradecsdata,
-	    sfsdata->sigdata)) {
-		abuf_free(sfsdata->upgradecsdata);
-		sfsdata->upgradecsdata = ABUF_EMPTY;
-	}
+	need_upgrade_data = sfs_need_upgrade_data(sfsdata->upgradecsdata,
+	    sfsdata->sigdata);
 	if (!abuf_empty(sfsdata->csdata)) {
 		num_entries++;
 		len = abuf_length(sfsdata->csdata);
@@ -989,7 +1233,7 @@ sfs_writesfsdata(const char *csum_file, const char *csum_path,
 		if (len == 0 || len > SFSDATA_MAX_FIELD_LENGTH)
 			return -EINVAL;
 	}
-	if (!abuf_empty(sfsdata->upgradecsdata)) {
+	if (need_upgrade_data && !abuf_empty(sfsdata->upgradecsdata)) {
 		num_entries++;
 		len = abuf_length(sfsdata->upgradecsdata);
 		if (len == 0 || len > SFSDATA_MAX_FIELD_LENGTH)
@@ -1045,7 +1289,7 @@ sfs_writesfsdata(const char *csum_file, const char *csum_path,
 			goto err;
 	}
 
-	if (!abuf_empty(sfsdata->upgradecsdata)) {
+	if (need_upgrade_data && !abuf_empty(sfsdata->upgradecsdata)) {
 		toc_entry[0] = SFSDATA_TYPE_UPGRADE_CS;
 		toc_entry[1] = offset;
 		toc_entry[2] = abuf_length(sfsdata->upgradecsdata);
@@ -1079,7 +1323,7 @@ sfs_writesfsdata(const char *csum_file, const char *csum_path,
 			goto err;
 	}
 
-	if (!abuf_empty(sfsdata->upgradecsdata)) {
+	if (need_upgrade_data && !abuf_empty(sfsdata->upgradecsdata)) {
 		ret = sfs_create_upgradeindex(csum_path, csum_file);
 		if (ret < 0)
 			goto err;
@@ -1102,8 +1346,19 @@ out:
 	return 0;
 }
 
+/**
+ * Read bytes from a file descriptor. Interrupted or partial reads are
+ * resumed.
+ *
+ * @param fd The filedescriptor to read from.
+ * @param buf The data is stored in the memory area pointed to by @buf.
+ * @param bytes The number of bytes to read.
+ * @return The total number of bytes that were read or a negative error
+ *     code in case of an error.
+ */
 static int
-read_bytes(int fd, void *buf, size_t bytes) {
+read_bytes(int fd, void *buf, size_t bytes)
+{
 	int ret = 0;
 	size_t bytes_read = 0;
 	while (bytes_read < bytes) {
@@ -1124,6 +1379,17 @@ read_bytes(int fd, void *buf, size_t bytes) {
 	return bytes_read;
 }
 
+/**
+ * Read data from the file descriptor into the buffer @buf. The number
+ * of bytes to read is determined by the size of the buffer. Interrupted
+ * or partial reads are resumed.
+ *
+ * @param fd The file descriptor to read from.
+ * @param buf The data is stored in this buffer. Memory for the buffer
+ *     must be allocated by the caller.
+ * @return The total number of bytes read or a negative error code in case
+ *     or errors.
+ */
 static int
 read_buffer(int fd, struct abuf_buffer buf)
 {
@@ -1131,6 +1397,19 @@ read_buffer(int fd, struct abuf_buffer buf)
 	    abuf_length(buf));
 }
 
+/**
+ * Read SFS data from an SFS file on disk.
+ * The caller must allocate the sfsdata structure itself. The buffers for
+ * the checksum/signature data are allocated by this function and the
+ * caller must free them.
+ *
+ * @param csum_file The file that the data should be read from.
+ * @param sfsdata A pre-allocated sfsdata structure where the data
+ *     will be stored. The buffer with the pre-allocated structure must
+ *     be initialized and empty.
+ * @return Zero in case of success, a negative error code in case of an
+ *     error. No memory is allocated in case of an error.
+ */
 static int
 sfs_readsfsdata(const char *csum_file, struct sfs_data *sfsdata)
 {
@@ -1140,7 +1419,7 @@ sfs_readsfsdata(const char *csum_file, struct sfs_data *sfsdata)
 	int			version, i, ret = 0;
 	unsigned int		total_length = 0, offset = 0, data_size;
 	int			last_entry;
-	struct abuf_buffer	databuf;
+	struct abuf_buffer	databuf = ABUF_EMPTY;
 
 	if (csum_file == NULL || sfsdata == NULL)
 		return -EINVAL;
@@ -1279,6 +1558,14 @@ err:
 	goto out;
 }
 
+/**
+ * Check if the file in @path has at least one checksum or signature
+ * assigned to it.
+ *
+ * @param path The path name.
+ * @return A negative error code if an error occured, zero if the file
+ *     has no checksum and one if the file has a checksum.
+ */
 int
 sfs_haschecksum_chroot(const char *path)
 {
@@ -1314,6 +1601,16 @@ sfs_haschecksum_chroot(const char *path)
 	return 0;
 }
 
+/**
+ * Delete the file @csum_file in the SFS tree. If this creates an
+ * empty directory, the parent directory is removed. This happens
+ * recursively.
+ *
+ * @param csum_file The checksum file.
+ * @return Zero in case of success, a negative error code in case of an
+ *     error. Errors while deleting empty parent directories are ignored,
+ *     if the file itself could be removed.
+ */
 static int
 sfs_deletechecksum(const char *csum_file)
 {
@@ -1349,12 +1646,14 @@ sfs_deletechecksum(const char *csum_file)
 	return 0;
 }
 
-/*
- * Currently this function returns true even if the directory
- * containis only index files but no real entry. This is because
- * otherwise we would have to remove the index files manually before
- * the rmdir for the directory. The directory will be removed only after the
- * user asks for a checksum list that deletes the index.
+/**
+ * Return true if the directory @path is empty. The directory must be
+ * completely empty. A stale index file is sufficient to prevent the
+ * deletion of the directory. If will only be deleted after the user
+ * asks for a checksum list that deletes the stale index.
+ *
+ * @param path The path name of the directory.
+ * @return True if the directory is empty.
  */
 static int
 check_empty_dir(const char *path)
@@ -1378,6 +1677,12 @@ check_empty_dir(const char *path)
 	return empty;
 }
 
+/**
+ * Return true if the SFS tree file @csum_file contains an upgrade checksum.
+ *
+ * @param The path of the file in the SFS tree.
+ * @return True if the file can be read and contains an upgrade checksum.
+ */
 static int
 sfs_upgraded(const char *csum_file)
 {
@@ -1391,20 +1696,14 @@ sfs_upgraded(const char *csum_file)
 	return ret;
 }
 
-/* If a message arrives regarding a signature the payload of the message
- * should be including at least the keyid and the regarding path.
- *	---------------------------------
- *	|	keyid	|	path	|
- *	---------------------------------
- * futhermore should the message include the signature and the checksum
- * if the requested operation is ADDSIG
- *	-----------------------------------------------------------------
- *	|	keyid	|	csum	|	sigbuf	|	path	|
- *	-----------------------------------------------------------------
- * idlen is in this the length of the keyid. rawmsg.length is the total
- * length of the message excluding the path length.
+/**
+ * Do consistency checks on the checksum operation. The checks are only
+ * done for list operations and old style checksum operations.
+ *
+ * @param csop The checksum operation to check.
+ * @return Zero in case of a successful validation, a negative error code
+ *     if the validate fails.
  */
-
 static int
 sfs_validate_checksumop(struct sfs_checksumop *csop)
 {
@@ -1415,8 +1714,8 @@ sfs_validate_checksumop(struct sfs_checksumop *csop)
 	/* Requests for another user's uid are only allowed for root. */
 	if (csop->uid != csop->auth_uid && csop->auth_uid != 0)
 		return -EPERM;
-	if (csop->keyid) {
-		cert = cert_get_by_keyid(csop->keyid, csop->idlen);
+	if (!abuf_empty(csop->keyid)) {
+		cert = cert_get_by_keyid(csop->keyid);
 		if (cert == NULL)
 			return -A_EPERM_NO_CERTIFICATE;
 		/*
@@ -1435,7 +1734,6 @@ sfs_validate_checksumop(struct sfs_checksumop *csop)
 
 	switch(csop->op) {
 	case ANOUBIS_CHECKSUM_OP_DEL:
-	case _ANOUBIS_CHECKSUM_OP_GET_OLD:
 	case ANOUBIS_CHECKSUM_OP_GET2:
 	case ANOUBIS_CHECKSUM_OP_ADDSUM:
 		if (csop->listflags)
@@ -1450,7 +1748,6 @@ sfs_validate_checksumop(struct sfs_checksumop *csop)
 				return -EINVAL;
 		}
 		break;
-	case _ANOUBIS_CHECKSUM_OP_GETSIG_OLD:
 	case ANOUBIS_CHECKSUM_OP_GETSIG2:
 	case ANOUBIS_CHECKSUM_OP_DELSIG:
 	case ANOUBIS_CHECKSUM_OP_ADDSIG:
@@ -1475,7 +1772,7 @@ sfs_validate_checksumop(struct sfs_checksumop *csop)
 			if (csop->listflags
 			    != (ANOUBIS_CSUM_UPGRADED | ANOUBIS_CSUM_KEY))
 				return -EINVAL;
-			if (csop->idlen == 0 || csop->keyid == NULL)
+			if (abuf_empty(csop->keyid))
 				return -EINVAL;
 		} else if (csop->listflags & ANOUBIS_CSUM_WANTIDS) {
 			/* WANTIDS implies ALL */
@@ -1484,7 +1781,7 @@ sfs_validate_checksumop(struct sfs_checksumop *csop)
 			/* WANTIDS requires root privileges */
 			if (csop->auth_uid != 0)
 				return -EPERM;
-			if (csop->keyid || csop->idlen)
+			if (!abuf_empty(csop->keyid))
 				return -EINVAL;
 			if (csop->uid)
 				return -EINVAL;
@@ -1495,14 +1792,14 @@ sfs_validate_checksumop(struct sfs_checksumop *csop)
 				return -EINVAL;
 			if (csop->auth_uid != 0)
 				return -EPERM;
-			if (csop->keyid)
+			if (!abuf_empty(csop->keyid))
 				return -EINVAL;
 		} else {
 			if (csop->listflags & ANOUBIS_CSUM_KEY) {
-				if (csop->idlen == 0 || csop->keyid == NULL)
+				if (abuf_empty(csop->keyid))
 					return -EINVAL;
 			} else {
-				if (csop->idlen || csop->keyid)
+				if (!abuf_empty(csop->keyid))
 					return -EINVAL;
 			}
 		}
@@ -1513,6 +1810,13 @@ sfs_validate_checksumop(struct sfs_checksumop *csop)
 	return 0;
 }
 
+/**
+ * Return true if the checksum operation is ADD or ADDSIG, i.e. the
+ * request data must contain checksum or signature data.
+ *
+ * @param op The operation.
+ * @return True if the operation is an add operation.
+ */
 static int
 sfs_op_is_add(int op)
 {
@@ -1520,6 +1824,24 @@ sfs_op_is_add(int op)
 	    || op == ANOUBIS_CHECKSUM_OP_ADDSIG);
 }
 
+/**
+ * Parse a csmulti request message and store the result in the checksum
+ * operation @dst. The sfs_checksumop structure must be preallocated by
+ * the caller. This function will allocate memory for the csmulti array
+ * in @dst. All other fields will reference the request message in @mbuf
+ * directly.
+ *
+ * @param dst The checksum operation.
+ * @param mbuf A buffer that contains the entire request message, i.e. the
+ *     buffer starts with an Anoubis_CSMultiRequestMessage.
+ *     See anoubis_protocol.h for a detailed description of the message
+ *     format.
+ * @param auth_uid The user-ID of the authorized user that issued the
+ *     request.
+ * @return Zero if the message could be parsed successfully. A negative
+ *     error code if something went wrong. No memory is allocated if an
+ *     error occurs. The csmulti field is always initialized.
+ */
 int
 sfs_parse_csmulti(struct sfs_checksumop *dst, struct abuf_buffer mbuf,
     uid_t auth_uid)
@@ -1528,8 +1850,10 @@ sfs_parse_csmulti(struct sfs_checksumop *dst, struct abuf_buffer mbuf,
 	unsigned int				 off, off2;
 	unsigned int				 i, nrec = 0;
 	int					 add = 0;
+	unsigned int				 idlen;
 
 	DEBUG(DBG_CSUM, ">sfs_parse_csmulti");
+	dst->csmulti = csmultiarr_EMPTY;
 	if ((req = abuf_cast(mbuf, Anoubis_CSMultiRequestMessage)) == NULL)
 		return -EFAULT;
 	memset(dst, 0, sizeof(struct sfs_checksumop));
@@ -1553,23 +1877,26 @@ sfs_parse_csmulti(struct sfs_checksumop *dst, struct abuf_buffer mbuf,
 	}
 	dst->listflags = 0;
 	dst->uid = get_value(req->uid);
-	dst->idlen = get_value(req->idlen);
-	if (dst->idlen && dst->uid)
+	idlen = get_value(req->idlen);
+	if (idlen && dst->uid)
 		return -EINVAL;
-	if (dst->idlen) {
-		dst->keyid = abuf_toptr(mbuf, off, dst->idlen);
-		if (dst->keyid == NULL)
+	if (idlen) {
+		dst->keyid = abuf_open(mbuf, off);
+		if (abuf_length(dst->keyid) < idlen)
 			return -EFAULT;
-		off += dst->idlen;
+		abuf_limit(&dst->keyid, idlen);
+		off += idlen;
+	} else {
+		dst->keyid = ABUF_EMPTY;
 	}
 	dst->sigbuf = ABUF_EMPTY;
 	dst->path = NULL;
 
 	/* Validation checks. */
-	if (dst->idlen) {
+	if (abuf_length(dst->keyid)) {
 		struct cert	*cert = NULL;
 
-		cert = cert_get_by_keyid(dst->keyid, dst->idlen);
+		cert = cert_get_by_keyid(dst->keyid);
 		if (cert == NULL) {
 			DEBUG(DBG_CSUM, "<sfs_parse_csmulti: no cert");
 			return -A_EPERM_NO_CERTIFICATE;
@@ -1608,8 +1935,8 @@ sfs_parse_csmulti(struct sfs_checksumop *dst, struct abuf_buffer mbuf,
 	}
 	/* Allocate memory for the records */
 	dst->nrec = nrec;
-	dst->csmulti = malloc(nrec * sizeof(struct sfs_csmulti_record));
-	if (dst->csmulti == NULL)
+	dst->csmulti = csmultiarr_alloc(nrec);
+	if (csmultiarr_size(dst->csmulti) != nrec)
 		return -ENOMEM;
 	/* Fill the records one at a time. */
 	for (i=0; i<nrec; ++i) {
@@ -1617,6 +1944,7 @@ sfs_parse_csmulti(struct sfs_checksumop *dst, struct abuf_buffer mbuf,
 		struct abuf_buffer		 pbuf;
 		Anoubis_CSMultiRequestRecord	*r;
 		unsigned int			 len, cslen;
+		struct sfs_csmulti_record	*rec;
 
 		r = abuf_cast(rbuf, Anoubis_CSMultiRequestRecord);
 		if (!r)
@@ -1634,7 +1962,8 @@ sfs_parse_csmulti(struct sfs_checksumop *dst, struct abuf_buffer mbuf,
 		 * If this is an add request, we expect cslen bytes of
 		 * checksum data.
 		 */
-		dst->csmulti[i].index = get_value(r->index);
+		rec = &csmultiarr_access(dst->csmulti, i);
+		rec->index = get_value(r->index);
 		cslen = get_value(r->cslen);
 		if (cslen) {
 			switch(dst->op) {
@@ -1652,41 +1981,71 @@ sfs_parse_csmulti(struct sfs_checksumop *dst, struct abuf_buffer mbuf,
 			pbuf = abuf_open(rbuf, off2);
 			if (abuf_limit(&pbuf, cslen) != cslen)
 				goto fault;
-			dst->csmulti[i].csdata = pbuf;
+			rec->csdata = pbuf;
 			off2 += cslen;
 		} else {
 			if (add)
 				goto invalid;
-			dst->csmulti[i].csdata = ABUF_EMPTY;
+			rec->csdata = ABUF_EMPTY;
 		}
 		/* The rest of the payload is the path name. */
-		dst->csmulti[i].path = abuf_tostr(rbuf, off2);
-		if (dst->csmulti[i].path == NULL)
+		rec->path = abuf_tostr(rbuf, off2);
+		if (rec->path == NULL)
 			goto fault;
 	}
 	DEBUG(DBG_CSUM, "<sfs_parse_csmulti (success)");
 	return 0;
 fault:
-	free(dst->csmulti);
-	dst->csmulti = NULL;
+	csmultiarr_free(dst->csmulti);
+	dst->csmulti = csmultiarr_EMPTY;
 	DEBUG(DBG_CSUM, "<sfs_parse_csmulti (fault)");
 	return -EFAULT;
 invalid:
-	free(dst->csmulti);
-	dst->csmulti = NULL;
+	csmultiarr_free(dst->csmulti);
+	dst->csmulti = csmultiarr_EMPTY;
 	DEBUG(DBG_CSUM, "<sfs_parse_csmulti (invalid)");
 	return -EINVAL;
 }
 
+/**
+ * Parse a checksum list request or old style checksum add/get/del
+ * requests. The message is an Anoubis_ChecksumRequestMessage.
+ * However, if the operation is ADD or ADDSIG, the message is an
+ * Anoubis_ChecksumAddMessage.
+ *
+ * The payload of the message consists of the following components
+ * in this order (some componente may not be present depending on
+ * the request type):
+ *  - A keyid if the idlen field of the request message is non-zero.
+ *  - Add requests contain signature data. The length of the data is
+ *    given by the siglen field of the request message.
+ *  - All messages contain a path name. The path name must be a string
+ *    that is terminated by a NUL byte.
+ *
+ * @param dst A pre-allocated sfs_checksumop structure that is filled
+ *     by this function. The memory for the sfs_checksumop structure
+ *     itself must be provided by the caller. In case of success all fields
+ *     reference the memory of the request message directly. No memory
+ *     is allocated by this function.
+ * @param m The request message.
+ * @param auth_uid The user ID of the authorized user that initiated the
+ *     request.
+ * @return Zero in case of success, a negative error code in case of an
+ *     error.
+ *
+ * This function calls sfs_validate_checksumop before returning. Any
+ * errors during validation are propagated.
+ */
 int
 sfs_parse_checksumop(struct sfs_checksumop *dst, struct anoubis_msg *m,
     uid_t auth_uid)
 {
 	void		*payload = NULL;
-	int		 curlen, plen, error;
-	unsigned int	 flags;
+	int		 error;
+	unsigned int	 flags, idlen, msgsz, i, plen;
 
-	if (!VERIFY_LENGTH(m, sizeof(Anoubis_ChecksumRequestMessage)))
+	msgsz = sizeof(Anoubis_ChecksumRequestMessage);
+	if (!VERIFY_LENGTH(m, msgsz))
 		return -EINVAL;
 	memset(dst, 0, sizeof(struct sfs_checksumop));
 	dst->op = get_value(m->u.checksumrequest->operation);
@@ -1696,80 +2055,73 @@ sfs_parse_checksumop(struct sfs_checksumop *dst, struct anoubis_msg *m,
 		dst->uid = get_value(m->u.checksumrequest->uid);
 	else
 		dst->uid = auth_uid;
-	dst->idlen = get_value(m->u.checksumrequest->idlen);
-	if (dst->idlen < 0)
-		return -EFAULT;
+	idlen = get_value(m->u.checksumrequest->idlen);
 	if (sfs_op_is_add(dst->op)) {
-		int	siglen;
+		unsigned int	siglen;
 
-		if (!VERIFY_LENGTH(m, sizeof(Anoubis_ChecksumAddMessage)))
+		msgsz = sizeof(Anoubis_ChecksumAddMessage);
+		if (!VERIFY_LENGTH(m, msgsz))
 			return -EINVAL;
+		plen = PAYLOAD_LEN(m, checksumadd, payload);
 		payload = m->u.checksumadd->payload;
 		siglen = get_value(m->u.checksumadd->cslen);
-		if (siglen < 0)
-			return -EFAULT;
-		dst->sigbuf =
-		    abuf_open_frommem((u_int8_t*)payload + dst->idlen, siglen);
+		if (idlen > plen || siglen > plen)
+			return -EINVAL;
+		if (!VERIFY_LENGTH(m, msgsz + idlen + siglen))
+			return -EINVAL;
+		dst->sigbuf = abuf_open_frommem(payload + idlen, siglen);
 	} else {
+		plen = PAYLOAD_LEN(m, checksumrequest, payload);
+		if (idlen > plen)
+			return -EINVAL;
+		if (!VERIFY_LENGTH(m, msgsz + idlen))
+			return -EINVAL;
 		payload = m->u.checksumrequest->payload;
 	}
-	if (dst->idlen)
-		dst->keyid = payload;
-	dst->path = payload + dst->idlen + abuf_length(dst->sigbuf);
-	curlen = (char*)payload - (char*)m->u.buf;
-	if (curlen < 0 || curlen > (int)m->length - CSUM_LEN)
-		return -EFAULT;
-	plen = m->length - curlen - CSUM_LEN;
+	if (idlen)
+		dst->keyid = abuf_open_frommem(payload, idlen);
+	dst->path = payload + idlen + abuf_length(dst->sigbuf);
+	plen -= (idlen + abuf_length(dst->sigbuf));
 	switch (dst->op) {
 	case ANOUBIS_CHECKSUM_OP_GENERIC_LIST:
 		dst->listflags = flags;
 		break;
-	case _ANOUBIS_CHECKSUM_OP_LIST:			/* Deprecated */
-		dst->op = ANOUBIS_CHECKSUM_OP_GENERIC_LIST;
-		if (dst->keyid) {
-			dst->listflags = ANOUBIS_CSUM_KEY;
-		} else {
-			dst->listflags = ANOUBIS_CSUM_UID;
-		}
-		break;
-	case _ANOUBIS_CHECKSUM_OP_LIST_ALL:		/* Deprecated */
-		dst->op = ANOUBIS_CHECKSUM_OP_GENERIC_LIST;
-		if (flags & ANOUBIS_CSUM_ALL) {
-			dst->listflags = ( ANOUBIS_CSUM_ALL
-			    | ANOUBIS_CSUM_UID | ANOUBIS_CSUM_KEY );
-		} else {
-			dst->listflags = ANOUBIS_CSUM_UID;
-			if (dst->idlen)
-				dst->listflags |= ANOUBIS_CSUM_KEY;
-		}
-		break;
-	case _ANOUBIS_CHECKSUM_OP_UID_LIST:		/* Deprecated */
-	case _ANOUBIS_CHECKSUM_OP_KEYID_LIST:		/* Deprecated */
-		dst->op = ANOUBIS_CHECKSUM_OP_GENERIC_LIST;
-		dst->listflags = (ANOUBIS_CSUM_WANTIDS | ANOUBIS_CSUM_ALL );
-		if (dst->op == _ANOUBIS_CHECKSUM_OP_UID_LIST)
-			dst->listflags |= ANOUBIS_CSUM_UID;
-		else
-			dst->listflags |= ANOUBIS_CSUM_KEY;
-		/* XXX CEH: Fixup for deprecated messages from sfssig */
-		if (dst->uid != dst->auth_uid && dst->auth_uid == 0)
-			dst->uid = 0;
-		break;
 	default:
-		if (dst->idlen == 0 && (flags & ANOUBIS_CSUM_UID))
+		if (abuf_empty(dst->keyid) && (flags & ANOUBIS_CSUM_UID))
 			dst->uid = get_value(m->u.checksumrequest->uid);
 		dst->listflags = 0;
 	}
 	error = -EINVAL;
-	for (curlen = 0; curlen < plen; ++curlen) {
-		if (dst->path[curlen] == 0) {
+	for (i = 0; i < plen; ++i) {
+		if (dst->path[i] == 0) {
 			error = 0;
 			break;
 		}
 	}
+	if (error)
+		return error;
 	return sfs_validate_checksumop(dst);
 }
 
+/**
+ * Return true if the entry @entryname in the directory @sfs_path should
+ * be listed as part of a list request with the user ID @uid and the
+ * list flags @listflags.
+ *
+ * @param sfs_path The SFS directory that is being listed.
+ * @param entryname The entry that was found in the directory.
+ * @param uid Checksums should be listed for this user-ID.
+ * @param listflags Only used to check if this request asks for
+ *     files with an upgrade checksum. However, this function assumes
+ *     that ANOUBIS_CSUM_UID is set in listflags and both
+ *     ANOUBIS_CSUM_WANTIDS and ANOUBIS_CSUM_ALL are clear.
+ * @param check_for_index True if the object given by @entryname refers to
+ *     a directory (i.e. it can contain index files). Directories are always
+ *     part of a listing except for those cases where a missing index file
+ *     tells us that the directory is not interesting (only works for
+ *     upgrade checksum at this time).
+ * @return True if the entry @entryname should be part of the listing.
+ */
 static int
 sfs_check_for_uid(const char *sfs_path, const char *entryname, uid_t uid,
     unsigned int listflags, int check_for_index)
@@ -1808,10 +2160,28 @@ sfs_check_for_uid(const char *sfs_path, const char *entryname, uid_t uid,
 	return 1;
 }
 
+/**
+ * Return true if the entry @entryname in the directory @sfs_path should
+ * be listed as part of a list request with the key ID @keyid and the
+ * list flags @listflags.
+ *
+ * @param sfs_path The SFS directory that is being listed.
+ * @param entryname The entry that was found in the directory.
+ * @param keyid Checksums should be listed for this key ID.
+ * @param listflags Only used to check if this request asks for
+ *     files with an upgrade checksum. However, this function assumes
+ *     that ANOUBIS_CSUM_KEY is set in listflags and both
+ *     ANOUBIS_CSUM_WANTIDS and ANOUBIS_CSUM_ALL are clear.
+ * @param check_for_index True if the object given by @entryname refers to
+ *     a directory (i.e. it can contain index files). Directories are always
+ *     part of a listing except for those cases where a missing index file
+ *     tells us that the directory is not interesting (only works for
+ *     upgrade checksum at this time).
+ * @return True if the entry @entryname should be part of the listing.
+ */
 static int
 sfs_check_for_key(const char *sfs_path, const char *entryname,
-    const unsigned char *key, int keylen, unsigned int listflags,
-    int check_for_index)
+    struct abuf_buffer keyid, unsigned int listflags, int check_for_index)
 {
 	char		*keystr, *file;
 	int		 ret;
@@ -1825,7 +2195,7 @@ sfs_check_for_key(const char *sfs_path, const char *entryname,
 			return 1;
 		idxstr = ".*u_";
 	}
-	if ((keystr = anoubis_sig_key2char(keylen, key)) == NULL) {
+	if ((keystr = abuf_convert_tohexstr(keyid)) == NULL) {
 		master_terminate(ENOMEM);
 		return 0;
 	}
@@ -1852,6 +2222,15 @@ sfs_check_for_key(const char *sfs_path, const char *entryname,
 	return 1;
 }
 
+/**
+ * Return true if the directory entry @entryname should be part of the
+ * list request @csop.
+ *
+ * @param csop The checksum list operation.
+ * @param sfs_path The name of the directory where @entryname was found.
+ * @param entryname The name of the entry.
+ * @return True if the entry should be part of the listing.
+ */
 int
 sfs_wantentry(const struct sfs_checksumop *csop, const char *sfs_path,
     const char *entryname)
@@ -1896,7 +2275,10 @@ sfs_wantentry(const struct sfs_checksumop *csop, const char *sfs_path,
 	while (entryname[stars] == '*')
 		stars++;
 
-	/* Non-leaf directory entries are always interesting. */
+	/*
+	 * Non-leaf directory entries are always interesting except for the
+	 * case where a missing index file tells us otherwise.
+	 */
 	if (stars % 2 == 0)
 		check_for_index = 1;
 
@@ -1904,13 +2286,20 @@ sfs_wantentry(const struct sfs_checksumop *csop, const char *sfs_path,
 	    && sfs_check_for_uid(sfs_path, entryname, csop->uid,
 	    csop->listflags, check_for_index))
 		return 1;
-	if ((csop->listflags & ANOUBIS_CSUM_KEY) && sfs_check_for_key(
-	    sfs_path, entryname, csop->keyid, csop->idlen, csop->listflags,
-	    check_for_index))
+	if ((csop->listflags & ANOUBIS_CSUM_KEY) && sfs_check_for_key(sfs_path,
+	    entryname, csop->keyid, csop->listflags, check_for_index))
 		return 1;
 	return 0;
 }
 
+/**
+ * Remove an index file after a list request that did not return any
+ * matching entries.
+ *
+ * @param path The path name that was listed.
+ * @param csop The checksum list request that did not return entries.
+ * @return None.
+ */
 void
 sfs_remove_index(const char *path, struct sfs_checksumop *csop)
 {
@@ -1929,7 +2318,7 @@ sfs_remove_index(const char *path, struct sfs_checksumop *csop)
 	}
 	if (csop->listflags & ANOUBIS_CSUM_KEY) {
 		char	*keystr;
-		keystr = anoubis_sig_key2char(csop->idlen, csop->keyid);
+		keystr = abuf_convert_tohexstr(csop->keyid);
 		if (keystr == NULL) {
 			master_terminate(ENOMEM);
 			return;

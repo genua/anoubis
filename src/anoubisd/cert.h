@@ -30,6 +30,7 @@
 
 #include <sys/types.h>
 #include <anoubisd.h>
+#include <anoubis_alloc.h>
 
 #ifdef LINUX
 #include <bsdcompat.h>
@@ -67,23 +68,22 @@ struct cert {
 	/** Corresponding private key (usually NULL)		*/
 	EVP_PKEY		*privkey;
 	/** Keyid of the public key				*/
-	unsigned char		*keyid;
-	/** Length of the keyid					*/
-	int			 kidlen;
+	struct abuf_buffer	 keyid;
 	/** True if this key should be ignored			*/
 	int			 ignore;
 	/** The certificate itself				*/
 	X509			*req;
 };
 
-void	 cert_init(int);
-void	 cert_reconfigure(int);
-char *	 cert_keyid_for_uid(uid_t uid);
+void		 cert_init(int);
+void		 cert_reconfigure(int);
+char		*cert_keyid_for_uid(uid_t uid);
 
 struct cert	*cert_get_by_uid(uid_t u);
 struct cert	*cert_get_by_uid_ignored(uid_t u);
 struct cert	*cert_get_by_uid_prio(uid_t uid, int prio);
-struct cert	*cert_get_by_keyid(const unsigned char *keyid, int klen);
-void		 cert_load_priv_key(struct cert *, const char *, char *);
+struct cert	*cert_get_by_keyid(const struct abuf_buffer keyid);
+void		 cert_load_priv_key(struct cert *, const char *file,
+		     char *passphrase);
 
 #endif	/* _CERT_H_ */

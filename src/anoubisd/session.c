@@ -150,8 +150,6 @@ static void	session_setupuds(struct sessionGroup *);
 static void	session_destroy(struct session *);
 static int	dispatch_generic_reply(void *cbdata, int error,
 		    void *data, int len, int orig_opcode);
-static void	dispatch_sfsdisable(struct anoubis_server *,
-		    struct anoubis_msg *, uid_t, void *);
 static void	dispatch_passphrase(struct anoubis_server *,
 		    struct anoubis_msg *, uid_t, void *);
 
@@ -255,8 +253,6 @@ session_connect(int fd __used, short event __used, void *arg)
 	    &dispatch_checksum, info);
 	anoubis_dispatch_create(session->proto, ANOUBIS_P_CSMULTIREQUEST,
 	    &dispatch_csmulti, info);
-	anoubis_dispatch_create(session->proto, _ANOUBIS_P_SFSDISABLE,
-	    &dispatch_sfsdisable, info);
 	anoubis_dispatch_create(session->proto, ANOUBIS_P_PASSPHRASE,
 	    &dispatch_passphrase, info);
 	anoubis_dispatch_create(session->proto, ANOUBIS_C_AUTHDATA,
@@ -631,11 +627,7 @@ dispatch_checksum(struct anoubis_server *server, struct anoubis_msg *m,
 	msg_csum->uid = uid;
 	msg_csum->len = m->length;
 	memcpy(msg_csum->msg, m->u.checksumrequest, m->length);
-	if (opp == _ANOUBIS_CHECKSUM_OP_LIST ||
-	    opp == _ANOUBIS_CHECKSUM_OP_KEYID_LIST ||
-	    opp == _ANOUBIS_CHECKSUM_OP_LIST_ALL ||
-	    opp == _ANOUBIS_CHECKSUM_OP_UID_LIST ||
-	    opp == ANOUBIS_CHECKSUM_OP_GENERIC_LIST) {
+	if (opp == ANOUBIS_CHECKSUM_OP_GENERIC_LIST) {
 		err = anoubis_policy_comm_addrequest(ev_info->policy, chan,
 		    POLICY_FLAG_START | POLICY_FLAG_END,
 		    &dispatch_checksum_list_reply, NULL, server,
@@ -658,16 +650,6 @@ dispatch_checksum(struct anoubis_server *server, struct anoubis_msg *m,
 	return;
 invalid:
 	dispatch_generic_reply(server, EINVAL, NULL, 0, opp);
-}
-
-/* Give EINVAL vor deprecated SFSDISABLE messages. */
-static void
-dispatch_sfsdisable(struct anoubis_server *server,
-    struct anoubis_msg *m __used, uid_t uid __used, void *arg __used)
-{
-	DEBUG(DBG_TRACE, ">dispatch_sfsdisable");
-	dispatch_generic_reply(server, EINVAL, NULL, 0, _ANOUBIS_P_SFSDISABLE);
-	DEBUG(DBG_TRACE, "<dispatch_sfsdisable");
 }
 
 static void

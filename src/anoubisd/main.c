@@ -1081,31 +1081,33 @@ send_sfscache_invalidate_uid(const char *path, uid_t uid,
 
 
 static void
-send_sfscache_invalidate_key(const char *path, const u_int8_t *keyid,
-    int keylen, struct event_info_main *ev_info)
+send_sfscache_invalidate_key(const char *path, const struct abuf_buffer keyid,
+    struct event_info_main *ev_info)
 {
 	struct anoubisd_msg			*msg;
 	struct anoubisd_sfscache_invalidate	*invmsg;
-	int					 i, j;
+	char					*keyidstr = NULL;
 
+	keyidstr = abuf_convert_tohexstr(keyid);
+	if (keyidstr == NULL) {
+		master_terminate(ENOMEM);
+		return;
+	}
 	msg = msg_factory(ANOUBISD_MSG_SFSCACHE_INVALIDATE,
 	    sizeof(struct anoubisd_sfscache_invalidate) + strlen(path) + 1
-	    + 2*keylen+1);
+	    + strlen(keyidstr) + 1);
 	if (!msg) {
+		free(keyidstr);
 		master_terminate(ENOMEM);
 		return;
 	}
 	invmsg = (struct anoubisd_sfscache_invalidate*)msg->msg;
 	invmsg->uid = (uid_t)-1;
 	invmsg->plen = strlen(path)+1;
-	invmsg->keylen = 2*keylen+1;
+	invmsg->keylen = strlen(keyidstr)+1;
 	memcpy(invmsg->payload, path, invmsg->plen);
-	i = invmsg->plen;
-	for (j=0; j<keylen; ++j) {
-		sprintf(invmsg->payload + i, "%2.2x", keyid[j]);
-		i += 2;
-	}
-	invmsg->payload[i] = 0;
+	memcpy(invmsg->payload + invmsg->plen, keyidstr, invmsg->keylen);
+	free(keyidstr);
 	enqueue(&eventq_m2p, msg);
 	event_add(ev_info->ev_m2p, NULL);
 }
@@ -1339,8 +1341,7 @@ send_sfscache_invalidate(struct sfs_checksumop *csop,
 		break;
 	case ANOUBIS_CHECKSUM_OP_ADDSIG:
 	case ANOUBIS_CHECKSUM_OP_DELSIG:
-		send_sfscache_invalidate_key(csop->path, csop->keyid,
-		    csop->idlen, ev_info);
+		send_sfscache_invalidate_key(csop->path, csop->keyid, ev_info);
 	}
 }
 
@@ -1385,8 +1386,11 @@ sfs_process_csmulti(struct sfs_checksumop *csop, u_int64_t token,
 	totallen = sizeof(Anoubis_CSMultiReplyMessage);
 	DEBUG(DBG_CSUM, " sfs_process_csmulti: nrec=%d", nrec);
 	for (i=0; i<nrec; ++i) {
-		csop->path = csop->csmulti[i].path;
-		csop->sigbuf = csop->csmulti[i].csdata;
+		struct sfs_csmulti_record	*rec;
+
+		rec = &csmultiarr_access(csop->csmulti, i);
+		csop->path = rec->path;
+		csop->sigbuf = rec->csdata;
 		if (get)
 			errors[i] = -sfs_checksumop(csop, &sigbufs[i]);
 		else
@@ -1433,7 +1437,7 @@ sfs_process_csmulti(struct sfs_checksumop *csop, u_int64_t token,
 		if (!r)
 			goto nomem;
 		set_value(r->length, length);
-		set_value(r->index, csop->csmulti[i].index);
+		set_value(r->index, csmultiarr_access(csop->csmulti, i).index);
 		set_value(r->error, errors[i]);
 		if (get && abuf_length(sigbufs[i])) {
 			unsigned int cp;
@@ -1499,18 +1503,12 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 		goto out;
 
 	switch (csop.op) {
-	case _ANOUBIS_CHECKSUM_OP_LIST:
-	case _ANOUBIS_CHECKSUM_OP_LIST_ALL:
-	case _ANOUBIS_CHECKSUM_OP_UID_LIST:
-	case _ANOUBIS_CHECKSUM_OP_KEYID_LIST:
 	case ANOUBIS_CHECKSUM_OP_GENERIC_LIST:
 		sfs_checksumop_list(&csop, msg_csum->token, ev_info);
 		return;
 	case ANOUBIS_CHECKSUM_OP_ADDSIG:
 	case ANOUBIS_CHECKSUM_OP_ADDSUM:
-	case _ANOUBIS_CHECKSUM_OP_GETSIG_OLD:
 	case ANOUBIS_CHECKSUM_OP_GETSIG2:
-	case _ANOUBIS_CHECKSUM_OP_GET_OLD:
 	case ANOUBIS_CHECKSUM_OP_GET2:
 	case ANOUBIS_CHECKSUM_OP_DELSIG:
 	case ANOUBIS_CHECKSUM_OP_DEL:
@@ -1555,16 +1553,13 @@ dispatch_csmulti_request(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 	if (err < 0)
 		goto err;
 	err = sfs_process_csmulti(&csop, msg_csum->token, ev_info);
-	if (csop.csmulti)
-		free(csop.csmulti);
+	csmultiarr_free(csop.csmulti);
 	if (err)
 		goto err;
 	DEBUG(DBG_TRACE, " <dispatch_csmulti_request (success)");
 	return;
 
 err:
-	if (csop.csmulti)
-		free(csop.csmulti);
 	msg = create_checksumreply_msg(ANOUBISD_MSG_CSMULTIREPLY,
 	    msg_csum->token, 0);
 	reply = (struct anoubisd_msg_csumreply *)msg->msg;
@@ -1638,7 +1633,8 @@ dispatch_auth_request(struct anoubisd_msg *msg, struct event_info_main *ev_info)
 			error = EACCES;
 		}
 	}
-	if (need_challenge && cert && cert->kidlen > 0 && rnd_initialized) {
+	if (need_challenge && cert && abuf_length(cert->keyid)
+	    && rnd_initialized) {
 		int ret;
 		/*
 		 * This doesn't need to be good random data, the same value
@@ -1656,7 +1652,8 @@ dispatch_auth_request(struct anoubisd_msg *msg, struct event_info_main *ev_info)
 			RAND_add(&cdata.time, sizeof(cdata.time), 0.5);
 		}
 	}
-	if (error || cert == NULL || need_challenge == 0 || cert->kidlen <= 0) {
+	if (error || cert == NULL || need_challenge == 0
+	    || abuf_length(cert->keyid) == 0) {
 		rep_msg = msg_factory(ANOUBISD_MSG_AUTH_CHALLENGE,
 		    sizeof(struct anoubisd_msg_authchallenge));
 		if (rep_msg == NULL) {
@@ -1675,7 +1672,7 @@ dispatch_auth_request(struct anoubisd_msg *msg, struct event_info_main *ev_info)
 		challenge->idlen = challenge->challengelen = 0;
 	} else {
 		/* We do need a challenge. Create it. */
-		int	payload = cert->kidlen + sizeof(cdata);
+		int	payload = abuf_length(cert->keyid) + sizeof(cdata);
 
 		rep_msg = msg_factory(ANOUBISD_MSG_AUTH_CHALLENGE,
 		    sizeof(struct anoubisd_msg_authchallenge) + payload);
@@ -1686,12 +1683,12 @@ dispatch_auth_request(struct anoubisd_msg *msg, struct event_info_main *ev_info)
 		challenge = (struct anoubisd_msg_authchallenge *)rep_msg->msg;
 		challenge->token = auth->token;
 		challenge->auth_uid = auth->auth_uid;
-		challenge->idlen = cert->kidlen;
+		challenge->idlen = abuf_length(cert->keyid);
 		challenge->challengelen = sizeof(cdata);
 		challenge->error = 0;
 		memcpy(challenge->payload, &cdata, sizeof(cdata));
-		memcpy(challenge->payload + sizeof(cdata), cert->keyid,
-		    cert->kidlen);
+		abuf_copy_frombuf(challenge->payload + sizeof(cdata),
+		    cert->keyid, abuf_length(cert->keyid));
 	}
 	enqueue(&eventq_m2s, rep_msg);
 	DEBUG(DBG_QUEUE, " >eventq_m2s: challenge %" PRIx64, auth->token);
@@ -2065,7 +2062,8 @@ dispatch_sfs_update_all(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 	/*
 	 * Update checksums on disk.
 	 */
-	ret = sfs_update_all(path, (u_int8_t*)umsg->payload, ANOUBIS_CS_LEN);
+	ret = sfs_update_all(path,
+	    abuf_open_frommem(umsg->payload, ANOUBIS_CS_LEN));
 	if (ret < 0)
 		log_warnx("Cannot update checksums during update");
 	if (anoubisd_config.rootkey) {
@@ -2075,7 +2073,7 @@ dispatch_sfs_update_all(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 		    path, cert, cert?cert->privkey:NULL);
 		if (cert && cert->privkey) {
 			ret = sfs_update_signature(path, cert,
-			    (u_int8_t*)umsg->payload, ANOUBIS_CS_LEN);
+			    abuf_open_frommem(umsg->payload, ANOUBIS_CS_LEN));
 			if (ret < 0)
 				log_warnx("Cannot update root signature "
 				    "during update");

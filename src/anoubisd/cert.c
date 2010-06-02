@@ -57,14 +57,15 @@
 #include "anoubis_alloc.h"
 
 
-TAILQ_HEAD(cert_db, cert) *certs;
+TAILQ_HEAD(cert_db, cert) *certs = NULL;
 
-static int		 cert_load_db(const char *, struct cert_db *);
-static void		 cert_flush_db(struct cert_db *sc);
-static int		 cert_keyid(unsigned char **keyid, X509 *cert);
-static struct cert	*_cert_get_by_keyid(const unsigned char *keyid,
-			    int klen, int check_ignore, struct cert_db *certdb);
-static struct cert	*_cert_get_by_uid(uid_t, int);
+static int			 cert_load_db(const char *, struct cert_db *);
+static void			 cert_flush_db(struct cert_db *sc);
+static struct abuf_buffer	 cert_keyid(X509 *cert);
+static struct cert		*_cert_get_by_keyid(
+				     const struct abuf_buffer keyid,
+				     int check_ignore, struct cert_db *certdb);
+static struct cert		*_cert_get_by_uid(uid_t, int);
 
 /**
  * Initialise the database of certificates. Allocate memory and load the
@@ -104,7 +105,7 @@ cert_init(int chroot)
 void
 cert_reconfigure(int chroot)
 {
-	struct cert_db	*newdb, *old;
+	struct cert_db		*newdb, *old;
 	int			 count;
 	const char		*certdir = CERT_DIR;
 
@@ -210,8 +211,8 @@ cert_load_db(const char *dirname, struct cert_db *certs)
 			continue;
 		}
 		sc->uid = uid;
-		sc->kidlen = cert_keyid(&sc->keyid, sc->req);
-		if (sc->kidlen == -1) {
+		sc->keyid = cert_keyid(sc->req);
+		if (abuf_length(sc->keyid) == 0) {
 			log_warnx("Error while loading key from uid %d", uid);
 			X509_free(sc->req);
 			EVP_PKEY_free(sc->pubkey);
@@ -224,15 +225,15 @@ cert_load_db(const char *dirname, struct cert_db *certs)
 		 * Check if the key was already loaded. If the key is found
 		 * we will ignore it.
 		 */
-		if ((check = _cert_get_by_keyid(sc->keyid, sc->kidlen, 0,
-		    certs))) {
+		if ((check = _cert_get_by_keyid(sc->keyid, 0, certs))) {
 			log_warnx("Warning: Certificate already found in "
 			    "database. Will ignore for KeyID from uid %d "
 			    "and %d", check->uid, uid);
 			sc->ignore = 1;
 			check->ignore = 1;
-		} else
+		} else {
 			sc->ignore = 0;
+		}
 		TAILQ_INSERT_TAIL(certs, sc, entry);
 		count++;
 		free(filename);
@@ -245,25 +246,27 @@ cert_load_db(const char *dirname, struct cert_db *certs)
 }
 
 /**
- * Read a KeyID from a certificate and store the result in a buffer.
- * The buffer is allocated using malloc and must be freed by the caller.
- * The KeyID is returned in binary form, it is not converted to a printable
- * string and is not terminated by a 0-Byte.
+ * Read a KeyID from a certificate and store the result in an abuf_buffer.
+ * The buffer must be freed by the caller. The KeyID is returned in binary
+ * form, it is not converted to a printable string and is not terminated by
+ * a 0-Byte.
  *
- * @param keyid Pointer to a char pointer where the result gets stored.
- * @param cert  The X509 certificate which contains the KeyID.
- *
- * @return Size of allocated memory for the result buffer in keyid.
+ * @param cert The X509 certificate which contains the KeyID.
+ * @return A buffer that contains the keyid. A zero length buffer
+ *     indicates an error.
  */
-static int
-cert_keyid(unsigned char **keyid, X509 *cert)
+static struct abuf_buffer
+cert_keyid(X509 *cert)
 {
-	X509_EXTENSION *ext = NULL;
-	ASN1_OCTET_STRING *o_asn = NULL;
-	int rv = -1, len = -1;
+	X509_EXTENSION		*ext = NULL;
+	ASN1_OCTET_STRING	*o_asn = NULL;
+	int			 rv = -1;
+	size_t			 len;
+	void			*data;
+	struct abuf_buffer	 ret;
 
-	if (keyid == NULL || cert == NULL)
-		return -1;
+	if (cert == NULL)
+		return ABUF_EMPTY;
 
 	for (rv = X509_get_ext_by_NID(cert, NID_subject_key_identifier, rv);
 	    rv >= 0;
@@ -272,33 +275,32 @@ cert_keyid(unsigned char **keyid, X509 *cert)
 
 	o_asn = X509_EXTENSION_get_data(ext);
 	if (!o_asn) {
-		log_warn("X509_EXTENSION_get_data\n");
-		return -1;
+		log_warn("X509_EXTENSION_get_data failed\n");
+		return ABUF_EMPTY;
 	}
 
 	/*
 	 * The result of X509_EXTENSION_get_data begins with
 	 * a number which discribes algorithm (see RFC 3280)
-	 * We just need the KeyID, for that we cut a way these number
+	 * We just need the KeyID, thus we cut away this number.
 	 */
+	len = ASN1_STRING_length(o_asn);
+	if (len < 2)
+		return ABUF_EMPTY;
 	if (memcmp(o_asn->data, "\004\024", 2) == 0) {
-		len = ASN1_STRING_length(o_asn) - 2;
-		if ((*keyid = calloc(len, sizeof(unsigned char))) == NULL)
-			return -1;
-		memcpy(*keyid, &o_asn->data[2], len);
+		len -= 2;
+		data = &o_asn->data[2];
 	} else {
 		/*
-		 * XXX KM: In case of changing this strange behavior
-		 * XXX KM: also put in a variant where the 2 bytes
-		 * XXX KM: doesn't exist.
+		 * XXX KM: If the algorithm is unknown include it in the keyid.
 		 */
-		len = ASN1_STRING_length(o_asn);
-		if ((*keyid = calloc(len, sizeof(unsigned char))) == NULL)
-			return -1;
-		memcpy(*keyid, &o_asn->data, len);
+		data = o_asn->data;
 	}
-
-	return (len);
+	ret = abuf_alloc(len);
+	if (abuf_length(ret) != len)
+		return ret;
+	abuf_copy_tobuf(ret, data, len);
+	return ret;
 }
 
 /**
@@ -322,7 +324,7 @@ cert_flush_db(struct cert_db *sc)
 		if (p->privkey)
 			EVP_PKEY_free(p->privkey);
 		X509_free(p->req);
-		free(p->keyid);
+		abuf_free(p->keyid);
 		abuf_free_type(p, struct cert);
 	}
 	abuf_free_type(sc, struct cert_db);
@@ -409,14 +411,13 @@ cert_get_by_uid_prio(uid_t uid, int prio)
  * The keyid must be given in binary format not as a printable string.
  *
  * @param keyid The id which specifies the certificate.
- * @param klen The length of the keyid.
- * @return The certificate or NULL if non certificate with the given keyid
+ * @return The certificate or NULL if no certificate with the given keyid
  *     was found.
  */
 struct cert *
-cert_get_by_keyid(const unsigned char *keyid, int klen)
+cert_get_by_keyid(const struct abuf_buffer keyid)
 {
-	return _cert_get_by_keyid(keyid, klen, 1, certs);
+	return _cert_get_by_keyid(keyid, 1, certs);
 }
 
 /**
@@ -424,7 +425,6 @@ cert_get_by_keyid(const unsigned char *keyid, int klen)
  * If specified also include ignored certificates in the search.
  *
  * @param keyid The id which specifies the certificate.
- * @param klen The length of the keyid.
  * @param check_ignore If a certificate should be ignored, ignore it really.
  *     You should not set this to false unless you really know what you are
  *     doing.
@@ -439,18 +439,16 @@ cert_get_by_keyid(const unsigned char *keyid, int klen)
  *     only.
  */
 static struct cert *
-_cert_get_by_keyid(const unsigned char *keyid, int klen, int check_ignore,
+_cert_get_by_keyid(const struct abuf_buffer keyid, int check_ignore,
     struct cert_db *certdb)
 {
 	struct cert *p;
 
-	if (keyid == 0)
+	if (abuf_length(keyid) == 0)
 		return NULL;
 	TAILQ_FOREACH(p, certdb, entry) {
-		if (klen != p->kidlen)
-			continue;
-		if (memcmp(keyid, p->keyid, p->kidlen) == 0) {
-			if (check_ignore  && p->ignore)
+		if (abuf_equal(keyid, p->keyid)) {
+			if (check_ignore && p->ignore)
 				return NULL;
 			return p;
 		}
@@ -461,7 +459,7 @@ _cert_get_by_keyid(const unsigned char *keyid, int klen, int check_ignore,
 
 /**
  * Return keyid for the specified user-ID as a printable string. The
- * memory for the string is allocated using malloc(3) and must be freed
+ * memory for the string is allocated using malloc(3c) and must be freed
  * by the caller.
  *
  * @param uid The user ID.
@@ -472,8 +470,6 @@ char *
 cert_keyid_for_uid(uid_t uid)
 {
 	struct cert		*p;
-	char			*ret;
-	int			 i, j;
 
 	TAILQ_FOREACH(p, certs, entry) {
 		if (p->uid == uid && p->ignore == 0)
@@ -481,15 +477,7 @@ cert_keyid_for_uid(uid_t uid)
 	}
 	if (!p)
 		return NULL;
-	ret = malloc(2*p->kidlen+1);
-	if (!ret)
-		return NULL;
-	for (i=j=0; i<p->kidlen; ++i) {
-		sprintf(ret+j, "%02x", p->keyid[i]);
-		j += 2;
-	}
-	ret[j] = 0;
-	return ret;
+	return abuf_convert_tohexstr(p->keyid);
 }
 
 /**

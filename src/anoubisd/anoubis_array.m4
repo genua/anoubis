@@ -148,7 +148,7 @@ FUNC(resize)(ARRTYPE arr, size_t elmcount)
  * Create a new ARRTYPE from the buffer @buf.
  *
  * @param buf The buffer that holds the memory associated with the array.
- *     The buffer must not be freed or shrinked while the array is still
+ *     The buffer must not be freed or shrunk while the array is still
  *     in use.
  * @return A new ARRTYPE array that represents the entire
  *     memory in @buf.

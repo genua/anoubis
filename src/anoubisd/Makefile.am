@@ -26,7 +26,10 @@
 
 sbin_PROGRAMS = anoubisd
 
-m4headers = apnrules_array.h prefixhash_entry_array.h
+m4headers = \
+    apnrules_array.h \
+    prefixhash_entry_array.h \
+    sfs_csmulti_record_array.h
 
 EXTRA_DIST = README.privsep anoubis_array.m4
 BUILT_SOURCES = $(m4headers)
@@ -102,6 +105,9 @@ apnrules_array.h:	anoubis_array.m4 Makefile
 	    $(srcdir)/anoubis_array.m4 >$@
 prefixhash_entry_array.h:	anoubis_array.m4 Makefile
 	m4 -DTYPE="struct entry *" -DPREFIX=entryarr \
+	    $(srcdir)/anoubis_array.m4 >$@
+sfs_csmulti_record_array.h:	anoubis_array.m4 Makefile
+	m4 -DTYPE="struct sfs_csmulti_record" -DPREFIX="csmultiarr" \
 	    $(srcdir)/anoubis_array.m4 >$@
 
 flawfinder_FLAGS=

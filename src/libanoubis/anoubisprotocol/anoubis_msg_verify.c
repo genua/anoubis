@@ -469,9 +469,6 @@ anoubis_msg_verify(const struct anoubis_msg *m)
 	CASE(ANOUBIS_N_POLICYCHANGE, policychange);
 	CASE(ANOUBIS_N_STATUSNOTIFY, statusnotify);
 
-	case _ANOUBIS_P_SFSDISABLE:
-		/* These are no longer supported. Treat them as ok */
-		return 1;
 	default:
 		return 0;
 	}

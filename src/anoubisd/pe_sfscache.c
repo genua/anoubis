@@ -449,7 +449,7 @@ sfshash_readsum(const char *path, int cstype, const char *key, uid_t uid,
 	struct abuf_buffer	 sigbuf = ABUF_EMPTY;
 	struct sfs_checksumop	 csop;
 	struct sfs_data		 tmpdata;
-	u_int8_t		*keybuf = NULL;
+	struct abuf_buffer	 keybuf = ABUF_EMPTY;
 
 	csop.path = path;
 	csop.sigbuf = ABUF_EMPTY;
@@ -461,28 +461,30 @@ sfshash_readsum(const char *path, int cstype, const char *key, uid_t uid,
 	case CSTYPE_UID:
 		csop.uid = uid;
 		csop.op = ANOUBIS_CHECKSUM_OP_GET2;
-		csop.idlen = 0;
-		csop.keyid = NULL;
+		csop.keyid = ABUF_EMPTY;
 		break;
 	case CSTYPE_KEY: {
-		int		 i, j, len = strlen(key);
+		int			 i, j, len = strlen(key);
+		uint8_t			*keyptr;
 
 		csop.uid = 0;
 		csop.op = ANOUBIS_CHECKSUM_OP_GETSIG2;
 		if (len % 2)
 			return -ENOENT;
-		csop.idlen = len / 2;
-		if ((keybuf = malloc(csop.idlen)) == NULL)
+		len /= 2;
+		keybuf = abuf_alloc(len);
+		if (abuf_empty(keybuf))
 			return -ENOMEM;
-		for (i=j=0; i<csop.idlen; ++i) {
+		keyptr = abuf_toptr(keybuf, 0, len);
+		for (i=j=0; i<len; ++i) {
 			int		c1, c2;
 			c1 = chartohex(key[j++]);
 			c2 = chartohex(key[j++]);
 			if (c1 < 0 || c2 < 0) {
-				free(keybuf);
+				abuf_free(keybuf);
 				return -ENOENT;
 			}
-			keybuf[i] = 16*c1 + c2;
+			keyptr[i] = 16*c1 + c2;
 		}
 		csop.keyid = keybuf;
 		break;
@@ -490,8 +492,7 @@ sfshash_readsum(const char *path, int cstype, const char *key, uid_t uid,
 		return -EINVAL;
 	}
 	ret = sfs_checksumop_chroot(&csop, &tmpdata);
-	if (keybuf)
-		free(keybuf);
+	abuf_free(keybuf);
 	if (ret < 0)
 		return ret;
 	if (cstype == CSTYPE_UID) {

@@ -46,7 +46,7 @@
  *     Version 5: Add CSMULTI messages
  */
 #define ANOUBIS_PROTO_VERSION		5
-#define ANOUBIS_PROTO_MINVERSION	3
+#define ANOUBIS_PROTO_MINVERSION	4
 
 #define ANOUBIS_PROTO_CONNECT		0
 #define ANOUBIS_PROTO_POLICY		1
@@ -165,7 +165,6 @@ static inline u_int64_t __ntohll(u_int64_t arg)
 #define		ANOUBIS_P_CSMULTIREQUEST	0x3110
 #define		ANOUBIS_P_CSMULTIREPLY		0x3111
 
-#define		_ANOUBIS_P_SFSDISABLE	0x3200		/* Deprecated */
 #define		ANOUBIS_P_PASSPHRASE	0x3201
 
 #define		ANOUBIS_P_REQUEST	0x3800
@@ -225,14 +224,12 @@ static inline u_int64_t __ntohll(u_int64_t arg)
  * Non-List operations only support three values:
  *    ANOUBIS_CSUM_NONE, ANOUBIS_CSUM_UID, ANOUBIS_CSUM_KEY.
  * UID and KEY cannot be combined, ANOUBIS_CSUM_NONE is equivalent
- * ot ANOUBIS_CSUM_UID with the current user ID.
+ * to ANOUBIS_CSUM_UID with the current user ID.
  */
 
 #define		ANOUBIS_CSUM_NONE	0x0000
 #define		ANOUBIS_CSUM_UID	0x0001
 #define		ANOUBIS_CSUM_KEY	0x0002
-#define		_ANOUBIS_CSUM_UID_ALL	0x0004		/* Deprecated */
-#define		_ANOUBIS_CSUM_KEY_ALL	0x0008		/* Deprecated */
 #define		ANOUBIS_CSUM_ALL	0x0010
 #define		ANOUBIS_CSUM_WANTIDS	0x0020
 #define		ANOUBIS_CSUM_UPGRADED	0x0040
@@ -404,15 +401,9 @@ typedef struct {
  */
 
 #define ANOUBIS_CHECKSUM_OP_DEL			0x0002UL
-#define _ANOUBIS_CHECKSUM_OP_GET_OLD		0x0003UL	/* Deprecated */
 #define ANOUBIS_CHECKSUM_OP_ADDSUM		0x0005UL
-#define _ANOUBIS_CHECKSUM_OP_LIST		0x0006UL	/* Deprecated */
-#define _ANOUBIS_CHECKSUM_OP_UID_LIST		0x0007UL	/* Deprecated */
 #define ANOUBIS_CHECKSUM_OP_ADDSIG		0x0008UL
-#define _ANOUBIS_CHECKSUM_OP_GETSIG_OLD		0x0009UL	/* Deprecated */
 #define ANOUBIS_CHECKSUM_OP_DELSIG		0x000BUL
-#define _ANOUBIS_CHECKSUM_OP_LIST_ALL		0x000CUL	/* Deprecated */
-#define _ANOUBIS_CHECKSUM_OP_KEYID_LIST		0x000DUL	/* Deprecated */
 #define _ANOUBIS_CHECKSUM_OP_VALIDATE		0x000EUL	/* Deprecated */
 #define ANOUBIS_CHECKSUM_OP_GENERIC_LIST	0x000FUL
 #define ANOUBIS_CHECKSUM_OP_GET2		0x0010UL

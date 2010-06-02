@@ -215,7 +215,7 @@ extern struct abuf_buffer	abuf_alloc(unsigned int length);
 
 /**
  * Change (increase) the size of the data allocated to a particular
- * buffer. Buffers are not shrinked! Reallocation will return the original
+ * buffer. Buffers are not shrunk! Reallocation will return the original
  * buffer if shrinking is requested. In case of an error, an empty buffer
  * will be returned and the original buffer will be freed!
  *
@@ -415,6 +415,17 @@ extern unsigned int	abuf_copy_part(struct abuf_buffer dst,
  *     boundaries of the buffer.
  */
 extern const char *	abuf_tostr(struct abuf_buffer buf, unsigned int off);
+
+/**
+ * Return a string that represents the memory in the buffer as a hex string.
+ * I.e. each byte in the buffer is converted to two printable hex digits.
+ * The string is allocated using malloc and must be freed by the caller.
+ *
+ * @param buf The buffer.
+ * @return The string represention of the buffer of NULL. A zero length
+ *     buffer will return NULL, too.
+ */
+extern char *		abuf_convert_tohexstr(struct abuf_buffer buf);
 
 /**
  * XXX CEH: Try to avoid the use of this function. It defeats the purpose

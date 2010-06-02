@@ -25,9 +25,11 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <anoubis_alloc.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <inttypes.h>
 
+#include <anoubis_alloc.h>
 /**
  * Magic cookie that is stored in front of an allocated buffer. It
  * ensures that a buffer was actually allocated by the abuf allocation
@@ -258,4 +260,22 @@ abuf_tostr(struct abuf_buffer buf, unsigned int off)
 			return buf.data+off;
 
 	return NULL;
+}
+
+char *
+abuf_convert_tohexstr(struct abuf_buffer buf)
+{
+	uint8_t		*ptr = abuf_toptr(buf, 0, abuf_length(buf));
+	char		*ret;
+	unsigned int	 i, len;
+
+	if (ptr == NULL || abuf_length(buf) == 0)
+		return NULL;
+	len = 2*abuf_length(buf) + 1;
+	ret = malloc(len);
+	if (ret == NULL)
+		return NULL;
+	for (i=0; i<abuf_length(buf); ++i)
+		snprintf(ret+2*i, len-2*i, "%02x", ptr[i]);
+	return ret;
 }
