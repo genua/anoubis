@@ -31,7 +31,7 @@
 .Os Anoubis
 .Sh NAME
 .Nm playground
-.Nd start of playgrounds.
+.Nd manage playgrounds for the Anoubis Security Suite.
 .Sh SYNOPSIS
 .\" For a program:  program [-abc] file ...
 .Nm playground
@@ -40,7 +40,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-is used to start playgrounds. Currently this is not implemented.
+is used to manage different aspects of playgrounds.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -49,8 +49,22 @@ Print usage.
 .It Ar command
 .Pp
 .Bl -tag -width Ds
-.It start
-start new playbround. Not yet implemented.
+.It start \&[--\&] \&<program\&> \&[args...\&]
+start program within new playground.
+Use "--" to seperate options for
+.Nm
+from options for \&<program\&>.
+The program
+.Nm
+is replaced with \&<program\&> by
+.Xr exec 3 .
+After execution of
+.Nm
+\&$? represents an error from
+.Nm
+or the exit code of \&<program\&> in case of
+an successfull call of
+.Xr exec 3 .
 .El
 .El
 .\" The following requests should be uncommented and used where appropriate.
@@ -62,6 +76,9 @@ start new playbround. Not yet implemented.
 .Sh EXAMPLES
 .Nm
 start firefox
+.Pp
+.Nm
+start -- ls -lh
 .\" This next request is for sections 1, 4, 6, and 8 only.
 .\" .Sh DIAGNOSTICS
 .\" The next request is for sections 2, 3, and 9 error and signal handling only.
