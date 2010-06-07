@@ -102,6 +102,8 @@ main(int argc, char *argv[])
 	error = 0;
 	if (strcmp(command, "start") == 0) {
 		error = playground_start_exec(argv);
+	} else {
+		usage();
 	}
 
 #endif /* OPENBSD */
