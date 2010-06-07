@@ -100,7 +100,7 @@ void
 AnPickFromFs::setFileName(const wxString & fileName)
 {
 	fileName_ = fileName;
-	inputTextCtrl_->ChangeValue(fileName);
+	inputTextCtrl_->ChangeValue(fileName_);
 }
 
 wxString
@@ -178,16 +178,18 @@ AnPickFromFs::adoptFileName(const wxString &fileName)
 	char		 resolve[PATH_MAX];
 	char		*resolved;
 	wxString	 msg;
+	wxString	 trimmedFileName;
 
 	startChange();
 	if (fileName.IsEmpty() || fileName == wxT("any")
 	    || (pickerMode_ & MODE_NORESOLVE)) {
 		fileName_ = fileName;
 	} else {
-		resolved = realpath(fileName.fn_str(), resolve);
+		trimmedFileName = trimFileName(fileName);
+		resolved = realpath(trimmedFileName.fn_str(), resolve);
 		if (resolved != NULL) {
 			fileName_ = wxString::From8BitData(resolved);
-			if (fileName_ != fileName) {
+			if (fileName_ != trimmedFileName) {
 				msg = _("Symbolic link was resolved");
 			} else {
 				msg = wxEmptyString;
@@ -195,7 +197,7 @@ AnPickFromFs::adoptFileName(const wxString &fileName)
 		} else {
 			msg = wxString::From8BitData(anoubis_strerror(errno));
 			msg.Prepend(_("Failure to resolve: "));
-			fileName_ = fileName;
+			fileName_ = trimmedFileName;
 		}
 		/* XXX ch: depending on the mode we could do furter checks */
 		showInfo(msg);
@@ -315,4 +317,12 @@ void
 AnPickFromFs::onPickButtonMenu(wxMouseEvent &)
 {
 	PopupMenu(&pickButtonMenu_, ScreenToClient(wxGetMousePosition()));
+}
+
+wxString
+AnPickFromFs::trimFileName(wxString fileName)
+{
+	fileName = fileName.Trim(0);
+	fileName = fileName.Trim(1);
+	return fileName;
 }

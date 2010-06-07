@@ -275,6 +275,13 @@ class AnPickFromFs : public wxPanel, public Subject
 		 * @return Nothing.
 		 */
 		void onPickButtonMenu(wxMouseEvent &);
+
+		/**
+		 * Trims wxString from trailing and leading whitespaces.
+		 * @param wxString.
+		 * @return new wxString.
+		 */
+		wxString trimFileName(wxString);
 };
 
 #endif	/* _ANPICKFROMFS_H_ */
