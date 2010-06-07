@@ -102,7 +102,7 @@ static int	apn_print_rule_cleaned(struct apn_rule *, int, FILE *,
  * - 1.1  nosfs-flag appended to context-block
  * - 1.2  sctp protocol support
  */
-static int	apn_version = APN_PARSER_MKVERSION(1,2);
+static int	apn_version = APN_PARSER_MKVERSION(1,3);
 
 /*
  * Parser descriptions for different APN syntax versions. The first entry
@@ -774,6 +774,12 @@ apn_print_rule_cleaned(struct apn_rule *rule, int flags, FILE *file,
 		if (rule->flags & APN_RULE_NOSFS) {
 			if (apn_version >= APN_PARSER_MKVERSION(1, 1))
 				fprintf(file, " nosfs");
+			else
+				return (1);
+		}
+		if (rule->flags & APN_RULE_PLAYGROUND) {
+			if (apn_version >= APN_PARSER_MKVERSION(1, 3))
+				fprintf(file, " playground");
 			else
 				return (1);
 		}

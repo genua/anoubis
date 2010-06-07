@@ -209,7 +209,8 @@ enum {
 	APN_SB_ACCESS,		/* rule.sbaccess, app = NULL */
 };
 
-#define APN_RULE_NOSFS 1
+#define APN_RULE_NOSFS      1
+#define APN_RULE_PLAYGROUND 2
 
 #define apn_type	_rbentry.dtype
 #define apn_id		_rbentry.key

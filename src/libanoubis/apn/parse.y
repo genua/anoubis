@@ -58,7 +58,7 @@
 #include "apninternals.h"
 
 #define PARSER_MINVERSION		APN_PARSER_MKVERSION(1,0)
-#define PARSER_MAXVERSION		APN_PARSER_MKVERSION(1,2)
+#define PARSER_MAXVERSION		APN_PARSER_MKVERSION(1,3)
 
 #define APN_FILE	1
 #define APN_IOVEC	2
@@ -171,7 +171,7 @@ typedef struct {
 %token	INET INET6 FROM TO PORT ANY TCP UDP SCTP DEFAULT NEW ASK ALERT OPEN
 %token	READ WRITE EXEC CHMOD ERROR APPLICATION RULE HOST TFILE BOTH SEND
 %token	RECEIVE TASK UNTIL COLON PATH KEY UID APNVERSION
-%token	SELF SIGNEDSELF VALID INVALID UNKNOWN CONTINUE BORROW NOSFS
+%token	SELF SIGNEDSELF VALID INVALID UNKNOWN CONTINUE BORROW NOSFS PLAYGROUND
 %token	<v.string>		STRING
 %destructor {
 	free($$);
@@ -210,7 +210,9 @@ typedef struct {
 	apn_free_host($$.tohost);
 }				hosts
 %type	<v.number>		not capability defaultspec ruleid sbrwx
+%type	<v.number>		ctxflags
 %type	<v.number>		ctxnosfs
+%type	<v.number>		ctxplayground
 %type	<v.string>		sfspath
 %destructor {
 	free($$);
@@ -1106,6 +1108,28 @@ ctxruleset_l	: ctxruleset_l ctxruleset
 		| ctxruleset
 		;
 
+ctxflags        : ctxnosfs ctxplayground
+                {
+                    $$ = $1 | $2;
+                }
+                | ctxplayground ctxnosfs
+                {
+                    $$ = $1 | $2;
+                }
+                | ctxnosfs
+                {
+                    $$ = $1;
+                }
+                | ctxplayground
+                {
+                    $$ = $1;
+                }
+                | /* empty */
+                {
+                    $$ = 0;
+                }
+                ;
+
 ctxnosfs	: NOSFS {
 			if (apnrsp->version < APN_PARSER_MKVERSION(1, 1)) {
 				/* nosfs-flag not supported for this version */
@@ -1117,12 +1141,23 @@ ctxnosfs	: NOSFS {
 			}
 			$$ = APN_RULE_NOSFS;
 		}
-		| /* Empty */ {
-			$$ = 0;
+		;
+
+ctxplayground   : PLAYGROUND {
+			if (apnrsp->version < APN_PARSER_MKVERSION(1, 3)) {
+				/* p/g-flag not supported for this version */
+				yyerror("The flag playground is not supported "
+				    "in v%i.%i! At least v1.3 expected.",
+				    APN_PARSER_MAJOR(apnrsp->version),
+				    APN_PARSER_MINOR(apnrsp->version));
+				YYERROR;
+			}
+			$$ = APN_RULE_PLAYGROUND;
 		}
 		;
 
-ctxruleset	: ruleid apps ctxnosfs optnl '{' optnl ctxrule_l '}' nl {
+
+ctxruleset	: ruleid apps ctxflags optnl '{' optnl ctxrule_l '}' nl {
 			struct apn_rule	*rule;
 
 			rule = calloc(1, sizeof(struct apn_rule));
@@ -1365,6 +1400,7 @@ lookup(char *s)
 		{ "open",	OPEN },
 		{ "other",	OTHER },
 		{ "path",	PATH },
+		{ "playground",	PLAYGROUND },
 		{ "port",	PORT },
 		{ "raw",	RAW },
 		{ "read",	READ },
