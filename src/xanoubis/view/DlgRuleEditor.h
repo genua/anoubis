@@ -383,6 +383,13 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		 */
 		void updateFooter(void);
 
+		/*
+		 * Adjusts appListPolicyText's label.
+		 * @param[in] selected appPolicy.
+		 * @return Nothing.
+		 */
+		void setAppPolicyLabel(AppPolicy *);
+
 		/**
 		 * Display rules of the given user.
 		 * @param[in] 1st The user ID.

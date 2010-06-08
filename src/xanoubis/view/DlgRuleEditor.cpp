@@ -201,10 +201,16 @@ DlgRuleEditor::~DlgRuleEditor(void)
 void
 DlgRuleEditor::update(Subject *subject)
 {
-	PolicyRuleSet *ruleSet;
+	PolicyRuleSet	*ruleSet;
+	AppPolicy	*appPolicy;
 
 	ruleSet = dynamic_cast<PolicyRuleSet*>(subject);
+
 	if (ruleSet != NULL) {
+		appPolicy = dynamic_cast<AppPolicy*>
+		    (getSelectedPolicy(appGrid));
+		if (appPolicy != NULL)
+			setAppPolicyLabel(appPolicy);
 		updateFooter();
 		return;
 	}
@@ -361,7 +367,6 @@ DlgRuleEditor::onShowRule(wxCommandEvent& event)
 void
 DlgRuleEditor::onAppGridCellSelect(wxGridEvent &event)
 {
-	wxString		 newLabel;
 	AnListClass		*item;
 	AnRowProvider		*rowProvider;
 	AppPolicy		*appPolicy;
@@ -420,10 +425,7 @@ DlgRuleEditor::onAppGridCellSelect(wxGridEvent &event)
 	}
 	filterListTypeChoice->Select(0);
 
-	/* Show selected policy below application list */
-	newLabel.Printf(_("%ls %ls"), appPolicy->getTypeIdentifier().c_str(),
-	    appPolicy->getBinaryName().c_str());
-	appListPolicyText->SetLabel(newLabel);
+	setAppPolicyLabel(appPolicy);
 
 	/* Set app move and delete buttons. */
 	ruleSet = appPolicy->getParentRuleSet();
@@ -1277,6 +1279,18 @@ DlgRuleEditor::updateFooter(void)
 	Layout();
 	Refresh();
 }
+
+void
+DlgRuleEditor::setAppPolicyLabel(AppPolicy *appPolicy)
+{
+	wxString    newLabel;
+
+	/* Show selected policy below application list */
+	newLabel.Printf(_("%ls %ls"), appPolicy->getTypeIdentifier().c_str(),
+	    appPolicy->getBinaryName().c_str());
+	appListPolicyText->SetLabel(newLabel);
+}
+
 
 void
 DlgRuleEditor::setUser(long uid)
