@@ -28,11 +28,10 @@
 #ifndef _CFG_H_
 #define _CFG_H_
 
+#include <stdio.h>
 #include "anoubisd.h"
 
-int		 cfg_defaults(void);
 int		 cfg_initialize(int, char * const *);
-void		 cfg_clear(void);
 int		 cfg_read(void);
 int		 cfg_reread(void);
 void		 cfg_dump(FILE *);

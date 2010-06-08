@@ -489,10 +489,8 @@ main(int argc, char *argv[])
 
 	anoubisd_process = PROC_MAIN;
 
-	cfg_initialize(argc, argv);
-	if (cfg_read() != 0) {
+	if (!cfg_initialize(argc, argv) || !cfg_read())
 		fatal("Unable to read configuration");
-	}
 
 #ifndef HAVE_SETPROCTITLE
 	/* Prepare for later setproctitle emulation */
@@ -504,12 +502,8 @@ main(int argc, char *argv[])
 		fatal("can't copy progname");
 	}
 
-	if (anoubisd_config.opts & ANOUBISD_OPT_NOACTION) {
-		/* Dump configuration if requested */
-		if (anoubisd_config.opts & ANOUBISD_OPT_VERBOSE) {
-			cfg_dump(stdout);
-		}
-	}
+	if (anoubisd_config.opts & ANOUBISD_OPT_NOACTION)
+		cfg_dump(stdout);
 
 	/*
 	 * Get ANOUBISCORE Version early because this is inherited by the
@@ -997,7 +991,7 @@ reconfigure(struct event_info_main *info)
 	/* Reload Public Keys */
 	cert_reconfigure(0);
 
-	if (cfg_reread() != 0) {
+	if (!cfg_reread()) {
 		log_warn("re-read of configuration failed.");
 	} else {
 		msg = cfg_msg_create();
