@@ -180,6 +180,10 @@ MainFrame::addModules(Module* modules[ANOUBIS_MODULESNO])
 	int		 id;
 
 	for (i=0; i<ANOUBIS_MODULESNO; i++) {
+		if (modules[i] == NULL) {
+			continue;
+		}
+
 		name = modules[i]->getNick();
 		tooltip = modules[i]->getName();
 		icon = modules[i]->getIcon();

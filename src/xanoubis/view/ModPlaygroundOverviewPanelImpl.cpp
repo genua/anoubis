@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2010 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,40 +25,54 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _STATUSNOTIFY_H_
-#define _STATUSNOTIFY_H_
+#include <wx/icon.h>
 
-#include <anoubis_msg.h>
-#include <wx/string.h>
-#include <typeinfo>
+#include "main.h"
+#include "ModPlayground.h"
+#include "ModPlaygroundOverviewPanelImpl.h"
 
-#include "Notification.h"
 
-#define IS_STATUSOBJ(obj) \
-	(typeid(*obj) == typeid(class StatusNotify))
+ModPlaygroundOverviewPanelImpl::ModPlaygroundOverviewPanelImpl(wxWindow* parent,
+    wxWindowID id) : ModPlaygroundOverviewPanelBase(parent, id)
+{
+	stateIconNormal_ = wxGetApp().loadIcon(wxT("ModPlayground_ok_48.png"));
+	stateIconError_ = wxGetApp().loadIcon(
+	    wxT("ModPlayground_error_48.png"));
+	stateIconNotConnected_ = wxGetApp().loadIcon(
+	    wxT("ModPlayground_black_48.png"));
+	runningPgs_.Printf(wxT("%d"), 0);
+}
 
-class StatusNotify : public Notification {
-	private:
-		int				 valueNo_;
-		struct anoubis_stat_message	*statMsg_;
+ModPlaygroundOverviewPanelImpl::~ModPlaygroundOverviewPanelImpl(void)
+{
+	delete stateIconNormal_;
+	delete stateIconError_;
+	delete stateIconNotConnected_;
+}
 
-		bool	extractValue(unsigned int, unsigned int, wxString *);
-		void	assembleStatusMessage(void);
+void
+ModPlaygroundOverviewPanelImpl::update(void)
+{
+	wxString	 stateText;
+	wxIcon		*stateIcon;
+	ModPlayground	*module;
 
-	public:
-		StatusNotify(wxString);
-		StatusNotify(struct anoubis_msg *);
-		~StatusNotify(void);
+	module = (ModPlayground *)(wxGetApp().getModule(PG));
 
-		bool	 hasAlfLoadtime(void);
-		wxString getAlfLoadtime(void);
+	if (!wxGetApp().getCommConnectionState()) {
+		 stateText = _("not connected");
+		 stateIcon = stateIconNotConnected_;
+	} else {
+		if (module->isActive()) {
+			stateText = _("ok");
+			stateIcon = stateIconNormal_;
+		} else {
+			stateText = _("not active");
+			stateIcon = stateIconError_;
+		}
+	}
 
-		bool	 hasSfsLoadtime(void);
-		wxString getSfsLoadtime(void);
-		wxString getSfsCsumRecalc(void);
-
-		bool	 hasPgLoadtime(void);
-		wxString getPgLoadtime(void);
-};
-
-#endif	/* _STATUSNOTIFY_H_ */
+	statusText->SetLabel(stateText);
+	countText->SetLabel(runningPgs_);
+	statusIcon->SetIcon(*stateIcon);
+}

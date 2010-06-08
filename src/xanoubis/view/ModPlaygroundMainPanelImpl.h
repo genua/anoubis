@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2010 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,40 +25,28 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _STATUSNOTIFY_H_
-#define _STATUSNOTIFY_H_
+#ifndef _MODPLAYGROUNDMAINPANELIMPL_H_
+#define _MODPLAYGROUNDMAINPANELIMPL_H_
 
-#include <anoubis_msg.h>
-#include <wx/string.h>
-#include <typeinfo>
+#include "AnEvents.h"
 
-#include "Notification.h"
+#include "ModPlaygroundPanelsBase.h"
 
-#define IS_STATUSOBJ(obj) \
-	(typeid(*obj) == typeid(class StatusNotify))
-
-class StatusNotify : public Notification {
-	private:
-		int				 valueNo_;
-		struct anoubis_stat_message	*statMsg_;
-
-		bool	extractValue(unsigned int, unsigned int, wxString *);
-		void	assembleStatusMessage(void);
-
+class ModPlaygroundMainPanelImpl : public ModPlaygroundMainPanelBase
+{
 	public:
-		StatusNotify(wxString);
-		StatusNotify(struct anoubis_msg *);
-		~StatusNotify(void);
+		/**
+		 * Constructor of ModPlaygroundMainPanelImpl.
+		 * @param[in] 1st The parent window and ID.
+		 */
+		ModPlaygroundMainPanelImpl(wxWindow*, wxWindowID);
 
-		bool	 hasAlfLoadtime(void);
-		wxString getAlfLoadtime(void);
-
-		bool	 hasSfsLoadtime(void);
-		wxString getSfsLoadtime(void);
-		wxString getSfsCsumRecalc(void);
-
-		bool	 hasPgLoadtime(void);
-		wxString getPgLoadtime(void);
+		/**
+		 * Destructor of ModPlaygroundMainPanelImpl.
+		 * @param None.
+		 */
+		~ModPlaygroundMainPanelImpl(void);
 };
 
-#endif	/* _STATUSNOTIFY_H_ */
+
+#endif	/* _MODPLAYGROUNDMAINPANELIMPL_H_ */

@@ -82,7 +82,7 @@ ModOverview::addModules(Module* modules[ANOUBIS_MODULESNO])
 	sz_v = new wxBoxSizer(wxVERTICAL);
 
 	for (i=0; i<ANOUBIS_MODULESNO; i++) {
-		if (modules[i] == this)
+		if ((modules[i] == NULL) or (modules[i] == this))
 			continue;
 
 		wxBoxSizer *sz_h = new wxBoxSizer(wxHORIZONTAL);

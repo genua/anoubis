@@ -70,6 +70,7 @@ enum moduleIdx {
 	ALF,
 	SFS,
 	SB,
+	PG,
 	ANOUBIS,
 	LAST_MODULE_INDEX
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2010 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,40 +25,26 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _STATUSNOTIFY_H_
-#define _STATUSNOTIFY_H_
+#ifndef _MODPLAYGROUNDOVERVIEWPANELIMPL_H_
+#define _MODPLAYGROUNDOVERVIEWPANELIMPL_H_
 
-#include <anoubis_msg.h>
-#include <wx/string.h>
-#include <typeinfo>
+#include "ModPlaygroundPanelsBase.h"
+#include <wx/icon.h>
 
-#include "Notification.h"
-
-#define IS_STATUSOBJ(obj) \
-	(typeid(*obj) == typeid(class StatusNotify))
-
-class StatusNotify : public Notification {
+class ModPlaygroundOverviewPanelImpl : public ModPlaygroundOverviewPanelBase
+{
 	private:
-		int				 valueNo_;
-		struct anoubis_stat_message	*statMsg_;
-
-		bool	extractValue(unsigned int, unsigned int, wxString *);
-		void	assembleStatusMessage(void);
+		wxIcon			*stateIconNormal_;
+		wxIcon			*stateIconError_;
+		wxIcon			*stateIconNotConnected_;
+		wxString		runningPgs_;
 
 	public:
-		StatusNotify(wxString);
-		StatusNotify(struct anoubis_msg *);
-		~StatusNotify(void);
+		ModPlaygroundOverviewPanelImpl(wxWindow* parent, wxWindowID id);
+		~ModPlaygroundOverviewPanelImpl(void);
 
-		bool	 hasAlfLoadtime(void);
-		wxString getAlfLoadtime(void);
-
-		bool	 hasSfsLoadtime(void);
-		wxString getSfsLoadtime(void);
-		wxString getSfsCsumRecalc(void);
-
-		bool	 hasPgLoadtime(void);
-		wxString getPgLoadtime(void);
+		virtual void update(void);
 };
 
-#endif	/* _STATUSNOTIFY_H_ */
+
+#endif	/* _MODPLAYGROUNDOVERVIEWPANELIMPL_H_ */

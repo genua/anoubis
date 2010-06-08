@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2010 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,40 +25,17 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _STATUSNOTIFY_H_
-#define _STATUSNOTIFY_H_
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <anoubis_msg.h>
-#include <wx/string.h>
-#include <typeinfo>
+#include "ModPlaygroundMainPanelImpl.h"
 
-#include "Notification.h"
+ModPlaygroundMainPanelImpl::ModPlaygroundMainPanelImpl(wxWindow* parent,
+    wxWindowID id) : ModPlaygroundMainPanelBase(parent, id)
+{
+}
 
-#define IS_STATUSOBJ(obj) \
-	(typeid(*obj) == typeid(class StatusNotify))
-
-class StatusNotify : public Notification {
-	private:
-		int				 valueNo_;
-		struct anoubis_stat_message	*statMsg_;
-
-		bool	extractValue(unsigned int, unsigned int, wxString *);
-		void	assembleStatusMessage(void);
-
-	public:
-		StatusNotify(wxString);
-		StatusNotify(struct anoubis_msg *);
-		~StatusNotify(void);
-
-		bool	 hasAlfLoadtime(void);
-		wxString getAlfLoadtime(void);
-
-		bool	 hasSfsLoadtime(void);
-		wxString getSfsLoadtime(void);
-		wxString getSfsCsumRecalc(void);
-
-		bool	 hasPgLoadtime(void);
-		wxString getPgLoadtime(void);
-};
-
-#endif	/* _STATUSNOTIFY_H_ */
+ModPlaygroundMainPanelImpl::~ModPlaygroundMainPanelImpl(void)
+{
+}

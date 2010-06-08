@@ -154,6 +154,18 @@ dist_icon_DATA = \
 	icons/ModOverview_problem_48.png \
 	icons/ModOverview_question_16.png \
 	icons/ModOverview_question_48.png \
+	icons/ModPlayground_alert_16.png \
+	icons/ModPlayground_alert_48.png \
+	icons/ModPlayground_black_16.png \
+	icons/ModPlayground_black_48.png \
+	icons/ModPlayground_error_16.png \
+	icons/ModPlayground_error_48.png \
+	icons/ModPlayground_ok_16.png \
+	icons/ModPlayground_ok_48.png \
+	icons/ModPlayground_problem_16.png \
+	icons/ModPlayground_problem_48.png \
+	icons/ModPlayground_question_16.png \
+	icons/ModPlayground_question_48.png \
 	icons/ModSb_black_48.png \
 	icons/ModSb_error_48.png \
 	icons/ModSb_ok_48.png \
@@ -213,6 +225,8 @@ xanoubis_SOURCES= \
 	model/ModSb.h \
 	model/ModSfs.cpp \
 	model/ModSfs.h \
+	model/ModPlayground.cpp \
+	model/ModPlayground.h \
 	model/Module.cpp \
 	model/Module.h \
 	model/Notification.cpp \
@@ -349,6 +363,12 @@ xanoubis_SOURCES= \
 	view/ModOverviewMainPanelImpl.h \
 	view/ModOverviewPanelsBase.cpp \
 	view/ModOverviewPanelsBase.h \
+	view/ModPlaygroundMainPanelImpl.cpp \
+	view/ModPlaygroundMainPanelImpl.h \
+	view/ModPlaygroundOverviewPanelImpl.cpp \
+	view/ModPlaygroundOverviewPanelImpl.h \
+	view/ModPlaygroundPanelsBase.cpp \
+	view/ModPlaygroundPanelsBase.h \
 	view/ModSfsDetailsDlg.cpp \
 	view/ModSfsDetailsDlg.h \
 	view/ModSfsGenerateKeyDlg.cpp \

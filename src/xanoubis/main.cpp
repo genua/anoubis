@@ -62,6 +62,7 @@
 #include "ModAlf.h"
 #include "ModAnoubis.h"
 #include "ModOverview.h"
+#include "ModPlayground.h"
 #include "ModSb.h"
 #include "ModSfs.h"
 #include "Module.h"
@@ -190,7 +191,10 @@ bool AnoubisGuiApp::OnInit()
 	modules_[OVERVIEW] = new ModOverview(mainFrame);
 	modules_[ALF]      = new ModAlf(mainFrame);
 	modules_[SFS]      = new ModSfs(mainFrame);
-	modules_[SB]      = new ModSb(mainFrame);
+	modules_[SB]       = new ModSb(mainFrame);
+#ifdef LINUX
+	modules_[PG]       = new ModPlayground(mainFrame);
+#endif
 	modules_[ANOUBIS]  = new ModAnoubis(mainFrame);
 
 	((ModOverview*)modules_[OVERVIEW])->addModules(modules_);
@@ -204,6 +208,9 @@ bool AnoubisGuiApp::OnInit()
 	((ModAlf*)modules_[ALF])->update();
 	((ModSfs*)modules_[SFS])->update();
 	((ModSfs*)modules_[SB])->update();
+#ifdef LINUX
+	((ModPlayground*)modules_[PG])->update();
+#endif
 	((ModAnoubis*)modules_[ANOUBIS])->update();
 
 	if (hasLocale) {

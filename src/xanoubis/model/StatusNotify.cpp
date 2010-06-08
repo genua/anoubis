@@ -38,6 +38,7 @@
 #include <linux/anoubis.h>
 #include <linux/anoubis_alf.h>
 #include <linux/anoubis_sfs.h>
+#include <linux/anoubis_playground.h>
 #endif
 #ifdef OPENBSD
 #include <dev/eventdev.h>
@@ -144,6 +145,32 @@ StatusNotify::getSfsCsumRecalc(void)
 	wxString result;
 
 	extractValue(ANOUBIS_SOURCE_SFS, SFS_STAT_CSUM_RECALC, &result);
+
+	return (result);
+}
+
+bool
+StatusNotify::hasPgLoadtime(void)
+{
+#ifdef LINUX
+	wxString result;
+	return (extractValue(ANOUBIS_SOURCE_PLAYGROUND, PG_STAT_LOADTIME,
+	    &result));
+#else
+	return (false);
+#endif
+}
+
+wxString
+StatusNotify::getPgLoadtime(void)
+{
+	wxString result;
+
+#ifdef LINUX
+	extractValue(ANOUBIS_SOURCE_PLAYGROUND, PG_STAT_LOADTIME, &result);
+#else
+	result = _("no value");
+#endif
 
 	return (result);
 }
