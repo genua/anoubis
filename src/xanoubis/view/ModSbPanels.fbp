@@ -490,7 +490,7 @@
                             <property name="flag">wxEXPAND</property>
                             <property name="proportion">1</property>
                             <object class="wxBoxSizer" expanded="0">
-                                <property name="minimum_size"></property>
+                                <property name="minimum_size">200,-1</property>
                                 <property name="name">sz_lables</property>
                                 <property name="orient">wxVERTICAL</property>
                                 <property name="permission">none</property>

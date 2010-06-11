@@ -43,7 +43,7 @@ ModPlayground::ModPlayground(wxWindow *parent) : Module(), Observer(NULL)
 	notifyCtrl = NotificationCtrl::instance();
 
 	name_ = wxString(wxT("Playground"));
-	nick_ = wxString(wxT("Playground"));
+	nick_ = wxString(wxT("PG"));
 	mainPanel_ = new ModPlaygroundMainPanelImpl(parent,
 	    MODPG_ID_MAINPANEL);
 	overviewPanel_ = new ModPlaygroundOverviewPanelImpl(parent,

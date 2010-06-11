@@ -29,11 +29,14 @@
 #include "config.h"
 #endif
 
+#include "AnPickFromFs.h"
 #include "ModPlaygroundMainPanelImpl.h"
 
 ModPlaygroundMainPanelImpl::ModPlaygroundMainPanelImpl(wxWindow* parent,
     wxWindowID id) : ModPlaygroundMainPanelBase(parent, id)
 {
+	programPicker->setTitle(_("Program:"));
+	programPicker->setMode(AnPickFromFs::MODE_FILE);
 }
 
 ModPlaygroundMainPanelImpl::~ModPlaygroundMainPanelImpl(void)

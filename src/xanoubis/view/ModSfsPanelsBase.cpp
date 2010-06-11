@@ -460,6 +460,7 @@ ModSfsOverviewPanelBase::ModSfsOverviewPanelBase( wxWindow* parent, wxWindowID i
 	wxBoxSizer* sz_lables;
 	sz_lables = new wxBoxSizer( wxVERTICAL );
 	
+	sz_lables->SetMinSize( wxSize( 200,-1 ) ); 
 	txt_status = new wxStaticText( this, wxID_ANY, _("status (SFS):"), wxDefaultPosition, wxDefaultSize, 0 );
 	txt_status->Wrap( -1 );
 	sz_lables->Add( txt_status, 0, wxALL, 5 );

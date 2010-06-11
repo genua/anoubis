@@ -31,6 +31,8 @@
 // PLEASE DO "NOT" EDIT THIS FILE!
 ///////////////////////////////////////////////////////////////////////////
 
+#include "AnPickFromFs.h"
+
 #include "ModPlaygroundPanelsBase.h"
 
 ///////////////////////////////////////////////////////////////////////////
@@ -44,6 +46,17 @@ ModPlaygroundMainPanelBase::ModPlaygroundMainPanelBase( wxWindow* parent, wxWind
 	mainHeadlineLabel->SetFont( wxFont( 16, 70, 90, 90, false, wxEmptyString ) );
 	
 	mainSizer->Add( mainHeadlineLabel, 0, wxALL|wxALIGN_CENTER_HORIZONTAL, 5 );
+	
+	wxStaticBoxSizer* startSizer;
+	startSizer = new wxStaticBoxSizer( new wxStaticBox( this, -1, _("New Playground") ), wxVERTICAL );
+	
+	programPicker = new AnPickFromFs( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	startSizer->Add( programPicker, 0, wxEXPAND|wxTOP|wxBOTTOM|wxRIGHT, 5 );
+	
+	startButton = new wxButton( this, wxID_ANY, _("Start Playground"), wxDefaultPosition, wxDefaultSize, 0 );
+	startSizer->Add( startButton, 0, wxALL, 5 );
+	
+	mainSizer->Add( startSizer, 0, wxALL|wxEXPAND, 5 );
 	
 	this->SetSizer( mainSizer );
 	this->Layout();
@@ -67,11 +80,12 @@ ModPlaygroundOverviewPanelBase::ModPlaygroundOverviewPanelBase( wxWindow* parent
 	wxBoxSizer* labelSizer;
 	labelSizer = new wxBoxSizer( wxVERTICAL );
 	
+	labelSizer->SetMinSize( wxSize( 200,-1 ) ); 
 	statusLabel = new wxStaticText( this, wxID_ANY, _("status (PG):"), wxDefaultPosition, wxDefaultSize, 0 );
 	statusLabel->Wrap( -1 );
 	labelSizer->Add( statusLabel, 0, wxALL, 5 );
 	
-	countLabel = new wxStaticText( this, wxID_ANY, _("open playgrounds (PG):"), wxDefaultPosition, wxDefaultSize, 0 );
+	countLabel = new wxStaticText( this, wxID_ANY, _("playgrounds (PG):"), wxDefaultPosition, wxDefaultSize, 0 );
 	countLabel->Wrap( -1 );
 	labelSizer->Add( countLabel, 0, wxALL, 5 );
 	
