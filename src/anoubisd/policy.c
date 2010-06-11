@@ -95,7 +95,7 @@ static Queue	replyq;
 
 struct event_info_policy {
 	/*@dependent@*/
-	struct event	*ev_p2m, *ev_p2s, *ev_s2p, *ev_m2p;
+	struct event	*ev_s2p, *ev_m2p;
 	/*@dependent@*/
 	struct event	*ev_timer;
 	/*@null@*/ /*@temp@*/
@@ -238,11 +238,8 @@ policy_main(int pipes[], int loggers[])
 	sigdelset(&mask, SIGUSR1);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 
-	queue_init(eventq_p2m);
-	queue_init(eventq_p2m_hold);
-	queue_init(eventq_p2s);
-
-	queue_init(replyq);
+	queue_init(&eventq_p2m_hold, NULL);
+	queue_init(&replyq, NULL);
 
 	/* init msg_bufs - keep track of outgoing ev_info */
 	msg_init(masterfd, "m2p");
@@ -253,19 +250,18 @@ policy_main(int pipes[], int loggers[])
 	    &ev_info);
 	event_add(&ev_m2p, NULL);
 
-	event_set(&ev_p2m, masterfd, EV_WRITE, dispatch_p2m,
-	    &ev_info);
+	event_set(&ev_p2m, masterfd, EV_WRITE, dispatch_p2m, NULL);
 
 	/* session process */
 	event_set(&ev_s2p, sessionfd, EV_READ | EV_PERSIST, dispatch_s2p,
 	    &ev_info);
 	event_add(&ev_s2p, NULL);
 
-	event_set(&ev_p2s, sessionfd, EV_WRITE, dispatch_p2s,
-	    &ev_info);
+	event_set(&ev_p2s, sessionfd, EV_WRITE, dispatch_p2s, NULL);
 
-	ev_info.ev_p2m = &ev_p2m;
-	ev_info.ev_p2s = &ev_p2s;
+	queue_init(&eventq_p2m, &ev_p2m);
+	queue_init(&eventq_p2s, &ev_p2s);
+
 	ev_info.ev_s2p = &ev_s2p;
 	ev_info.ev_m2p = &ev_m2p;
 
@@ -298,9 +294,9 @@ dispatch_timer(int sig __used, short event __used, void *arg)
 	anoubisd_msg_t *msg;
 	eventdev_token *tk;
 	/*@dependent@*/
-	Qentryp qep_cur;
+	Qentry *qep_cur;
 	/*@dependent@*/
-	Qentryp qep_next;
+	Qentry *qep_next;
 	struct eventdev_reply *rep;
 	time_t now = time(NULL);
 
@@ -323,7 +319,6 @@ dispatch_timer(int sig __used, short event __used, void *arg)
 			rep->reply = EPERM;
 			enqueue(&eventq_p2m, msg);
 			DEBUG(DBG_QUEUE, " >eventq_p2m: %x", rep->msg_token);
-			event_add(ev_info->ev_p2m, NULL);
 
 			msg = msg_factory(ANOUBISD_MSG_EVENTCANCEL,
 			    sizeof(eventdev_token));
@@ -335,7 +330,6 @@ dispatch_timer(int sig __used, short event __used, void *arg)
 			*tk = msg_wait->token;
 			enqueue(&eventq_p2s, msg);
 			DEBUG(DBG_QUEUE, " >eventq_p2s: %x", msg_wait->token);
-			event_add(ev_info->ev_p2s, NULL);
 
 			DEBUG(DBG_QUEUE, " <replyq: %x", msg_wait->token);
 			queue_delete(&replyq, msg_wait);
@@ -421,7 +415,7 @@ send_upgrade_start(void)
 }
 
 static void
-send_upgrade_chunk(struct event_info_policy *ev_info)
+send_upgrade_chunk(void)
 {
 	anoubisd_msg_t			*msg;
 	struct anoubisd_msg_upgrade	*upg;
@@ -456,14 +450,13 @@ send_upgrade_chunk(struct event_info_policy *ev_info)
 	    "enqueue ANOUBISD_UPGRADE_CHUNK, chunksize = %i",
 	    upg->chunksize);
 	enqueue(&eventq_p2m, msg);
-	event_add(ev_info->ev_p2m, NULL);
 
 	DEBUG(DBG_UPGRADE, "<send_upgrade_chunk");
 }
 
 /* Does not free the message */
 static void
-dispatch_upgrade(anoubisd_msg_t *msg, struct event_info_policy *ev_info)
+dispatch_upgrade(anoubisd_msg_t *msg)
 {
 	struct anoubisd_msg_upgrade	*upg;
 	struct eventdev_reply		*rep;
@@ -487,7 +480,7 @@ dispatch_upgrade(anoubisd_msg_t *msg, struct event_info_policy *ev_info)
 		 * Another chunk was requested,
 		 * collect files and send them back
 		 */
-		send_upgrade_chunk(ev_info);
+		send_upgrade_chunk();
 	} else if (upg->upgradetype == ANOUBISD_UPGRADE_END) {
 		DEBUG(DBG_UPGRADE, " dispatch_upgrade: "
 		    "upgradetype = ANOUBISD_UPGRADE_END");
@@ -506,7 +499,6 @@ dispatch_upgrade(anoubisd_msg_t *msg, struct event_info_policy *ev_info)
 			DEBUG(DBG_QUEUE, " p2m_hold->p2m: %x",
 			    rep->msg_token);
 		}
-		event_add(ev_info->ev_p2m, NULL);
 	} else if (upg->upgradetype == ANOUBISD_UPGRADE_OK) {
 		DEBUG(DBG_UPGRADE, " dispatch_upgrade: "
 		    "type = ANOUBISD_UPGRADE_OK arg = %d", upg->chunk[0]);
@@ -614,7 +606,7 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 			hdr = (struct eventdev_hdr *)msg->msg;
 			break;
 		case ANOUBISD_MSG_UPGRADE:
-			dispatch_upgrade(msg, ev_info);
+			dispatch_upgrade(msg);
 			free(msg);
 			continue;
 		case ANOUBISD_MSG_CONFIG:
@@ -650,12 +642,6 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 			continue;
 		}
 		reply = policy_engine(msg);
-
-		/* Dispatch event loop, if one of the queues are not empty */
-		if (queue_peek(&eventq_p2m))
-			event_add(ev_info->ev_p2m, NULL);
-		if (queue_peek(&eventq_p2s))
-			event_add(ev_info->ev_p2s, NULL);
 
 		if (reply == NULL) {
 			free(msg);
@@ -721,8 +707,6 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 			/* send msg to the session */
 			enqueue(&eventq_p2s, msg);
 			DEBUG(DBG_QUEUE, " >eventq_p2s: %x", hdr->msg_token);
-			event_add(ev_info->ev_p2s, NULL);
-
 		} else {
 			int	hold = reply->hold;
 			msg_reply = msg_factory(ANOUBISD_MSG_EVENTREPLY,
@@ -747,7 +731,6 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 				enqueue(&eventq_p2m, msg_reply);
 				DEBUG(DBG_QUEUE, " >eventq_p2m: %x",
 				    hdr->msg_token);
-				event_add(ev_info->ev_p2m, NULL);
 			}
 		}
 
@@ -758,18 +741,15 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 	if (msg_eof(fd)) {
 		set_terminate(2, ev_info);
 		event_del(ev_info->ev_m2p);
-		event_add(ev_info->ev_p2s, NULL);
 	}
 	DEBUG(DBG_TRACE, "<dispatch_m2p (no msg)");
 }
 
 static void
-dispatch_p2m(int fd, short sig __used, void *arg)
+dispatch_p2m(int fd, short sig __used, void *arg __used)
 {
-	struct event_info_policy	*ev_info = arg;
-
 	DEBUG(DBG_TRACE, ">dispatch_p2m");
-	dispatch_write_queue(&eventq_p2m, fd, ev_info->ev_p2m);
+	dispatch_write_queue(&eventq_p2m, fd);
 	DEBUG(DBG_TRACE, "<dispatch_p2m");
 }
 
@@ -891,11 +871,6 @@ dispatch_s2p(int fd, short sig __used, void *arg)
 			msg_rep = pe_dispatch_policy(msg);
 			if (msg_rep)
 				enqueue(&eventq_p2s, msg_rep);
-			/*
-			 * Always run event_add. Messages might have been
-			 * queued via send_policy_data.
-			 */
-			event_add(ev_info->ev_p2s, NULL);
 			free(msg);
 			break;
 
@@ -928,7 +903,6 @@ dispatch_s2p(int fd, short sig __used, void *arg)
 				enqueue(&eventq_p2m, msg);
 				DEBUG(DBG_QUEUE, " >eventq_p2m: %x",
 					evrep->msg_token);
-				event_add(ev_info->ev_p2m, NULL);
 			} else {
 				free(msg);
 			}
@@ -950,12 +924,10 @@ dispatch_s2p(int fd, short sig __used, void *arg)
 }
 
 static void
-dispatch_p2s(int fd, short sig __used, void *arg)
+dispatch_p2s(int fd, short sig __used, void *arg __used)
 {
-	struct event_info_policy	*ev_info = arg;
-
 	DEBUG(DBG_TRACE, ">dispatch_p2s");
-	dispatch_write_queue(&eventq_p2s, fd, ev_info->ev_p2s);
+	dispatch_write_queue(&eventq_p2s, fd);
 	if (terminate >= 2 && !queue_peek(&eventq_p2s) && !msg_pending(fd))
 		shutdown(fd, SHUT_WR);
 	DEBUG(DBG_TRACE, "<dispatch_p2s");

@@ -97,7 +97,6 @@ struct sessionGroup {
 };
 
 struct event_info_session {
-	struct event	*ev_s2m, *ev_s2p;
 	struct event	*ev_m2s, *ev_p2s;
 	struct sessionGroup *seg;
 	struct anoubis_policy_comm *policy;
@@ -254,7 +253,7 @@ session_connect(int fd __used, short event __used, void *arg)
 	anoubis_dispatch_create(session->proto, ANOUBIS_P_CSMULTIREQUEST,
 	    &dispatch_csmulti, info);
 	anoubis_dispatch_create(session->proto, ANOUBIS_P_PASSPHRASE,
-	    &dispatch_passphrase, info);
+	    &dispatch_passphrase, NULL);
 	anoubis_dispatch_create(session->proto, ANOUBIS_C_AUTHDATA,
 	    &dispatch_authdata, info);
 	LIST_INSERT_HEAD(&(seg->sessionList), session, nextSession);
@@ -404,10 +403,7 @@ session_main(int pipes[], int loggers[])
 
 	/* From now on, this is an unprivileged child process. */
 	LIST_INIT(&(seg.sessionList));
-	queue_init(eventq_s2p);
-	queue_init(eventq_s2m);
-
-	queue_init(headq);
+	queue_init(&headq, NULL);
 
 	/* We catch or block signals rather than ignoring them. */
 	signal_set(&ev_sigterm, SIGTERM, session_sighandler, &ev_info);
@@ -433,23 +429,22 @@ session_main(int pipes[], int loggers[])
 	    &ev_info);
 	event_add(&ev_m2s, NULL);
 
-	event_set(&ev_s2m, masterfd, EV_WRITE, dispatch_s2m,
-	    &ev_info);
+	event_set(&ev_s2m, masterfd, EV_WRITE, dispatch_s2m, NULL);
 
 	/* policy process */
 	event_set(&ev_p2s, policyfd, EV_READ | EV_PERSIST, dispatch_p2s,
 	    &ev_info);
 	event_add(&ev_p2s, NULL);
 
-	event_set(&ev_s2p, policyfd, EV_WRITE, dispatch_s2p,
-	    &ev_info);
+	event_set(&ev_s2p, policyfd, EV_WRITE, dispatch_s2p, NULL);
+
+	queue_init(&eventq_s2p, &ev_s2p);
+	queue_init(&eventq_s2m, &ev_s2m);
 
 	ev_info.ev_m2s = &ev_m2s;
-	ev_info.ev_s2m = &ev_s2m;
 	ev_info.ev_p2s = &ev_p2s;
-	ev_info.ev_s2p = &ev_s2p;
 	ev_info.seg = &seg;
-	ev_info.policy = anoubis_policy_comm_create(&dispatch_policy, &ev_info);
+	ev_info.policy = anoubis_policy_comm_create(&dispatch_policy, NULL);
 	if (!ev_info.policy)
 		fatal("Cannot create policy object (out of memory)");
 
@@ -505,7 +500,6 @@ notify_callback(struct anoubis_notify_head *head, int verdict, void *cbdata)
 
 	enqueue(&eventq_s2p, msg);
 	DEBUG(DBG_QUEUE, " >eventq_s2p: %x", rep->msg_token);
-	event_add(((struct cbdata *)cbdata)->ev_info->ev_s2p, NULL);
 
 	if (head) {
 		anoubis_notify_destroy_head(head);
@@ -586,7 +580,6 @@ dispatch_csmulti(struct anoubis_server *server, struct anoubis_msg *m,
 	}
 	enqueue(&eventq_s2m, s2m_msg);
 	DEBUG(DBG_QUEUE, " >eventq_s2m");
-	event_add(ev_info->ev_s2m, NULL);
 	DEBUG(DBG_TRACE, "<dispatch_csmulti");
 	return;
 
@@ -644,8 +637,6 @@ dispatch_checksum(struct anoubis_server *server, struct anoubis_msg *m,
 	}
 	enqueue(&eventq_s2m, s2m_msg);
 	DEBUG(DBG_QUEUE, " >eventq_s2m");
-	event_add(ev_info->ev_s2m, NULL);
-
 	DEBUG(DBG_TRACE, "<dispatch_checksum");
 	return;
 invalid:
@@ -654,10 +645,9 @@ invalid:
 
 static void
 dispatch_passphrase(struct anoubis_server *server, struct anoubis_msg *m,
-    uid_t auth_uid, void *arg)
+    uid_t auth_uid, void *arg __used)
 {
 	int				 plen;
-	struct event_info_session	*ev_info = arg;
 	anoubisd_msg_t			*msg;
 	anoubisd_msg_passphrase_t	*pass;
 
@@ -701,7 +691,6 @@ dispatch_passphrase(struct anoubis_server *server, struct anoubis_msg *m,
 
 	enqueue(&eventq_s2m, msg);
 	DEBUG(DBG_QUEUE, " >eventq_s2m");
-	event_add(ev_info->ev_s2m, NULL);
 	DEBUG(DBG_TRACE, "<dispatch_passphrase");
 }
 
@@ -853,7 +842,6 @@ dispatch_authdata(struct anoubis_server *server, struct anoubis_msg *m,
 		}
 		enqueue(&eventq_s2m, msg);
 		DEBUG(DBG_QUEUE, " >eventq_s2m: auth request");
-		event_add(ev_info->ev_s2m, NULL);
 		break;
 	}
 	case ANOUBIS_AUTH_CHALLENGEREPLY: {
@@ -913,7 +901,6 @@ dispatch_authdata(struct anoubis_server *server, struct anoubis_msg *m,
 		}
 		enqueue(&eventq_s2m, msg);
 		DEBUG(DBG_QUEUE, " >eventq_s2m: auth request");
-		event_add(ev_info->ev_s2m, NULL);
 		break;
 	}
 	default:
@@ -1032,10 +1019,9 @@ err:
 }
 
 static int
-dispatch_policy(struct anoubis_policy_comm *comm __attribute__((unused)),
-    u_int64_t token, u_int32_t uid, void *buf, size_t len, void *arg, int flags)
+dispatch_policy(struct anoubis_policy_comm *comm __used, uint64_t token,
+    uint32_t uid, void *buf, size_t len, void *arg __used, int flags)
 {
-	struct event_info_session	*ev_info = arg;
 	anoubisd_msg_t			*msg;
 	struct anoubisd_msg_polrequest	*polreq;
 
@@ -1077,8 +1063,6 @@ dispatch_policy(struct anoubis_policy_comm *comm __attribute__((unused)),
 
 	enqueue(&eventq_s2p, msg);
 	DEBUG(DBG_QUEUE, " >eventq_s2p: %" PRIx64, token);
-	event_add(ev_info->ev_s2p, NULL);
-
 	DEBUG(DBG_TRACE, "<dispatch_policy");
 	return 0;
 }
@@ -1593,22 +1577,18 @@ dispatch_m2s_upgrade_notify(anoubisd_msg_t *msg,
 }
 
 static void
-dispatch_s2m(int fd, short sig __used, void *arg)
+dispatch_s2m(int fd, short sig __used, void *arg __used)
 {
-	struct event_info_session	*ev_info = arg;
-
 	DEBUG(DBG_TRACE, ">dispatch_s2m");
-	dispatch_write_queue(&eventq_s2m, fd, ev_info->ev_s2m);
+	dispatch_write_queue(&eventq_s2m, fd);
 	DEBUG(DBG_TRACE, "<dispatch_s2m");
 }
 
 static void
-dispatch_s2p(int fd, short sig __used, void *arg)
+dispatch_s2p(int fd, short sig __used, void *arg __used)
 {
-	struct event_info_session	*ev_info = arg;
-
 	DEBUG(DBG_TRACE, ">dispatch_s2p");
-	dispatch_write_queue(&eventq_s2p, fd, ev_info->ev_s2p);
+	dispatch_write_queue(&eventq_s2p, fd);
 	DEBUG(DBG_TRACE, "<dispatch_s2p");
 }
 

@@ -48,7 +48,7 @@
  */
 
 int
-enqueue(Queuep queuep, void *msgp)
+enqueue(Queue * queuep, void *msgp)
 {
 	Qentry *qep;
 
@@ -76,11 +76,13 @@ enqueue(Queuep queuep, void *msgp)
 	/*@i@*/queuep->tail = qep;
 	if (queuep->head == NULL)
 		queuep->head = queuep->tail;
+	if (queuep->event)
+		event_add(queuep->event, NULL);
 	return 1;
 }
 
 void *
-dequeue(Queuep queuep)
+dequeue(Queue *queuep)
 {
 	Qentry *qep;
 	void *msgp;
@@ -100,8 +102,8 @@ dequeue(Queuep queuep)
 	return msgp;
 }
 
-Qentryp
-queue_head(Queuep queuep)
+Qentry *
+queue_head(Queue *queuep)
 {
 	if (queuep == NULL) {
 		log_warn("uninitialized queue");
@@ -110,8 +112,8 @@ queue_head(Queuep queuep)
 	return queuep->head;
 }
 
-Qentryp
-queue_walk(Queuep queuep, Qentryp qep)
+Qentry *
+queue_walk(Queue *queuep, Qentry *qep)
 {
 	if (queuep == NULL) {
 		log_warn("uninitialized queue");
@@ -123,7 +125,7 @@ queue_walk(Queuep queuep, Qentryp qep)
 }
 
 void *
-queue_peek(Queuep queuep)
+queue_peek(Queue *queuep)
 {
 	if (queuep == NULL) {
 		log_warn("uninitialized queue");
@@ -135,9 +137,9 @@ queue_peek(Queuep queuep)
 }
 
 void *
-queue_find(Queuep queuep, void *msgp, int(*cmp)(void *, void *))
+queue_find(Queue *queuep, void *msgp, int(*cmp)(void *, void *))
 {
-	Qentryp qep;
+	Qentry *qep;
 
 	if (queuep == NULL) {
 		log_warn("uninitialized queue");
@@ -155,10 +157,10 @@ queue_find(Queuep queuep, void *msgp, int(*cmp)(void *, void *))
 }
 
 int
-queue_delete(Queuep queuep, void *msgp)
+queue_delete(Queue *queuep, void *msgp)
 {
-	Qentryp qep;
-	Qentryp lqep = NULL;
+	Qentry *qep;
+	Qentry *lqep = NULL;
 
 	if (queuep == NULL) {
 		log_warn("uninitialized queue");
@@ -204,7 +206,7 @@ queue_delete(Queuep queuep, void *msgp)
 }
 
 int
-dispatch_write_queue(Queue *q, int fd, struct event *ev)
+dispatch_write_queue(Queue *q, int fd)
 {
 	anoubisd_msg_t		*msg;
 	int			 ret = 0;
@@ -223,8 +225,8 @@ dispatch_write_queue(Queue *q, int fd, struct event *ev)
 		 * ret == 0: Buffers flushed but message not sent.
 		 * ret < 0:  Permanent error: Drop message (if any).
 		 */
-		if (ret == 0) {
-			event_add(ev, NULL);
+		if (ret == 0 && q->event) {
+			event_add(q->event, NULL);
 			break;
 		}
 		if (ret < 0) {
@@ -235,7 +237,7 @@ dispatch_write_queue(Queue *q, int fd, struct event *ev)
 				    " Dropping unsent message: %p", msg);
 				free(msg);
 			}
-			event_add(ev, NULL);
+			event_add(q->event, NULL);
 			break;
 		}
 		/*
@@ -251,7 +253,7 @@ dispatch_write_queue(Queue *q, int fd, struct event *ev)
 
 #ifdef UTEST
 void
-queue_dump(Queuep q)
+queue_dump(Queue *q)
 {
 	Qentry *qep;
 
@@ -273,7 +275,7 @@ main(int ac, char *av[])
 	void *mp;
 
 	printf("init\n");
-	queue_init(q);
+	queue_init(&q, NULL);
 	queue_dump(&q);
 
 	mp = malloc(sizeof(int));

@@ -62,7 +62,7 @@ static void
 dispatch_log_write(int fd __used, short event __used, void *arg __used)
 {
 	__logging = 1;
-	dispatch_write_queue(&__eventq_log, __log_fd, &__log_event);
+	dispatch_write_queue(&__eventq_log, __log_fd);
 	__logging = 0;
 }
 
@@ -85,8 +85,8 @@ log_init(int fd)
 	msg_init(fd, "logger");
 	__log_fd = fd;
 	__logging = 0;
-	queue_init(__eventq_log);
 	event_set(&__log_event, __log_fd, EV_WRITE, &dispatch_log_write, NULL);
+	queue_init(&__eventq_log, &__log_event);
 }
 
 static void
@@ -137,7 +137,6 @@ vlog(int pri, const char *fmt, va_list ap)
 			strlcpy(lmsg->msg, nfmt, strlen(nfmt)+1);
 			free(nfmt);
 			enqueue(&__eventq_log, msg);
-			event_add(&__log_event, NULL);
 		} else {
 			vsyslog(pri, fmt, ap);
 		}

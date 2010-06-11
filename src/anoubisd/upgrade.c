@@ -63,7 +63,7 @@ static void	dispatch_u2m(int, short, void *);
 static Queue    eventq_u2m;
 
 struct event_info_upgrade {
-	struct event	*ev_u2m, *ev_m2u;
+	struct event	*ev_m2u;
 	struct event	*sigs[10];
 };
 
@@ -142,7 +142,6 @@ upgrade_main(int pipes[], int loggers[])
 	anoubisd_defaultsigset(&mask);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 
-	queue_init(eventq_u2m);
 	msg_init(masterfd, "m2u");
 
 	/* master process */
@@ -150,10 +149,10 @@ upgrade_main(int pipes[], int loggers[])
 	    &ev_info);
 	event_add(&ev_m2u, NULL);
 
-	event_set(&ev_u2m, masterfd, EV_WRITE, dispatch_u2m,
-	    &ev_info);
+	event_set(&ev_u2m, masterfd, EV_WRITE, dispatch_u2m, NULL);
 
-	ev_info.ev_u2m = &ev_u2m;
+	queue_init(&eventq_u2m, &ev_u2m);
+
 	ev_info.ev_m2u = &ev_m2u;
 
 	if (event_dispatch() == -1) {
@@ -164,7 +163,7 @@ upgrade_main(int pipes[], int loggers[])
 }
 
 static void
-send_upgrade_message(int type, struct event_info_upgrade *ev_info)
+send_upgrade_message(int type)
 {
 	anoubisd_msg_t		*msg;
 	anoubisd_msg_upgrade_t	*umsg;
@@ -180,11 +179,10 @@ send_upgrade_message(int type, struct event_info_upgrade *ev_info)
 	umsg->upgradetype = type;
 	DEBUG(DBG_QUEUE, " Upgrade message: type %d", type);
 	enqueue(&eventq_u2m, msg);
-	event_add(ev_info->ev_u2m, NULL);
 }
 
 static void
-send_checksum(const char *path, struct event_info_upgrade *ev_info)
+send_checksum(const char *path)
 {
 	static int			 devanoubis = -2;
 	anoubisd_msg_t			*msg;
@@ -257,11 +255,10 @@ send_checksum(const char *path, struct event_info_upgrade *ev_info)
 	memcpy(umsg->payload + ANOUBIS_CS_LEN, path, plen);
 	DEBUG(DBG_QUEUE, " Checksum upgrade message for %s", path);
 	enqueue(&eventq_u2m, msg);
-	event_add(ev_info->ev_u2m, NULL);
 }
 
 static void
-dispatch_upgrade(anoubisd_msg_t *msg, struct event_info_upgrade *ev_info)
+dispatch_upgrade(anoubisd_msg_t *msg)
 {
 	anoubisd_msg_upgrade_t		*umsg;
 	size_t				 pos;
@@ -277,21 +274,21 @@ dispatch_upgrade(anoubisd_msg_t *msg, struct event_info_upgrade *ev_info)
 	}
 	switch(umsg->upgradetype) {
 	case ANOUBISD_UPGRADE_START:
-		send_upgrade_message(ANOUBISD_UPGRADE_CHUNK_REQ, ev_info);
+		send_upgrade_message(ANOUBISD_UPGRADE_CHUNK_REQ);
 		break;
 	case ANOUBISD_UPGRADE_CHUNK:
 		if (umsg->chunksize == 0) {
-			send_upgrade_message(ANOUBISD_UPGRADE_END, ev_info);
+			send_upgrade_message(ANOUBISD_UPGRADE_END);
 			break;
 		}
 		/* Force NUL-termination of strings in umsg->chunk */
 		umsg->chunk[umsg->chunksize-1] = 0;
 		pos = 0;
 		while (pos < umsg->chunksize) {
-			send_checksum(umsg->chunk + pos, ev_info);
+			send_checksum(umsg->chunk + pos);
 			pos += strlen(umsg->chunk + pos) + 1;
 		}
-		send_upgrade_message(ANOUBISD_UPGRADE_CHUNK_REQ, ev_info);
+		send_upgrade_message(ANOUBISD_UPGRADE_CHUNK_REQ);
 		break;
 	default:
 		log_warnx("dispatch_upgrade: Bad upgrade message type %d",
@@ -318,7 +315,7 @@ dispatch_m2u(int fd, short sig __used, void *arg)
 		DEBUG(DBG_QUEUE, " m2u: type %d", msg->mtype);
 		switch(msg->mtype) {
 		case ANOUBISD_MSG_UPGRADE:
-			dispatch_upgrade(msg, ev_info);
+			dispatch_upgrade(msg);
 			break;
 		default:
 			log_warnx(" dispatch_m2u: Unknown message type");
@@ -334,11 +331,9 @@ dispatch_m2u(int fd, short sig __used, void *arg)
 }
 
 static void
-dispatch_u2m(int fd, short sig __used, void *arg)
+dispatch_u2m(int fd, short sig __used, void *arg __used)
 {
-	struct event_info_upgrade	*ev_info = arg;
-
 	DEBUG(DBG_TRACE, ">dispatch_u2m");
-	dispatch_write_queue(&eventq_u2m, fd, ev_info->ev_u2m);
+	dispatch_write_queue(&eventq_u2m, fd);
 	DEBUG(DBG_TRACE, "<dispatch_u2m");
 }

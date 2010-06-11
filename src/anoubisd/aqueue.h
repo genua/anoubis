@@ -42,7 +42,6 @@ struct queue_entry {
 	void *entry;
 };
 typedef struct queue_entry  Qentry;
-typedef struct queue_entry *Qentryp;
 
 /*
  * This is an extremely simple fifo queue.
@@ -50,34 +49,38 @@ typedef struct queue_entry *Qentryp;
  */
 struct queue_hd {
 	/*@owned@*/ /*@null@*/
-	Qentryp head;
+	Qentry *head;
 	/*@shared@*/ /*@null@*/
-	Qentryp tail;
+	Qentry *tail;
+	struct event *event;
 };
 typedef struct queue_hd  Queue;
-typedef struct queue_hd *Queuep;
 
-#define queue_init(queue) { queue.head = queue.tail = NULL; }
+static inline void queue_init(Queue *queue, struct event *ev)
+{
+	queue->head = queue->tail = NULL;
+	queue->event = ev;
+}
 
-int	 enqueue(/*@notnull@*/ Queuep, /*@owned@*/ void *);
+int	 enqueue(/*@notnull@*/ Queue *, /*@owned@*/ void *);
 
 /*@null@*/
-void	*dequeue(Queuep);
+void	*dequeue(Queue *);
 
 /*@exposed@*/ /*@null@*/
-Qentryp	 queue_head(Queuep);
+Qentry	*queue_head(Queue *);
 
 /*@exposed@*/ /*@null@*/
-Qentryp	 queue_walk(Queuep, /*@null@*/ Qentryp);
+Qentry	*queue_walk(Queue *, /*@null@*/ Qentry *);
 
 /*@exposed@*/ /*@null@*/
-void	*queue_peek(Queuep);
+void	*queue_peek(Queue *);
 
 /*@exposed@*/ /*@null@*/
-void	*queue_find(Queuep, void *, int(*cmp)(void *, void *));
+void	*queue_find(Queue *, void *, int(*cmp)(void *, void *));
 
-int	 queue_delete(Queuep, void *);
+int	 queue_delete(Queue *, void *);
 
-int	 dispatch_write_queue(Queue *q, int fd, struct event *);
+int	 dispatch_write_queue(Queue *q, int fd);
 
 #endif /* !_AQUEUE_H */

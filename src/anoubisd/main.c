@@ -134,7 +134,6 @@ static Queue eventq_m2dev;
 
 struct event_info_main {
 	/*@dependent@*/
-	struct event	*ev_m2s, *ev_m2p, *ev_m2u, *ev_m2dev;
 	struct event	*ev_s2m, *ev_p2m, *ev_u2m, *ev_dev2m;
 	struct event	*ev_sigs[10];
 	/*@dependent@*/
@@ -144,8 +143,8 @@ struct event_info_main {
 	int anoubisfd;
 };
 
-static void	reconfigure(struct event_info_main *);
-static void	init_root_key(char *, struct event_info_main *);
+static void	reconfigure(void);
+static void	init_root_key(char *);
 int main(int argc, char *argv[]);
 
 FILE	    *pidfp;
@@ -309,7 +308,7 @@ sighandler(int sig, short event __used, void *arg __used)
 		}
 		break;
 	case SIGHUP:
-		reconfigure(info);
+		reconfigure();
 		break;
 	}
 
@@ -708,11 +707,6 @@ main(int argc, char *argv[])
 	sigdelset(&mask, SIGHUP);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 
-	queue_init(eventq_m2p);
-	queue_init(eventq_m2s);
-	queue_init(eventq_m2dev);
-	queue_init(eventq_m2u);
-
 	/* init msg_bufs - keep track of outgoing ev_info */
 	msg_init(sessionfd, "m2s");
 	msg_init(policyfd, "m2p");
@@ -731,19 +725,19 @@ main(int argc, char *argv[])
 	msg_init(eventfds[0], "m2dev");
 
 	/* session process */
-	event_set(&ev_m2s, sessionfd, EV_WRITE, dispatch_m2s, &ev_info);
+	event_set(&ev_m2s, sessionfd, EV_WRITE, dispatch_m2s, NULL);
 	event_set(&ev_s2m, sessionfd, EV_READ | EV_PERSIST, dispatch_s2m,
 	    &ev_info);
 	event_add(&ev_s2m, NULL);
 
 	/* policy process */
-	event_set(&ev_m2p, policyfd, EV_WRITE, dispatch_m2p, &ev_info);
+	event_set(&ev_m2p, policyfd, EV_WRITE, dispatch_m2p, NULL);
 	event_set(&ev_p2m, policyfd, EV_READ | EV_PERSIST, dispatch_p2m,
 	    &ev_info);
 	event_add(&ev_p2m, NULL);
 
 	/* upgrade process */
-	event_set(&ev_m2u, upgradefd, EV_WRITE, dispatch_m2u, &ev_info);
+	event_set(&ev_m2u, upgradefd, EV_WRITE, dispatch_m2u, NULL);
 	event_set(&ev_u2m, upgradefd, EV_READ | EV_PERSIST, dispatch_u2m,
 	    &ev_info);
 	event_add(&ev_u2m, NULL);
@@ -753,16 +747,16 @@ main(int argc, char *argv[])
 	    &ev_info);
 	event_add(&ev_dev2m, NULL);
 
-	event_set(&ev_m2dev, eventfds[0], EV_WRITE, dispatch_m2dev,
-	    &ev_info);
+	event_set(&ev_m2dev, eventfds[0], EV_WRITE, dispatch_m2dev, NULL);
 
-	ev_info.ev_m2s = &ev_m2s;
-	ev_info.ev_m2p = &ev_m2p;
-	ev_info.ev_m2dev = &ev_m2dev;
+	queue_init(&eventq_m2p, &ev_m2p);
+	queue_init(&eventq_m2s, &ev_m2s);
+	queue_init(&eventq_m2dev, &ev_m2dev);
+	queue_init(&eventq_m2u, &ev_m2u);
+
 	ev_info.ev_dev2m = &ev_dev2m;
 	ev_info.ev_p2m = &ev_p2m;
 	ev_info.ev_s2m = &ev_s2m;
-	ev_info.ev_m2u = &ev_m2u;
 	ev_info.ev_u2m = &ev_u2m;
 
 	/*
@@ -804,7 +798,7 @@ main(int argc, char *argv[])
 	evtimer_set(&ev_timer, &dispatch_timer, &ev_info);
 	event_add(&ev_timer, &tv);
 
-	init_root_key(NULL, &ev_info);
+	init_root_key(NULL);
 
 	DEBUG(DBG_TRACE, "master event loop");
 	if (event_dispatch() == -1)
@@ -984,7 +978,7 @@ cleanup_fds(int pipes[], int loggers[])
 }
 
 static void
-reconfigure(struct event_info_main *info)
+reconfigure(void)
 {
 	anoubisd_msg_t	*msg;
 
@@ -996,28 +990,22 @@ reconfigure(struct event_info_main *info)
 	} else {
 		msg = cfg_msg_create();
 
-		if (msg != NULL) {
+		if (msg != NULL)
 			enqueue(&eventq_m2s, msg);
-			event_add(info->ev_m2s, NULL);
-		}
 
 		msg = cfg_msg_create();
-		if (msg != NULL) {
+		if (msg != NULL)
 			enqueue(&eventq_m2p, msg);
-			event_add(info->ev_m2p, NULL);
-		}
-		init_root_key(NULL, info);
+		init_root_key(NULL);
 	}
 }
 
 static void
-dispatch_m2s(int fd, short event __used, /*@dependent@*/ void *arg)
+dispatch_m2s(int fd, short event __used, void *arg __used)
 {
-	struct event_info_main		*ev_info = arg;
-
 	DEBUG(DBG_TRACE, ">dispatch_m2s");
 
-	if (dispatch_write_queue(&eventq_m2s, fd, ev_info->ev_m2s) <= 0) {
+	if (dispatch_write_queue(&eventq_m2s, fd) <= 0) {
 		/* Write was not successful: Check if we lost a child. */
 		sighandler(SIGCHLD, 0, NULL);
 	}
@@ -1028,8 +1016,7 @@ dispatch_m2s(int fd, short event __used, /*@dependent@*/ void *arg)
 }
 
 static void
-send_sfscache_invalidate_uid(const char *path, uid_t uid,
-    struct event_info_main *ev_info)
+send_sfscache_invalidate_uid(const char *path, uid_t uid)
 {
 	struct anoubisd_msg			*msg;
 	struct anoubisd_sfscache_invalidate	*invmsg;
@@ -1045,13 +1032,11 @@ send_sfscache_invalidate_uid(const char *path, uid_t uid,
 	invmsg->keylen = 0;
 	memcpy(invmsg->payload, path, invmsg->plen);
 	enqueue(&eventq_m2p, msg);
-	event_add(ev_info->ev_m2p, NULL);
 }
 
 
 static void
-send_sfscache_invalidate_key(const char *path, const struct abuf_buffer keyid,
-    struct event_info_main *ev_info)
+send_sfscache_invalidate_key(const char *path, const struct abuf_buffer keyid)
 {
 	struct anoubisd_msg			*msg;
 	struct anoubisd_sfscache_invalidate	*invmsg;
@@ -1078,11 +1063,10 @@ send_sfscache_invalidate_key(const char *path, const struct abuf_buffer keyid,
 	memcpy(invmsg->payload + invmsg->plen, keyidstr, invmsg->keylen);
 	free(keyidstr);
 	enqueue(&eventq_m2p, msg);
-	event_add(ev_info->ev_m2p, NULL);
 }
 
 static void
-send_upgrade_ok(int value, struct event_info_main *ev_info)
+send_upgrade_ok(int value)
 {
 	struct anoubisd_msg		*msg;
 	struct anoubisd_msg_upgrade	*upg;
@@ -1098,11 +1082,10 @@ send_upgrade_ok(int value, struct event_info_main *ev_info)
 	upg->chunksize = 1;
 	upg->chunk[0] = !!value;
 	enqueue(&eventq_m2p, msg);
-	event_add(ev_info->ev_m2p, NULL);
 }
 
 static void
-send_upgrade_notification(struct event_info_main *ev_info)
+send_upgrade_notification(void)
 {
 	struct anoubisd_msg		*msg;
 	struct anoubisd_msg_upgrade	*upg;
@@ -1117,11 +1100,10 @@ send_upgrade_notification(struct event_info_main *ev_info)
 	upg->upgradetype = ANOUBISD_UPGRADE_NOTIFY;
 	upg->chunksize = upgraded_files;
 	enqueue(&eventq_m2s, msg);
-	event_add(ev_info->ev_m2s, NULL);
 }
 
 static void
-init_root_key(char *passphrase, struct event_info_main *ev_info)
+init_root_key(char *passphrase)
 {
 	struct cert	*cert;
 
@@ -1151,7 +1133,7 @@ init_root_key(char *passphrase, struct event_info_main *ev_info)
 		if (cert)
 			cert_load_priv_key(cert, NULL, NULL);
 		/* Update is allowed but will not do signature upgrades */
-		send_upgrade_ok(1, ev_info);
+		send_upgrade_ok(1);
 		return;
 	}
 	/*
@@ -1160,7 +1142,7 @@ init_root_key(char *passphrase, struct event_info_main *ev_info)
 	 */
 	if (!cert) {
 		log_warnx("Ignoring rootkey because root has no public key.");
-		send_upgrade_ok(1, ev_info);
+		send_upgrade_ok(1);
 		DEBUG(DBG_UPGRADE, "<init_root_key: no rootkey cert: %p %p",
 		    cert, cert?cert->privkey:NULL);
 		return;
@@ -1172,11 +1154,11 @@ init_root_key(char *passphrase, struct event_info_main *ev_info)
 	cert_load_priv_key(cert, anoubisd_config.rootkey, passphrase);
 	if (anoubisd_config.rootkey_required && cert->pubkey == NULL) {
 		log_warnx("Upgrades will be denied due to missing root key");
-		send_upgrade_ok(0, ev_info);
+		send_upgrade_ok(0);
 		return;
 	}
 	/* Upgrades are allowed. */
-	send_upgrade_ok(1, ev_info);
+	send_upgrade_ok(1);
 	DEBUG(DBG_UPGRADE, "<init_root_key: cert: %p %p", cert,
 	    cert?cert->privkey:NULL);
 }
@@ -1203,8 +1185,7 @@ create_checksumreply_msg(int type, u_int64_t token, int payloadlen)
 }
 
 static void
-sfs_checksumop_list(struct sfs_checksumop *csop, u_int64_t token,
-    struct event_info_main *ev_info)
+sfs_checksumop_list(struct sfs_checksumop *csop, u_int64_t token)
 {
 	char				*sfs_path = NULL;
 	int				 error = EINVAL;
@@ -1253,7 +1234,6 @@ sfs_checksumop_list(struct sfs_checksumop *csop, u_int64_t token,
 			msg_shrink(msg,
 			    sizeof(struct anoubisd_msg_csumreply) + offset);
 			enqueue(&eventq_m2s, msg);
-			event_add(ev_info->ev_m2s, NULL);
 			msg = create_checksumreply_msg(
 			    ANOUBISD_MSG_CHECKSUMREPLY, token, 8000);
 			reply = (struct anoubisd_msg_csumreply *)msg->msg;
@@ -1273,7 +1253,6 @@ sfs_checksumop_list(struct sfs_checksumop *csop, u_int64_t token,
 	reply->flags |= POLICY_FLAG_END;
 	msg_shrink(msg, sizeof(struct anoubisd_msg_csumreply) + offset);
 	enqueue(&eventq_m2s, msg);
-	event_add(ev_info->ev_m2s, NULL);
 	if (!found) {
 		sfs_remove_index(sfs_path, csop);
 	}
@@ -1296,27 +1275,24 @@ out:
 	}
 	reply->reply = error;
 	enqueue(&eventq_m2s, msg);
-	event_add(ev_info->ev_m2s, NULL);
 }
 
 static void
-send_sfscache_invalidate(struct sfs_checksumop *csop,
-    struct event_info_main *ev_info)
+send_sfscache_invalidate(struct sfs_checksumop *csop)
 {
 	switch (csop->op) {
 	case ANOUBIS_CHECKSUM_OP_ADDSUM:
 	case ANOUBIS_CHECKSUM_OP_DEL:
-		send_sfscache_invalidate_uid(csop->path, csop->uid, ev_info);
+		send_sfscache_invalidate_uid(csop->path, csop->uid);
 		break;
 	case ANOUBIS_CHECKSUM_OP_ADDSIG:
 	case ANOUBIS_CHECKSUM_OP_DELSIG:
-		send_sfscache_invalidate_key(csop->path, csop->keyid, ev_info);
+		send_sfscache_invalidate_key(csop->path, csop->keyid);
 	}
 }
 
 static int
-sfs_process_csmulti(struct sfs_checksumop *csop, u_int64_t token,
-    struct event_info_main *ev_info)
+sfs_process_csmulti(struct sfs_checksumop *csop, u_int64_t token)
 {
 	int				 get = 0;
 	unsigned int			 totallen = 0;
@@ -1374,7 +1350,7 @@ sfs_process_csmulti(struct sfs_checksumop *csop, u_int64_t token,
 			if (get)
 				totallen += abuf_length(sigbufs[i]);
 			else
-				send_sfscache_invalidate(csop, ev_info);
+				send_sfscache_invalidate(csop);
 		}
 		if (totallen > 16000) {
 			nrec = i+1;
@@ -1435,7 +1411,6 @@ sfs_process_csmulti(struct sfs_checksumop *csop, u_int64_t token,
 
 	enqueue(&eventq_m2s, msg);
 	DEBUG(DBG_QUEUE, " >eventq_m2s: %" PRIx64, reply->token);
-	event_add(ev_info->ev_m2s, NULL);
 	DEBUG(DBG_TRACE, " <sfs_process_csmulti (success)");
 
 	return 0;
@@ -1455,7 +1430,7 @@ nomem:
 }
 
 static void
-dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
+dispatch_checksumop(anoubisd_msg_t *msg)
 {
 	struct anoubis_msg		 rawmsg;
 	struct anoubisd_msg_csumop	*msg_csum;
@@ -1473,7 +1448,7 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 
 	switch (csop.op) {
 	case ANOUBIS_CHECKSUM_OP_GENERIC_LIST:
-		sfs_checksumop_list(&csop, msg_csum->token, ev_info);
+		sfs_checksumop_list(&csop, msg_csum->token);
 		return;
 	case ANOUBIS_CHECKSUM_OP_ADDSIG:
 	case ANOUBIS_CHECKSUM_OP_ADDSUM:
@@ -1490,7 +1465,7 @@ dispatch_checksumop(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 		goto out;
 	}
 
-	send_sfscache_invalidate(&csop, ev_info);
+	send_sfscache_invalidate(&csop);
 out:
 	msg = create_checksumreply_msg(ANOUBISD_MSG_CHECKSUMREPLY,
 	    msg_csum->token, abuf_length(sigbuf));
@@ -1503,11 +1478,10 @@ out:
 	abuf_free(sigbuf);
 	enqueue(&eventq_m2s, msg);
 	DEBUG(DBG_QUEUE, " >eventq_m2s: %" PRIx64, reply->token);
-	event_add(ev_info->ev_m2s, NULL);
 }
 
 static void
-dispatch_csmulti_request(anoubisd_msg_t *msg, struct event_info_main *ev_info)
+dispatch_csmulti_request(anoubisd_msg_t *msg)
 {
 	struct anoubisd_msg_csumop	*msg_csum;
 	struct sfs_checksumop		 csop;
@@ -1521,7 +1495,7 @@ dispatch_csmulti_request(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 	err = sfs_parse_csmulti(&csop, mbuf, msg_csum->uid);
 	if (err < 0)
 		goto err;
-	err = sfs_process_csmulti(&csop, msg_csum->token, ev_info);
+	err = sfs_process_csmulti(&csop, msg_csum->token);
 	csmultiarr_free(csop.csmulti);
 	if (err)
 		goto err;
@@ -1536,12 +1510,11 @@ err:
 	reply->flags = POLICY_FLAG_START | POLICY_FLAG_END;
 	enqueue(&eventq_m2s, msg);
 	DEBUG(DBG_QUEUE, " >eventq_m2s %" PRIx64, reply->token);
-	event_add(ev_info->ev_m2s, NULL);
 	DEBUG(DBG_TRACE, " <dispatch_csmulti_request (error)");
 }
 
 static void
-dispatch_passphrase(anoubisd_msg_t *msg, struct event_info_main *ev_info)
+dispatch_passphrase(anoubisd_msg_t *msg)
 {
 	anoubisd_msg_passphrase_t	*pass;
 	int				 len;
@@ -1551,12 +1524,12 @@ dispatch_passphrase(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 	if (len < (int)sizeof(anoubisd_msg_passphrase_t) + 1)
 		return;
 	pass->payload[len-1] = 0;
-	init_root_key(pass->payload, ev_info);
+	init_root_key(pass->payload);
 }
 
 #define		RANDOM_CHALLENGE_BYTES	16
 static void
-dispatch_auth_request(struct anoubisd_msg *msg, struct event_info_main *ev_info)
+dispatch_auth_request(struct anoubisd_msg *msg)
 {
 	struct anoubisd_msg			*rep_msg;
 	struct anoubisd_msg_authchallenge	*challenge;
@@ -1661,12 +1634,11 @@ dispatch_auth_request(struct anoubisd_msg *msg, struct event_info_main *ev_info)
 	}
 	enqueue(&eventq_m2s, rep_msg);
 	DEBUG(DBG_QUEUE, " >eventq_m2s: challenge %" PRIx64, auth->token);
-	event_add(ev_info->ev_m2s, NULL);
 	return;
 }
 
 static void
-dispatch_auth_verify(struct anoubisd_msg *imsg, struct event_info_main *ev_info)
+dispatch_auth_verify(struct anoubisd_msg *imsg)
 {
 	struct anoubisd_msg			*omsg;
 	struct anoubisd_msg_authverify		*verify;
@@ -1698,7 +1670,6 @@ dispatch_auth_verify(struct anoubisd_msg *imsg, struct event_info_main *ev_info)
 	enqueue(&eventq_m2s, omsg);
 	DEBUG(DBG_QUEUE, " >eventq_m2s: auth result token=%" PRIx64 " error=%d",
 	    authresult->token, authresult->error);
-	event_add(ev_info->ev_m2s, NULL);
 }
 
 static void
@@ -1715,19 +1686,19 @@ dispatch_s2m(int fd, short event __used, void *arg)
 			break;
 		switch(msg->mtype) {
 		case ANOUBISD_MSG_CHECKSUM_OP:
-			dispatch_checksumop(msg, ev_info);
+			dispatch_checksumop(msg);
 			break;
 		case ANOUBISD_MSG_CSMULTIREQUEST:
-			dispatch_csmulti_request(msg, ev_info);
+			dispatch_csmulti_request(msg);
 			break;
 		case ANOUBISD_MSG_PASSPHRASE:
-			dispatch_passphrase(msg, ev_info);
+			dispatch_passphrase(msg);
 			break;
 		case ANOUBISD_MSG_AUTH_REQUEST:
-			dispatch_auth_request(msg, ev_info);
+			dispatch_auth_request(msg);
 			break;
 		case ANOUBISD_MSG_AUTH_VERIFY:
-			dispatch_auth_verify(msg, ev_info);
+			dispatch_auth_verify(msg);
 			break;
 		default:
 			log_warn("dispatch_s2m: bad mtype %d", msg->mtype);
@@ -1742,13 +1713,11 @@ dispatch_s2m(int fd, short event __used, void *arg)
 }
 
 static void
-dispatch_m2p(int fd, short event __used, /*@dependent@*/ void *arg)
+dispatch_m2p(int fd, short event __used, void *arg __used)
 {
-	struct event_info_main		*ev_info = arg;
-
 	DEBUG(DBG_TRACE, ">dispatch_m2p");
 
-	if (dispatch_write_queue(&eventq_m2p, fd, ev_info->ev_m2p) <= 0) {
+	if (dispatch_write_queue(&eventq_m2p, fd) <= 0) {
 		/* Write not successful: Check if we lost a child. */
 		sighandler(SIGCHLD, 0, NULL);
 	}
@@ -1779,12 +1748,10 @@ dispatch_p2m(int fd, short event __used, /*@dependent@*/ void *arg)
 			enqueue(&eventq_m2dev, msg);
 			DEBUG(DBG_QUEUE, " >eventq_m2dev: %x",
 			    ev_rep->msg_token);
-			event_add(ev_info->ev_m2dev, NULL);
 			break;
 		case ANOUBISD_MSG_UPGRADE:
 			DEBUG(DBG_QUEUE, " >p2m: upgrade msg");
 			enqueue(&eventq_m2u, msg);
-			event_add(ev_info->ev_m2u, NULL);
 			break;
 		default:
 			DEBUG(DBG_TRACE, "<dispatch_p2m (bad msg)");
@@ -1798,13 +1765,11 @@ dispatch_p2m(int fd, short event __used, /*@dependent@*/ void *arg)
 }
 
 static void
-dispatch_m2dev(int fd, short event __used, /*@dependent@*/ void *arg)
+dispatch_m2dev(int fd, short event __used, void *arg __used)
 {
-	/*@dependent@*/
-	anoubisd_msg_t *msg;
-	struct eventdev_reply *ev_rep;
-	struct event_info_main *ev_info = (struct event_info_main*)arg;
-	ssize_t			ret;
+	anoubisd_msg_t		*msg;
+	struct eventdev_reply	*ev_rep;
+	ssize_t			 ret;
 
 	DEBUG(DBG_TRACE, ">dispatch_m2dev");
 
@@ -1844,7 +1809,7 @@ dispatch_m2dev(int fd, short event __used, /*@dependent@*/ void *arg)
 	}
 
 	if (queue_peek(&eventq_m2dev) || msg_pending(fd))
-		event_add(ev_info->ev_m2dev, NULL);
+		event_add(eventq_m2dev.event, NULL);
 
 	DEBUG(DBG_TRACE, "<dispatch_m2dev");
 }
@@ -1889,9 +1854,7 @@ dispatch_dev2m(int fd, short event __used, void *arg)
 			/* this should be queued, so as to not get lost */
 			enqueue(&eventq_m2dev, msg_reply);
 			rep = (struct eventdev_reply *)msg_reply->msg;
-			DEBUG(DBG_QUEUE, " >eventq_m2dev: %x",
-				rep->msg_token);
-			event_add(ev_info->ev_m2dev, NULL);
+			DEBUG(DBG_QUEUE, " >eventq_m2dev: %x", rep->msg_token);
 
 			free(msg);
 
@@ -1907,18 +1870,13 @@ dispatch_dev2m(int fd, short event __used, void *arg)
 		    (hdr->msg_source == ANOUBIS_SOURCE_PROCESS) ||
 		    (hdr->msg_source == ANOUBIS_SOURCE_SFSEXEC) ||
 		    (hdr->msg_source == ANOUBIS_SOURCE_IPC)) {
-
 			/* Send event to policy process for handling. */
 			enqueue(&eventq_m2p, msg);
 			DEBUG(DBG_QUEUE, " >eventq_m2p: %x", hdr->msg_token);
-			event_add(ev_info->ev_m2p, NULL);
-
 		} else {
-
 			/* Send event to session process for notifications. */
 			enqueue(&eventq_m2s, msg);
 			DEBUG(DBG_QUEUE, " >eventq_m2s: %x", hdr->msg_token);
-			event_add(ev_info->ev_m2s, NULL);
 		}
 
 		DEBUG(DBG_TRACE, "<dispatch_dev2m (loop)");
@@ -1928,21 +1886,19 @@ dispatch_dev2m(int fd, short event __used, void *arg)
 		ev_info->ev_dev2m = NULL;
 		if (terminate < 2)
 			terminate = 2;
-		event_add(ev_info->ev_m2p, NULL);
-		event_add(ev_info->ev_m2s, NULL);
-		event_add(ev_info->ev_m2u, NULL);
+		event_add(eventq_m2p.event, NULL);
+		event_add(eventq_m2s.event, NULL);
+		event_add(eventq_m2u.event, NULL);
 	}
 	DEBUG(DBG_TRACE, "<dispatch_dev2m");
 }
 
 static void
-dispatch_m2u(int fd, short event __used, void *arg)
+dispatch_m2u(int fd, short event __used, void *arg __used)
 {
-	struct event_info_main		*ev_info = arg;
-
 	DEBUG(DBG_TRACE, ">dispatch_m2u");
 
-	if (dispatch_write_queue(&eventq_m2u, fd, ev_info->ev_m2u) <= 0) {
+	if (dispatch_write_queue(&eventq_m2u, fd) <= 0) {
 		/* Write not successful. Check if we lost a child. */
 		sighandler(SIGCHLD, 0, NULL);
 	}
@@ -1953,7 +1909,7 @@ dispatch_m2u(int fd, short event __used, void *arg)
 }
 
 static void
-dispatch_sfs_update_all(anoubisd_msg_t *msg, struct event_info_main *ev_info)
+dispatch_sfs_update_all(anoubisd_msg_t *msg)
 {
 	anoubisd_sfs_update_all_t	*umsg;
 	size_t				 plen;
@@ -2001,7 +1957,7 @@ dispatch_sfs_update_all(anoubisd_msg_t *msg, struct event_info_main *ev_info)
 		} else if (anoubisd_config.rootkey_required) {
 			log_warnx("ERROR: Upgrade in progress but rootkey "
 			    "is not available");
-			send_upgrade_ok(0, ev_info);
+			send_upgrade_ok(0);
 		}
 	}
 	return;
@@ -2013,8 +1969,8 @@ bad:
 static void
 dispatch_u2m(int fd, short event __used, void *arg)
 {
-	struct event_info_main		*ev_info = arg;
 	anoubisd_msg_t			*msg;
+	struct event_info_main		*ev_info = arg;
 
 	DEBUG(DBG_TRACE, ">dispatch_u2m");
 	for (;;) {
@@ -2027,15 +1983,14 @@ dispatch_u2m(int fd, short event __used, void *arg)
 
 			umsg = (struct anoubisd_msg_upgrade *)msg->msg;
 			if (umsg->upgradetype == ANOUBISD_UPGRADE_END) {
-				send_upgrade_notification(ev_info);
+				send_upgrade_notification();
 				upgraded_files = 0;
 			}
 			enqueue(&eventq_m2p, msg);
-			event_add(ev_info->ev_m2p, NULL);
 			break;
 		}
 		case ANOUBISD_MSG_SFS_UPDATE_ALL:
-			dispatch_sfs_update_all(msg, ev_info);
+			dispatch_sfs_update_all(msg);
 			upgraded_files++;
 			free(msg);
 			break;
