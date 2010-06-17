@@ -741,6 +741,7 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 	if (msg_eof(fd)) {
 		set_terminate(2, ev_info);
 		event_del(ev_info->ev_m2p);
+		event_add(eventq_p2s.event, NULL);
 	}
 	DEBUG(DBG_TRACE, "<dispatch_m2p (no msg)");
 }
