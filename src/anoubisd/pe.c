@@ -552,18 +552,17 @@ pe_handle_sfs(struct eventdev_hdr *hdr)
 	/* XXX CEH: This might need more thought. */
 	reply = reply_merge(hdr, reply, reply2);
 
-	/* Set the secure exec flag if required. */
+	/* Set exec flags if required. */
 #ifdef ANOUBIS_RET_NEED_SECUREEXEC
 	/*
-	 * Staring with ANOUBISCORE_LOCK_VERSION the kernel understands
-	 * flags in a reply. Only set the secure exec flag if the reply is
+	 * Starting with ANOUBISCORE_LOCK_VERSION the kernel understands
+	 * flags in a reply. Only set exec flags if the reply is
 	 * zero and the permissions include exec.
 	 */
 	if (fevent->amask & APN_SBA_EXEC && reply->reply == 0
-	    && version >= ANOUBISCORE_LOCK_VERSION
-	    && pe_proc_will_transition(fevent->cookie, fevent->uid,
-	    fevent->csum, fevent->path)) {
-		reply->reply |= ANOUBIS_RET_NEED_SECUREEXEC;
+	    && version >= ANOUBISCORE_LOCK_VERSION) {
+		reply->reply = pe_proc_flag_transition(fevent->cookie,
+		    fevent->uid, fevent->csum, fevent->path);
 	}
 #endif
 	pe_proc_put(proc);

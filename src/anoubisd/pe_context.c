@@ -538,6 +538,45 @@ pe_context_will_transition(struct pe_proc *proc, uid_t uid,
 	return 0;
 }
 
+int
+pe_context_will_pg(struct pe_proc *proc, uid_t uid,
+    struct pe_proc_ident *pident)
+{
+	int			 i;
+	struct apn_ruleset	*ruleset;
+	struct pe_context	*newctx, *curctx;
+
+	if (proc == NULL)
+		return  0;
+
+	for (i = 0; i < PE_PRIO_MAX; ++i) {
+		/* Do not switch if rules forbid it. */
+		if (pe_context_decide(proc, APN_CTX_NEW, i, pident, uid) == 0)
+			continue;
+
+		ruleset = pe_user_get_ruleset(uid, i, NULL);
+		/* No need for playground if there is no ruleset. */
+		if (!ruleset)
+			continue;
+
+		curctx = pe_proc_get_context(proc, i);
+		newctx = pe_context_search(ruleset, pident, uid);
+
+		if (!newctx)
+			continue;
+		if (curctx && newctx->ctxrule == curctx->ctxrule) {
+			pe_context_put(newctx);
+			continue;
+		}
+		if (pe_context_is_pg(newctx)) {
+			pe_context_put(newctx);
+			return 1;
+		}
+		pe_context_put(newctx);
+	}
+	return 0;
+}
+
 /*
  * Change context on open(2):
  * - If pe_context_decide forbids changing the context, we don't.
@@ -863,4 +902,12 @@ pe_context_is_nosfs(struct pe_context *ctx)
 	if (ctx == NULL || ctx->ctxrule == NULL)
 		return 0;
 	return !!(ctx->ctxrule->flags & APN_RULE_NOSFS);
+}
+
+int
+pe_context_is_pg(struct pe_context *ctx)
+{
+	if (ctx == NULL || ctx->ctxrule == NULL)
+		return 0;
+	return !!(ctx->ctxrule->flags & APN_RULE_PLAYGROUND);
 }

@@ -87,6 +87,7 @@ static Queue	eventq_p2s;
  */
 struct reply_wait {
 	eventdev_token	token;
+	int	flags;
 	time_t	starttime;
 	time_t	timeout;
 	int	log;
@@ -698,6 +699,7 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 				master_terminate(EIO);
 				continue;
 			}
+			msg_wait->flags = ANOUBIS_RET_FLAGS(reply->reply);
 			msg_wait->timeout = reply->timeout;
 			msg_wait->log = reply->log;
 
@@ -900,6 +902,8 @@ dispatch_s2p(int fd, short sig __used, void *arg)
 					    evrep->msg_token, evrep->reply);
 					break;
 				}
+				/* restore flags set via APN */
+				evrep->reply |= rep_wait->flags;
 				abuf_free_type(rep_wait, struct reply_wait);
 				enqueue(&eventq_p2m, msg);
 				DEBUG(DBG_QUEUE, " >eventq_p2m: %x",

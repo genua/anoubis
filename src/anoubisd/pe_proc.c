@@ -491,17 +491,24 @@ void pe_proc_exec(anoubis_cookie_t cookie, uid_t uid, pid_t pid,
 }
 
 int
-pe_proc_will_transition(anoubis_cookie_t cookie, uid_t uid,
+pe_proc_flag_transition(anoubis_cookie_t cookie, uid_t uid,
     const struct abuf_buffer csum, const char *pathhint)
 {
 	struct pe_proc		*proc = pe_proc_get(cookie);
 	struct pe_proc_ident	 pident = { ABUF_EMPTY, NULL };
-	int			 ret;
+	int			 ret = 0;
 
 	if (!proc)
 		return 0;
 	pe_proc_ident_set(&pident, csum, pathhint);
-	ret = pe_context_will_transition(proc, uid, &pident);
+#ifdef ANOUBIS_RET_NEED_SECUREEXEC
+	if (pe_context_will_transition(proc, uid, &pident))
+		ret |= ANOUBIS_RET_NEED_SECUREEXEC;
+#endif
+#ifdef ANOUBIS_RET_NEED_PLAYGROUND
+	if (pe_context_will_pg(proc, uid, &pident))
+		ret |= ANOUBIS_RET_NEED_PLAYGROUND;
+#endif
 	pe_proc_ident_put(&pident);
 	pe_proc_put(proc);
 	return ret;
