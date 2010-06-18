@@ -190,7 +190,7 @@ START_TEST(test_fetchversion)
 	fail_unless(task.getProtocolVersion() == 5,
 	    "Unexpected protocol version received (%i)\n",
 	    task.getProtocolVersion());
-	fail_unless(task.getApnVersion() == 65538,
+	fail_unless(task.getApnVersion() == 0x10003,
 	    "Unexpected APN version received (%i.%i)\n",
 	    APN_PARSER_MAJOR(task.getApnVersion()),
 	    APN_PARSER_MINOR(task.getApnVersion()));
