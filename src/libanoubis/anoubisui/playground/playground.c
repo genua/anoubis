@@ -46,6 +46,12 @@
 #include <linux/anoubis.h>
 #include <bsdcompat.h>
 
+/**
+ * Size of message between child and parend in case of error.
+ * Specifies the number of bytes.
+ */
+#define MSG_SIZE 16
+
 int
 playground_setMarker(void)
 {
@@ -84,21 +90,72 @@ playground_start_exec(char **argv)
 int
 playground_start_fork(char **argv)
 {
+	int	i   = 0;
 	int	rc  = 0;
 	pid_t	pid = 0;
+	int	pipes[2];
+	char	buffer[MSG_SIZE];
+
+	if (pipe(pipes) == -1) {
+		return (-errno);
+	}
 
 	if ((pid = fork()) < 0) {
 		return (-errno);
 	}
 
+	bzero(buffer, MSG_SIZE);
 	if (pid == 0) {
 		/* Child */
-		rc = playground_start_exec(argv);
-		/* Only reached if playground_start_exec returns an error. */
-		exit(1);
+		close(pipes[0]);
+		fcntl(pipes[1], F_SETFD, FD_CLOEXEC);
+
+		/* Mark ourself as playground process. */
+		rc = playground_setMarker();
+		if (rc != 0) {
+			/* Error: inform parent and exit! */
+			snprintf(buffer, MSG_SIZE, "%d\n", rc);
+			rc = write(pipes[1], buffer, MSG_SIZE);
+			close(pipes[1]);
+			_exit(EXIT_FAILURE);
+		}
+
+		/*
+		 * Close open filehandles except stdin, stdout, stderr.
+		 * Also do not close pipe to parend. It's been closed on
+		 * exec(SUCCESS) (see fcntl(FD_CLOEXEC)).
+		 */
+		i = 3;
+		do {
+			if (i != pipes[1]) {
+				close(i);
+			}
+			i++;
+		} while (i < FOPEN_MAX);
+
+		execvp(argv[0], argv);
+		/*
+		 * Only reached if execvp() returns an error.
+		 * Inform parent and exit!
+		 */
+		snprintf(buffer, MSG_SIZE, "%d\n", -errno);
+		rc = write(pipes[1], buffer, MSG_SIZE);
+		close(pipes[1]);
+		_exit(EXIT_FAILURE);
 	} else {
 		/* Parent */
-		rc = pid;
+		close(pipes[1]);
+
+		/* Was child successfull? */
+		rc = read(pipes[0], buffer, MSG_SIZE);
+		if (rc == 0) {
+			/* Child just closed pipe, no error sent. */
+			rc = pid;
+		} else {
+			/* Received error. */
+			sscanf(buffer, "%d", &rc);
+		}
+		close(pipes[0]);
 	}
 
 	return (rc);

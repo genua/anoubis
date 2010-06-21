@@ -46,6 +46,44 @@ class ModPlaygroundMainPanelImpl : public ModPlaygroundMainPanelBase
 		 * @param None.
 		 */
 		~ModPlaygroundMainPanelImpl(void);
+
+	private:
+		/**
+		 * Handle <Return> events of AppComboBox.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onAppStartEnter(wxCommandEvent &);
+
+		/**
+		 * Handle onClick events to 'Start Playground' button.
+		 * @param[in] 1st The click event.
+		 * @return Nothing.
+		 */
+		virtual void onAppStart(wxCommandEvent &);
+
+		/**
+		 * Start application.
+		 * This method will take the input from combo box and tries
+		 * to start it. On succes the history (combo box) is updated.
+		 * On error a dialog is shown.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void startApplication(void);
+
+		/**
+		 * Convert string to argv array.
+		 * This method creates tokens by splitting the given string
+		 * at whitespace characters. These tokens are stored in an array
+		 * with number of tokens + 1. The last element is NULL for
+		 * termination.
+		 * @note It is the responibility of the caller to free(3) the
+		 *	allocated memory of argv.
+		 * @param[in] 1st The string to tokenize.
+		 * @return A pointer to argv or NULL in case of error.
+		 */
+		char **convertStringToArgV(const wxString &) const;
 };
 
 

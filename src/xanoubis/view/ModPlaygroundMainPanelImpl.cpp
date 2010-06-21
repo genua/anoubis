@@ -29,16 +29,135 @@
 #include "config.h"
 #endif
 
+#include <sys/wait.h>
+
+#include <anoubis_errno.h>
+#include <anoubis_playground.h>
+#include <signal.h>
+#include <wx/tokenzr.h>
+
+#include "AnMessageDialog.h"
 #include "AnPickFromFs.h"
+#include "Debug.h"
 #include "ModPlaygroundMainPanelImpl.h"
+
+#ifdef LINUX
+static void
+chldhandler(int)
+{
+	int	status;
+	pid_t	pid;
+
+	pid = wait(&status);
+	if (WIFEXITED(status)) {
+		Debug::trace(wxString::Format(wxT("Playground - child "
+		    "with pid %d exited with status %d"), pid,
+		    WEXITSTATUS(status)));
+	}
+}
+#endif /* LINUX */
 
 ModPlaygroundMainPanelImpl::ModPlaygroundMainPanelImpl(wxWindow* parent,
     wxWindowID id) : ModPlaygroundMainPanelBase(parent, id)
 {
-	programPicker->setTitle(_("Program:"));
-	programPicker->setMode(AnPickFromFs::MODE_FILE);
 }
 
 ModPlaygroundMainPanelImpl::~ModPlaygroundMainPanelImpl(void)
 {
+}
+
+void
+ModPlaygroundMainPanelImpl::onAppStartEnter(wxCommandEvent &)
+{
+	startApplication();
+}
+
+void
+ModPlaygroundMainPanelImpl::onAppStart(wxCommandEvent &)
+{
+	startApplication();
+}
+
+void
+ModPlaygroundMainPanelImpl::startApplication(void)
+{
+	int	  rc;
+	int	  idx;
+	char	**argv;
+	wxString  message;
+	wxString  command;
+
+	command = applicationComboBox->GetValue();
+	argv = convertStringToArgV(command);
+	if (argv == NULL) {
+		message = wxString::Format(_("Sytem error: %hs"),
+		    anoubis_strerror(errno));
+		anMessageBox(message, _("Playground error"),
+		    wxOK | wxICON_ERROR, this);
+		return;
+	}
+
+#ifdef LINUX
+	signal(SIGCHLD, chldhandler);
+	rc = playground_start_fork(argv);
+#else
+	rc = -ENOSYS;
+#endif
+	if (rc < 1) {
+		/* Start failed, got no pid. */
+		message = wxString::Format(_("Could not start program \"%ls\" "
+		    "within playground: %ls"), command.BeforeFirst(' ').c_str(),
+		    wxString::From8BitData(anoubis_strerror(-rc)).c_str());
+		anMessageBox(message, _("Playground error"),
+		    wxOK | wxICON_ERROR, this);
+	} else {
+		/* Successfull start. */
+		Debug::trace(wxString::Format(wxT("Playground - start "
+		    "program \"%ls\" with pid %d"), command.c_str(), rc));
+
+		/* Clear combobox input. */
+		applicationComboBox->SetValue(wxEmptyString);
+
+		/*
+		 * Do history.
+		 * Search for command in history and remove it if found (to
+		 * avoid multiple entries). Insert on top so the last command
+		 * is always the first.
+		 */
+		idx = applicationComboBox->FindString(command);
+		if (idx != wxNOT_FOUND) {
+			applicationComboBox->Delete(idx);
+		}
+		applicationComboBox->Insert(command, 0);
+	}
+
+	/* Cleanup argv. */
+	idx = 0;
+	while (argv[idx] != NULL) {
+		free(argv[idx++]);
+	}
+	free(argv);
+}
+
+char **
+ModPlaygroundMainPanelImpl::convertStringToArgV(const wxString &input) const
+{
+	int			  count;
+	wxStringTokenizer	  tokenizer;
+	char			**argv;
+
+	tokenizer.SetString(input);
+	argv = (char **)calloc(tokenizer.CountTokens() + 1, sizeof(char *));
+	if (argv == NULL) {
+		return (NULL);
+	}
+
+	count = 0;
+	while (tokenizer.HasMoreTokens()) {
+		argv[count] = strdup(tokenizer.GetNextToken().To8BitData());
+		count++;
+	}
+	argv[count] = NULL;
+
+	return (argv);
 }

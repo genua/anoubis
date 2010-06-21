@@ -34,20 +34,20 @@
 #ifndef __ModPlaygroundPanelsBase__
 #define __ModPlaygroundPanelsBase__
 
-class AnPickFromFs;
-
 #include <wx/string.h>
 #include <wx/stattext.h>
 #include <wx/gdicmn.h>
 #include <wx/font.h>
 #include <wx/colour.h>
 #include <wx/settings.h>
-#include <wx/panel.h>
+#include <wx/combobox.h>
 #include <wx/button.h>
 #include <wx/sizer.h>
 #include <wx/statbox.h>
+#include <wx/panel.h>
 #include <wx/bitmap.h>
 #include <wx/image.h>
+#include <wx/notebook.h>
 #include <wx/statbmp.h>
 
 ///////////////////////////////////////////////////////////////////////////
@@ -63,8 +63,16 @@ class ModPlaygroundMainPanelBase : public wxPanel
 	protected:
 		wxBoxSizer* mainSizer;
 		wxStaticText* mainHeadlineLabel;
-		AnPickFromFs* programPicker;
-		wxButton* startButton;
+		wxNotebook* pgNotebook;
+		wxPanel* pgPage;
+		wxStaticText* applicationLabel;
+		wxComboBox* applicationComboBox;
+		wxButton* applicationStartButton;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void onAppStartEnter( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onAppStart( wxCommandEvent& event ){ event.Skip(); }
+		
 	
 	public:
 		ModPlaygroundMainPanelBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 1067,-1 ), long style = wxTAB_TRAVERSAL );

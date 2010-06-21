@@ -31,8 +31,6 @@
 // PLEASE DO "NOT" EDIT THIS FILE!
 ///////////////////////////////////////////////////////////////////////////
 
-#include "AnPickFromFs.h"
-
 #include "ModPlaygroundPanelsBase.h"
 
 ///////////////////////////////////////////////////////////////////////////
@@ -47,19 +45,39 @@ ModPlaygroundMainPanelBase::ModPlaygroundMainPanelBase( wxWindow* parent, wxWind
 	
 	mainSizer->Add( mainHeadlineLabel, 0, wxALL|wxALIGN_CENTER_HORIZONTAL, 5 );
 	
+	pgNotebook = new wxNotebook( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	pgPage = new wxPanel( pgNotebook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxBoxSizer* pgPageSizer;
+	pgPageSizer = new wxBoxSizer( wxVERTICAL );
+	
 	wxStaticBoxSizer* startSizer;
-	startSizer = new wxStaticBoxSizer( new wxStaticBox( this, -1, _("New Playground") ), wxVERTICAL );
+	startSizer = new wxStaticBoxSizer( new wxStaticBox( pgPage, -1, _("New Playground") ), wxVERTICAL );
 	
-	programPicker = new AnPickFromFs( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	startSizer->Add( programPicker, 0, wxEXPAND|wxTOP|wxBOTTOM|wxRIGHT, 5 );
+	applicationLabel = new wxStaticText( pgPage, wxID_ANY, _("Application:"), wxDefaultPosition, wxDefaultSize, 0 );
+	applicationLabel->Wrap( -1 );
+	startSizer->Add( applicationLabel, 0, wxALL, 5 );
 	
-	startButton = new wxButton( this, wxID_ANY, _("Start Playground"), wxDefaultPosition, wxDefaultSize, 0 );
-	startSizer->Add( startButton, 0, wxALL, 5 );
+	applicationComboBox = new wxComboBox( pgPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 350,-1 ), 0, NULL, wxTE_PROCESS_ENTER ); 
+	startSizer->Add( applicationComboBox, 0, wxALL, 5 );
 	
-	mainSizer->Add( startSizer, 0, wxALL|wxEXPAND, 5 );
+	applicationStartButton = new wxButton( pgPage, wxID_ANY, _("Start Playground"), wxDefaultPosition, wxDefaultSize, 0 );
+	startSizer->Add( applicationStartButton, 0, wxALL, 5 );
+	
+	pgPageSizer->Add( startSizer, 0, wxEXPAND, 5 );
+	
+	pgPage->SetSizer( pgPageSizer );
+	pgPage->Layout();
+	pgPageSizer->Fit( pgPage );
+	pgNotebook->AddPage( pgPage, _("Playground"), false );
+	
+	mainSizer->Add( pgNotebook, 1, wxEXPAND | wxALL, 5 );
 	
 	this->SetSizer( mainSizer );
 	this->Layout();
+	
+	// Connect Events
+	applicationComboBox->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( ModPlaygroundMainPanelBase::onAppStartEnter ), NULL, this );
+	applicationStartButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModPlaygroundMainPanelBase::onAppStart ), NULL, this );
 }
 
 ModPlaygroundOverviewPanelBase::ModPlaygroundOverviewPanelBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )
