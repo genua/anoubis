@@ -681,20 +681,18 @@ DlgRuleEditorFilterSubjectPageBase::DlgRuleEditorFilterSubjectPageBase( wxWindow
 	mainSizer->Add( pathPicker, 0, wxEXPAND | wxALL, 5 );
 	
 	wxFlexGridSizer* subjectSizer;
-	subjectSizer = new wxFlexGridSizer( 7, 3, 0, 0 );
+	subjectSizer = new wxFlexGridSizer( 2, 3, 0, 0 );
 	subjectSizer->AddGrowableCol( 1 );
 	subjectSizer->SetFlexibleDirection( wxBOTH );
 	subjectSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
 	subjectLabel = new wxStaticText( scrollPanel, wxID_ANY, _("Subject:"), wxDefaultPosition, wxDefaultSize, 0 );
 	subjectLabel->Wrap( -1 );
-	subjectSizer->Add( subjectLabel, 0, wxALL, 5 );
+	subjectSizer->Add( subjectLabel, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
-	anyRadioButton = new wxRadioButton( scrollPanel, wxID_ANY, _("any"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP );
-	anyRadioButton->Hide();
-	anyRadioButton->SetToolTip( _("Not specified") );
-	
-	subjectSizer->Add( anyRadioButton, 0, wxALL, 5 );
+	wxArrayString subjectChoiceChoices;
+	subjectChoice = new wxChoice( scrollPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, subjectChoiceChoices, 0 );
+	subjectSizer->Add( subjectChoice, 0, wxALL, 5 );
 	
 	
 	subjectSizer->Add( 0, 0, 1, wxEXPAND, 5 );
@@ -702,62 +700,11 @@ DlgRuleEditorFilterSubjectPageBase::DlgRuleEditorFilterSubjectPageBase( wxWindow
 	
 	subjectSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	selfRadioButton = new wxRadioButton( scrollPanel, wxID_ANY, _("self"), wxDefaultPosition, wxDefaultSize, 0 );
-	selfRadioButton->SetToolTip( _("Trust own checksum") );
-	
-	subjectSizer->Add( selfRadioButton, 0, wxALL, 5 );
+	subjectTextCtrl = new wxTextCtrl( scrollPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	subjectSizer->Add( subjectTextCtrl, 1, wxALL|wxEXPAND, 5 );
 	
 	
-	subjectSizer->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	
-	subjectSizer->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	selfSignedRadioButton = new wxRadioButton( scrollPanel, wxID_ANY, _("self-signed"), wxDefaultPosition, wxDefaultSize, 0 );
-	selfSignedRadioButton->SetToolTip( _("Trust own signature") );
-	
-	subjectSizer->Add( selfSignedRadioButton, 0, wxALL, 5 );
-	
-	
-	subjectSizer->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	
-	subjectSizer->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	wxBoxSizer* uidSizer;
-	uidSizer = new wxBoxSizer( wxHORIZONTAL );
-	
-	uidRadioButton = new wxRadioButton( scrollPanel, wxID_ANY, _("uid"), wxDefaultPosition, wxSize( 60,-1 ), 0 );
-	uidRadioButton->SetToolTip( _("Trust the specified user") );
-	
-	uidSizer->Add( uidRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	uidTextCtrl = new wxTextCtrl( scrollPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
-	uidSizer->Add( uidTextCtrl, 1, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	subjectSizer->Add( uidSizer, 1, wxEXPAND, 5 );
-	
-	
-	subjectSizer->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	
-	subjectSizer->Add( 0, 0, 1, wxEXPAND, 5 );
-	
-	wxBoxSizer* keySizer;
-	keySizer = new wxBoxSizer( wxHORIZONTAL );
-	
-	keyRadioButton = new wxRadioButton( scrollPanel, wxID_ANY, _("key"), wxDefaultPosition, wxSize( 60,-1 ), 0 );
-	keyRadioButton->SetToolTip( _("Trust certificate with specified keyid") );
-	
-	keySizer->Add( keyRadioButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	keyTextCtrl = new wxTextCtrl( scrollPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER );
-	keySizer->Add( keyTextCtrl, 1, wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL, 5 );
-	
-	subjectSizer->Add( keySizer, 1, wxEXPAND, 5 );
-	
-	
-	subjectSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	subjectSizer->Add( 100, 0, 1, wxEXPAND, 5 );
 	
 	mainSizer->Add( subjectSizer, 0, wxEXPAND, 5 );
 	
@@ -771,15 +718,9 @@ DlgRuleEditorFilterSubjectPageBase::DlgRuleEditorFilterSubjectPageBase( wxWindow
 	pageSizer->Fit( this );
 	
 	// Connect Events
-	anyRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterSubjectPageBase::onAnyRadioButton ), NULL, this );
-	selfRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterSubjectPageBase::onSelfRadioButton ), NULL, this );
-	selfSignedRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterSubjectPageBase::onSelfSignedRadioButton ), NULL, this );
-	uidRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterSubjectPageBase::onUidRadioButton ), NULL, this );
-	uidTextCtrl->Connect( wxEVT_KILL_FOCUS, wxFocusEventHandler( DlgRuleEditorFilterSubjectPageBase::onUidTextKillFocus ), NULL, this );
-	uidTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorFilterSubjectPageBase::onUidTextEnter ), NULL, this );
-	keyRadioButton->Connect( wxEVT_COMMAND_RADIOBUTTON_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterSubjectPageBase::onKeyRadioButton ), NULL, this );
-	keyTextCtrl->Connect( wxEVT_KILL_FOCUS, wxFocusEventHandler( DlgRuleEditorFilterSubjectPageBase::onKeyTextKillFocus ), NULL, this );
-	keyTextCtrl->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgRuleEditorFilterSubjectPageBase::onKeyTextEnter ), NULL, this );
+	subjectChoice->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( DlgRuleEditorFilterSubjectPageBase::onSubjectSelected ), NULL, this );
+	subjectTextCtrl->Connect( wxEVT_KILL_FOCUS, wxFocusEventHandler( DlgRuleEditorFilterSubjectPageBase::onSubjectTextKillFocus ), NULL, this );
+	subjectTextCtrl->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( DlgRuleEditorFilterSubjectPageBase::onSubjectTextEnter ), NULL, this );
 }
 
 DlgRuleEditorFilterSfsPageBase::DlgRuleEditorFilterSfsPageBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )

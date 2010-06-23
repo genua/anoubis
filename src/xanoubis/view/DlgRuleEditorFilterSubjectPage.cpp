@@ -33,6 +33,34 @@
 #include "AnPickFromFs.h"
 #include "DlgRuleEditorFilterSubjectPage.h"
 
+/**
+ * Client-data passed to subjectChoice.
+ *
+ * Contains the APN_CS_-type. Each entry in subjectChoice represents a specific
+ * subject-type.
+ */
+class SubjectChoiceData
+{
+	public:
+		SubjectChoiceData(int type)
+		{
+			this->type_ = type;
+		}
+
+		int type_;
+};
+
+/*
+ * The different client-data-instances, which are passed to subjectChoice.
+ *
+ * They can be made static because the instances are never modified.
+ */
+static SubjectChoiceData cs_none(APN_CS_NONE);
+static SubjectChoiceData cs_uid_self(APN_CS_UID_SELF);
+static SubjectChoiceData cs_key_self(APN_CS_KEY_SELF);
+static SubjectChoiceData cs_uid(APN_CS_UID);
+static SubjectChoiceData cs_key(APN_CS_KEY);
+
 DlgRuleEditorFilterSubjectPage::DlgRuleEditorFilterSubjectPage(wxWindow *parent,
     wxWindowID id, const wxPoint & pos, const wxSize & size, long style)
     : DlgRuleEditorPage(),
@@ -42,6 +70,13 @@ DlgRuleEditorFilterSubjectPage::DlgRuleEditorFilterSubjectPage(wxWindow *parent,
 	sbPolicy_  = NULL;
 	appPolicy_ = NULL;
 	ctxPolicy_ = NULL;
+
+	/* Fill subjectChoice with all possible values */
+	subjectChoice->Append(_("any"), &cs_none);
+	subjectChoice->Append(_("self"), &cs_uid_self);
+	subjectChoice->Append(_("self-signed"), &cs_key_self);
+	subjectChoice->Append(_("uid"), &cs_uid);
+	subjectChoice->Append(_("key"), &cs_key);
 
 	addSubject(pathPicker);
 	pathPicker->setMode(AnPickFromFs::MODE_BOTH);
@@ -192,21 +227,19 @@ DlgRuleEditorFilterSubjectPage::showSubject(void)
 	if (sfsPolicy_ != NULL) {
 		type  = sfsPolicy_->getSubjectTypeNo();
 		value = sfsPolicy_->getSubjectName();
-		anyRadioButton->Hide();
+		updateSubjectChoice(type, false);
 	} else if (sbPolicy_ != NULL) {
 		type  = sbPolicy_->getSubjectTypeNo();
 		value = sbPolicy_->getSubjectName();
-		if (!anyRadioButton->IsShown()) {
-			anyRadioButton->Show();
-		}
+		updateSubjectChoice(type, true);
 	} else if (appPolicy_ != NULL) {
-		anyRadioButton->Show();
 		type = appPolicy_->getSubjectTypeNo(binaryIndex_);
 		value = appPolicy_->getSubjectName(binaryIndex_);
+		updateSubjectChoice(type, true);
 	} else if (ctxPolicy_ != NULL) {
-		anyRadioButton->Show();
 		type = ctxPolicy_->getSubjectTypeNo(binaryIndex_);
 		value = ctxPolicy_->getSubjectName(binaryIndex_);
+		updateSubjectChoice(type, true);
 	} else {
 		return;
 	}
@@ -220,53 +253,21 @@ DlgRuleEditorFilterSubjectPage::showSubject(void)
 	 */
 	switch (type) {
 	case APN_CS_UID_SELF:
-		uidTextCtrl->Clear();
-		uidTextCtrl->Disable();
-		keyTextCtrl->Clear();
-		keyTextCtrl->Disable();
-		selfRadioButton->SetValue(true);
+		updateSubjectTextCtrl(false, wxEmptyString);
 		break;
 	case APN_CS_KEY_SELF:
-		uidTextCtrl->Clear();
-		uidTextCtrl->Disable();
-		keyTextCtrl->Clear();
-		keyTextCtrl->Disable();
-		selfSignedRadioButton->SetValue(true);
+		updateSubjectTextCtrl(false, wxEmptyString);
 		break;
 	case APN_CS_UID:
-		keyTextCtrl->Clear();
-		keyTextCtrl->Disable();
 		value.Replace(wxT("uid "), wxEmptyString);
-		if (value.Cmp(uidTextCtrl->GetValue()) != 0) {
-			uidTextCtrl->ChangeValue(value);
-		}
-		if (uidRadioButton->GetValue() != true) {
-			uidRadioButton->SetValue(true);
-		}
-		if (!uidTextCtrl->IsEnabled()) {
-			uidTextCtrl->Enable();
-		}
+		updateSubjectTextCtrl(true, value);
 		break;
 	case APN_CS_KEY:
-		uidTextCtrl->Clear();
-		uidTextCtrl->Disable();
 		value.Replace(wxT("key "), wxEmptyString);
-		if (value.Cmp(keyTextCtrl->GetValue()) != 0) {
-			keyTextCtrl->ChangeValue(value);
-		}
-		if (keyRadioButton->GetValue() != true) {
-			keyRadioButton->SetValue(true);
-		}
-		if (!keyTextCtrl->IsEnabled()) {
-			keyTextCtrl->Enable();
-		}
+		updateSubjectTextCtrl(true, value);
 		break;
 	case APN_CS_NONE:
-		uidTextCtrl->Clear();
-		uidTextCtrl->Disable();
-		keyTextCtrl->Clear();
-		keyTextCtrl->Disable();
-		anyRadioButton->SetValue(true);
+		updateSubjectTextCtrl(false, wxEmptyString);
 		break;
 	}
 
@@ -275,16 +276,83 @@ DlgRuleEditorFilterSubjectPage::showSubject(void)
 }
 
 void
-DlgRuleEditorFilterSubjectPage::onAnyRadioButton(wxCommandEvent &)
+DlgRuleEditorFilterSubjectPage::onSubjectSelected(wxCommandEvent &)
 {
-	if (sbPolicy_ != NULL) {
-		sbPolicy_->setSubjectNone();
+	int selection = subjectChoice->GetSelection();
+	SubjectChoiceData *data = static_cast<SubjectChoiceData *>(
+	    subjectChoice->GetClientData(selection));
+
+	if (data->type_ == APN_CS_NONE) {
+		/* any */
+		if (sbPolicy_ != NULL) {
+			sbPolicy_->setSubjectNone();
+		}
+		if (appPolicy_ != NULL) {
+			appPolicy_->setSubjectNone(binaryIndex_);
+		}
+		if (ctxPolicy_ != NULL) {
+			ctxPolicy_->setSubjectNone(binaryIndex_);
+		}
+	} else if (data->type_ == APN_CS_UID_SELF) {
+		/* self */
+		setSubjectSelf(false);
+	} else if (data->type_ == APN_CS_KEY_SELF) {
+		/* self-signed */
+		setSubjectSelf(true);
+	} else if (data->type_ == APN_CS_UID) {
+		/* uid */
+		setSubjectUid(geteuid());
+	} else if (data->type_ == APN_CS_KEY) {
+		/* key */
+		setSubjectKey(wxEmptyString);
 	}
-	if (appPolicy_ != NULL) {
-		appPolicy_->setSubjectNone(binaryIndex_);
+
+	showSubject();
+}
+
+void
+DlgRuleEditorFilterSubjectPage::onSubjectTextEnter(wxCommandEvent &event)
+{
+	int selection = subjectChoice->GetSelection();
+	SubjectChoiceData *data = static_cast<SubjectChoiceData *>(
+	    subjectChoice->GetClientData(selection));
+
+	if (data->type_ == APN_CS_UID) {
+		/* uid */
+		unsigned long uid;
+
+		if (event.GetString().ToULong(&uid))
+			setSubjectUid((uid_t)uid);
+	} else if (data->type_ == APN_CS_KEY) {
+		/* key */
+		setSubjectKey(event.GetString());
 	}
-	if (ctxPolicy_ != NULL) {
-		ctxPolicy_->setSubjectNone(binaryIndex_);
+}
+
+void
+DlgRuleEditorFilterSubjectPage::onSubjectTextKillFocus(wxFocusEvent &)
+{
+	int selection = subjectChoice->GetSelection();
+	SubjectChoiceData *data = static_cast<SubjectChoiceData *>(
+	    subjectChoice->GetClientData(selection));
+
+	if (data->type_ == APN_CS_UID) {
+		/* uid */
+		unsigned long uid;
+
+		if (subjectTextCtrl->IsModified()) {
+			/* Mark as clean */
+			subjectTextCtrl->DiscardEdits();
+			if (subjectTextCtrl->GetValue().ToULong(&uid))
+				setSubjectUid((uid_t)uid);
+		}
+	} else if (data->type_ == APN_CS_KEY) {
+		/* key */
+		if (subjectTextCtrl->IsModified()) {
+			/* Mark as clean */
+			subjectTextCtrl->DiscardEdits();
+			setSubjectKey(subjectTextCtrl->GetValue());
+		}
 	}
 }
 
@@ -306,18 +374,6 @@ DlgRuleEditorFilterSubjectPage::setSubjectSelf(bool sign)
 }
 
 void
-DlgRuleEditorFilterSubjectPage::onSelfRadioButton(wxCommandEvent &)
-{
-	setSubjectSelf(false);
-}
-
-void
-DlgRuleEditorFilterSubjectPage::onSelfSignedRadioButton(wxCommandEvent &)
-{
-	setSubjectSelf(true);
-}
-
-void
 DlgRuleEditorFilterSubjectPage::setSubjectUid(uid_t uid)
 {
 	if (sfsPolicy_ != NULL) {
@@ -331,35 +387,6 @@ DlgRuleEditorFilterSubjectPage::setSubjectUid(uid_t uid)
 	}
 	if (ctxPolicy_ != NULL) {
 		ctxPolicy_->setSubjectUid(binaryIndex_, uid);
-	}
-}
-
-void
-DlgRuleEditorFilterSubjectPage::onUidRadioButton(wxCommandEvent &)
-{
-	uidTextCtrl->Enable();
-	setSubjectUid(geteuid());
-}
-
-void
-DlgRuleEditorFilterSubjectPage::onUidTextEnter(wxCommandEvent & event)
-{
-	unsigned long uid;
-
-	event.GetString().ToULong(&uid);
-	setSubjectUid((uid_t)uid);
-}
-
-void
-DlgRuleEditorFilterSubjectPage::onUidTextKillFocus(wxFocusEvent &)
-{
-	unsigned long uid;
-
-	if (uidTextCtrl->IsModified()) {
-		/* Mark as clean */
-		uidTextCtrl->DiscardEdits();
-		uidTextCtrl->GetValue().ToULong(&uid);
-		setSubjectUid((uid_t)uid);
 	}
 }
 
@@ -381,26 +408,38 @@ DlgRuleEditorFilterSubjectPage::setSubjectKey(wxString key)
 }
 
 void
-DlgRuleEditorFilterSubjectPage::onKeyRadioButton(wxCommandEvent &)
+DlgRuleEditorFilterSubjectPage::updateSubjectChoice(int type, bool showAny)
 {
-	keyTextCtrl->Enable();
-	setSubjectKey(wxEmptyString);
-}
+	int count = subjectChoice->GetCount();
 
-void
-DlgRuleEditorFilterSubjectPage::onKeyTextEnter(wxCommandEvent & event)
-{
-	setSubjectKey(event.GetString());
-}
-
-void
-DlgRuleEditorFilterSubjectPage::onKeyTextKillFocus(wxFocusEvent &)
-{
-	if (keyTextCtrl->IsModified()) {
-		/* Mark as clean */
-		keyTextCtrl->DiscardEdits();
-		setSubjectKey(keyTextCtrl->GetValue());
+	if (count > 4 && !showAny) {
+		/* Remove any-entry */
+		subjectChoice->Delete(0);
+	} else if (count <= 4 && showAny) {
+		/* Insert any-entry */
+		subjectChoice->Insert(_("any"), 0, &cs_none);
 	}
+
+	/* Update the selection according to the type */
+	for (unsigned int i = 0; i < subjectChoice->GetCount(); i++) {
+		SubjectChoiceData *data = static_cast<SubjectChoiceData *>(
+		    subjectChoice->GetClientData(i));
+		if (data->type_ == type) {
+			subjectChoice->SetSelection(i);
+		}
+	}
+}
+
+void DlgRuleEditorFilterSubjectPage::updateSubjectTextCtrl(bool enabled,
+	const wxString &value)
+{
+	subjectTextCtrl->Enable(enabled);
+	subjectTextCtrl->SetEditable(enabled);
+
+	if (value.Cmp(subjectTextCtrl->GetValue()) != 0) {
+		subjectTextCtrl->ChangeValue(value);
+	}
+
 }
 
 void

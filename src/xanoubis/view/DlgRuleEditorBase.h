@@ -318,33 +318,16 @@ class DlgRuleEditorFilterSubjectPageBase : public wxPanel
 		wxScrolledWindow* scrollPanel;
 		AnPickFromFs* pathPicker;
 		wxStaticText* subjectLabel;
-		wxRadioButton* anyRadioButton;
+		wxChoice* subjectChoice;
 		
 		
-		wxRadioButton* selfRadioButton;
-		
-		
-		wxRadioButton* selfSignedRadioButton;
-		
-		
-		wxRadioButton* uidRadioButton;
-		wxTextCtrl* uidTextCtrl;
-		
-		
-		wxRadioButton* keyRadioButton;
-		wxTextCtrl* keyTextCtrl;
+		wxTextCtrl* subjectTextCtrl;
 		
 		
 		// Virtual event handlers, overide them in your derived class
-		virtual void onAnyRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onSelfRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onSelfSignedRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onUidRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onUidTextKillFocus( wxFocusEvent& event ){ event.Skip(); }
-		virtual void onUidTextEnter( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onKeyRadioButton( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onKeyTextKillFocus( wxFocusEvent& event ){ event.Skip(); }
-		virtual void onKeyTextEnter( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onSubjectSelected( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onSubjectTextKillFocus( wxFocusEvent& event ){ event.Skip(); }
+		virtual void onSubjectTextEnter( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:
