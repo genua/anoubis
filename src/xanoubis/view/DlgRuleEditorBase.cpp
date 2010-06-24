@@ -31,6 +31,7 @@
 // PLEASE DO "NOT" EDIT THIS FILE!
 ///////////////////////////////////////////////////////////////////////////
 
+#include "AnDetails.h"
 #include "AnGrid.h"
 #include "AnPickFromFs.h"
 #include "AnPolicyNotebook.h"
@@ -377,11 +378,26 @@ DlgRuleEditorAppPageBase::DlgRuleEditorAppPageBase( wxWindow* parent, wxWindowID
 	subjPage = new DlgRuleEditorFilterSubjectPage( mainPage, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	mainSizer->Add( subjPage, 1, wxALL|wxEXPAND, 5 );
 	
-	noSfsCheckbox = new wxCheckBox( mainPage, wxID_ANY, _("Disable SFS"), wxDefaultPosition, wxDefaultSize, 0 );
+	contextPage = new AnDetails( mainPage, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxRAISED_BORDER|wxTAB_TRAVERSAL, wxT("Details") );
+	wxBoxSizer* bSizer26;
+	bSizer26 = new wxBoxSizer( wxVERTICAL );
+	
+	noSfsCheckbox = new wxCheckBox( contextPage, wxID_ANY, _("Disable SFS"), wxDefaultPosition, wxDefaultSize, 0 );
 	
 	noSfsCheckbox->SetToolTip( _("Activate it, if SFS should be disabled for this policy (and all of it's binaries).") );
 	
-	mainSizer->Add( noSfsCheckbox, 0, wxALL, 5 );
+	bSizer26->Add( noSfsCheckbox, 0, wxALL, 5 );
+	
+	playgroundCheckbox = new wxCheckBox( contextPage, wxID_ANY, _("Run in playground"), wxDefaultPosition, wxDefaultSize, 0 );
+	
+	playgroundCheckbox->SetToolTip( _("Activate it, if the playground should be enabled for this policy (and all of it's binaries).") );
+	
+	bSizer26->Add( playgroundCheckbox, 0, wxALL, 5 );
+	
+	contextPage->SetSizer( bSizer26 );
+	contextPage->Layout();
+	bSizer26->Fit( contextPage );
+	mainSizer->Add( contextPage, 0, wxEXPAND | wxALL, 5 );
 	
 	wxBoxSizer* footerSizer;
 	footerSizer = new wxBoxSizer( wxHORIZONTAL );
@@ -411,6 +427,7 @@ DlgRuleEditorAppPageBase::DlgRuleEditorAppPageBase( wxWindow* parent, wxWindowID
 	
 	// Connect Events
 	noSfsCheckbox->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DlgRuleEditorAppPageBase::onNoSfsClicked ), NULL, this );
+	playgroundCheckbox->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DlgRuleEditorAppPageBase::onPlaygroundClicked ), NULL, this );
 	addButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorAppPageBase::onAddButton ), NULL, this );
 	deleteButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorAppPageBase::onDeleteButton ), NULL, this );
 }

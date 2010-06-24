@@ -33,6 +33,7 @@
 #include <wx/msgdlg.h>
 #include <wx/string.h>
 
+#include "AnDetails.h"
 #include "AnPickFromFs.h"
 #include "ContextAppPolicy.h"
 #include "DlgRuleEditorAppPage.h"
@@ -61,6 +62,7 @@ DlgRuleEditorAppPage::update(Subject *subject)
 
 	if (subject && dynamic_cast<ContextAppPolicy*>(subject)) {
 		setDisableSFS();
+		setRunInPlayground();
 	}
 }
 
@@ -84,10 +86,9 @@ DlgRuleEditorAppPage::select(Policy *policy)
 	}
 
 	/*
-	 * The "Disable SFS" checkbox is only displayed for
-	 * Context applications
+	 * The contextPanel is only displayed for Context applications.
 	 */
-	noSfsCheckbox->Show(policy &&
+	contextPage->Show(policy &&
 	    dynamic_cast<ContextAppPolicy*>(policy));
 }
 
@@ -115,6 +116,15 @@ DlgRuleEditorAppPage::onNoSfsClicked(wxCommandEvent &event)
 	}
 
 	event.Skip();
+}
+
+void
+DlgRuleEditorAppPage::onPlaygroundClicked(wxCommandEvent &event)
+{
+	if (appPolicy_ != 0 &&
+	    dynamic_cast<ContextAppPolicy *>(appPolicy_)) {
+		appPolicy_->setFlag(APN_RULE_PLAYGROUND, event.IsChecked());
+	}
 }
 
 void
@@ -161,3 +171,10 @@ DlgRuleEditorAppPage::setDisableSFS(void)
 {
 	noSfsCheckbox->SetValue(appPolicy_->getFlag(APN_RULE_NOSFS));
 }
+
+void
+DlgRuleEditorAppPage::setRunInPlayground(void)
+{
+	playgroundCheckbox->SetValue(appPolicy_->getFlag(APN_RULE_PLAYGROUND));
+}
+

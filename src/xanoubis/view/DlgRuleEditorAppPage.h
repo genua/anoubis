@@ -118,6 +118,14 @@ class DlgRuleEditorAppPage : public DlgRuleEditorPage,
 		 */
 		void onNoSfsClicked(wxCommandEvent &);
 
+		/**
+		 * Handles selection events from the "Run in playground"
+		 * checkbox.
+		 * Updates the model.
+		 * @param[in] 1st The event.
+		 */
+		void onPlaygroundClicked(wxCommandEvent &);
+
 	private:
 		/**
 		 * This page is responsible for the binary with this index.
@@ -150,6 +158,11 @@ class DlgRuleEditorAppPage : public DlgRuleEditorPage,
 		 * Puts the value of the nosfs-Flag into the checkbox.
 		 */
 		void setDisableSFS(void);
+
+		/**
+		 * Puts the value of the playerground-flag into the checkbox.
+		 */
+		void setRunInPlayground(void);
 };
 
 #endif	/* _DLGRULEEDITORAPPPAGE_H_ */
