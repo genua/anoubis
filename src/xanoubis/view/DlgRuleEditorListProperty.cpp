@@ -57,7 +57,7 @@ DlgRuleEditorListProperty::getHeader(void) const
 	case PROPERTY_ID:	header = _("Id");		break;
 	case PROPERTY_TYPE:	header = _("Type");		break;
 	case PROPERTY_USER:	header = _("User");		break;
-	case PROPERTY_NOSFS:	header = _("NOSFS");		break;
+	case PROPERTY_DETAILS:	header = _("Details");		break;
 	case PROPERTY_BINARY:	header = _("Binary");		break;
 	case PROPERTY_ACTION:	header = _("Action");		break;
 	case PROPERTY_LOG:	header = _("Log");		break;
@@ -156,11 +156,16 @@ DlgRuleEditorListProperty::examineAppPolicy(AppPolicy *app) const
 			text = wxT("default");
 		}
 		break;
-	case PROPERTY_NOSFS:
+	case PROPERTY_DETAILS:
+		text = wxEmptyString;
 		if (app->getFlag(APN_RULE_NOSFS)) {
 			text = wxT("nosfs");
-		} else {
-			text = wxEmptyString;
+		}
+		if (app->getFlag(APN_RULE_PLAYGROUND)) {
+			if (!text.IsEmpty()) {
+				text.Append(wxT(", "));
+			}
+			text.Append(wxT("playground"));
 		}
 		break;
 	case PROPERTY_BINARY:

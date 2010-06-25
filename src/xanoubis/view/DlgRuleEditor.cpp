@@ -102,7 +102,7 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
 	ADD_PROPERTY(appTable_, PROPERTY_ID, 45);
 	ADD_PROPERTY(appTable_, PROPERTY_TYPE, 40);
 	ADD_PROPERTY(appTable_, PROPERTY_USER, 55);
-	ADD_PROPERTY(appTable_, PROPERTY_NOSFS, 55);
+	ADD_PROPERTY(appTable_, PROPERTY_DETAILS, 55);
 	ADD_PROPERTY(appTable_, PROPERTY_BINARY, 255);
 	SET_TABLE(appGrid, appTable_);
 	appGrid->setCursorVisibility(false);

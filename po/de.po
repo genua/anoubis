@@ -33,7 +33,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: anoubis. 10.972.C388\n"
 "Report-Msgid-Bugs-To: anoubis@lists.anoubis.org\n"
-"POT-Creation-Date: 2010-06-24 09:44+0200\n"
+"POT-Creation-Date: 2010-06-24 17:47+0200\n"
 "PO-Revision-Date: 2010-06-24 09:45+0100\n"
 "Last-Translator: Robin <robin_doer@genua.de>\n"
 "Language-Team: German <translation-team-de@lists.sourceforge.net>\n"
@@ -48,7 +48,9 @@ msgstr "Operation nicht erlaubt: Kein Zertifikat gefunden"
 
 #: src/libanoubis/anoubiserrorcode/anoubis_errno.c:38
 msgid "Operation not permitted: User ID and certificate's User ID do not match"
-msgstr "Operation nicht erlaubt: User ID und User ID des Zertifikates stimmen nicht überein"
+msgstr ""
+"Operation nicht erlaubt: User ID und User ID des Zertifikates stimmen nicht "
+"überein"
 
 #: src/libanoubis/anoubiserrorcode/anoubis_errno.c:40
 #: src/xanoubis/view/ModSfsMainPanelImpl.cpp:195
@@ -141,8 +143,7 @@ msgstr "Benutzer"
 #: src/xanoubis/view/VersionListCtrl.cpp:113
 #: src/xanoubis/view/VersionListCtrl.cpp:130
 #: src/xanoubis/view/VersionListCtrl.cpp:147
-#: src/xanoubis/widgets/AnTable.cpp:262
-#: src/xanoubis/widgets/AnTable.cpp:265
+#: src/xanoubis/widgets/AnTable.cpp:262 src/xanoubis/widgets/AnTable.cpp:265
 #: src/xanoubis/widgets/AnTable.cpp:268
 msgid "???"
 msgstr "???"
@@ -168,10 +169,8 @@ msgstr "wurde erlaubt"
 msgid "was denied"
 msgstr "wurde verboten"
 
-#: src/xanoubis/model/Module.cpp:36
-#: src/xanoubis/model/Module.cpp:37
-#: src/xanoubis/model/Module.cpp:38
-#: src/xanoubis/model/Notification.cpp:294
+#: src/xanoubis/model/Module.cpp:36 src/xanoubis/model/Module.cpp:37
+#: src/xanoubis/model/Module.cpp:38 src/xanoubis/model/Notification.cpp:294
 #: src/xanoubis/model/Notification.cpp:511
 msgid "unknown"
 msgstr "unbekannt"
@@ -700,16 +699,24 @@ msgid "Disable SFS"
 msgstr "SFS deaktivieren"
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:387
-msgid "Activate it, if SFS should be disabled for this policy (and all of it's binaries)."
-msgstr "SFS soll für diese Regel (und alle zugehörigen Anwendungen) deaktiviert werden."
+msgid ""
+"Activate it, if SFS should be disabled for this policy (and all of it's "
+"binaries)."
+msgstr ""
+"SFS soll für diese Regel (und alle zugehörigen Anwendungen) deaktiviert "
+"werden."
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:391
 msgid "Run in playground"
 msgstr "Im Playground starten"
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:393
-msgid "Activate it, if the playground should be enabled for this policy (and all of it's binaries)."
-msgstr "Playground soll für diese Regel (und alle zugehörigen Anwendungen) aktiviert werden."
+msgid ""
+"Activate it, if the playground should be enabled for this policy (and all of "
+"it's binaries)."
+msgstr ""
+"Playground soll für diese Regel (und alle zugehörigen Anwendungen) aktiviert "
+"werden."
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:405
 msgid "add"
@@ -969,8 +976,7 @@ msgid "Delete rule %ld?"
 msgstr "Soll die Regel %ld gelöscht werden?"
 
 #: src/xanoubis/view/DlgRuleEditor.cpp:659
-#: src/xanoubis/view/DlgRuleEditor.cpp:704
-#: src/xanoubis/view/MainFrame.cpp:618
+#: src/xanoubis/view/DlgRuleEditor.cpp:704 src/xanoubis/view/MainFrame.cpp:618
 msgid "Confirm"
 msgstr "Bestätigen"
 
@@ -1011,19 +1017,15 @@ msgstr "Fehler: Konnte neue Filterregel nicht erzeugen."
 msgid "Import policy file"
 msgstr "Regeldatei importieren"
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:948
-#: src/xanoubis/view/MainFrame.cpp:529
+#: src/xanoubis/view/DlgRuleEditor.cpp:948 src/xanoubis/view/MainFrame.cpp:529
 msgid "Couldn't import policy file: it has errors."
 msgstr "Konnte Regeldatei nicht importieren: Sie enthält Fehler."
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:949
-#: src/xanoubis/view/MainFrame.cpp:530
+#: src/xanoubis/view/DlgRuleEditor.cpp:949 src/xanoubis/view/MainFrame.cpp:530
 #: src/xanoubis/view/MainFrame.cpp:796
 #: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1534
-#: src/xanoubis/view/ModSfsGenerateKeyDlg.cpp:192
-#: src/xanoubis/main.cpp:146
-#: src/xanoubis/main.cpp:413
-#: src/xanoubis/main.cpp:421
+#: src/xanoubis/view/ModSfsGenerateKeyDlg.cpp:192 src/xanoubis/main.cpp:146
+#: src/xanoubis/main.cpp:413 src/xanoubis/main.cpp:421
 msgid "Error"
 msgstr "Fehler"
 
@@ -1131,8 +1133,10 @@ msgid "Type"
 msgstr "Typ"
 
 #: src/xanoubis/view/DlgRuleEditorListProperty.cpp:60
-msgid "NOSFS"
-msgstr "NOSFS"
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:288
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:643
+msgid "Details"
+msgstr "Details"
 
 #: src/xanoubis/view/DlgRuleEditorListProperty.cpp:61
 msgid "Binary"
@@ -1189,8 +1193,14 @@ msgid "Access mask"
 msgstr "Zugriffsarten"
 
 #: src/xanoubis/view/DlgUpgradeAsk.cpp:35
-msgid "The system has been upgraded. Therefore the checksums of all related files have changed. Please check the checksums of your signed files in the SFS Browser!"
-msgstr "Es wurde ein Upgrade des Systems durchgeführt. Deswegen wurden die Prüfsummen aller zugehörigen Dateien verändert. Bitte überprüfen Sie die Prüfsummen Ihrer signierten Dateien im SFS Browser!"
+msgid ""
+"The system has been upgraded. Therefore the checksums of all related files "
+"have changed. Please check the checksums of your signed files in the SFS "
+"Browser!"
+msgstr ""
+"Es wurde ein Upgrade des Systems durchgeführt. Deswegen wurden die "
+"Prüfsummen aller zugehörigen Dateien verändert. Bitte überprüfen Sie die "
+"Prüfsummen Ihrer signierten Dateien im SFS Browser!"
 
 #: src/xanoubis/view/DlgUpgradeAsk.cpp:38
 msgid "Anoubis - System Update"
@@ -1277,8 +1287,7 @@ msgstr "0"
 msgid "Connected:"
 msgstr "Verbunden:"
 
-#: src/xanoubis/view/MainFrameBase.cpp:112
-#: src/xanoubis/view/MainFrame.cpp:282
+#: src/xanoubis/view/MainFrameBase.cpp:112 src/xanoubis/view/MainFrame.cpp:282
 msgid "no"
 msgstr "Nein"
 
@@ -1325,13 +1334,23 @@ msgstr "Verbindung mit %ls ist fehlgeschlagen!"
 
 #: src/xanoubis/view/MainFrame.cpp:371
 #, c-format
-msgid "Because of an incompatible protocol version (xanoubis: %i, Anoubis daemon: %i) the connection was rejected. Please update the Anoubis daemon package!"
-msgstr "Die Verbindung konnte wegen einer Inkompabilität im Anoubis-Protokoll (xanoubis: v%i, Anoubis-Daemon: v%i) nicht aufgebaut werden. Bitte aktualisieren Sie das Anoubis-Daemon-Paket!"
+msgid ""
+"Because of an incompatible protocol version (xanoubis: %i, Anoubis daemon: %"
+"i) the connection was rejected. Please update the Anoubis daemon package!"
+msgstr ""
+"Die Verbindung konnte wegen einer Inkompabilität im Anoubis-Protokoll "
+"(xanoubis: v%i, Anoubis-Daemon: v%i) nicht aufgebaut werden. Bitte "
+"aktualisieren Sie das Anoubis-Daemon-Paket!"
 
 #: src/xanoubis/view/MainFrame.cpp:378
 #, c-format
-msgid "Because of an incompatible protocol version (xanoubis: %i, Anoubis daemon: %i) the connection was rejected. Please update the xanoubis package!"
-msgstr "Die Verbindung konnte wegen einer Inkompabilität im Anoubis-Protokoll (xanoubis: v%i, Anoubis-Daemon: v%i) nicht aufgebaut werden. Bitte aktualisieren Sie das xanoubis-Paket!"
+msgid ""
+"Because of an incompatible protocol version (xanoubis: %i, Anoubis daemon: %"
+"i) the connection was rejected. Please update the xanoubis package!"
+msgstr ""
+"Die Verbindung konnte wegen einer Inkompabilität im Anoubis-Protokoll "
+"(xanoubis: v%i, Anoubis-Daemon: v%i) nicht aufgebaut werden. Bitte "
+"aktualisieren Sie das xanoubis-Paket!"
 
 #: src/xanoubis/view/MainFrame.cpp:385
 msgid "Protocol version mismatch"
@@ -1339,37 +1358,61 @@ msgstr "Falsche Anoubis-Protokoll-Version"
 
 #: src/xanoubis/view/MainFrame.cpp:392
 #, c-format
-msgid "The APN parser (v%i.%i) is newer than the parser of the Anoubis daemon (v%i.%i). Please update the Anoubis daemon package!"
-msgstr "Der APN-Parser (v%i.%i) ist neuer als der Parser des Anoubis Daemons (v%i.%i). Bitte aktualisieren Sie das Daemon-Paket!"
+msgid ""
+"The APN parser (v%i.%i) is newer than the parser of the Anoubis daemon (v%i.%"
+"i). Please update the Anoubis daemon package!"
+msgstr ""
+"Der APN-Parser (v%i.%i) ist neuer als der Parser des Anoubis Daemons (v%i.%"
+"i). Bitte aktualisieren Sie das Daemon-Paket!"
 
 #: src/xanoubis/view/MainFrame.cpp:400
 #, c-format
-msgid "The APN parser (v%i.%i) is older than the parser of the Anoubis daemon (v%i.%i). Please update the xanoubis package!"
-msgstr "Der APN-Parser (v%i.%i) ist älter als der Parser des Anoubis Daemons (v%i.%i). Bitte aktualisieren Sie das xanoubis-Paket!"
+msgid ""
+"The APN parser (v%i.%i) is older than the parser of the Anoubis daemon (v%i.%"
+"i). Please update the xanoubis package!"
+msgstr ""
+"Der APN-Parser (v%i.%i) ist älter als der Parser des Anoubis Daemons (v%i.%"
+"i). Bitte aktualisieren Sie das xanoubis-Paket!"
 
 #: src/xanoubis/view/MainFrame.cpp:409
 msgid "APN version mismatch"
 msgstr "Falsche APN-Version"
 
 #: src/xanoubis/view/MainFrame.cpp:414
-msgid "Because of missing keys the connection was rejected. Please check your key-configuration (certificate, private key)."
-msgstr "Die Verbindung wurde abgebrochen, weil der Schlüssel nicht geladen werden konnten. Bitte überprüfen Sie Ihre Schlüssel-Konfiguration (Zertifikat, privater Schlüssel)."
+msgid ""
+"Because of missing keys the connection was rejected. Please check your key-"
+"configuration (certificate, private key)."
+msgstr ""
+"Die Verbindung wurde abgebrochen, weil der Schlüssel nicht geladen werden "
+"konnten. Bitte überprüfen Sie Ihre Schlüssel-Konfiguration (Zertifikat, "
+"privater Schlüssel)."
 
 #: src/xanoubis/view/MainFrame.cpp:418
 msgid "Missing key"
 msgstr "Fehlender Schlüssel"
 
 #: src/xanoubis/view/MainFrame.cpp:424
-msgid "Your configured certificate does not match with the certificate requested by the daemon. Please check your key-configuration or ask your system-administrator to configure your certificate at the daemon."
-msgstr "Der Daemon fragt nach einem Zertifikat, das Sie nicht konfiguriert haben. Bitte überprüfen Sie Ihre Schlüssel-Konfiguration oder bitten Sie Ihren System-Administrator, Ihr Zertifikat am Daemon zu hinterlegen."
+msgid ""
+"Your configured certificate does not match with the certificate requested by "
+"the daemon. Please check your key-configuration or ask your system-"
+"administrator to configure your certificate at the daemon."
+msgstr ""
+"Der Daemon fragt nach einem Zertifikat, das Sie nicht konfiguriert haben. "
+"Bitte überprüfen Sie Ihre Schlüssel-Konfiguration oder bitten Sie Ihren "
+"System-Administrator, Ihr Zertifikat am Daemon zu hinterlegen."
 
 #: src/xanoubis/view/MainFrame.cpp:430
 msgid "Certificate mismatch"
 msgstr "Falsches Zertifikat"
 
 #: src/xanoubis/view/MainFrame.cpp:437
-msgid "Your configured certificate or private key is missconfigured or is not supported by Anoubis. Please check your certificate and private key."
-msgstr "Ihr Zertifikat oder privater Schlüssel sind falsch konfiguriert oder werden nicht von Anoubis unterstüzt. Bitte überprüfen Sie Ihre Schlüsseleinstellungen."
+msgid ""
+"Your configured certificate or private key is missconfigured or is not "
+"supported by Anoubis. Please check your certificate and private key."
+msgstr ""
+"Ihr Zertifikat oder privater Schlüssel sind falsch konfiguriert oder werden "
+"nicht von Anoubis unterstüzt. Bitte überprüfen Sie Ihre "
+"Schlüsseleinstellungen."
 
 #: src/xanoubis/view/MainFrame.cpp:441
 msgid "Invalid Certificate / Private Key"
@@ -1377,7 +1420,8 @@ msgstr "Fehlerhaftes Certifikat oder privater Schlüssel"
 
 #: src/xanoubis/view/MainFrame.cpp:445
 msgid "An internal error occured while processing the authentication."
-msgstr "Ein interner Fehler ist bei der Bearbeitung der Authentisierung aufgetreten."
+msgstr ""
+"Ein interner Fehler ist bei der Bearbeitung der Authentisierung aufgetreten."
 
 #: src/xanoubis/view/MainFrame.cpp:448
 msgid "Internal Error"
@@ -1398,17 +1442,24 @@ msgstr "xanoubis wird geschlossen werden."
 
 #: src/xanoubis/view/MainFrame.cpp:783
 msgid "Communication error while fetching list of upgraded files."
-msgstr "Kommunikationsfehler bei der Abfrage der Liste von Dateien, die durch ein Upgrade veränderten wurden."
+msgstr ""
+"Kommunikationsfehler bei der Abfrage der Liste von Dateien, die durch ein "
+"Upgrade veränderten wurden."
 
 #: src/xanoubis/view/MainFrame.cpp:787
 #, c-format
 msgid "Got error (%hs) from daemon while fetching list of upgraded files."
-msgstr "Fehler vom Daemon (%hs) beim Abfrage der Liste von Dateien, die durch ein Upgrade veränderten wurden."
+msgstr ""
+"Fehler vom Daemon (%hs) beim Abfrage der Liste von Dateien, die durch ein "
+"Upgrade veränderten wurden."
 
 #: src/xanoubis/view/MainFrame.cpp:792
 #, c-format
-msgid "An unexpected error (%i) occured while while fetching list of upgraded files."
-msgstr "Ein unerwarteter Fehler (%i) ist beim Abfrage der Liste von Dateien, die durch ein Upgrade veränderten wurden, aufgetreten."
+msgid ""
+"An unexpected error (%i) occured while while fetching list of upgraded files."
+msgstr ""
+"Ein unerwarteter Fehler (%i) ist beim Abfrage der Liste von Dateien, die "
+"durch ein Upgrade veränderten wurden, aufgetreten."
 
 #: src/xanoubis/view/ModAlfOverviewPanelImpl.cpp:70
 #: src/xanoubis/view/ModPlaygroundOverviewPanelImpl.cpp:63
@@ -1436,7 +1487,8 @@ msgid "Rules"
 msgstr "Regeln"
 
 #: src/xanoubis/view/ModAlfPanelsBase.cpp:103
-msgid "Displays the status of the Application level Firewall (ALF) while connected."
+msgid ""
+"Displays the status of the Application level Firewall (ALF) while connected."
 msgstr "Zeigt Status der Application level Firewall (ALF) solange verbunden."
 
 #: src/xanoubis/view/ModAlfPanelsBase.cpp:123
@@ -1790,12 +1842,18 @@ msgid "Save..."
 msgstr "Speichern..."
 
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:475
-msgid "Save the rule set that is currently loaded into the rule editor as a profile."
-msgstr "Speichere den Regelsatz welcher gerade im RuleEditor geladen ist als Profil."
+msgid ""
+"Save the rule set that is currently loaded into the rule editor as a profile."
+msgstr ""
+"Speichere den Regelsatz welcher gerade im RuleEditor geladen ist als Profil."
 
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:485
-msgid "Saving a profile only creates a new Version. The ruleset is not sent to the daemon. Use \"Activate\" to achieve this."
-msgstr "Speichern eines Profils erzeugt nur eine neue Version. Der Regelsatz wird nicht an den Daemon gesandt. Benutze \"Aktivieren\" um dies zu erreichen."
+msgid ""
+"Saving a profile only creates a new Version. The ruleset is not sent to the "
+"daemon. Use \"Activate\" to achieve this."
+msgstr ""
+"Speichern eines Profils erzeugt nur eine neue Version. Der Regelsatz wird "
+"nicht an den Daemon gesandt. Benutze \"Aktivieren\" um dies zu erreichen."
 
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:489
 msgid "Activate"
@@ -1901,7 +1959,9 @@ msgstr "Upgrade Nachricht aktivieren"
 
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:685
 msgid "Check to be notified when upgrade event had taken place"
-msgstr "Anhaken, wenn Sie benachrichtigt werden wollen, wenn Upgrade  stattgefunden hat"
+msgstr ""
+"Anhaken, wenn Sie benachrichtigt werden wollen, wenn Upgrade  stattgefunden "
+"hat"
 
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:689
 msgid "Enable Kernel Upgrade Message"
@@ -1970,7 +2030,8 @@ msgstr "Trennt die Verbindung vom Anoubis-Daemon"
 
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:890
 msgid "Select a profile from the list below or enter a new profile."
-msgstr "Auswahl eines Profils aus unterer Liste oder Eingabe eines neuen Profils."
+msgstr ""
+"Auswahl eines Profils aus unterer Liste oder Eingabe eines neuen Profils."
 
 #: src/xanoubis/view/ModAnoubisPanelsBase.h:298
 msgid "Select a profile"
@@ -2139,8 +2200,12 @@ msgid "(null)"
 msgstr "(null)"
 
 #: src/xanoubis/view/ModSfsMainPanelImpl.cpp:151
-msgid "You have selected a new certificate. To be able to use the key, you need to activate it! Please inform your administrator."
-msgstr "Sie haben ein neues Schlüsselpaar ausgewählt. Um es zu verwenden, ist eine Aktivierung notwendig. Bitte informieren sie Ihren Administrator."
+msgid ""
+"You have selected a new certificate. To be able to use the key, you need to "
+"activate it! Please inform your administrator."
+msgstr ""
+"Sie haben ein neues Schlüsselpaar ausgewählt. Um es zu verwenden, ist eine "
+"Aktivierung notwendig. Bitte informieren sie Ihren Administrator."
 
 #: src/xanoubis/view/ModSfsMainPanelImpl.cpp:154
 #: src/xanoubis/view/ModSfsMainPanelImpl.cpp:612
@@ -2150,10 +2215,13 @@ msgstr "Information: Zertifikat"
 
 #: src/xanoubis/view/ModSfsMainPanelImpl.cpp:191
 msgid "No keys are configured. You will not be able to make use of signatures."
-msgstr "Es sind keine Schlüssel konfiguriert. Die Verwendung von Signature ist nicht möglich."
+msgstr ""
+"Es sind keine Schlüssel konfiguriert. Die Verwendung von Signature ist nicht "
+"möglich."
 
 #: src/xanoubis/view/ModSfsMainPanelImpl.cpp:197
-msgid "You have no private key configured. This may lead to unexpected problems."
+msgid ""
+"You have no private key configured. This may lead to unexpected problems."
 msgstr ""
 "Sie haben keinen privaten Schlüssel konfiguriert!\n"
 "Dies kann zu unerwarteten Problemen führen!"
@@ -2163,13 +2231,16 @@ msgid "Failed too load certificate"
 msgstr "Zertifikat konnte nicht geladen werden"
 
 #: src/xanoubis/view/ModSfsMainPanelImpl.cpp:204
-msgid "You have no certificate configured. This may lead to unexpected problems."
+msgid ""
+"You have no certificate configured. This may lead to unexpected problems."
 msgstr ""
 "Sie haben kein Zertifikat konfiguriert!\n"
 "Dies kann zu unerwarteten Problemen führen!"
 
 #: src/xanoubis/view/ModSfsMainPanelImpl.cpp:214
-msgid "Your private key and certificate do not match. This may lead to unexpected problems."
+msgid ""
+"Your private key and certificate do not match. This may lead to unexpected "
+"problems."
 msgstr ""
 "Privater Schlüssel und Zertifikat passen nicht zusammen!\n"
 "Dies kann zu unerwarteten Problemen führen!"
@@ -2185,8 +2256,14 @@ msgid "SFS error"
 msgstr "SFS Fehler"
 
 #: src/xanoubis/view/ModSfsMainPanelImpl.cpp:332
-msgid "The SFS Browser currently displays an invalid view because no daemon connection is established. The selection is switched back to the \"Standard File Browsing\" view."
-msgstr "Der SFS Browser stellt eine ungültige Ansicht dar, da derzeit keine Daemon-Verbindung vorhanden ist. Es wird nun in die \"Standard Dateiansicht\" gewechselt."
+msgid ""
+"The SFS Browser currently displays an invalid view because no daemon "
+"connection is established. The selection is switched back to the \"Standard "
+"File Browsing\" view."
+msgstr ""
+"Der SFS Browser stellt eine ungültige Ansicht dar, da derzeit keine Daemon-"
+"Verbindung vorhanden ist. Es wird nun in die \"Standard Dateiansicht\" "
+"gewechselt."
 
 #: src/xanoubis/view/ModSfsMainPanelImpl.cpp:336
 msgid "SFS warning"
@@ -2237,15 +2314,25 @@ msgid "Failed to disable signed checksums."
 msgstr "Fehler beim Abschalten von signierten Prüfsummen."
 
 #: src/xanoubis/view/ModSfsMainPanelImpl.cpp:609
-msgid "You have created a new keypair. To be able to use it, you need to activate it! Please inform your administrator."
-msgstr "Sie haben ein neues Schlüsselpaar erzeugt. Um es zu verwenden, muss es zunächst aktiviert werden. Bitte informieren sie Ihren Administrator."
+msgid ""
+"You have created a new keypair. To be able to use it, you need to activate "
+"it! Please inform your administrator."
+msgstr ""
+"Sie haben ein neues Schlüsselpaar erzeugt. Um es zu verwenden, muss es "
+"zunächst aktiviert werden. Bitte informieren sie Ihren Administrator."
 
 #: src/xanoubis/view/ModSfsMainPanelImpl.cpp:618
 msgid ""
-"A keypair has already been configured. Would you like to use the newly generated keypair from now on?\n"
+"A keypair has already been configured. Would you like to use the newly "
+"generated keypair from now on?\n"
 "\n"
-"If so, the certificate needs to be activated. Please inform your administrator."
-msgstr "Es ist bereits ein anderes Schlüsselpaar konfiguriert. Möchten Sie in Zukunft das neu erzeugte Schlüsselpaar verwenden? Falls ja, ist eine Aktivierung des Zertifikats notwendig. Informieren Sie bitte Ihren Administrator."
+"If so, the certificate needs to be activated. Please inform your "
+"administrator."
+msgstr ""
+"Es ist bereits ein anderes Schlüsselpaar konfiguriert. Möchten Sie in "
+"Zukunft das neu erzeugte Schlüsselpaar verwenden? Falls ja, ist eine "
+"Aktivierung des Zertifikats notwendig. Informieren Sie bitte Ihren "
+"Administrator."
 
 #: src/xanoubis/view/ModSfsMainPanelImpl.cpp:806
 msgid ""
@@ -2431,11 +2518,6 @@ msgstr "Gültigkeit in Sekunden"
 msgid "Certificate"
 msgstr "Zertifikat"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:288
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:643
-msgid "Details"
-msgstr "Details"
-
 #: src/xanoubis/view/ModSfsPanelsBase.cpp:308
 msgid "KeyID:"
 msgstr "KeyID:"
@@ -2487,7 +2569,8 @@ msgstr "Erzeuge Schlüsselpaar"
 
 #: src/xanoubis/view/ModSfsPanelsBase.cpp:398
 msgid ""
-"Your private key and your certificate don't match! This may lead to unexpected problems!\n"
+"Your private key and your certificate don't match! This may lead to "
+"unexpected problems!\n"
 "Please be sure to correct this!"
 msgstr ""
 "Ihr privater Schlüssel und Ihr Zertifikat passen nicht zusammen!\n"
@@ -2498,8 +2581,10 @@ msgid "Keys"
 msgstr "Schlüssel"
 
 #: src/xanoubis/view/ModSfsPanelsBase.cpp:444
-msgid "Displays the status of the Secure File System Module (SFS) while connected."
-msgstr "Zeigt den Status des Secure File System Moduls (SFS) solange verbunden."
+msgid ""
+"Displays the status of the Secure File System Module (SFS) while connected."
+msgstr ""
+"Zeigt den Status des Secure File System Moduls (SFS) solange verbunden."
 
 #: src/xanoubis/view/ModSfsPanelsBase.cpp:464
 msgid "status (SFS):"
@@ -2584,8 +2669,12 @@ msgstr "Bitte zuerst ein Programm wählen."
 #: src/xanoubis/view/RuleWizardProgramPage.cpp:139
 #: src/xanoubis/view/RuleWizardProgramPage.cpp:359
 #, c-format
-msgid "The checksum for %ls does not match! Please go to the SFS Browser and update the checksum."
-msgstr "Die Prüfsumme von %ls stimmt nicht überein! Bitte wechseln Sie in den SFS Browser und aktualisieren die Prüfsumme."
+msgid ""
+"The checksum for %ls does not match! Please go to the SFS Browser and update "
+"the checksum."
+msgstr ""
+"Die Prüfsumme von %ls stimmt nicht überein! Bitte wechseln Sie in den SFS "
+"Browser und aktualisieren die Prüfsumme."
 
 #: src/xanoubis/view/RuleWizardProgramPage.cpp:144
 #: src/xanoubis/view/RuleWizardProgramPage.cpp:230
@@ -2613,7 +2702,9 @@ msgstr "Konnte \"%ls\" nicht auslösen."
 #: src/xanoubis/view/RuleWizardProgramPage.cpp:224
 #, c-format
 msgid "An unexpected error occured (%hs) while fetching the checksum for %ls."
-msgstr "Unerwarteter Fehler (%hs) ist beim Abfragen der Prüfsumme für %ls aufgetreten."
+msgstr ""
+"Unerwarteter Fehler (%hs) ist beim Abfragen der Prüfsumme für %ls "
+"aufgetreten."
 
 #: src/xanoubis/view/RuleWizardProgramPage.cpp:277
 #: src/xanoubis/view/RuleWizardProgramPage.cpp:319
@@ -2635,21 +2726,29 @@ msgstr "Fehler vom Daemon (%hs) beim Registrieren der Prüfsumme für %ls."
 #: src/xanoubis/view/RuleWizardProgramPage.cpp:290
 #, c-format
 msgid "An unexpected error occured (%hs) while register the checksum for %ls."
-msgstr "Unerwarteter Fehler (%hs) ist beim Registrieren der Prüfsumme für %ls aufgetreten."
+msgstr ""
+"Unerwarteter Fehler (%hs) ist beim Registrieren der Prüfsumme für %ls "
+"aufgetreten."
 
 #: src/xanoubis/view/RuleWizardAlfOverwritePage.cpp:47
 msgid ""
-"Alf polices already exists and you have to choose between two options: keep or overwrite.\n"
+"Alf polices already exists and you have to choose between two options: keep "
+"or overwrite.\n"
 "\n"
-"Choose \"No\" if you don't want to alter the existing policies. You'll skip the alf section and proceed to sandbox page.\n"
+"Choose \"No\" if you don't want to alter the existing policies. You'll skip "
+"the alf section and proceed to sandbox page.\n"
 "\n"
-"Choose \"Yes\" if you want to erase all policies of this application. Thereby you may specify new alf policies."
+"Choose \"Yes\" if you want to erase all policies of this application. "
+"Thereby you may specify new alf policies."
 msgstr ""
-"Alf Regeln existieren bereits und es muss nun zwischen den Optionen gewählt werden: erhalten oder überschreiben.\n"
+"Alf Regeln existieren bereits und es muss nun zwischen den Optionen gewählt "
+"werden: erhalten oder überschreiben.\n"
 "\n"
-"Mit \"Nein\" werden die die Regeln nicht verändert. Der ALF-Teil wird übersprungen und mit der Sandbox fortgefahren.\n"
+"Mit \"Nein\" werden die die Regeln nicht verändert. Der ALF-Teil wird "
+"übersprungen und mit der Sandbox fortgefahren.\n"
 "\n"
-"Mit \"Ja\" werden die Regen für diese Applikation entfernt. Dadurch können neue Alf Regeln angelegt werden."
+"Mit \"Ja\" werden die Regen für diese Applikation entfernt. Dadurch können "
+"neue Alf Regeln angelegt werden."
 
 #: src/xanoubis/view/RuleWizardAlfOverwritePage.cpp:58
 msgid ""
@@ -2691,17 +2790,23 @@ msgstr "kundenspezifisch"
 
 #: src/xanoubis/view/RuleWizardSandboxOverwritePage.cpp:46
 msgid ""
-"Sandbox policies already exist and you have to choose between two options: keep or overwrite.\n"
+"Sandbox policies already exist and you have to choose between two options: "
+"keep or overwrite.\n"
 "\n"
-"Choose \"No\" if you don't want to alter the existing policies. You'll skip the sandbox section and proceed to final page.\n"
+"Choose \"No\" if you don't want to alter the existing policies. You'll skip "
+"the sandbox section and proceed to final page.\n"
 "\n"
-"Choose \"Yes\" if you want to erase all policies of this application. Thereby you may specify new sandbox policies."
+"Choose \"Yes\" if you want to erase all policies of this application. "
+"Thereby you may specify new sandbox policies."
 msgstr ""
-"Sandbox Regeln existieren bereits und es muss nun zwischen den Optionen gewählt werden: erhalten oder überschreiben.\n"
+"Sandbox Regeln existieren bereits und es muss nun zwischen den Optionen "
+"gewählt werden: erhalten oder überschreiben.\n"
 "\n"
-"Mit \"Nein\" werden die die Regeln nicht verändert. Der Sandbox-Teil wird übersprungen und man kommt zum Abschluss.\n"
+"Mit \"Nein\" werden die die Regeln nicht verändert. Der Sandbox-Teil wird "
+"übersprungen und man kommt zum Abschluss.\n"
 "\n"
-"Mit \"Ja\" werden die Regen für diese Applikation entfernt. Dadurch können neue Sandbox Regeln angelegt werden."
+"Mit \"Ja\" werden die Regen für diese Applikation entfernt. Dadurch können "
+"neue Sandbox Regeln angelegt werden."
 
 #: src/xanoubis/view/RuleWizardSandboxOverwritePage.cpp:57
 msgid ""
@@ -3066,21 +3171,29 @@ msgstr "Kontext Einstellungen:"
 
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:344
 msgid ""
-"The context of an application is the conjunction of it's calling environment. This is the program which runs another one.\n"
+"The context of an application is the conjunction of it's calling "
+"environment. This is the program which runs another one.\n"
 "\n"
-"If you are creating policies for a laucher-application or a command shell we suggest the answer: \"no\".\n"
+"If you are creating policies for a laucher-application or a command shell we "
+"suggest the answer: \"no\".\n"
 "\n"
 "But in case of the most applications \"yes' seems to be the best fit. "
 msgstr ""
-"Der Kontext einer Anwendung ist die Verbindung Ihrer aufrufenden Umgebung. Dies ist das Programm welches das andere ausführt.\n"
+"Der Kontext einer Anwendung ist die Verbindung Ihrer aufrufenden Umgebung. "
+"Dies ist das Programm welches das andere ausführt.\n"
 "\n"
-"Wenn Sie Regeln für eine Starter-Anwendung oder einer Befehls-Shell erstellen, raten wir zur Antwort: \"nein\".\n"
+"Wenn Sie Regeln für eine Starter-Anwendung oder einer Befehls-Shell "
+"erstellen, raten wir zur Antwort: \"nein\".\n"
 "\n"
 "In den meisten Fällen jedoch scheint \"ja\" am besten zu passen."
 
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:356
-msgid "Programs started by this application have the same permissions / restrictions as the main program."
-msgstr "Von dieser Anwendung gestartete Programme haben die gleichen Rechte / Einschränkungen wie das Hauptprogramm."
+msgid ""
+"Programs started by this application have the same permissions / "
+"restrictions as the main program."
+msgstr ""
+"Von dieser Anwendung gestartete Programme haben die gleichen Rechte / "
+"Einschränkungen wie das Hauptprogramm."
 
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:363
 msgid "Yes (same permissions / restrictions)"
@@ -3228,7 +3341,8 @@ msgid ""
 "This is done by specifying which files it may read, write or execute."
 msgstr ""
 "Mit der Sandbox lassen sich Anwendungen einsperren.\n"
-"Dies wird dadurch erreicht, dass genau festgelegt wird, welche Dateien gelesen, geschrieben oder ausgeführt werden dürfen."
+"Dies wird dadurch erreicht, dass genau festgelegt wird, welche Dateien "
+"gelesen, geschrieben oder ausgeführt werden dürfen."
 
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:715
 msgid "Create sandbox policies?"
@@ -3262,7 +3376,8 @@ msgstr "uneingeschränkt"
 msgid ""
 "Default permissions are allowed, any other\n"
 "access is asked on demand."
-msgstr "Standardberechtigungen sind erlaubt, bei sonstigen Zugriffen wird nachgefragt"
+msgstr ""
+"Standardberechtigungen sind erlaubt, bei sonstigen Zugriffen wird nachgefragt"
 
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:857
 msgid "Options for ... access of \"...\":"
@@ -3321,13 +3436,15 @@ msgid ""
 "This is the final page. If you click on 'finish'\n"
 "the policies will be created.\n"
 "\n"
-"To send the newly created policies directly to the Anoubis Daemon, the checkbox below has to be activated.\n"
+"To send the newly created policies directly to the Anoubis Daemon, the "
+"checkbox below has to be activated.\n"
 "(To make this work you need to be connected.)"
 msgstr ""
 "Dies ist die letzte Seite. Mit einem Klick auf 'Fertig'\n"
 "werden die Regeln erstellt.\n"
 "\n"
-"Um die neu erstellten Regeln sofort an den Anoubis Daemon zu senden, muss die untere Checkbox aktiviert sein.\n"
+"Um die neu erstellten Regeln sofort an den Anoubis Daemon zu senden, muss "
+"die untere Checkbox aktiviert sein.\n"
 "(Dies funktioniert nur,wenn Sie verbunden sind.)"
 
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:967
@@ -3395,35 +3512,53 @@ msgstr "Konnte %ls nicht parsen!"
 #: src/xanoubis/control/SfsCtrl.cpp:649
 #, c-format
 msgid "Communication error while fetching list of checksumed files of %ls."
-msgstr "Kommunikationsfehler bei der Abfrage der Liste von Dateien mit Prüfsumme von %ls."
+msgstr ""
+"Kommunikationsfehler bei der Abfrage der Liste von Dateien mit Prüfsumme von "
+"%ls."
 
 #: src/xanoubis/control/SfsCtrl.cpp:654
 #, c-format
 msgid "Communication error while fetching list of signed files of %ls."
-msgstr "Kommunikationsfehler bei der Abfrage der Liste von Dateien mit Signaturen von %ls."
+msgstr ""
+"Kommunikationsfehler bei der Abfrage der Liste von Dateien mit Signaturen "
+"von %ls."
 
 #: src/xanoubis/control/SfsCtrl.cpp:663
 #, c-format
-msgid "Got error from daemon (%hs) while fetching the list of checksumed files of %ls."
-msgstr "Fehler vom Daemon (%hs) beim Abfragen der Liste der Dateien mit Prüfsumme von %ls."
+msgid ""
+"Got error from daemon (%hs) while fetching the list of checksumed files of %"
+"ls."
+msgstr ""
+"Fehler vom Daemon (%hs) beim Abfragen der Liste der Dateien mit Prüfsumme "
+"von %ls."
 
 #: src/xanoubis/control/SfsCtrl.cpp:668
 #, c-format
-msgid "Got error from daemon (%hs) while fetching the list of signed files of %ls."
-msgstr "Fehler vom Daemon (%hs) beim Abfragen der Liste der signierten Dateien von %ls."
+msgid ""
+"Got error from daemon (%hs) while fetching the list of signed files of %ls."
+msgstr ""
+"Fehler vom Daemon (%hs) beim Abfragen der Liste der signierten Dateien von %"
+"ls."
 
 #: src/xanoubis/control/SfsCtrl.cpp:674
 #, c-format
-msgid "An unexpected error occured (%i) while fetching the list of checksumed files of %ls."
-msgstr "Ein unerwarteter Fehler (%i) ist beim Abfragen der Liste der Dateien mit Prüfsumme von %ls aufgetreten."
+msgid ""
+"An unexpected error occured (%i) while fetching the list of checksumed files "
+"of %ls."
+msgstr ""
+"Ein unerwarteter Fehler (%i) ist beim Abfragen der Liste der Dateien mit "
+"Prüfsumme von %ls aufgetreten."
 
 #: src/xanoubis/control/SfsCtrl.cpp:680
 #, c-format
-msgid "An unexpected error occured (%i) while fetching the list of signed files of %ls."
-msgstr "Ein unerwarteter Fehler (%i) ist beim Abfragen der Liste der signierten Dateien von %ls aufgetreten."
+msgid ""
+"An unexpected error occured (%i) while fetching the list of signed files of %"
+"ls."
+msgstr ""
+"Ein unerwarteter Fehler (%i) ist beim Abfragen der Liste der signierten "
+"Dateien von %ls aufgetreten."
 
-#: src/xanoubis/control/SfsCtrl.cpp:789
-#: src/xanoubis/control/SfsCtrl.cpp:952
+#: src/xanoubis/control/SfsCtrl.cpp:789 src/xanoubis/control/SfsCtrl.cpp:952
 #, c-format
 msgid "%ls not found in file-list!"
 msgstr "%ls nicht in der Dateilisten gefunden!"
@@ -3483,8 +3618,11 @@ msgstr "Fehler vom Daemon (%hs) beim Registrieren von Prüfsummen/Signaturen."
 
 #: src/xanoubis/control/SfsCtrl.cpp:1015
 #, c-format
-msgid "An unexpected error occured (%hs) while registering checksums/signatures."
-msgstr "Ein unerwarteter Fehler (%hs) ist beim Registrieren von Prüfsummen/Signaturen aufgetreten."
+msgid ""
+"An unexpected error occured (%hs) while registering checksums/signatures."
+msgstr ""
+"Ein unerwarteter Fehler (%hs) ist beim Registrieren von Prüfsummen/"
+"Signaturen aufgetreten."
 
 #: src/xanoubis/control/SfsCtrl.cpp:1037
 #, c-format
@@ -3799,8 +3937,7 @@ msgstr ""
 "Es wurde eine nicht unterstützte Version (%d) von HOME/.xanoubis gefunden.\n"
 "Xanoubis wird sich nun beenden.\n"
 
-#: src/xanoubis/main.cpp:153
-#: src/xanoubis/main.cpp:252
+#: src/xanoubis/main.cpp:153 src/xanoubis/main.cpp:252
 msgid "Warning"
 msgstr "Warnung"
 
@@ -3809,8 +3946,12 @@ msgid "Language setting: "
 msgstr "Spracheinstellungen:"
 
 #: src/xanoubis/main.cpp:249
-msgid "The Boot Loader configuration has been updated. Please make sure to boot an Anoubis Kernel."
-msgstr "Die Konfiguration des Boot-Loaders hat sich geändert. Bitte stellen sie sicher, dass der Anoubis-Kernel beim Start geladen wird."
+msgid ""
+"The Boot Loader configuration has been updated. Please make sure to boot an "
+"Anoubis Kernel."
+msgstr ""
+"Die Konfiguration des Boot-Loaders hat sich geändert. Bitte stellen sie "
+"sicher, dass der Anoubis-Kernel beim Start geladen wird."
 
 #: src/xanoubis/main.cpp:299
 msgid "this help"
@@ -3832,8 +3973,7 @@ msgstr "TrayIcon deaktivieren"
 msgid "Do not show the main window"
 msgstr "Haupfenster nicht anzeigen"
 
-#: src/xanoubis/main.cpp:411
-#: src/xanoubis/main.cpp:419
+#: src/xanoubis/main.cpp:411 src/xanoubis/main.cpp:419
 #, c-format
 msgid "Couldn't remove Autostart file: %ls"
 msgstr "Kann Autostart Datei nicht entfernen: %ls"
@@ -3847,8 +3987,7 @@ msgstr ""
 "Eingabe des Passwords zum privaten Schlüssel:\n"
 " %ls"
 
-#: src/xanoubis/main.cpp:596
-#: src/xanoubis/main.cpp:601
+#: src/xanoubis/main.cpp:596 src/xanoubis/main.cpp:601
 msgid "Enter passphrase for: "
 msgstr "Eingabe des Passworts: "
 
@@ -3863,44 +4002,63 @@ msgstr ""
 "Eingabe des Passwortes für:\n"
 "%ls"
 
+#~ msgid "NOSFS"
+#~ msgstr "NOSFS"
+
 #~ msgid "Not specified"
 #~ msgstr "Kein Vertrauen angegeben"
+
 #~ msgid "Trust own checksum"
 #~ msgstr "Traue der eigenen Prüfsumme"
+
 #~ msgid "Trust own signature"
 #~ msgstr "Traue der eigenen Signatur"
+
 #~ msgid "Trust the specified user"
 #~ msgstr "Traue dem angegebenen Benutzer"
+
 #~ msgid "Trust certificate with specified keyid"
 #~ msgstr "Traue Zertifikat "
+
 #~ msgid "Communication error while removing the checksum for %ls."
 #~ msgstr "Kommunikationsfehler beim Entfernen der Prüfsumme für %ls."
+
 #~ msgid "Communication error while removing the signature for %ls."
 #~ msgstr "Kommunikationsfehler beim Entfernen der Signatur für %ls."
+
 #~ msgid "Got error from daemon (%hs) while removing the checksum for %ls."
 #~ msgstr "Fehler vom Daemon (%hs) beim Entfernen der Prüfsumme für %ls."
+
 #~ msgid "Got error from daemon (%hs) while removing the signature for %ls."
 #~ msgstr "Fehler vom Daemon (%hs) beim Entfernen der Signatur für %ls."
+
 #~ msgid ""
 #~ "An unexpected error occured (%hs) while removing the checksum for %ls."
 #~ msgstr ""
 #~ "Unerwarteter Fehler (%hs) ist beim Entfernen der Prüfsumme für %ls "
 #~ "aufgetreten."
+
 #~ msgid ""
 #~ "An unexpected error occured (%hs) while removing the signature for %ls."
 #~ msgstr ""
 #~ "Unerwarteter Fehler (%hs) ist beim Entfernen der Signatur für %ls "
 #~ "aufgetreten."
+
 #~ msgid "Change ..."
 #~ msgstr "Wechsle ..."
+
 #~ msgid "Communication error while register the signature for %ls."
 #~ msgstr "Kommunikationsfehler beim Registrieren der Signatur für %ls."
+
 #~ msgid "error code 1"
 #~ msgstr "Fehler Code 1"
+
 #~ msgid "error code 2"
 #~ msgstr "Fehler Code 2"
+
 #~ msgid "error code 3"
 #~ msgstr "Fehler Code 3"
+
 #~ msgid ""
 #~ "You haven't configured a private key or a certificate! This may lead to "
 #~ "unexpected problems!\n"
@@ -3909,24 +4067,34 @@ msgstr ""
 #~ "Sie haben weder einen privaten Schlüssel noch ein Zertifikat "
 #~ "konfiguriert! Dies kann zu unerwarteten Problemen führen!\n"
 #~ "Bitte korrigieren Sie das!"
+
 #~ msgid "error code 4"
 #~ msgstr "Fehler Code 4"
+
 #~ msgid "error code 5"
 #~ msgstr "Fehler Code 5"
+
 #~ msgid "ID"
 #~ msgstr "ID"
+
 #~ msgid "Rule Editor filling application table (admin ruleset)"
 #~ msgstr "RuleEditor befüllt Anwendungstabelle (Administrator Regelsatz)"
+
 #~ msgid "Rule Editor filling application table (user ruleset)"
 #~ msgstr "RuleEditor befüllt Anwendungtabelle (Benutzer Regelsatz)"
+
 #~ msgid "Loading application policy..."
 #~ msgstr "Lade Anwendungsregeln..."
+
 #~ msgid "Rule Editor filling filter table..."
 #~ msgstr "RuleEditor befüllt Filtertabelle..."
+
 #~ msgid "Loading filter policy..."
 #~ msgstr "Lade Filterregeln..."
+
 #~ msgid "loading policy with id: %d"
 #~ msgstr "lade Regel mit id: %d"
+
 #~ msgid ""
 #~ "You have created a new keypair but it is not used because a keypair is "
 #~ "already configured.\n"
@@ -3937,32 +4105,44 @@ msgstr ""
 #~ "verwendet, da bereits ein Schlüsselpaar angegeben wurde.Möchten Sie die "
 #~ "Konfiguration ändern, so dass das neue Schlüsselpaar benutzt wird? (Falls "
 #~ "ja, informieren sie bitte Ihren Administrator (z.B. per E-Mail)."
+
 #~ msgid "Auto Checksum Check"
 #~ msgstr "Automatische Prüfsummenüberprüfung"
+
 #~ msgid "Check to automatically validate updated application rules"
 #~ msgstr "Auswählen um automatisch erneuerte Anwendungsregeln zu überprüfen"
+
 #~ msgid "Choose Key..."
 #~ msgstr "Schlüssel wählen..."
+
 #~ msgid "Choose certificate..."
 #~ msgstr "Zertifikat wählen..."
+
 #~ msgid "Configure Certificate:"
 #~ msgstr "Zertifikat einrichten:"
+
 #~ msgid "Distinguished Name:"
 #~ msgstr "Distinguished Name:"
+
 #~ msgid "Connection established with %ls without sfsdisable!"
 #~ msgstr "Verbindung mit %ls ohne sfsdisable hergestellt"
+
 #~ msgid ""
 #~ "The Boot Loader configuration has been updated.Please make sure to boot "
 #~ "an Anoubis Kernel."
 #~ msgstr ""
 #~ "Die Konfiguration Ihres Boot-Loaders hat sich geändert. Bitte "
 #~ "vergewissern sie sich, dass ein Anoubis-Kernel beim Start geladen wird."
+
 #~ msgid "Fingerprint:"
 #~ msgstr "Fingerprint:"
+
 #~ msgid "Anoubis protocol version mismatch"
 #~ msgstr "Falsche Anoubis-Protokoll-Version"
+
 #~ msgid "Sign Files"
 #~ msgstr "Signiere Dateien"
+
 #~ msgid ""
 #~ "There are policies with\n"
 #~ "outdated checksum\n"
@@ -3971,135 +4151,193 @@ msgstr ""
 #~ "Es sind Regeln mit\n"
 #~ "veralteten Prüfsummen vorhanden.Soll der Regelsatz trotzdem gesendet "
 #~ "werden?"
+
 #~ msgid " without sfsdisable!"
 #~ msgstr " ohne sfsdisable!"
+
 #~ msgid " failed!"
 #~ msgstr " fehlgeschlagen!"
+
 #~ msgid "csum"
 #~ msgstr "csum"
+
 #~ msgid "Trust specified checksum"
 #~ msgstr "Traue der angegebenen Prüfsumme"
+
 #~ msgid "No checkum is calculated yet."
 #~ msgstr "Es wurde noch keine Prüfsumme berechnet."
+
 #~ msgid "calculating..."
 #~ msgstr "Berechne..."
+
 #~ msgid "Failed to calculate checksum"
 #~ msgstr "Konnte Prüfsumme nicht berechnen"
+
 #~ msgid "Checksum (registered):"
 #~ msgstr "Prüfsumme (registriert):"
+
 #~ msgid "Checksum (current):"
 #~ msgstr "Prüfsumme (aktuell):"
+
 #~ msgid "Validates the checksum"
 #~ msgstr "Überprüfe die Prüfsumme"
+
 #~ msgid "update"
 #~ msgstr "Aktualisiere"
+
 #~ msgid "Updates the checksum"
 #~ msgstr "Aktualisiert die Prüfsumme"
+
 #~ msgid "Info:"
 #~ msgstr "Info:"
+
 #~ msgid "match"
 #~ msgstr "Übereinstimmung"
+
 #~ msgid "mismatch"
 #~ msgstr "Keine Übereinstimmung"
+
 #~ msgid "File does not exist or is not executable"
 #~ msgstr "Datei existiert nicht oder ist nicht ausführbar"
+
 #~ msgid "Got error (%hs) from daemon while fetching listof upgraded files."
 #~ msgstr ""
 #~ "Fehler vom Daemon (%hs) beim Abfrage der Liste von Dateien, die durch ein "
 #~ "Upgrade veränderten wurden."
+
 #~ msgid ""
 #~ "An unexpected error (%i) occured while while fetching listof upgraded "
 #~ "files."
 #~ msgstr ""
 #~ "Ein unerwarteter Fehler (%i) ist beim Abfrage der Liste von Dateien, die "
 #~ "durch ein Upgrade veränderten wurden, aufgetreten."
+
 #~ msgid "SFS Browser"
 #~ msgstr "SFS Browser"
+
 #~ msgid "show changed"
 #~ msgstr "Zeige Änderungen"
+
 #~ msgid "Show files with modified checksum"
 #~ msgstr "Zeige Dateien mit geänderten Prüfsummen"
+
 #~ msgid "show orphaned"
 #~ msgstr "Zeige verwaiste"
+
 #~ msgid "Searches for orphaned files"
 #~ msgstr "Zeigt nur verwaiste Dateien"
+
 #~ msgid ""
 #~ "Shows all signed files which have been upgraded and got a new checksum."
 #~ msgstr ""
 #~ "Zeigt alle signierten Dateien an, welche während eines Upgrades ersetzt "
 #~ "wurden und eine neue Prüfsumme haben."
+
 #~ msgid "Address family:"
 #~ msgstr "Adressfamilie:"
+
 #~ msgid "inet"
 #~ msgstr "inet"
+
 #~ msgid "Filter IPv4 connections"
 #~ msgstr "IPv4-Verbindungen filtern"
+
 #~ msgid "inet6"
 #~ msgstr "inet6"
+
 #~ msgid "Filter IPv6 connections"
 #~ msgstr "IPv6-Verbindungen filtern"
+
 #~ msgid "Allow any family"
 #~ msgstr "Erlaube alle Adressfamilien"
+
 #~ msgid "AF"
 #~ msgstr "AF"
+
 #~ msgid "Search Orphaned"
 #~ msgstr "Zeige verwaiste"
+
 #~ msgid "(Initializing version management...)"
 #~ msgstr "(Initialisiere Versionsverwaltung...)"
+
 #~ msgid "(No versioning information available.)"
 #~ msgstr "(Keine Versionsinformation verfügbar.)"
+
 #~ msgid " add directory..."
 #~ msgstr "Verzeichnis hinzufügen..."
+
 #~ msgid "Wrong Password!"
 #~ msgstr "Falsches Passwort!"
+
 #~ msgid "The entered Password is incorrect."
 #~ msgstr "Das eingegebene Passwort ist nicht korrekt."
+
 #~ msgid "Choose a binary"
 #~ msgstr "Ein Programm auswählen"
+
 #~ msgid "modify"
 #~ msgstr "verändern"
+
 #~ msgid "Choose a path"
 #~ msgstr "Einen Pfad wählen"
+
 #~ msgid "Failure to resolve symbolic link"
 #~ msgstr "Fehler beim Auflösen des symbolischen Links"
+
 #~ msgid "Choose the file, where your private key is stored."
 #~ msgstr "Datei mit privatem Schlüssel auswählen."
+
 #~ msgid "Choose the file, where your certificate is stored."
 #~ msgstr "Datei mit Zerifikat auswählen."
+
 #~ msgid "Selects a private key"
 #~ msgstr "Privaten Schlüssel auswählen"
+
 #~ msgid "Selects a certificate"
 #~ msgstr "Auswahl eines Zertifikates"
+
 #~ msgid ""
 #~ "opens a file-choose-dialog\n"
 #~ "and stores the result"
 #~ msgstr ""
 #~ "Öffnet einen Dateiauswahldialog\n"
 #~ "und speichert das Resultat"
+
 #~ msgid "till process ends "
 #~ msgstr "bis Prozessende "
+
 #~ msgid "for %d "
 #~ msgstr "für %d "
+
 #~ msgid "second "
 #~ msgstr "Sekunde "
+
 #~ msgid "seconds "
 #~ msgstr "Sekunden "
+
 #~ msgid "minute "
 #~ msgstr "Minute "
+
 #~ msgid "minutes "
 #~ msgstr "Minuten "
+
 #~ msgid "hour "
 #~ msgstr "Stunde "
+
 #~ msgid "hours "
 #~ msgstr "Stunden "
+
 #~ msgid "day "
 #~ msgstr "Tag "
+
 #~ msgid "days "
 #~ msgstr "Tage "
+
 #~ msgid "forever "
 #~ msgstr "für immer "
+
 #~ msgid "allowed."
 #~ msgstr "erlaubt."
+
 #~ msgid "forbidden."
 #~ msgstr "verboten."
-

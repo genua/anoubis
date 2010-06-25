@@ -62,9 +62,9 @@ class DlgRuleEditorListProperty : public AnListProperty
 			 */
 			PROPERTY_USER,
 			/**
-			 * NOSFS flag. Valid on app policy.
+			 * DETAILS flag. Valid on CTX filter.
 			 */
-			PROPERTY_NOSFS,
+			PROPERTY_DETAILS,
 			/**
 			 * Name of binary. Valid on app policy and
 			 * CTX filter.

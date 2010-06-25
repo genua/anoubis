@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: anoubis 0.9.3.25.391.752\n"
+"Project-Id-Version: anoubis 0.9.3.25.395.761\n"
 "Report-Msgid-Bugs-To: anoubis@lists.anoubis.org\n"
-"POT-Creation-Date: 2010-06-24 09:44+0200\n"
+"POT-Creation-Date: 2010-06-24 17:47+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1098,7 +1098,9 @@ msgid "Type"
 msgstr ""
 
 #: src/xanoubis/view/DlgRuleEditorListProperty.cpp:60
-msgid "NOSFS"
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:288
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:643
+msgid "Details"
 msgstr ""
 
 #: src/xanoubis/view/DlgRuleEditorListProperty.cpp:61
@@ -2413,11 +2415,6 @@ msgstr ""
 #: src/xanoubis/view/ModSfsPanelsBase.cpp:280
 #: src/xanoubis/view/ModSfsPanelsBase.cpp:635
 msgid "Certificate"
-msgstr ""
-
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:288
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:643
-msgid "Details"
 msgstr ""
 
 #: src/xanoubis/view/ModSfsPanelsBase.cpp:308
