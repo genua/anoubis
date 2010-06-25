@@ -453,6 +453,8 @@ xanoubis_SOURCES= \
 	control/KeyCtrl.h \
 	control/NotificationCtrl.cpp \
 	control/NotificationCtrl.h \
+	control/MainUtils.cpp \
+	control/MainUtils.h \
 	control/RuleSetClearModifiedVisitor.cpp \
 	control/RuleSetClearModifiedVisitor.h \
 	control/RuleSetSearchPolicyVisitor.cpp \

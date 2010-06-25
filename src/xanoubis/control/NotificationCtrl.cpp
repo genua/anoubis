@@ -25,17 +25,17 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "NotificationCtrl.h"
-#include "Singleton.cpp"
-#include "StatusNotify.h"
-#include "EscalationNotify.h"
-#include "LogNotify.h"
 #include "AlertNotify.h"
+#include "DaemonAnswerNotify.h"
+#include "EscalationNotify.h"
 #include "JobCtrl.h"
+#include "LogNotify.h"
+#include "MainUtils.h"
+#include "NotificationCtrl.h"
 #include "PolicyCtrl.h"
 #include "PolicyRuleSet.h"
-#include "DaemonAnswerNotify.h"
-#include "main.h"
+#include "Singleton.cpp"
+#include "StatusNotify.h"
 
 NotificationCtrl::~NotificationCtrl(void)
 {
@@ -216,14 +216,14 @@ NotificationCtrl::onDaemonDisconnect(wxCommandEvent & event)
 		stats_.removeId(stats_.getId(0));
 	}
 	//XXX ch: fix this while cleaning MVC-pattern
-	if (wxGetApp().getModule(ALF))
-		wxGetApp().getModule(ALF)->update();
-	if (wxGetApp().getModule(SFS))
-		wxGetApp().getModule(SFS)->update();
-	if (wxGetApp().getModule(SB))
-		wxGetApp().getModule(SB)->update();
-	if (wxGetApp().getModule(ANOUBIS))
-		wxGetApp().getModule(ANOUBIS)->update();
+	if (MainUtils::instance()->getModule(ALF))
+		MainUtils::instance()->getModule(ALF)->update();
+	if (MainUtils::instance()->getModule(SFS))
+		MainUtils::instance()->getModule(SFS)->update();
+	if (MainUtils::instance()->getModule(SB))
+		MainUtils::instance()->getModule(SB)->update();
+	if (MainUtils::instance()->getModule(ANOUBIS))
+		MainUtils::instance()->getModule(ANOUBIS)->update();
 }
 
 void

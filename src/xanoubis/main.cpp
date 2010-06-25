@@ -31,22 +31,11 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#include <anoubis_apnvm.h>
+#include <pwd.h>
 #include <time.h>
 #include <unistd.h>
-
-#include <sys/types.h>
-#include <pwd.h>
-#include <anoubis_apnvm.h>
-
-#include <wx/cmdline.h>
-#include <wx/fileconf.h>
-#include <wx/icon.h>
-#include <wx/stdpaths.h>
-#include <wx/string.h>
-#include <wx/textdlg.h>
-#include <wx/textfile.h>
-#include <wx/tokenzr.h>
-#include <wx/filename.h>
 
 #include "AlertNotify.h"
 #include "AnConfig.h"
@@ -58,7 +47,7 @@
 #include "JobCtrl.h"
 #include "LogNotify.h"
 #include "MainFrame.h"
-#include "main.h"
+#include "MainUtils.h"
 #include "ModAlf.h"
 #include "ModAnoubis.h"
 #include "ModOverview.h"
@@ -68,9 +57,10 @@
 #include "Module.h"
 #include "NotificationCtrl.h"
 #include "PolicyRuleSet.h"
+#include "ProcCtrl.h"
 #include "TrayIcon.h"
 #include "VersionCtrl.h"
-#include "ProcCtrl.h"
+#include "main.h"
 
 IMPLEMENT_APP_NO_MAIN(AnoubisGuiApp)
 IMPLEMENT_WX_THEME_SUPPORT
@@ -82,16 +72,9 @@ AnoubisGuiApp::AnoubisGuiApp(void)
 	trayVisible_ = true;
 	hide_ = false;
 	oldhandle_ = -1;
-#ifdef LINUX
-	grubPath_ = wxT("/boot/grub/menu.lst");
-#else
-	grubPath_ = wxT("");
-#endif
+
 	SetAppName(wxT("xanoubis"));
 	wxInitAllImageHandlers();
-
-	paths_.SetInstallPrefix(wxT(PACKAGE_PREFIX));
-
 	Debug::initialize();
 }
 
@@ -123,19 +106,14 @@ bool AnoubisGuiApp::OnInit()
 	 */
 	(void)ProcCtrl::getInstance();
 
+	/* Initialize helper class. */
+	(void)MainUtils::instance();
+
 	hasLocale = language_.Init(wxLANGUAGE_DEFAULT, wxLOCALE_CONV_ENCODING);
 	if (hasLocale) {
 		language_.AddCatalog(wxT("wxstd"));
 		language_.AddCatalog(wxT(PACKAGE_NAME));
 	}
-
-	/*
-	 * Initialize all modules with zero early on. This is important
-	 * to avoid bogus return values from wxGetApp().getModule(...)
-	 * during startup.
-	 */
-	for (int i=0; i<ANOUBIS_MODULESNO; ++i)
-		modules_[i] = NULL;
 
 	/*
 	 * Initilize config dirctory and check version of the config
@@ -153,10 +131,6 @@ bool AnoubisGuiApp::OnInit()
 		anMessageBox(msg, _("Warning"), wxOK | wxICON_WARNING,
 		    mainFrame);
 		return (false);
-	}
-
-	if (!wxDirExists(paths_.GetUserDataDir())) {
-		wxMkdir(paths_.GetUserDataDir());
 	}
 
 	/* Initialization of versionmanagement */
@@ -184,83 +158,22 @@ bool AnoubisGuiApp::OnInit()
 	wxConfig::Set(config);
 
 	mainFrame = new MainFrame((wxWindow*)NULL, trayVisible_);
-
 	SetTopWindow(mainFrame);
 	mainFrame->OnInit();
 
-	modules_[OVERVIEW] = new ModOverview(mainFrame);
-	modules_[ALF]      = new ModAlf(mainFrame);
-	modules_[SFS]      = new ModSfs(mainFrame);
-	modules_[SB]       = new ModSb(mainFrame);
-#ifdef LINUX
-	modules_[PG]       = new ModPlayground(mainFrame);
-#endif
-	modules_[ANOUBIS]  = new ModAnoubis(mainFrame);
-
-	((ModOverview*)modules_[OVERVIEW])->addModules(modules_);
-	mainFrame->addModules(modules_);
-
-	/* XXX [ST]: BUG #424
-	 * The following should be considered as a hack to update the state of
-	 * Module ALF by calling the update()-method.
-	 * Eventually the actual call has to be triggered by an event.
-	 */
-	((ModAlf*)modules_[ALF])->update();
-	((ModSfs*)modules_[SFS])->update();
-	((ModSfs*)modules_[SB])->update();
-#ifdef LINUX
-	((ModPlayground*)modules_[PG])->update();
-#endif
-	((ModAnoubis*)modules_[ANOUBIS])->update();
+	/* Create and initialize modules. */
+	MainUtils::instance()->initModules(mainFrame);
 
 	if (hasLocale) {
-		status(_("Language setting: ") + language_.GetCanonicalName());
+		mainFrame->SetStatusText(_("Language setting: ") +
+		    language_.GetCanonicalName(), 0);
 	}
 
 	/* Show the window only after it is completely constructed. */
 	if (!hide_)
 		mainFrame->Show();
 
-	wxConfig::Get()->Read(wxT("/Options/GrubConfigPath"), &grubPath_);
-
 	return (true);
-}
-
-void
-AnoubisGuiApp::checkBootConf(void)
-{
-	if (grubPath_.IsEmpty())
-		return;
-
-	/*
-	 * Now check if a new kernel has been installed since the last
-	 * start of xanoubis.
-	 */
-	time_t		savedTime = 0, lastTime = 0;
-	wxString	msg;
-	struct stat	sbuf;
-
-	wxConfig::Get()->Read(wxT("/Options/GrubModifiedTime"), &savedTime, 0);
-	if (savedTime) {
-		int ret = stat(grubPath_.fn_str(), &sbuf);
-		if (ret != -1)
-			lastTime = sbuf.st_mtime;
-		if (savedTime < lastTime) {
-			msg = _("The Boot Loader configuration has been"
-			    " updated. Please make sure to boot an Anoubis"
-			    " Kernel.");
-			AnMessageDialog dlg(mainFrame, msg, _("Warning"),
-			    wxOK | wxICON_WARNING);
-			dlg.onNotifyCheck(
-			    wxT("/Options/ShowKernelUpgradeMessage"));
-			dlg.ShowModal();
-			wxConfig::Get()->Write(
-			    wxT("/Options/GrubModifiedTime"), time(NULL));
-		}
-	} else {
-		wxConfig::Get()->Write(
-		    wxT("/Options/GrubModifiedTime"), time(NULL));
-	}
 }
 
 int
@@ -269,6 +182,7 @@ AnoubisGuiApp::OnExit(void)
 	int result = wxApp::OnExit();
 
 	delete AnIconList::getInstance();
+	delete MainUtils::instance();
 
 	/* Destroy policy-controller */
 	delete PolicyCtrl::getInstance();
@@ -279,13 +193,6 @@ AnoubisGuiApp::OnExit(void)
 	delete jobCtrl;
 
 	return (result);
-}
-
-
-void
-AnoubisGuiApp::status(wxString msg)
-{
-	mainFrame->SetStatusText(msg, 0);
 }
 
 void
@@ -364,213 +271,12 @@ AnoubisGuiApp::OnCmdLineParsed(wxCmdLineParser& parser)
 	return (true);
 }
 
-bool
-AnoubisGuiApp::connectCommunicator(bool doConnect)
-{
-	if (doConnect == getCommConnectionState()) {
-		/* No change of state */
-		return (false);
-	}
-
-	if (doConnect) {
-		return (JobCtrl::getInstance()->connect());
-	} else {
-		JobCtrl::getInstance()->disconnect();
-		return (true);
-	}
-}
-
-void
-AnoubisGuiApp::autoStart(bool autostart)
-{
-	wxString deskFile = wxStandardPaths::Get().GetDataDir() +
-	    wxT("/xanoubis.desktop");
-	wxString kPath = paths_.GetUserConfigDir() + wxT("/.kde/Autostart");
-	wxString gPath = paths_.GetUserConfigDir() + wxT("/.config/autostart");
-	wxString kAutoFile = kPath + wxT("/xanoubis.desktop");
-	wxString gAutoFile = gPath + wxT("/xanoubis.desktop");
-
-	if (autostart == true) {
-		if (wxDirExists(kPath) == false) {
-			wxFileName::Mkdir(kPath, 0777, wxPATH_MKDIR_FULL);
-		}
-		if (wxDirExists(gPath) == false) {
-			wxFileName::Mkdir(gPath, 0777, wxPATH_MKDIR_FULL);
-		}
-
-		if (wxFileExists(kAutoFile) == false) {
-			wxCopyFile(deskFile, kAutoFile);
-		}
-		if (wxFileExists(gAutoFile) == false) {
-			wxCopyFile(deskFile, gAutoFile);
-		}
-	} else {
-		if (wxFileExists(kAutoFile) == true) {
-			if (wxRemove(kAutoFile) != 0) {
-				wxString msg = wxString::Format(_
-				    ("Couldn't remove Autostart file: %ls"),
-				    kAutoFile.c_str());
-				anMessageBox(msg, _("Error"), wxICON_ERROR);
-			}
-		}
-		if (wxFileExists(gAutoFile) == true) {
-			if (wxRemove(gAutoFile) != 0) {
-				wxString msg = wxString::Format(_
-				    ("Couldn't remove Autostart file: %ls"),
-				    gAutoFile.c_str());
-				anMessageBox(msg, _("Error"), wxICON_ERROR);
-			}
-		}
-	}
-}
-
-wxString
-AnoubisGuiApp::getWizardPath(void)
-{
-	wxString wizardFileName;
-
-	wizardFileName = paths_.GetDataDir() + wxT("/profiles/wizard/");
-	if (!::wxFileExists(wizardFileName)) {
-		/*
-		 * We didn't find our wizard (where --prefix told us)!
-		 * Try to take executable path into account. This should
-		 * fix a missing --prefix as the matter in our build and test
-		 * environment with aegis.
-		 */
-		wizardFileName  = ::wxPathOnly(paths_.GetExecutablePath()) +
-		    wxT("/../../..") + wizardFileName;
-	}
-
-	return wizardFileName;
-}
-
-wxString
-AnoubisGuiApp::getIconPath(wxString iconName)
-{
-	wxString iconFileName;
-
-	iconFileName = paths_.GetDataDir() + wxT("/icons/") + iconName;
-	if (!::wxFileExists(iconFileName)) {
-		/*
-		 * We didn't find our icon (where --prefix told us)!
-		 * Try to take executable path into account. This should
-		 * fix a missing --prefix as the matter in our build and test
-		 * environment with aegis.
-		 */
-		iconFileName  = ::wxPathOnly(paths_.GetExecutablePath()) +
-		    wxT("/../../..") + iconFileName;
-	}
-	/*
-	 * XXX: by ch: No error check is done, 'cause wxIcon will open a error
-	 * dialog, complaining about missing icons itself. But maybe a logging
-	 * message should be generated when logging will been implemented.
-	 */
-	return iconFileName;
-}
-
-wxString
-AnoubisGuiApp::getRulesetPath(const wxString &profile, bool resolve)
-{
-	wxString fileName = paths_.GetUserDataDir() + wxT("/") + profile;
-
-	if (!resolve)
-		return (fileName);
-
-	if (!wxFileExists(fileName)) {
-		fileName = paths_.GetDataDir();
-		fileName += wxT("/profiles/") + profile;
-	}
-
-	if (!wxFileExists(fileName)) {
-		/*
-		 * We didn't find our icon (where --prefix told us)!
-		 * Try to take executable path into account. This should
-		 * fix a missing --prefix as the matter in our build and test
-		 * environment with aegis.
-		 */
-		fileName = wxPathOnly(paths_.GetExecutablePath()) +
-		    wxT("/../../..") + fileName;
-	}
-
-	return (fileName);
-}
-
-wxIcon *
-AnoubisGuiApp::loadIcon(wxString iconName)
-{
-	return (new wxIcon(getIconPath(iconName), wxBITMAP_TYPE_PNG));
-}
-
-
-Module *
-AnoubisGuiApp::getModule(enum moduleIdx idx)
-{
-	return (modules_[idx]);
-}
-
-wxString
-AnoubisGuiApp::getDataDir(void)
-{
-	return (paths_.GetUserConfigDir());
-}
-
-bool
-AnoubisGuiApp::getCommConnectionState(void)
-{
-	return (JobCtrl::getInstance()->isConnected());
-}
-
-uid_t
-AnoubisGuiApp::getUserIdByName(wxString name) const
-{
-	struct passwd	*pwd;
-
-	pwd = getpwnam(name.fn_str());
-	if (pwd) {
-		return pwd->pw_uid;
-	} else {
-		return (uid_t)-1;
-	}
-}
-
-/*
- * This function caches the last lookup to speed things up for cases
- * like the rule editor where we call this functions for each application
- * block.
- */
-wxString
-AnoubisGuiApp::getUserNameById(uid_t uid) const
-{
-	static int	 lastuid = 1;
-	static wxString	 lastname = wxEmptyString;
-	struct passwd	*pwd;
-
-	if (lastuid < 0 || uid != (uid_t)lastuid) {
-		pwd = getpwuid(uid);
-		if (pwd && pwd->pw_name) {
-			lastuid = uid;
-			lastname = wxString::From8BitData(pwd->pw_name,
-			    strlen(pwd->pw_name));
-		} else {
-			lastuid = -1;
-			lastname = wxEmptyString;
-		}
-	}
-	return lastname;
-}
-
 void
 AnoubisGuiApp::OnAnswerEscalation(wxCommandEvent &event)
 {
 	Notification *notify = (Notification*)event.GetClientObject();
 	JobCtrl::getInstance()->answerNotification(notify);
 	event.Skip();
-}
-
-wxString
-AnoubisGuiApp::getGrubPath(void)
-{
-	return grubPath_;
 }
 
 wxString

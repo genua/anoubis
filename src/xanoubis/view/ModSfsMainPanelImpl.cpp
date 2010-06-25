@@ -45,6 +45,7 @@
 #include "SfsOverviewTable.h"
 #include "SimpleOverviewRow.h"
 #include "ModSfsGenerateKeyDlg.h"
+#include "MainUtils.h"
 
 ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent, wxWindowID id)
     : ModSfsMainPanelBase(parent, id), Observer(NULL)
@@ -481,23 +482,23 @@ ModSfsMainPanelImpl::handleSfsCommandResult(SfsCtrl::CommandResult result)
 
 	switch (result) {
 	case SfsCtrl::RESULT_NOTCONNECTED:
-		wxGetApp().status(
+		MainUtils::instance()->status(
 		  _("Error: xanoubis is not connected to the daemon"));
 		break;
 	case SfsCtrl::RESULT_NEEDKEY:
-		wxGetApp().status(
+		MainUtils::instance()->status(
 		  _("Error: Failed to load the private key."));
 		break;
 	case SfsCtrl::RESULT_INVALIDARG:
-		wxGetApp().status(
+		MainUtils::instance()->status(
 		  _("Error: An invalid argument was supplied"));
 		break;
 	case SfsCtrl::RESULT_BUSY:
-		wxGetApp().status(
+		MainUtils::instance()->status(
 		 _("Error: Sfs is still busy with another operation."));
 		break;
 	case SfsCtrl::RESULT_WRONG_PASS:
-		wxGetApp().status(
+		MainUtils::instance()->status(
 		    _("Wrong password!"));
 		msg = _("The entered password is incorrect.");
 		anMessageBox(msg, _("SFS error"), wxOK|wxICON_ERROR, this);

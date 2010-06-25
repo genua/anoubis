@@ -25,9 +25,12 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <wx/filename.h>
+#include <wx/stdpaths.h>
+#include <wx/textfile.h>
+
 #include <netdb.h>
 
-#include "main.h"
 #include "Service.h"
 #include "ServiceList.h"
 

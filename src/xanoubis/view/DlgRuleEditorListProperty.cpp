@@ -25,9 +25,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "main.h"
 #include "Debug.h"
 #include "DlgRuleEditorListProperty.h"
+#include "MainUtils.h"
 
 #define EXTRACT_ID(text, policy) \
 	do { \
@@ -151,7 +151,8 @@ DlgRuleEditorListProperty::examineAppPolicy(AppPolicy *app) const
 		break;
 	case PROPERTY_USER:
 		if (ruleSet && (ruleSet->getUid() != (uid_t)-1)) {
-			text = wxGetApp().getUserNameById(ruleSet->getUid());
+			text = MainUtils::instance()->getUserNameById(
+			    ruleSet->getUid());
 		} else {
 			text = wxT("default");
 		}

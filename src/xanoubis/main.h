@@ -38,91 +38,99 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <wx/app.h>
-#include <wx/config.h>
-#include <wx/icon.h>
-#include <wx/intl.h>
-#include <wx/stdpaths.h>
-#include <wx/string.h>
-
-#include <wx/wxprec.h>
 #include <wx/cmdline.h>
+#include <wx/config.h>
+#include <wx/intl.h>
+#include <wx/string.h>
+#include <wx/wxprec.h>
+#include <wx/wx.h>
 
-#include <apn.h>
-#include <map>
-#include <list>
-
-#include "ctassert.h"
 #include "ComPolicyRequestTask.h"
 #include "ComPolicySendTask.h"
+#include "Debug.h"
 #include "DlgLogViewer.h"
 #include "DlgRuleEditor.h"
 #include "KeyCtrl.h"
 #include "MainFrame.h"
 #include "Module.h"
-#include "TrayIcon.h"
-#include "PolicyRuleSet.h"
-#include "Debug.h"
 #include "PolicyCtrl.h"
+#include "PolicyRuleSet.h"
+#include "TrayIcon.h"
 
-enum moduleIdx {
-	OVERVIEW = 0,
-	ALF,
-	SFS,
-	SB,
-	PG,
-	ANOUBIS,
-	LAST_MODULE_INDEX
-};
 
-compile_time_assert((LAST_MODULE_INDEX == ANOUBIS_MODULESNO), \
-    MODULE_INDEX_mismatch_ANOUBIS_MODULESNO);
-
+/**
+ * Main application class of xanoubis.
+ */
 class AnoubisGuiApp : public wxApp, private PassphraseReader
 {
-	private:
-		wxStandardPaths		 paths_;
-		wxLocale		 language_;
-		bool			 onInitProfile_;
-		bool			 trayVisible_;
-		bool			 hide_;
-		std::map<wxString,wxString> userList_;
-		MainFrame		*mainFrame;
-		Module			*modules_[ANOUBIS_MODULESNO];
-		int			 oldhandle_;
-		wxString		 grubPath_;
-
-		wxString readPassphrase(bool *);
-
-	protected:
-		void OnAnswerEscalation(wxCommandEvent &);
-
 	public:
+		/**
+		 * Constructor.
+		 */
 		AnoubisGuiApp(void);
+
+		/**
+		 * Destructor.
+		 */
 		~AnoubisGuiApp(void);
 
-		bool	OnInit(void);
-		int	OnExit(void);
-		void	status(wxString);
-		void	checkBootConf(void);
+		/**
+		 * On initialisation.
+		 * Initialize whole application after wxWidgets
+		 * was initializes.
+		 * @param None.
+		 * @return True on success.
+		 */
+		bool OnInit(void);
 
-		void	OnInitCmdLine(wxCmdLineParser&);
-		bool	OnCmdLineParsed(wxCmdLineParser&);
+		/**
+		 * On exit.
+		 * Cleanup on exit.
+		 * @param None.
+		 * @return Value ignored.
+		 * @note From wxWidgets documentation: The return value of
+		 * this function is currently ignored, return the same value
+		 * as returned by the base class method if you override it.
+		 */
+		int OnExit(void);
 
-		bool		 connectCommunicator(bool);
-		wxString	 getCatalogPath(void);
-		wxString	 getWizardPath(void);
-		wxString	 getIconPath(wxString);
-		wxString	 getRulesetPath(const wxString &, bool);
-		wxIcon		*loadIcon(wxString);
-		Module		*getModule(enum moduleIdx);
-		wxString	 getDataDir(void);
-		bool		 getCommConnectionState(void);
-		void		 autoStart(bool);
-		wxString	 getGrubPath(void);
+		/**
+		 * Initialize the parser with the command line options for this
+		 * application.
+		 * @param[in] 1st Parser for command lines.
+		 * @return Nothing.
+		 */
+		void OnInitCmdLine(wxCmdLineParser&);
 
-		uid_t		 getUserIdByName(wxString) const;
-		wxString	 getUserNameById(uid_t) const;
+		/**
+		 * Called after the command line had been successfully parsed.
+		 * @param[in] 1st Parser for command lines.
+		 * @return True on success.
+		 */
+		bool OnCmdLineParsed(wxCmdLineParser&);
+
+	protected:
+		/**
+		 * Relay notifications.
+		 * XXX ch: Can we remove this or do it another way?
+		 * XXX ch: I'll take a look at this.
+		 */
+		void OnAnswerEscalation(wxCommandEvent &);
+
+	private:
+		wxLocale	 language_;
+		bool		 onInitProfile_;
+		bool		 trayVisible_;
+		bool		 hide_;
+		MainFrame	*mainFrame;
+		int		 oldhandle_;
+
+		/**
+		 * Open Dialog to read passphrase.
+		 * @param[out] 1st When a password was entered this is true.
+		 * @return The entered password or an empty string.
+		 */
+		wxString readPassphrase(bool *);
 };
 
 DECLARE_APP(AnoubisGuiApp)

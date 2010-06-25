@@ -25,10 +25,12 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "AlfOverviewTable.h"
-#include "main.h"
-#include "SimpleOverviewRow.h"
 #include <typeinfo>
+
+#include "AlfOverviewTable.h"
+#include "MainUtils.h"
+#include "PolicyRuleSet.h"
+#include "SimpleOverviewRow.h"
 
 AlfOverviewTable::AlfOverviewTable(void)
     : SimpleOverviewTable(typeid(AlfAppPolicy))
@@ -167,8 +169,8 @@ AlfOverviewTable::getUserText(SimpleOverviewRow *row) const
 		return _("???");
 
 	if (ruleSet->isAdmin()) {
-		wxString userName =
-		    wxGetApp().getUserNameById(ruleSet->getUid());
+		wxString userName = MainUtils::instance()->getUserNameById(
+		    ruleSet->getUid());
 		return wxString::Format(_("admin ruleset of %ls"),
 		    userName.c_str());
 	} else {

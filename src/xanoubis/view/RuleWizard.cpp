@@ -25,41 +25,40 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "RuleWizard.h"
-
-#include "RuleWizardPage.h"
-#include "RuleWizardProgramPage.h"
-#include "RuleWizardContextPage.h"
-#include "RuleWizardContextExceptionPage.h"
-#include "RuleWizardAlfOverwritePage.h"
-#include "RuleWizardAlfClientPage.h"
-#include "RuleWizardAlfClientPortsPage.h"
-#include "RuleWizardSandboxPage.h"
-#include "RuleWizardSandboxOverwritePage.h"
-#include "RuleWizardFinalPage.h"
-#include "RuleWizardSandboxReadPage.h"
-#include "RuleWizardSandboxReadFilesPage.h"
-#include "RuleWizardSandboxWritePage.h"
-#include "RuleWizardSandboxWriteFilesPage.h"
-#include "RuleWizardSandboxExecutePage.h"
-#include "RuleWizardSandboxExecuteFilesPage.h"
-#include "AppPolicy.h"
 #include "AlfAppPolicy.h"
-#include "AlfFilterPolicy.h"
 #include "AlfCapabilityFilterPolicy.h"
-#include "SbAppPolicy.h"
-#include "SbAccessFilterPolicy.h"
-#include "Service.h"
-#include "ServiceList.h"
-#include "SbEntry.h"
-#include "SbModel.h"
-#include "StringListModel.h"
+#include "AlfFilterPolicy.h"
+#include "AnMessageDialog.h"
+#include "AppPolicy.h"
 #include "DefaultFilterPolicy.h"
+#include "JobCtrl.h"
+#include "MainUtils.h"
 #include "PolicyCtrl.h"
 #include "PolicyRuleSet.h"
-
-#include "main.h"
-#include "JobCtrl.h"
+#include "RuleWizard.h"
+#include "RuleWizardAlfClientPage.h"
+#include "RuleWizardAlfClientPortsPage.h"
+#include "RuleWizardAlfOverwritePage.h"
+#include "RuleWizardContextExceptionPage.h"
+#include "RuleWizardContextPage.h"
+#include "RuleWizardFinalPage.h"
+#include "RuleWizardPage.h"
+#include "RuleWizardProgramPage.h"
+#include "RuleWizardSandboxExecuteFilesPage.h"
+#include "RuleWizardSandboxExecutePage.h"
+#include "RuleWizardSandboxOverwritePage.h"
+#include "RuleWizardSandboxPage.h"
+#include "RuleWizardSandboxReadFilesPage.h"
+#include "RuleWizardSandboxReadPage.h"
+#include "RuleWizardSandboxWriteFilesPage.h"
+#include "RuleWizardSandboxWritePage.h"
+#include "SbAccessFilterPolicy.h"
+#include "SbAppPolicy.h"
+#include "SbEntry.h"
+#include "SbModel.h"
+#include "Service.h"
+#include "ServiceList.h"
+#include "StringListModel.h"
 
 #define CREATE_PAGE(list, idx, name, history)				\
 	do {								\
@@ -415,19 +414,20 @@ RuleWizard::onWizardFinished(wxWizardEvent &)
 			message = _("The entered password is incorrect.");
 			anMessageBox(message, _("Key Load Error"),
 			    wxOK|wxICON_ERROR, this);
-			wxGetApp().status(wxT("Wrong password!"));
+			MainUtils::instance()->status(wxT("Wrong password!"));
 			break;
 		case PolicyCtrl::RESULT_POL_ERR:
 			message = _("An error occured while sending admin"
 			    " policy to the daemon.");
 			anMessageBox(message, _("Policy Load Error"),
 				wxOK|wxICON_ERROR, this);
-			wxGetApp().status(wxT("Error while sending"
+			MainUtils::instance()->status(wxT("Error while sending"
 			    " admin policy to daemon."));
 			break;
 		case PolicyCtrl::RESULT_POL_ABORT:
 		case PolicyCtrl::RESULT_POL_OK:
-			wxGetApp().status(_("policy sent to daemon"));
+			MainUtils::instance()->status(
+			    _("policy sent to daemon"));
 			break;
 		}
 

@@ -46,35 +46,36 @@
 #include "AnEvents.h"
 #include "AnMessageDialog.h"
 #include "AnStatusBar.h"
-#include "JobCtrl.h"
-#include "MainFrameBase.h"
-#include "Module.h"
-#include "ModAnoubis.h"
-#include "ModSfs.h"
-#include "ModAnoubisMainPanelImpl.h"
-#include "RuleWizard.h"
 #include "DlgBackupPolicyImpl.h"
-#include "anoubis_errno.h"
-
-#include "main.h"
-
+#include "JobCtrl.h"
 #include "MainFrame.h"
+#include "MainFrameBase.h"
+#include "MainUtils.h"
+#include "ModAnoubis.h"
+#include "ModAnoubisMainPanelImpl.h"
+#include "ModSfs.h"
+#include "Module.h"
+#include "RuleWizard.h"
+#include "anoubis_errno.h"
+#include "main.h"
 
 MainFrame::MainFrame(wxWindow *parent, bool trayVisible)
     : MainFrameBase(parent)
 {
 	AnEvents	*anEvents;
 	JobCtrl		*jobCtrl;
+	MainUtils	*utils;
 
 	exit_ = false;
 
+	utils = MainUtils::instance();
 	messageAlertCount_ = 0;
 	messageEscalationCount_ = 0;
-	aboutIcon_ = wxGetApp().loadIcon(wxT("ModAnoubis_black_48.png"));
-	okIcon_ = wxGetApp().loadIcon(wxT("General_ok_16.png"));
-	errorIcon_ = wxGetApp().loadIcon(wxT("General_error_16.png"));
-	alertIcon_ = wxGetApp().loadIcon(wxT("General_alert_16.png"));
-	escalationIcon_ = wxGetApp().loadIcon(wxT("General_question_16.png"));
+	aboutIcon_ = utils->loadIcon(wxT("ModAnoubis_black_48.png"));
+	okIcon_ = utils->loadIcon(wxT("General_ok_16.png"));
+	errorIcon_ = utils->loadIcon(wxT("General_error_16.png"));
+	alertIcon_ = utils->loadIcon(wxT("General_alert_16.png"));
+	escalationIcon_ = utils->loadIcon(wxT("General_question_16.png"));
 
 	anEvents = AnEvents::getInstance();
 	jobCtrl = JobCtrl::getInstance();
@@ -170,6 +171,7 @@ MainFrame::OnInit(void)
 	Layout();
 }
 
+#include "/home/hiesl/include/debug.h"
 void
 MainFrame::addModules(Module* modules[ANOUBIS_MODULESNO])
 {
@@ -179,6 +181,7 @@ MainFrame::addModules(Module* modules[ANOUBIS_MODULESNO])
 	int		 i;
 	int		 id;
 
+	DEBUG_FIN;
 	for (i=0; i<ANOUBIS_MODULESNO; i++) {
 		if (modules[i] == NULL) {
 			continue;
@@ -189,6 +192,7 @@ MainFrame::addModules(Module* modules[ANOUBIS_MODULESNO])
 		icon = modules[i]->getIcon();
 		id   = modules[i]->getToolbarId();
 
+		DEBUG_VAL("add module %ls id %d\n", tooltip.c_str(), id);
 		/* add module to toolbar and connect selection event */
 		tb_LeftToolbarModule->AddRadioTool(id, name, *(icon),
 		    wxNullIcon, tooltip);
@@ -201,6 +205,7 @@ MainFrame::addModules(Module* modules[ANOUBIS_MODULESNO])
 	sz_mainframeMain->Add(modules[OVERVIEW]->getMainPanel(), 1,
 	    wxEXPAND, 5);
 	sz_mainframeMain->Layout();
+	DEBUG_FOUT;
 }
 
 void
@@ -254,7 +259,7 @@ void
 MainFrame::onSfsBrowserShow(wxCommandEvent& event)
 {
 	this->Show(event.GetInt());
-	Module *module = wxGetApp().getModule(SFS);
+	Module *module = MainUtils::instance()->getModule(SFS);
 	int id = module->getToolbarId();
 
 	/*
@@ -517,7 +522,7 @@ MainFrame::OnMbFileImportSelect(wxCommandEvent&)
 {
 	wxString	caption = _("Choose a policy file:");
 	wxString	wildcard = wxT("*");
-	wxString	defaultDir = wxGetApp().getDataDir();
+	wxString	defaultDir = MainUtils::instance()->getDataDir();
 	wxString	defaultFilename = wxEmptyString;
 	wxFileDialog	fileDlg(this, caption, defaultDir, defaultFilename,
 			    wildcard, wxOPEN);
@@ -537,7 +542,7 @@ MainFrame::OnMbFileExportSelect(wxCommandEvent&)
 {
 	wxString	caption = _("Choose a file to write the policies to:");
 	wxString	wildcard = wxT("*");
-	wxString	defaultDir = wxGetApp().getDataDir();
+	wxString	defaultDir = MainUtils::instance()->getDataDir();
 	wxString	defaultFilename = wxEmptyString;
 	wxFileDialog	fileDlg(this, caption, defaultDir, defaultFilename,
 			    wildcard, wxFD_SAVE);
@@ -596,7 +601,7 @@ MainFrame::OnMbHelpHelpSelect(wxCommandEvent&)
 void
 MainFrame::OnMbFileConnectSelect(wxCommandEvent& event)
 {
-	wxGetApp().connectCommunicator(event.IsChecked());
+	MainUtils::instance()->connectCommunicator(event.IsChecked());
 }
 
 void
@@ -645,7 +650,7 @@ MainFrame::OnEscalationsShow(wxCommandEvent& event)
 		Raise();
 		RequestUserAttention(wxUSER_ATTENTION_ERROR);
 	}
-	Module *module = wxGetApp().getModule(ANOUBIS);
+	Module *module = MainUtils::instance()->getModule(ANOUBIS);
 	int id = module->getToolbarId();
 
 	/*
@@ -664,7 +669,7 @@ void
 MainFrame::OnAnoubisOptionShow(wxCommandEvent& event)
 {
 	this->Show(event.GetInt());
-	Module *module = wxGetApp().getModule(ANOUBIS);
+	Module *module = MainUtils::instance()->getModule(ANOUBIS);
 	int id = module->getToolbarId();
 
 	/*
@@ -741,7 +746,7 @@ MainFrame::doUpgradeNotify(void)
 void
 MainFrame::onUpgradeNotify(wxCommandEvent &)
 {
-	wxGetApp().checkBootConf();
+	MainUtils::instance()->checkBootConf();
 	doUpgradeNotify();
 }
 

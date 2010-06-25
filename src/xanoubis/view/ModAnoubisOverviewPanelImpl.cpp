@@ -26,13 +26,14 @@
  */
 
 #include "JobCtrl.h"
+#include "MainUtils.h"
 #include "ModAnoubisOverviewPanelImpl.h"
-#include "main.h"
 
 ModAnoubisOverviewPanelImpl::ModAnoubisOverviewPanelImpl(wxWindow* parent, \
     wxWindowID id) : ModAnoubisOverviewPanelBase(parent, id)
 {
-	wxIcon *icon = wxGetApp().loadIcon(wxT("ModAnoubis_black_48.png"));
+	wxIcon *icon = MainUtils::instance()->loadIcon(
+	    wxT("ModAnoubis_black_48.png"));
 	anoubisStatusIcon->SetIcon(*icon);
 
 	setConnectionState(false);
@@ -47,13 +48,13 @@ ModAnoubisOverviewPanelImpl::ModAnoubisOverviewPanelImpl(wxWindow* parent, \
 void
 ModAnoubisOverviewPanelImpl::OnConnectClicked(wxCommandEvent&)
 {
-	wxGetApp().connectCommunicator(true);
+	MainUtils::instance()->connectCommunicator(true);
 }
 
 void
 ModAnoubisOverviewPanelImpl::OnDisconnectClicked(wxCommandEvent&)
 {
-	wxGetApp().connectCommunicator(false);
+	MainUtils::instance()->connectCommunicator(false);
 }
 
 void

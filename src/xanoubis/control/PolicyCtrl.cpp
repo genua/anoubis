@@ -34,12 +34,14 @@
 #include <wx/dir.h>
 #include <wx/stdpaths.h>
 
-#include "main.h"
+#include "AnMessageDialog.h"
 #include "ComPolicyRequestTask.h"
 #include "ComPolicySendTask.h"
 #include "JobCtrl.h"
-#include "PolicyRuleSet.h"
+#include "KeyCtrl.h"
+#include "MainUtils.h"
 #include "PolicyCtrl.h"
+#include "PolicyRuleSet.h"
 #include "Singleton.cpp"
 #include "VersionCtrl.h"
 
@@ -461,7 +463,7 @@ PolicyCtrl::OnPolicyRequest(TaskEvent &event)
 
 	isAdmin = (geteuid() == 0);
 	taskResult = task->getComTaskResult();
-	user = wxGetApp().getUserNameById(task->getUid());
+	user = MainUtils::instance()->getUserNameById(task->getUid());
 
 	if (taskResult == ComTask::RESULT_COM_ERROR) {
 		if (isAdmin && (task->getPriority() == 0))
@@ -536,7 +538,7 @@ PolicyCtrl::OnPolicySend(TaskEvent &event)
 
 	isAdmin = (geteuid() == 0);
 	taskResult = task->getComTaskResult();
-	user = wxGetApp().getUserNameById(task->getUid());
+	user = MainUtils::instance()->getUserNameById(task->getUid());
 
 	if (taskResult == ComTask::RESULT_INIT) {
 		message = _("The task was not executed.");

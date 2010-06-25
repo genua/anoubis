@@ -27,7 +27,8 @@
 
 #include <wx/icon.h>
 
-#include "main.h"
+#include "JobCtrl.h"
+#include "MainUtils.h"
 #include "ModPlayground.h"
 #include "ModPlaygroundOverviewPanelImpl.h"
 
@@ -35,10 +36,11 @@
 ModPlaygroundOverviewPanelImpl::ModPlaygroundOverviewPanelImpl(wxWindow* parent,
     wxWindowID id) : ModPlaygroundOverviewPanelBase(parent, id)
 {
-	stateIconNormal_ = wxGetApp().loadIcon(wxT("ModPlayground_ok_48.png"));
-	stateIconError_ = wxGetApp().loadIcon(
-	    wxT("ModPlayground_error_48.png"));
-	stateIconNotConnected_ = wxGetApp().loadIcon(
+	MainUtils *utils = MainUtils::instance();
+
+	stateIconNormal_ = utils->loadIcon(wxT("ModPlayground_ok_48.png"));
+	stateIconError_ = utils->loadIcon(wxT("ModPlayground_error_48.png"));
+	stateIconNotConnected_ = utils->loadIcon(
 	    wxT("ModPlayground_black_48.png"));
 	runningPgs_.Printf(wxT("%d"), 0);
 }
@@ -57,9 +59,9 @@ ModPlaygroundOverviewPanelImpl::update(void)
 	wxIcon		*stateIcon;
 	ModPlayground	*module;
 
-	module = (ModPlayground *)(wxGetApp().getModule(PG));
+	module = (ModPlayground *)(MainUtils::instance()->getModule(PG));
 
-	if (!wxGetApp().getCommConnectionState()) {
+	if (!JobCtrl::getInstance()->isConnected()) {
 		 stateText = _("not connected");
 		 stateIcon = stateIconNotConnected_;
 	} else {

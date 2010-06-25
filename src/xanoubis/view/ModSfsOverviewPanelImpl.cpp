@@ -27,17 +27,19 @@
 
 #include <wx/icon.h>
 
-#include "main.h"
+#include "JobCtrl.h"
+#include "MainUtils.h"
 #include "ModSfs.h"
 #include "ModSfsOverviewPanelImpl.h"
 
 ModSfsOverviewPanelImpl::ModSfsOverviewPanelImpl(wxWindow* parent,
     wxWindowID id) : ModSfsOverviewPanelBase(parent, id)
 {
-	stateIconNormal_ = wxGetApp().loadIcon(wxT("ModSfs_ok_48.png"));
-	stateIconError_ = wxGetApp().loadIcon(wxT("ModSfs_error_48.png"));
-	stateIconNotConnected_ = wxGetApp().loadIcon(
-	    wxT("ModSfs_black_48.png"));
+	MainUtils *utils = MainUtils::instance();
+
+	stateIconNormal_ = utils->loadIcon(wxT("ModSfs_ok_48.png"));
+	stateIconError_ = utils->loadIcon(wxT("ModSfs_error_48.png"));
+	stateIconNotConnected_ = utils->loadIcon(wxT("ModSfs_black_48.png"));
 	notAnswered_.Printf(wxT("%d"), 0);
 
 	AnEvents::getInstance()->Connect(anEVT_OPEN_SFS_ESCALATIONS,
@@ -63,8 +65,8 @@ ModSfsOverviewPanelImpl::update(void)
 	wxIcon		*stateIcon;
 	ModSfs		*module;
 
-	module = (ModSfs *)(wxGetApp().getModule(SFS));
-	if (!wxGetApp().getCommConnectionState()) {
+	module = (ModSfs *)(MainUtils::instance()->getModule(SFS));
+	if (!JobCtrl::getInstance()->isConnected()) {
 		stateText = _("not connected");
 		stateIcon = stateIconNotConnected_;
 	} else {

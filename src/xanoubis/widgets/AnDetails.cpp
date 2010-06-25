@@ -26,7 +26,7 @@
  */
 
 #include "AnDetails.h"
-#include "main.h"
+#include "MainUtils.h"
 
 AnDetails::AnDetails(wxWindow *parent, wxWindowID id, const wxPoint & pos,
     const wxSize & size, long style, const wxString & name)
@@ -34,11 +34,13 @@ AnDetails::AnDetails(wxWindow *parent, wxWindowID id, const wxPoint & pos,
 {
 	wxBoxSizer* mainSizer;
 	wxBoxSizer* headSizer;
+	MainUtils*  utils;
 
 	isVisible_    = false;
 	contentSizer_ = NULL;
-	downArrow_    = wxGetApp().loadIcon(wxT("General_downarrow_16.png"));
-	rightArrow_   = wxGetApp().loadIcon(wxT("General_rightarrow_16.png"));
+	utils	      = MainUtils::instance();
+	downArrow_    = utils->loadIcon(wxT("General_downarrow_16.png"));
+	rightArrow_   = utils->loadIcon(wxT("General_rightarrow_16.png"));
 
 	mainSizer = new wxBoxSizer(wxVERTICAL);
 	headSizer = new wxBoxSizer(wxHORIZONTAL);

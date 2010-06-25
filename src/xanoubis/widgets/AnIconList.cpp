@@ -26,7 +26,7 @@
  */
 
 #include "AnIconList.h"
-#include "main.h"
+#include "MainUtils.h"
 #include "Singleton.cpp"
 
 AnIconList::AnIconList(void)
@@ -72,7 +72,7 @@ AnIconList::getInstance(void)
 void
 AnIconList::addIcon(const wxString &name)
 {
-	wxIcon *icon = wxGetApp().loadIcon(name);
+	wxIcon *icon = MainUtils::instance()->loadIcon(name);
 
 	Add(*icon);
 

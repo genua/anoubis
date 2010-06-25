@@ -54,6 +54,7 @@
 #include "JobCtrl.h"
 #include "main.h"
 #include "TrayIcon.h"
+#include "MainUtils.h"
 
 #define MAX_MESSAGE	128
 #define MAX_PATH	1024
@@ -413,11 +414,13 @@ TrayIcon::systemNotify(const gchar *module, const gchar *message,
 
 	/* determine the icon used for systemNotify */
 	if (messagePriority == NOTIFY_URGENCY_LOW)
-		ipath += wxGetApp().getIconPath(wxT("ModAnoubis_black_48.png"));
+		ipath += MainUtils::instance()->getIconPath(
+		     wxT("ModAnoubis_black_48.png"));
 	if (messagePriority == NOTIFY_URGENCY_NORMAL)
-		ipath += wxGetApp().getIconPath(wxT("ModAnoubis_alert_48.png"));
+		ipath += MainUtils::instance()->getIconPath(
+		    wxT("ModAnoubis_alert_48.png"));
 	if (messagePriority == NOTIFY_URGENCY_CRITICAL)
-		ipath += wxGetApp().getIconPath(
+		ipath += MainUtils::instance()->getIconPath(
 		    wxT("ModAnoubis_question_48.png"));
 
 	strlcpy(buffer, (const char*)ipath.mb_str(wxConvUTF8), sizeof(buffer));

@@ -25,12 +25,13 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "main.h"
+#include <typeinfo>
+
+#include "MainUtils.h"
 #include "PolicyRuleSet.h"
 #include "SfsAppPolicy.h"
 #include "SfsOverviewTable.h"
 #include "SimpleOverviewRow.h"
-#include <typeinfo>
 
 SfsOverviewTable::SfsOverviewTable(void)
     : SimpleOverviewTable(typeid(SfsAppPolicy))
@@ -136,8 +137,8 @@ SfsOverviewTable::getUserText(SimpleOverviewRow *row) const
 		return _("???");
 
 	if (ruleSet->isAdmin()) {
-		wxString userName =
-		    wxGetApp().getUserNameById(ruleSet->getUid());
+		wxString userName = MainUtils::instance()->getUserNameById(
+		    ruleSet->getUid());
 		return wxString::Format(_("admin ruleset of %ls"),
 		    userName.c_str());
 	} else {

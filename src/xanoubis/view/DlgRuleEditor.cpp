@@ -27,30 +27,29 @@
 
 #include <wx/defs.h>	/* mandatory but missing in choicdlg.h */
 #include <wx/choicdlg.h>
+#include <wx/config.h>
 #include <wx/dynarray.h>
+#include <wx/filedlg.h>
+
+#include "AlfAppPolicy.h"
+#include "AnGrid.h"
+#include "AnMessageDialog.h"
+#include "AnPolicyNotebook.h"
+#include "AnRowProvider.h"
+#include "ContextAppPolicy.h"
+#include "DlgRuleEditor.h"
+#include "DlgRuleEditorAppPage.h"
+#include "DlgRuleEditorAttrProvider.h"
+#include "DlgRuleEditorListProperty.h"
+#include "DlgRuleEditorPage.h"
+#include "FilterPolicy.h"
+#include "JobCtrl.h"
+#include "MainUtils.h"
+#include "PolicyCtrl.h"
+#include "PolicyRuleSet.h"
+#include "SfsAppPolicy.h"
 
 #include <wx/arrimpl.cpp>
-#include <wx/filedlg.h>
-#include <wx/config.h>
-
-#include "main.h"
-#include "DlgRuleEditor.h"
-
-#include "AnGrid.h"
-#include "AnRowProvider.h"
-#include "AlfAppPolicy.h"
-#include "ContextAppPolicy.h"
-#include "SfsAppPolicy.h"
-#include "FilterPolicy.h"
-#include "PolicyRuleSet.h"
-#include "PolicyCtrl.h"
-#include "DlgRuleEditorPage.h"
-#include "DlgRuleEditorAppPage.h"
-#include "JobCtrl.h"
-#include "AnPolicyNotebook.h"
-#include "DlgRuleEditorListProperty.h"
-#include "DlgRuleEditorAttrProvider.h"
-
 
 #define ADD_PROPERTY(table, type, width) \
 	table->addProperty(new DlgRuleEditorListProperty( \
@@ -1322,7 +1321,7 @@ DlgRuleEditor::setUser(wxString user)
 	if (user == wxT("") || tx_userSelect->IsModified() == false) {
 		return;
 	}
-	uid = wxGetApp().getUserIdByName(user);
+	uid = MainUtils::instance()->getUserIdByName(user);
 	tx_userSelect->DiscardEdits();
 	if (uid == (uid_t)-1) {
 		wxString	msg;

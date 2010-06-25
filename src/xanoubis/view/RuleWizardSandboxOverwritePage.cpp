@@ -25,11 +25,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "RuleWizardSandboxOverwritePage.h"
-
+#include "MainUtils.h"
 #include "PolicyCtrl.h"
 #include "PolicyRuleSet.h"
-#include "main.h"
+#include "RuleWizardSandboxOverwritePage.h"
 
 RuleWizardSandboxOverwritePage::RuleWizardSandboxOverwritePage(wxWindow *parent,
     RuleWizardHistory *history) : RuleWizardOverwritePolicyPageBase(parent)
@@ -51,7 +50,7 @@ RuleWizardSandboxOverwritePage::RuleWizardSandboxOverwritePage(wxWindow *parent,
 	    " application. Thereby you may specify new sandbox policies.");
 	helpLabel->SetLabel(text);
 
-	icon = wxGetApp().loadIcon(wxT("General_problem_48.png"));
+	icon = MainUtils::instance()->loadIcon(wxT("General_problem_48.png"));
 	alertIcon->SetIcon(*icon);
 
 	text = _("For this application\nsandbox policies\nalready exist.");

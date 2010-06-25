@@ -42,6 +42,8 @@
 
 class TaskEvent;
 class TrayIcon;
+class DlgLogViewer;
+class DlgRuleEditor;
 
 class MainFrame : public MainFrameBase
 {

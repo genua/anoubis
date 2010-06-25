@@ -34,12 +34,13 @@
 
 #include <anoubis_errno.h>
 
-#include "main.h"
+#include "MainUtils.h"
 #include "PolicyCtrl.h"
 #include "PolicyRowProvider.h"
 #include "PolicyVisitor.h"
-#include "RuleSetSearchPolicyVisitor.h"
 #include "RuleSetClearModifiedVisitor.h"
+#include "RuleSetSearchPolicyVisitor.h"
+#include "main.h"
 
 PolicyRuleSet::PolicyRuleSet(int priority, uid_t uid,
     struct apn_ruleset *ruleSet)
@@ -883,5 +884,5 @@ PolicyRuleSet::status(const wxString &msg)
 	 * You don't have a AnoubisGuiApp in can of a unit-test.
 	 */
 	if (dynamic_cast<AnoubisGuiApp*>(wxTheApp))
-		wxGetApp().status(msg);
+		MainUtils::instance()->status(msg);
 }

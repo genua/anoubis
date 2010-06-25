@@ -28,7 +28,7 @@
 #include <wx/icon.h>
 #include <wx/string.h>
 
-#include "main.h"
+#include "MainUtils.h"
 #include "Module.h"
 
 Module::Module(void)
@@ -97,5 +97,5 @@ Module::getIcon(void)
 void
 Module::loadIcon(wxString iconName)
 {
-	icon_ = wxGetApp().loadIcon(iconName);
+	icon_ = MainUtils::instance()->loadIcon(iconName);
 }

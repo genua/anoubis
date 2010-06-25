@@ -34,19 +34,20 @@
 #include <wx/utils.h>
 
 #include "ApnVersion.h"
+#include "MainUtils.h"
 #include "ModAnoubis.h"
+#include "PolicyRuleSet.h"
+#include "ProcCtrl.h"
 #include "Singleton.cpp"
 #include "VersionCtrl.h"
-#include "ProcCtrl.h"
-
-#include "main.h"
 
 VersionCtrl::VersionCtrl(void)
 {
 	wxString	repository;
 	wxString	userName;
 
-	repository = wxGetApp().getDataDir() + wxT("/.xanoubis/apnvmroot");
+	repository = MainUtils::instance()->getDataDir() +
+	    wxT("/.xanoubis/apnvmroot");
 	userName = wxGetUserId();
 
 	versionProfile_ = wxEmptyString;

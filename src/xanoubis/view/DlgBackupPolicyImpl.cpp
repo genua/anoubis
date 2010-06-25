@@ -31,9 +31,10 @@
 #include <wx/app.h>
 #include <wx/filedlg.h>
 
+#include "AnMessageDialog.h"
 #include "DlgBackupPolicyImpl.h"
+#include "MainUtils.h"
 #include "PolicyRuleSet.h"
-#include "main.h"
 
 DlgBackupPolicy::DlgBackupPolicy(wxIcon *icon, PolicyRuleSet *rs)
     : DlgBackupPolicyBase(NULL)
@@ -47,8 +48,8 @@ DlgBackupPolicy::DlgBackupPolicy(wxIcon *icon, PolicyRuleSet *rs)
 	pwd = getpwuid(ruleset_->getUid());
 	if (pwd && pwd->pw_dir) {
 	}
-	homedir_ = wxGetApp().getDataDir();
-	user = wxGetApp().getUserNameById(rs->getUid());
+	homedir_ = MainUtils::instance()->getDataDir();
+	user = MainUtils::instance()->getUserNameById(rs->getUid());
 	if (user.IsEmpty()) {
 		user = wxString::Format(_("uid %d"), rs->getUid());
 	}

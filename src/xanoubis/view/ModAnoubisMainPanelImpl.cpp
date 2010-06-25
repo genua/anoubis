@@ -50,25 +50,25 @@
 #include <wx/filedlg.h>
 #include <wx/tooltip.h>
 
-#include "AnListColumn.h"
-#include "main.h"
+#include "AlertNotify.h"
 #include "AnEvents.h"
+#include "AnListColumn.h"
 #include "ApnVersion.h"
 #include "DlgProfileSelection.h"
+#include "EscalationNotify.h"
 #include "KeyCtrl.h"
+#include "LogNotify.h"
+#include "MainUtils.h"
 #include "ModAnoubis.h"
 #include "ModAnoubisMainPanelImpl.h"
 #include "Notification.h"
-#include "LogNotify.h"
-#include "AlertNotify.h"
-#include "EscalationNotify.h"
 #include "NotifyAnswer.h"
-#include "VersionCtrl.h"
-#include "VersionListCtrl.h"
 #include "PolicyCtrl.h"
 #include "ProfileListCtrl.h"
-
+#include "VersionCtrl.h"
+#include "VersionListCtrl.h"
 #include "apn.h"
+#include "main.h"
 
 
 #define ZERO_SECONDS	0
@@ -246,7 +246,7 @@ ModAnoubisMainPanelImpl::readOptions(void)
 	wxConfig::Get()->Read(wxT("/Options/AlertTimeout"), &alertTimeout);
 
 	wxConfig::Get()->Read(wxT("/Options/Autostart"), &doAutostart);
-	wxGetApp().autoStart(doAutostart);
+	MainUtils::instance()->autoStart(doAutostart);
 
 	wxConfig::Get()->Read(wxT("/Options/AutoConnect"), &autoConnect);
 
@@ -269,7 +269,7 @@ ModAnoubisMainPanelImpl::readOptions(void)
 	cb_DoAutostart->SetValue(doAutostart);
 
 	autoConnectBox->SetValue(autoConnect);
-	wxGetApp().connectCommunicator(autoConnect);
+	MainUtils::instance()->connectCommunicator(autoConnect);
 
 	toolTipCheckBox->SetValue(enableToolTips);
 	toolTipSpinCtrl->SetValue(toolTipTimeout);
@@ -950,7 +950,8 @@ ModAnoubisMainPanelImpl::answer(bool permission)
 
 	current = dynamic_cast<EscalationNotify *>(currentNotify_);
 	if (current) {
-		module = (ModAnoubis *)(wxGetApp().getModule(ANOUBIS));
+		module = (ModAnoubis *)(MainUtils::instance()->getModule(
+		    ANOUBIS));
 
 		if (rb_EscalationOnce->GetValue()) {
 			answer = new NotifyAnswer(NOTIFY_ANSWER_ONCE,
@@ -1128,7 +1129,7 @@ ModAnoubisMainPanelImpl::OnEnableInformationMsg(wxCommandEvent&)
 
 void ModAnoubisMainPanelImpl::OnDoAutostart(wxCommandEvent& event)
 {
-	wxGetApp().autoStart(event.IsChecked());
+	MainUtils::instance()->autoStart(event.IsChecked());
 }
 
 void

@@ -58,6 +58,7 @@
 #include "EscalationNotify.h"
 #include "LogNotify.h"
 #include "NotifyAnswer.h"
+#include "MainUtils.h"
 #include "StatusNotify.h"
 #include "DaemonAnswerNotify.h"
 
@@ -465,7 +466,8 @@ Notification::getOrigin(void)
 	off = get_value((notify_->u.notify)->pathoff);
 	len = get_value((notify_->u.notify)->pathlen);
 	buffer = notify_->u.notify->payload;
-	user = wxGetApp().getUserNameById(get_value(notify_->u.notify->uid));
+	user = MainUtils::instance()->getUserNameById(
+	    get_value(notify_->u.notify->uid));
 	if (len > 0) {
 		wxString path = wxString::From8BitData(buffer+off, len);
 		origin = wxString::Format(_("%ls(Pid: %d, Uid: %ls/%d)"),
