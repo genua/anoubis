@@ -171,7 +171,6 @@ MainFrame::OnInit(void)
 	Layout();
 }
 
-#include "/home/hiesl/include/debug.h"
 void
 MainFrame::addModules(Module* modules[ANOUBIS_MODULESNO])
 {
@@ -181,7 +180,6 @@ MainFrame::addModules(Module* modules[ANOUBIS_MODULESNO])
 	int		 i;
 	int		 id;
 
-	DEBUG_FIN;
 	for (i=0; i<ANOUBIS_MODULESNO; i++) {
 		if (modules[i] == NULL) {
 			continue;
@@ -192,7 +190,6 @@ MainFrame::addModules(Module* modules[ANOUBIS_MODULESNO])
 		icon = modules[i]->getIcon();
 		id   = modules[i]->getToolbarId();
 
-		DEBUG_VAL("add module %ls id %d\n", tooltip.c_str(), id);
 		/* add module to toolbar and connect selection event */
 		tb_LeftToolbarModule->AddRadioTool(id, name, *(icon),
 		    wxNullIcon, tooltip);
@@ -205,7 +202,6 @@ MainFrame::addModules(Module* modules[ANOUBIS_MODULESNO])
 	sz_mainframeMain->Add(modules[OVERVIEW]->getMainPanel(), 1,
 	    wxEXPAND, 5);
 	sz_mainframeMain->Layout();
-	DEBUG_FOUT;
 }
 
 void
