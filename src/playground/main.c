@@ -91,7 +91,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc <= 0)
+	if (argc <= 1)
 		usage();
 		/* NOTREACHED */
 
@@ -99,7 +99,6 @@ main(int argc, char *argv[])
 	argc--;
 
 	/* Run command. */
-	error = 0;
 	if (strcmp(command, "start") == 0) {
 		error = playground_start_exec(argv);
 	} else {
