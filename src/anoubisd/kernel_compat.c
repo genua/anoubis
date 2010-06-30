@@ -63,9 +63,9 @@ compat_get_event(anoubisd_msg_t *old, unsigned long version)
 	 * This conversion function assumes that the current
 	 * ANOUBISCORE_VERSION is 0x00010004UL. Abort if this is not the case.
 	 */
-	if (ANOUBISCORE_VERSION != 0x10004UL) {
+	if (ANOUBISCORE_VERSION != 0x10005UL) {
 		log_warnx("compat_get_event: Current verion is %lx but we "
-		    "only support 0x00010004", ANOUBISCORE_VERSION);
+		    "only support 0x00010005", ANOUBISCORE_VERSION);
 		free(old);
 		return NULL;
 	}
@@ -76,7 +76,7 @@ compat_get_event(anoubisd_msg_t *old, unsigned long version)
 	}
 	/*
 	 * There have been no structure layout changes between versions
-	 * 0x00010001UL and 0x00010004.
+	 * 0x00010001UL and 0x00010005.
 	 */
 	return  old;
 }

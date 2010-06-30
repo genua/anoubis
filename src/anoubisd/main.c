@@ -1837,10 +1837,10 @@ dispatch_dev2m(int fd, short event __used, void *arg)
 
 		/* we shortcut and ack events for our own children */
 		if ((hdr->msg_flags & EVENTDEV_NEED_REPLY) &&
-		    (hdr->msg_pid == (u_int32_t)se_pid ||
-		     hdr->msg_pid == (u_int32_t)policy_pid
-		     || hdr->msg_pid == (u_int32_t)logger_pid)) {
-
+		    (hdr->msg_pid == (u_int32_t)se_pid
+		     || hdr->msg_pid == (u_int32_t)policy_pid
+		     || hdr->msg_pid == (u_int32_t)logger_pid
+		     || hdr->msg_source == ANOUBIS_SOURCE_PLAYGROUND)) {
 			msg_reply = msg_factory(ANOUBISD_MSG_EVENTREPLY,
 			    sizeof(struct eventdev_reply));
 			if (msg_reply == NULL) {
@@ -1850,6 +1850,8 @@ dispatch_dev2m(int fd, short event __used, void *arg)
 			rep = (struct eventdev_reply *)msg_reply->msg;
 			rep->msg_token = hdr->msg_token;
 			rep->reply = 0;
+			if (hdr->msg_source == ANOUBIS_SOURCE_PLAYGROUND)
+				rep->reply = EPERM;
 
 			/* this should be queued, so as to not get lost */
 			enqueue(&eventq_m2dev, msg_reply);

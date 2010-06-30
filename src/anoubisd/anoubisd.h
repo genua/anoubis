@@ -49,6 +49,15 @@
 #include <dev/anoubis.h>
 #include <dev/anoubis_sfs.h>
 #endif
+
+/* This file can be included from both linux and OpenBSD. */
+#include <linux/anoubis_playground.h>
+
+#ifndef ANOUBIS_SOURCE_PLAYGROUND
+#define ANOUBIS_SOURCE_PLAYGROUND 0xff
+#endif
+
+#include <linux/anoubis_playground.h>
 #include <assert.h>
 
 #include <sys/queue.h>

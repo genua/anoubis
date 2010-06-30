@@ -41,6 +41,7 @@
 #include <linux/anoubis.h>
 #include <linux/anoubis_alf.h>
 #include <linux/anoubis_sfs.h>
+#include <linux/anoubis_playground.h>
 #endif
 #ifdef OPENBSD
 #include <sha2.h>
@@ -391,6 +392,27 @@ sfs_open_message_size(const char *buf, int buflen)
 	RETURN_SIZE();
 }
 
+/*
+ * Size of a pg_open_message
+ */
+static int
+pg_open_message_size(const char *buf, int buflen)
+{
+	struct pg_open_message *pg;
+	DECLARE_SIZE();
+
+	CAST(pg, buf, buflen);
+	SHIFT_FIELD(pg, pathbuf, buf, buflen);
+	SHIFT_STRING(buf, buflen);
+	if (pg->op == ANOUBIS_PLAYGROUND_OP_OPEN)
+		RETURN_SIZE();
+	if (pg->op == ANOUBIS_PLAYGROUND_OP_RENAME) {
+		SHIFT_STRING(buf, buflen);
+		RETURN_SIZE();
+	}
+	return -1;
+}
+
 #ifdef ANOUBIS_SOURCE_SFSPATH
 /*
  * Size of an sfs_path_message structure.
@@ -517,6 +539,7 @@ eventdev_hdr_size(const char *buf, int buflen)
 	VARIANT(ANOUBIS_SOURCE_PROCESS, ac_process_message, buf, buflen);
 	VARIANT(ANOUBIS_SOURCE_STAT, anoubis_stat_message, buf, buflen);
 	VARIANT(ANOUBIS_SOURCE_IPC, ac_ipc_message, buf, buflen);
+	VARIANT(ANOUBIS_SOURCE_PLAYGROUND, pg_open_message, buf, buflen);
 	default:
 		return -1;
 	}
