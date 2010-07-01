@@ -695,7 +695,7 @@ DlgRuleEditorFilterSubjectPageBase::DlgRuleEditorFilterSubjectPageBase( wxWindow
 	mainSizer = new wxBoxSizer( wxVERTICAL );
 	
 	pathPicker = new AnPickFromFs( scrollPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	mainSizer->Add( pathPicker, 0, wxEXPAND | wxALL, 5 );
+	mainSizer->Add( pathPicker, 0, wxEXPAND|wxTOP|wxBOTTOM|wxRIGHT, 5 );
 	
 	wxFlexGridSizer* subjectSizer;
 	subjectSizer = new wxFlexGridSizer( 2, 3, 0, 0 );
@@ -703,7 +703,7 @@ DlgRuleEditorFilterSubjectPageBase::DlgRuleEditorFilterSubjectPageBase( wxWindow
 	subjectSizer->SetFlexibleDirection( wxBOTH );
 	subjectSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
-	subjectLabel = new wxStaticText( scrollPanel, wxID_ANY, _("Subject:"), wxDefaultPosition, wxDefaultSize, 0 );
+	subjectLabel = new wxStaticText( scrollPanel, wxID_ANY, _("Subject:"), wxDefaultPosition, wxSize( 75,-1 ), 0 );
 	subjectLabel->Wrap( -1 );
 	subjectSizer->Add( subjectLabel, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
@@ -718,7 +718,7 @@ DlgRuleEditorFilterSubjectPageBase::DlgRuleEditorFilterSubjectPageBase( wxWindow
 	subjectSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	subjectTextCtrl = new wxTextCtrl( scrollPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	subjectSizer->Add( subjectTextCtrl, 1, wxALL|wxEXPAND, 5 );
+	subjectSizer->Add( subjectTextCtrl, 1, wxEXPAND|wxALL, 5 );
 	
 	
 	subjectSizer->Add( 100, 0, 1, wxEXPAND, 5 );

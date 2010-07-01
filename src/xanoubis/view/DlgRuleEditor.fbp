@@ -4811,7 +4811,7 @@
                             <property name="permission">none</property>
                             <object class="sizeritem" expanded="1">
                                 <property name="border">5</property>
-                                <property name="flag">wxEXPAND | wxALL</property>
+                                <property name="flag">wxEXPAND|wxTOP|wxBOTTOM|wxRIGHT</property>
                                 <property name="proportion">0</property>
                                 <object class="wxPanel" expanded="1">
                                     <property name="bg"></property>
@@ -4891,7 +4891,7 @@
                                             <property name="name">subjectLabel</property>
                                             <property name="permission">protected</property>
                                             <property name="pos"></property>
-                                            <property name="size"></property>
+                                            <property name="size">75,-1</property>
                                             <property name="style"></property>
                                             <property name="subclass"></property>
                                             <property name="tooltip"></property>
@@ -4996,7 +4996,7 @@
                                     </object>
                                     <object class="sizeritem" expanded="1">
                                         <property name="border">5</property>
-                                        <property name="flag">wxALL|wxEXPAND</property>
+                                        <property name="flag">wxEXPAND|wxALL</property>
                                         <property name="proportion">1</property>
                                         <object class="wxTextCtrl" expanded="1">
                                             <property name="bg"></property>

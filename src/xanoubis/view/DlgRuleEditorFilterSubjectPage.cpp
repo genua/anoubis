@@ -81,6 +81,7 @@ DlgRuleEditorFilterSubjectPage::DlgRuleEditorFilterSubjectPage(wxWindow *parent,
 	addSubject(pathPicker);
 	pathPicker->setMode(AnPickFromFs::MODE_BOTH);
 	pathPicker->setTitle(_("Path:"));
+	pathPicker->setTitleMinSize(wxSize(75,-1));
 }
 
 void
