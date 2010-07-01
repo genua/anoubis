@@ -81,7 +81,15 @@ AnoubisGuiApp::AnoubisGuiApp(void)
 AnoubisGuiApp::~AnoubisGuiApp(void)
 {
 	/* Destroy versionmanagement */
-	delete VersionCtrl::getInstance();
+	/*
+	 * XXX CH: When gui called /w option OnInit() is not called. Thus
+	 * XXX CH: this delete will fristly create an instance which causes
+	 * XXX CH: other c-tors and using wx classes not initialized. For
+	 * XXX CH: now we just deactivate this, but need better solution.
+	 * XXX CH: This may be realated to bug #1333.
+	 *
+	 * delete VersionCtrl::getInstance();
+	 */
 	Debug::uninitialize();
 
 	/* XXX KM: if we delete this instance a
@@ -217,11 +225,11 @@ AnoubisGuiApp::OnInitCmdLine(wxCmdLineParser& parser)
 			wxCMD_LINE_OPTION,
 			wxT("d"),
 			wxT("debug"),
-			_("Debug output with \'num\' als level"),
+			_("Debug output with level of \'num\'"),
 			wxCMD_LINE_VAL_NUMBER,
 			wxCMD_LINE_PARAM_OPTIONAL
 		}, {
-			wxCMD_LINE_OPTION,
+			wxCMD_LINE_SWITCH,
 			wxT("t"),
 			wxT("tray"),
 			_("Disable TrayIcon"),
@@ -233,7 +241,7 @@ AnoubisGuiApp::OnInitCmdLine(wxCmdLineParser& parser)
 			wxT("hide"),
 			_("Do not show the main window"),
 			wxCMD_LINE_VAL_NONE,
-			0
+			wxCMD_LINE_PARAM_OPTIONAL
 		}, {
 			wxCMD_LINE_NONE,
 			NULL,
