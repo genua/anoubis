@@ -637,7 +637,8 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 		if (((hdr->msg_flags & EVENTDEV_NEED_REPLY) == 0) &&
 		    (hdr->msg_source != ANOUBIS_SOURCE_PROCESS &&
 		    hdr->msg_source != ANOUBIS_SOURCE_SFSEXEC &&
-		    hdr->msg_source != ANOUBIS_SOURCE_IPC)) {
+		    hdr->msg_source != ANOUBIS_SOURCE_IPC &&
+		    hdr->msg_source != ANOUBIS_SOURCE_PLAYGROUND)) {
 			free(msg);
 			DEBUG(DBG_TRACE, "<dispatch_m2p (not NEED_REPLY)");
 			continue;

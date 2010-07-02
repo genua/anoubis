@@ -74,6 +74,7 @@ static anoubisd_reply_t	*pe_handle_sfsexec(struct eventdev_hdr *);
 static anoubisd_reply_t	*pe_handle_alf(struct eventdev_hdr *);
 static anoubisd_reply_t	*pe_handle_ipc(struct eventdev_hdr *);
 static anoubisd_reply_t	*pe_handle_sfs(struct eventdev_hdr *);
+static anoubisd_reply_t *pe_handle_playgroundask(struct eventdev_hdr *);
 
 static struct pe_file_event *pe_parse_file_event(struct eventdev_hdr *hdr);
 #ifdef ANOUBIS_SOURCE_SFSPATH
@@ -313,6 +314,10 @@ pe_dispatch_event(struct eventdev_hdr *hdr)
 		reply = pe_handle_sfspath(hdr);
 		break;
 #endif
+
+	case ANOUBIS_SOURCE_PLAYGROUND:
+		reply = pe_handle_playgroundask(hdr);
+		break;
 
 	default:
 		log_warnx("pe_dispatch_event: unknown message source %d",
@@ -695,6 +700,63 @@ pe_handle_sfspath(struct eventdev_hdr *hdr)
 	return reply;
 }
 #endif
+
+/**
+ * Handle playground ask events. These events are generated if a
+ * playground request access to the special file or tries to rename
+ * a directory and this access cannot be done within the playground.
+ *
+ * @param hdr The eventdev header of the kernel event. Any playground
+ *     specific payload data follows.
+ * @return An anoubis_reply structure. Currently, we ask the user for
+ *     permission unconditionally.
+ */
+static anoubisd_reply_t *
+pe_handle_playgroundask(struct eventdev_hdr *hdr)
+{
+
+	anoubisd_reply_t		*reply = NULL;
+	struct pg_open_message		*pgevent;
+	struct pe_proc			*proc;
+
+	if (hdr == NULL) {
+		log_warnx("pe_handle_playgroundask: empty message");
+		return NULL;
+	}
+	if (hdr->msg_size < (sizeof(struct eventdev_hdr) +
+	    sizeof(struct pg_open_message))) {
+		log_warnx("pe_handle_playgroundask: short message");
+		return NULL;
+	}
+	pgevent = (struct pg_open_message *)(hdr+1);
+
+	reply = malloc(sizeof(anoubisd_reply_t));
+	if (reply == NULL)
+		return NULL;
+	proc = pe_proc_get(pgevent->common.task_cookie);
+	if (proc && pe_proc_get_pid(proc) == -1)
+		pe_proc_set_pid(proc, hdr->msg_pid);
+
+	reply->hold = 0;
+	reply->log = APN_LOG_NONE; /* XXX CEH: This needs fixing. */
+	reply->rule_id = 0;
+	reply->prio = 1;
+	reply->sfsmatch = ANOUBIS_SFS_NONE;
+
+	if (!proc) {
+		reply->reply = EPERM;
+		reply->ask = 0;
+		reply->timeout = 0;
+		return reply;
+	}
+	reply->ask = 1;
+	reply->timeout = 300;
+	reply->pident = pe_proc_ident(proc);
+	reply->ctxident = pe_context_get_ident(
+	    pe_proc_get_context(proc, reply->prio));
+	pe_proc_put(proc);
+	return reply;
+}
 
 void
 pe_dump(void)

@@ -1832,15 +1832,15 @@ dispatch_dev2m(int fd, short event __used, void *arg)
 			break;
 		hdr = (struct eventdev_hdr *)msg->msg;
 
-		DEBUG(DBG_QUEUE, " >dev2m: %x %c", hdr->msg_token,
-		    (hdr->msg_flags & EVENTDEV_NEED_REPLY)  ? 'R' : 'N');
+		DEBUG(DBG_QUEUE, " >dev2m: %x %c source=%d", hdr->msg_token,
+		    (hdr->msg_flags & EVENTDEV_NEED_REPLY)  ? 'R' : 'N',
+		    hdr->msg_source);
 
 		/* we shortcut and ack events for our own children */
 		if ((hdr->msg_flags & EVENTDEV_NEED_REPLY) &&
 		    (hdr->msg_pid == (u_int32_t)se_pid
 		     || hdr->msg_pid == (u_int32_t)policy_pid
-		     || hdr->msg_pid == (u_int32_t)logger_pid
-		     || hdr->msg_source == ANOUBIS_SOURCE_PLAYGROUND)) {
+		     || hdr->msg_pid == (u_int32_t)logger_pid)) {
 			msg_reply = msg_factory(ANOUBISD_MSG_EVENTREPLY,
 			    sizeof(struct eventdev_reply));
 			if (msg_reply == NULL) {
@@ -1874,7 +1874,8 @@ dispatch_dev2m(int fd, short event __used, void *arg)
 		    (hdr->msg_source == ANOUBIS_SOURCE_IPC)) {
 			/* Send event to policy process for handling. */
 			enqueue(&eventq_m2p, msg);
-			DEBUG(DBG_QUEUE, " >eventq_m2p: %x", hdr->msg_token);
+			DEBUG(DBG_QUEUE, " >eventq_m2p: %x source=%d",
+			    hdr->msg_token, hdr->msg_source);
 		} else {
 			/* Send event to session process for notifications. */
 			enqueue(&eventq_m2s, msg);
