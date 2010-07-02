@@ -3,6 +3,7 @@ sbin/anoubisd
 sbin/anoubisctl
 sbin/sfssig
 usr/bin/anoubis-keygen
+usr/bin/playground
 sbin/anoubis-keyinstall
 etc/udev/*
 usr/share/anoubisd/*
