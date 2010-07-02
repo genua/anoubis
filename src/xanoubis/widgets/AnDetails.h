@@ -77,6 +77,22 @@ class AnDetails : public wxPanel
 		 */
 		void SetSizer(wxSizer *, bool deleteOld = true);
 
+		/**
+		 * Returns true if the details-panel is visible.
+		 * @return If the details-panel is visible, true is returned,
+		 *         false otherwise.
+		 */
+		bool detailsVisible(void) const;
+
+		/**
+		 * Display the details-panel.
+		 *
+		 * @param[in] 1st If set to true, the details-panel is
+		 *            displayed. If set tp false, the details-panel
+		 *            is hidden.
+		 */
+		void showDetails(bool);
+
 	protected:
 		/**
 		 * This is the icon shown at the top left corner. It shows

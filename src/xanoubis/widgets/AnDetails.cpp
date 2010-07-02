@@ -93,11 +93,23 @@ AnDetails::SetSizer(wxSizer *sizer, bool deleteOld)
 	update();
 }
 
+bool
+AnDetails::detailsVisible(void) const
+{
+	return (isVisible_);
+}
+
+void
+AnDetails::showDetails(bool visible)
+{
+	isVisible_ = visible;
+	update();
+}
+
 void
 AnDetails::onDetailClick(wxMouseEvent &)
 {
-	isVisible_ = !isVisible_;
-	update();
+	showDetails(!isVisible_);
 }
 
 void

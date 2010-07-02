@@ -39,6 +39,11 @@
 #include "DlgRuleEditorAppPage.h"
 #include "DlgRuleEditorFilterSubjectPage.h"
 
+/*
+ * Definition of contextPageVisible_-attribute.
+ */
+bool DlgRuleEditorAppPage::contextPageVisible_ = false;
+
 DlgRuleEditorAppPage::DlgRuleEditorAppPage(wxWindow *parent,
     wxWindowID id, const wxPoint & pos, const wxSize & size, long style)
     : DlgRuleEditorPage(),
@@ -48,10 +53,13 @@ DlgRuleEditorAppPage::DlgRuleEditorAppPage(wxWindow *parent,
 	appPolicy_ = NULL;
 	ctxPolicy_ = NULL;
 	pageHeader_ = wxT("");
+
+	contextPage->showDetails(contextPageVisible_);
 }
 
 DlgRuleEditorAppPage::~DlgRuleEditorAppPage(void)
 {
+	contextPageVisible_ = contextPage->detailsVisible();
 }
 
 void
@@ -177,4 +185,3 @@ DlgRuleEditorAppPage::setRunInPlayground(void)
 {
 	playgroundCheckbox->SetValue(appPolicy_->getFlag(APN_RULE_PLAYGROUND));
 }
-

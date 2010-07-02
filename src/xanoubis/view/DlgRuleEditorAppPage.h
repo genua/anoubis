@@ -148,6 +148,16 @@ class DlgRuleEditorAppPage : public DlgRuleEditorPage,
 		wxString pageHeader_;
 
 		/**
+		 * Static attribute holds visibility-status of the
+		 * context-page.
+		 *
+		 * The visibility should be the same over all
+		 * DlgRuleEditorAppPage-instances. That's why, the attribute is
+		 * static.
+		 */
+		static bool contextPageVisible_;
+
+		/**
 		 * Write the binary to page header.
 		 * @param None.
 		 * @return Nothing.
