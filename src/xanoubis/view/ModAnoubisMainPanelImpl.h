@@ -29,6 +29,7 @@
 #define __ModAnoubisMainPanelImpl__
 
 #include <vector>
+#include <map>
 
 #include "ModAnoubisPanelsBase.h"
 #include "Notification.h"
@@ -40,8 +41,19 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase,
 {
 	private:
 		NotificationPerspective *listPerspective_;
-		wxArrayLong::const_iterator it_;
 
+		/**
+		 * This is our hash, to resolve the selected element of
+		 * each listPerspective_.
+		 */
+		std::map<NotificationPerspective *, long> elementNoHash_;
+
+		/**
+		 * To notice any removal of an element from
+		 * LIST_NOTANSWERED, we remember the old size from
+		 * this list.
+		 */
+		long		 sizeListNotAnswered_;
 		Notification	*currentNotify_;
 		Notification	*savedNotify_;
 		wxString	 selectedProfile;

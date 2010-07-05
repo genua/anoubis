@@ -103,10 +103,8 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 	notifyCtrl = NotificationCtrl::instance();
 	listPerspective_ = notifyCtrl->getPerspective(
 		NotificationCtrl::LIST_NOTANSWERED);
-	if (listPerspective_ != NULL)
-		it_ = listPerspective_->begin();
-	else
-		it_ = 0;
+	elementNoHash_[listPerspective_] = 0;
+	sizeListNotAnswered_ = 0;
 
 	/* read and restore Escalations Settings */
 	readOptions();
@@ -618,10 +616,11 @@ void
 ModAnoubisMainPanelImpl::update(void)
 {
 	wxString		 s;
-	size_t			 maxElementNo;
-	size_t			 elementNo;
+	long			 maxElementNo;
+	long			 elementNo;
 	EscalationNotify	*eNotify = NULL;
 	NotificationCtrl	*notifyCtrl = NotificationCtrl::instance();
+	NotificationPerspective	*listPerspectiveNotAnswered;
 
 	if (tb_MainAnoubisNotify->GetCurrentPage()
 	   == tb_MainAnoubisNotification) {
@@ -631,31 +630,86 @@ ModAnoubisMainPanelImpl::update(void)
 		wxPostEvent(AnEvents::getInstance(), showEvent);
 	}
 
+	/*
+	 * We may need the listPerspective_ of LIST_NOTANSWERED
+	 *
+	 * We need to adjust the remembered size of LIST_NOTANSWERED
+	 * if a new escalation has been added.
+	 */
+	listPerspectiveNotAnswered = NotificationCtrl::instance()->
+	    getPerspective(NotificationCtrl::LIST_NOTANSWERED);
+	if (sizeListNotAnswered_ < listPerspectiveNotAnswered->getSize())
+		sizeListNotAnswered_ = listPerspectiveNotAnswered->getSize();
+
 	if (currentNotify_) {
 		/*
 		 * A DaemonAnswerNotify can remove an Escalation from
 		 * the list. Reset currentNotify_ in this case.
 		 */
 		eNotify = dynamic_cast<EscalationNotify *>(currentNotify_);
-		if (eNotify && eNotify->isAnswered() &&
-		    listPerspective_ == notifyCtrl->getPerspective(
-		    NotificationCtrl::LIST_NOTANSWERED))
-			currentNotify_ = NULL;
+		if (eNotify && eNotify->isAnswered()) {
+			if (listPerspective_ == listPerspectiveNotAnswered) {
+				currentNotify_ = NULL;
+			} else {
+				/*
+				 * ONLY if the LIST_NOTANSWERED has been
+				 * changed by removing an element &&
+				 * removed element was an entry 'before'
+				 * the element to be shown from
+				 * LIST_NOTANSWERED &&
+				 * index to element to be shown could be
+				 * decremented
+				 *
+				 * -> decrement
+				 */
+				if ((listPerspectiveNotAnswered->getSize() <
+				    sizeListNotAnswered_)
+				    &&
+				    (listPerspective_->getIndex(
+				    	listPerspectiveNotAnswered->getId(
+				    	elementNoHash_[
+					    listPerspectiveNotAnswered])
+				    ) - 1 >
+				    listPerspective_->getIndex(
+					currentNotify_->getId()))
+				    &&
+				    (elementNoHash_[listPerspectiveNotAnswered]
+				    != 0))
+				{
+					elementNoHash_[
+					    listPerspectiveNotAnswered] -= 1;
+				}
+			}
+		} else {
+			/*
+			 * If an element from LIST_NOTANSWERED had been removed
+			 * and the current element to be shown is not answered,
+			 * the removal has been caused by a timeout.
+			 * Thus we have to decrement the index.
+			 */
+			if ((listPerspectiveNotAnswered->getSize() <
+			    sizeListNotAnswered_) &&
+			    (elementNoHash_[listPerspectiveNotAnswered] != 0))
+				elementNoHash_[listPerspectiveNotAnswered] -= 1;
+		}
 	}
+
+	elementNo = elementNoHash_[listPerspective_];
 
 	if (listPerspective_) {
 		maxElementNo = listPerspective_->getSize();
 	} else {
 		maxElementNo = 0;
 	}
-	elementNo = 0;
 
 	if (maxElementNo > 0) {
+		if (elementNo > maxElementNo - 1)
+			elementNo = maxElementNo - 1;
 		if (currentNotify_ == NULL) {
-			it_ = listPerspective_->begin();
-			currentNotify_ = notifyCtrl->getNotification(*it_);
+			currentNotify_ = notifyCtrl->getNotification(
+				listPerspective_->getId(elementNo)
+			);
 		}
-		elementNo = it_ - listPerspective_->begin();
 	} else {
 		currentNotify_ = NULL;
 	}
@@ -683,7 +737,7 @@ ModAnoubisMainPanelImpl::update(void)
 	 * last element in the list enable buttons for the next and last
 	 * element.
 	 */
-	if (maxElementNo > 0 && elementNo + 1 < maxElementNo) {
+	if (maxElementNo > 0 && elementNo + 1 < (long) maxElementNo) {
 		bt_next->Enable();
 		bt_last->Enable();
 	} else {
@@ -695,25 +749,23 @@ ModAnoubisMainPanelImpl::update(void)
 	 * Only update the escalation window if the escalation actually
 	 * changed.
 	 */
-	if (currentNotify_ == savedNotify_) {
+	if (currentNotify_ == savedNotify_ && currentNotify_ == NULL) {
 		/*
 		 * Fix for bug #1363:
 		 * Escalation view not properly initialized
 		 * If current notify == saved notify == NULL
 		 * we have to hide all concerning widgets.
 		 */
-		if (currentNotify_ == NULL) {
-			HIDESLOT(1);
-			HIDESLOT(2);
-			HIDESLOT(3);
-			HIDESLOT(4);
-			HIDESLOT(5);
-			HIDESLOT(6);
-			pn_Escalation->Hide();
-			tx_answerValue->Hide();
-			Layout();
-			Refresh();
-		}
+		HIDESLOT(1);
+		HIDESLOT(2);
+		HIDESLOT(3);
+		HIDESLOT(4);
+		HIDESLOT(5);
+		HIDESLOT(6);
+		pn_Escalation->Hide();
+		tx_answerValue->Hide();
+		Layout();
+		Refresh();
 		return;
 	}
 	savedNotify_ = currentNotify_;
@@ -770,21 +822,24 @@ ModAnoubisMainPanelImpl::setPerspective(NotificationCtrl::ListPerspectives p)
 	NotificationCtrl			*notifyCtrl;
 
 	notifyCtrl = NotificationCtrl::instance();
-	currentNotify_ = NULL;
+
+	if (listPerspective_ == notifyCtrl->getPerspective(
+	    NotificationCtrl::LIST_NOTANSWERED))
+		sizeListNotAnswered_ = listPerspective_->getSize();
 
 	removeSubject(listPerspective_);
 
 	listPerspective_ = notifyCtrl->getPerspective(p);
-	if (listPerspective_ != NULL) {
-		it_ = listPerspective_->begin();
-	} else {
-		it_ = 0;
-	}
-	if (it_) {
-		currentNotify_ = notifyCtrl->getNotification(*it_);
-	} else {
+
+	if (p == NotificationCtrl::LIST_NOTANSWERED)
+		sizeListNotAnswered_ = listPerspective_->getSize();
+
+	if (listPerspective_->getSize() > 0)
+		currentNotify_ = notifyCtrl->getNotification(
+		    listPerspective_->getId(
+			elementNoHash_[listPerspective_]));
+	else
 		currentNotify_ = NULL;
-	}
 
 	addSubject(listPerspective_);
 	update();
@@ -819,14 +874,14 @@ ModAnoubisMainPanelImpl::OnTypeChoosen(wxCommandEvent& event)
 void
 ModAnoubisMainPanelImpl::OnFirstBtnClick(wxCommandEvent&)
 {
-	NotificationCtrl	*notifyCtlr;
+	NotificationCtrl	*notifyCtrl;
 
-	notifyCtlr = NotificationCtrl::instance();
+	notifyCtrl = NotificationCtrl::instance();
 	if (listPerspective_ != NULL) {
-		it_ = listPerspective_->begin();
-		currentNotify_ = notifyCtlr->getNotification(*it_);
+		elementNoHash_[listPerspective_] = 0;
+		currentNotify_ = notifyCtrl->getNotification(
+		    listPerspective_->getId(0));
 	} else {
-		it_ = 0;
 		currentNotify_ = NULL;
 	}
 
@@ -836,12 +891,14 @@ ModAnoubisMainPanelImpl::OnFirstBtnClick(wxCommandEvent&)
 void
 ModAnoubisMainPanelImpl::OnPreviousBtnClick(wxCommandEvent&)
 {
-	NotificationCtrl	*notifyCtlr;
+	NotificationCtrl	*notifyCtrl;
 
-	notifyCtlr = NotificationCtrl::instance();
-	if (it_ != 0) {
-		it_--;
-		currentNotify_ = notifyCtlr->getNotification(*it_);
+	notifyCtrl = NotificationCtrl::instance();
+	if (elementNoHash_[listPerspective_] != 0) {
+		elementNoHash_[listPerspective_] -= 1;
+		currentNotify_ = notifyCtrl->getNotification(
+		    listPerspective_->getId(
+			elementNoHash_[listPerspective_]));
 	} else {
 		currentNotify_ = NULL;
 	}
@@ -852,12 +909,16 @@ ModAnoubisMainPanelImpl::OnPreviousBtnClick(wxCommandEvent&)
 void
 ModAnoubisMainPanelImpl::OnNextBtnClick(wxCommandEvent&)
 {
-	NotificationCtrl	*notifyCtlr;
+	NotificationCtrl	*notifyCtrl;
 
-	notifyCtlr = NotificationCtrl::instance();
-	if (it_ != 0) {
-		it_++;
-		currentNotify_ = notifyCtlr->getNotification(*it_);
+	notifyCtrl = NotificationCtrl::instance();
+	if (elementNoHash_[listPerspective_] <
+	    listPerspective_->getSize() - 1)
+	{
+		elementNoHash_[listPerspective_] += 1;
+		currentNotify_ = notifyCtrl->getNotification(
+		    listPerspective_->getId(
+			elementNoHash_[listPerspective_]));
 	} else {
 		currentNotify_ = NULL;
 	}
@@ -868,17 +929,19 @@ ModAnoubisMainPanelImpl::OnNextBtnClick(wxCommandEvent&)
 void
 ModAnoubisMainPanelImpl::OnLastBtnClick(wxCommandEvent&)
 {
-	NotificationCtrl	*notifyCtlr;
+	NotificationCtrl	*notifyCtrl;
 
-	notifyCtlr = NotificationCtrl::instance();
+	notifyCtrl = NotificationCtrl::instance();
 
 	if (listPerspective_ != NULL) {
 		/* get last */
-		it_ = listPerspective_->end();
-		it_--;
-		currentNotify_ = notifyCtlr->getNotification(*it_);
+		elementNoHash_[listPerspective_] =
+		    listPerspective_->getSize()  - 1;
+		currentNotify_ = notifyCtrl->getNotification(
+		    listPerspective_->getId(
+			elementNoHash_[listPerspective_]));
 	} else {
-		it_ = 0;
+		elementNoHash_[listPerspective_] = 0;
 		currentNotify_ = NULL;
 	}
 
@@ -986,7 +1049,6 @@ ModAnoubisMainPanelImpl::answer(bool permission)
 		NotificationCtrl::instance()->answerEscalationNotify(
 		    current, answer);
 	}
-	currentNotify_ = NULL;
 	update();
 }
 

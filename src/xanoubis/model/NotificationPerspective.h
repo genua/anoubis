@@ -65,25 +65,13 @@ class NotificationPerspective : public Subject
 		long getId(long) const;
 
 		/**
-		 * Get iterator.
+		 * Get Index of given item.
 		 *
-		 * This delegates the begin() to ids_ array to get a
-		 * iterator pointing to the first element.
-		 * @param None.
-		 * @return Iterator to first element.
+		 * @param[in]	The item, from which the index should be
+		 *		returned.
+		 * @return Index to given item.
 		 */
-		wxArrayLong::const_iterator begin(void) const;
-
-		/**
-		 * Get iterator.
-		 *
-		 * This delegates the end() to ids_ array to get a
-		 * iterator pointing to the last element.
-		 * @param None.
-		 * @return Iterator to last element.
-		 */
-		wxArrayLong::const_iterator end(void) const;
-
+		long getIndex(long) const;
 	private:
 		/**
 		 * The array of ids forming this list.

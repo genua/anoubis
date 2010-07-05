@@ -79,16 +79,13 @@ public:
 	 */
 	AnListClass	*getRow(unsigned int idx) const {
 		NotificationCtrl		*notifyCtrl;
-		wxArrayLong::const_iterator	 it;
 
 		if (perspective_ == NULL)
 			return NULL;
 		if ((int)idx < 0 || (int)idx >= perspective_->getSize())
 			return NULL;
-		it = perspective_->begin();
-		it += idx;
 		notifyCtrl = NotificationCtrl::instance();
-		return notifyCtrl->getNotification(*it);
+		return notifyCtrl->getNotification(perspective_->getId(idx));
 	};
 	/**
 	 * Implementation of Observer::update().
@@ -184,15 +181,13 @@ DlgLogViewer::onLogSelect(wxListEvent &event)
 {
 	wxCommandEvent			 showEvent(anEVT_SHOW_RULE);
 	Notification			*notify;
-	wxArrayLong::const_iterator	 it;
 	NotificationCtrl		*notifyCtrl;
 	NotificationPerspective		*perspective;
 
 	notifyCtrl = NotificationCtrl::instance();
 	perspective = notifyCtrl->getPerspective(NotificationCtrl::LIST_ALL);
-	it = perspective->begin();
-	it += event.GetIndex();
-	notify = notifyCtrl->getNotification(*it);
+	notify = notifyCtrl->getNotification(perspective->getId(
+		event.GetIndex()));
 
 	if (!notify)
 		return;

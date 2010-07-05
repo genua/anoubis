@@ -46,16 +46,10 @@ NotificationPerspective::getId(long index) const
 	return (ids_.Item(index));
 }
 
-wxArrayLong::const_iterator
-NotificationPerspective::begin(void) const
+long
+NotificationPerspective::getIndex(long id) const
 {
-	return (ids_.begin());
-}
-
-wxArrayLong::const_iterator
-NotificationPerspective::end(void) const
-{
-	return (ids_.end());
+	return (long) ids_.Index(id, false);
 }
 
 NotificationPerspective::~NotificationPerspective(void)

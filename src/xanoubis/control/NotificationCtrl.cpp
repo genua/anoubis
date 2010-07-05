@@ -185,8 +185,6 @@ NotificationCtrl::NotificationCtrl(void) : Singleton<NotificationCtrl>()
 void
 NotificationCtrl::onDaemonDisconnect(wxCommandEvent & event)
 {
-	wxArrayLong::const_iterator it;
-
 	NotifyAnswer		*answer;
 	Notification		*notify;
 	EscalationNotify	*escalation;
@@ -194,20 +192,22 @@ NotificationCtrl::onDaemonDisconnect(wxCommandEvent & event)
 	event.Skip();
 
 	if (event.GetInt() != JobCtrl::CONNECTED) {
-		it = escalationsNotAnswered_.begin();
-		while (it != escalationsNotAnswered_.end()) {
-			notify = getNotification(*it);
+		while (escalationsNotAnswered_.getSize() > 0) {
+			notify = getNotification(
+				escalationsNotAnswered_.getId(0)
+			);
 			escalation = dynamic_cast<EscalationNotify *>(notify);
 			if (escalation == NULL) {
 				/* Should never happen, but let's play safe. */
-				escalationsNotAnswered_.removeId(*it);
+				escalationsNotAnswered_.removeId(
+					escalationsNotAnswered_.getId(0)
+				);
 			} else {
 				answer = new NotifyAnswer(NOTIFY_ANSWER_ONCE,
 				    false);
 				answerEscalationNotify(escalation, answer,
 				    false);
 			}
-			it = escalationsNotAnswered_.begin();
 		}
 	}
 
@@ -350,7 +350,7 @@ EscalationNotify *
 NotificationCtrl::fixupEscalationAnswer(int type, anoubis_token_t token,
     int error)
 {
-	wxArrayLong::const_iterator	 it;
+	long				 currentElement;
 	bool				 allow = (error == 0);
 	NotifyAnswer			*answer;
 	Notification			*notify;
@@ -358,9 +358,12 @@ NotificationCtrl::fixupEscalationAnswer(int type, anoubis_token_t token,
 
 	if (type == ANOUBIS_N_RESOTHER) {
 		/* Search it in the list of unanswered requests. */
-		for (it = escalationsNotAnswered_.begin();
-		     it != escalationsNotAnswered_.end(); it++) {
-			notify = getNotification(*it);
+		for (currentElement = 0;
+		     currentElement != escalationsNotAnswered_.getSize();
+		     currentElement++)
+		{
+			notify = getNotification(
+				escalationsNotAnswered_.getId(currentElement));
 			escalation = dynamic_cast<EscalationNotify *>(notify);
 			if ((escalation != NULL) &&
 			    (escalation->getToken() == token)) {
@@ -377,10 +380,11 @@ NotificationCtrl::fixupEscalationAnswer(int type, anoubis_token_t token,
 	 * request is likely to be at the end of the list and the list can
 	 * get long over time.
 	 */
-	it = escalationsNotAnswered_.end();
-	while (it != escalationsNotAnswered_.begin()) {
-		it--;
-		notify = getNotification(*it);
+	currentElement = escalationsNotAnswered_.getSize();
+	while (currentElement > 0) {
+		currentElement--;
+		notify = getNotification(
+			escalationsNotAnswered_.getId(currentElement));
 		escalation = dynamic_cast<EscalationNotify *>(notify);
 		if ((escalation != NULL) && (escalation->getToken() == token)) {
 			answer = escalation->getAnswer();

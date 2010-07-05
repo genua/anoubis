@@ -89,8 +89,6 @@ ModSb::update(void)
 void
 ModSb::update(Subject *subject)
 {
-	wxArrayLong::const_iterator it;
-
 	Notification		*notify;
 	NotificationCtrl	*notifyCtrl;
 	NotificationPerspective	*perspective;
@@ -101,8 +99,7 @@ ModSb::update(Subject *subject)
 	}
 
 	notifyCtrl = NotificationCtrl::instance();
-	it = perspective->begin();
-	notify = notifyCtrl->getNotification(*it);
+	notify = notifyCtrl->getNotification(perspective->getId(0));
 	if (notify && IS_STATUSOBJ(notify)) {
 		isActive_ = ((StatusNotify *)notify)->hasSfsLoadtime();
 	}
