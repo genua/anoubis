@@ -65,7 +65,7 @@ static int			 have_task_tracking = 0;
 static void			 pe_proc_track(struct pe_proc *);
 static void			 pe_proc_untrack(struct pe_proc *);
 static struct pe_proc		*pe_proc_alloc(uid_t uid, anoubis_cookie_t,
-				    struct pe_proc_ident *);
+				    struct pe_proc_ident *, anoubis_cookie_t);
 static inline unsigned int	 pe_proc_get_flag(struct pe_proc *,
 				     unsigned int);
 static inline void		 pe_proc_set_flag(struct pe_proc *,
@@ -80,8 +80,22 @@ static inline void		 pe_proc_secure_inherit(struct pe_proc *,
 #define _PE_PROC_INTERNALS_H_
 #include "pe_proc_internals.h"
 
+/**
+ * A list of all processes known to the process management of anoubisd.
+ */
 TAILQ_HEAD(tracker, pe_proc) tracker;
 
+/**
+ * Fill the process identifier with a copy of the data given as parameters.
+ * Any memory associated with the old process identifier is freed.
+ *
+ * @param A pointer to the new process identifier. The identifer must be
+ *     valid and any memory allocated for the path or checksum data will
+ *     be freed.
+ * @param csum The new sha256 checksum. The memory will be copied.
+ * @param pathhint The new pathhint. The memory will be copied.
+ * @return None.
+ */
 void
 pe_proc_ident_set(struct pe_proc_ident *pident, const struct abuf_buffer csum,
     const char *pathhint)
@@ -111,6 +125,14 @@ oom:
 	master_terminate(ENOMEM);
 }
 
+/**
+ * Release all memory associated with a process identifier. This function
+ * frees the checksum buffer and the pathint. The process identifier
+ * will be initialized with an empty checksum buffer and pathhint.
+ *
+ * @param pident The process identifier.
+ * @return None.
+ */
 void
 pe_proc_ident_put(struct pe_proc_ident *pident)
 {
@@ -122,12 +144,25 @@ pe_proc_ident_put(struct pe_proc_ident *pident)
 	}
 }
 
+/**
+ * Initailize the process tracking data structures.
+ *
+ * @param None.
+ * @return None.
+ */
 void
 pe_proc_init(void)
 {
 	TAILQ_INIT(&tracker);
 }
 
+/**
+ * Free all memory allocated with the process tracking. This is
+ * called in response to a HUP signal.
+ *
+ * @param None.
+ * @return None.
+ */
 void
 pe_proc_flush(void)
 {
@@ -140,6 +175,15 @@ pe_proc_flush(void)
 	}
 }
 
+/**
+ * Return the process structure for the given task cookie. If a process
+ * with the given task cookie exists, a reference to its proc structure is
+ * acquired and a pointer to the structure is returned.
+ *
+ * @param cookie The task cookie.
+ * @return NULL if the process is not tracked or a pointer to the proc
+ *     structure with the reference count increased.
+ */
 struct pe_proc *
 pe_proc_get(anoubis_cookie_t cookie)
 {
@@ -157,6 +201,15 @@ pe_proc_get(anoubis_cookie_t cookie)
 	return (proc);
 }
 
+/**
+ * Release one reference to the proc structure. If the reference count
+ * reaches zero the structure is freed. Callers should use this function
+ * to drop their reference to a process structure. Freeing the process
+ * structure directly is not allowed.
+ *
+ * @param proc The proc structure.
+ * @return None.
+ */
 void
 pe_proc_put(struct pe_proc *proc)
 {
@@ -164,6 +217,7 @@ pe_proc_put(struct pe_proc *proc)
 
 	if (!proc || --(proc->refcount))
 		return;
+	pe_playground_delete(proc->pgid, proc);
 	pe_proc_ident_put(&proc->ident);
 
 	for (i = 0; i < PE_PRIO_MAX; i++) {
@@ -173,8 +227,59 @@ pe_proc_put(struct pe_proc *proc)
 	abuf_free_type(proc, struct pe_proc);
 }
 
+/**
+ * Set the playground ID of a process. This function make sure that the
+ * playground management accounts for the new pgid of the process.
+ *
+ * @param proc The process that changes its playgroundid. The process
+ *     may be new and not yet tracked.
+ * @param pgid The new playground ID to set.
+ * @return None.
+ */
+void
+pe_proc_set_playgroundid(struct pe_proc *proc, anoubis_cookie_t pgid)
+{
+	if (proc && proc->pgid != pgid) {
+		if (proc->pgid)
+			pe_playground_delete(pgid, proc);
+		proc->pgid = pgid;
+		if (proc->pgid)
+			pe_playground_add(pgid, proc);
+	}
+}
+
+/**
+ * Return the playground ID of the given process.
+ *
+ * @param The process.
+ * @return The playground ID. This function returns zero if proc is NULL.
+ */
+anoubis_cookie_t
+pe_proc_get_playgroundid(struct pe_proc *proc)
+{
+	if (!proc)
+		return 0;
+	return proc->pgid;
+}
+
+/**
+ * Allocate a new process structure. The reference count of the new structure
+ * is one, i.e. a single pe_proc_put will free the memory unless other
+ * references are taken.
+ *
+ * @param uid The user-ID of the new process.
+ * @param cookie The task cookie of the new process.
+ * @param pident The process identifier of the new process. This function
+ *     copies the data in pident, the memory allocated by the caller for the
+ *     pident parameter is untouched.
+ * @param pgid The playground ID of the new process.
+ * @return A newly allocated process structure.. The structure is filled with
+ *     the data from the parameters. If memory allocation fails, NULL is
+ *     retunred.
+ */
 static struct pe_proc *
-pe_proc_alloc(uid_t uid, anoubis_cookie_t cookie, struct pe_proc_ident *pident)
+pe_proc_alloc(uid_t uid, anoubis_cookie_t cookie, struct pe_proc_ident *pident,
+    anoubis_cookie_t pgid)
 {
 	struct pe_proc	*proc;
 
@@ -187,6 +292,7 @@ pe_proc_alloc(uid_t uid, anoubis_cookie_t cookie, struct pe_proc_ident *pident)
 	proc->flags = 0;
 	proc->refcount = 1;
 	proc->instances = 1;
+	proc->pgid = 0;
 #ifdef ANOUBIS_PROCESS_OP_CREATE
 	proc->threads = 0;
 #else
@@ -198,6 +304,7 @@ pe_proc_alloc(uid_t uid, anoubis_cookie_t cookie, struct pe_proc_ident *pident)
 		pe_proc_ident_set(&proc->ident, pident->csum, pident->pathhint);
 	DEBUG(DBG_PE_TRACKER, "pe_proc_alloc: proc %p uid %u cookie 0x%08"
 	    PRIx64 " ", proc, uid, proc->task_cookie);
+	pe_proc_set_playgroundid(proc, pgid);
 
 	return (proc);
 oom:
@@ -206,6 +313,14 @@ oom:
 	return (NULL);	/* XXX HSH */
 }
 
+/**
+ * Add the given process to the global list of tracked processes.
+ * This function takes an additional reference count on the process that
+ * will be released be pe_proc_untrack.
+ *
+ * @param The process.
+ * @return None.
+ */
 static void
 pe_proc_track(struct pe_proc *proc)
 {
@@ -219,6 +334,13 @@ pe_proc_track(struct pe_proc *proc)
 	TAILQ_INSERT_TAIL(&tracker, proc, entry);
 }
 
+/**
+ * Remove the process from the list of tracked processes. This function
+ * drops the reference on the process that was obtained by pe_proc_track.
+ *
+ * @param proc The process.
+ * @return None.
+ */
 static void
 pe_proc_untrack(struct pe_proc *proc)
 {
@@ -228,6 +350,20 @@ pe_proc_untrack(struct pe_proc *proc)
 	pe_proc_put(proc);
 }
 
+/**
+ * Return the rules context with the given priority of the process.
+ *
+ * @param proc The process.
+ * @param prio The rule priority (PE_PRIO_USER or PE_PRIO_ADMIN).
+ * @return The rules context as requested. NULL if the process is NULL
+ *     or no approriate context is defined.
+ *
+ * NOTE: The pointer returned by this function is invalidated if the
+ *     rules context of the process changes or if the process is freed.
+ *     I.e. the caller must either make sure that this cannot happen or
+ *     take a reference of its own on the context before dropping its
+ *     reference to the process.
+ */
 struct pe_context *
 pe_proc_get_context(struct pe_proc *proc, int prio)
 {
@@ -238,6 +374,17 @@ pe_proc_get_context(struct pe_proc *proc, int prio)
 	return proc->context[prio];
 }
 
+/**
+ * Set the rules context of the given process to a new value.
+ *
+ * @param proc The process.
+ * @param ctx The new rules context.
+ * @return None.
+ *
+ * NOTE: The proc structure holds a reference to the current rules context.
+ *     The reference on the old rules context (if any) is dropped and a
+ *     new reference on the new context is acquired.
+ */
 void
 pe_proc_set_context(struct pe_proc *proc, int prio, struct pe_context *ctx)
 {
@@ -251,18 +398,37 @@ pe_proc_set_context(struct pe_proc *proc, int prio, struct pe_context *ctx)
 	proc->context[prio] = ctx;
 }
 
+/**
+ * Return the current user-ID assigned to the process.
+ *
+ * @param proc The process.
+ * @return The user ID is recorded in the process tracking.
+ */
 uid_t
 pe_proc_get_uid(struct pe_proc *proc)
 {
 	return proc->uid;
 }
 
+/**
+ * Change the user-ID of the process in the process tracking.
+ *
+ * @param proc The process.
+ * @param uid The new user-ID.
+ * @return None.
+ */
 void
 pe_proc_set_uid(struct pe_proc *proc, uid_t uid)
 {
 	proc->uid = uid;
 }
 
+/**
+ * Return the task cookie of the process.
+ *
+ * @param proc The process.
+ * @return The task cookie.
+ */
 anoubis_cookie_t
 pe_proc_task_cookie(struct pe_proc *proc)
 {
@@ -271,18 +437,44 @@ pe_proc_task_cookie(struct pe_proc *proc)
 	return proc->task_cookie;
 }
 
+/**
+ * Return the process identifier of the process. The process identifier
+ * encapsulates both pathname and checksum of the running binary.
+ *
+ * @param proc The process.
+ * @return The process identifier.
+ *
+ * NOTE: This function returns a pointer to the process identifier that
+ *     is already present in the struct pe_proc. No memory is copied and
+ *     the life time of the pointer is limited by the life time of the
+ *     surrounding proc structure.
+ */
 struct pe_proc_ident *
 pe_proc_ident(struct pe_proc *proc)
 {
 	return proc ? &proc->ident : NULL;
 }
 
+/**
+ * Return the process-ID of the process as recoreded in the process
+ * management structure.
+ *
+ * @param The process.
+ * @return The process ID.
+ */
 pid_t
 pe_proc_get_pid(struct pe_proc *proc)
 {
 	return proc->pid;
 }
 
+/**
+ * Set the process ID of the process in the process management structure.
+ *
+ * @param proc The process.
+ * @param pid The new process ID.
+ * @return None.
+ */
 void pe_proc_set_pid(struct pe_proc *proc, pid_t pid)
 {
 	if (!proc)
@@ -295,6 +487,14 @@ void pe_proc_set_pid(struct pe_proc *proc, pid_t pid)
 	proc->pid = pid;
 }
 
+/**
+ * Print a summary of all processes known to the process tracking.
+ * The data is printed using log_info. Where this data ends up depends on
+ * the command line arguments and potentially the syslog.conf file.
+ *
+ * @param None.
+ * @return None.
+ */
 void
 pe_proc_dump(void)
 {
@@ -318,16 +518,25 @@ pe_proc_dump(void)
 	}
 }
 
-/*
- * Insert a newly forked process and set its context.
+/**
+ * Insert a newly forked process and set its context. This function
+ * creates a new process structure and fills it with the data from the
+ * parameters. The process is inserted into the process tracking.
+ *
+ * @param uid The user-ID of the new process.
+ * @param child The task cookie of the new process.
+ * @param parent_cookie The task cookie of the parent process that is forking.
+ * @param pgid The playground ID of the process.
+ * @return None.
  */
 void
-pe_proc_fork(uid_t uid, anoubis_cookie_t child, anoubis_cookie_t parent_cookie)
+pe_proc_fork(uid_t uid, anoubis_cookie_t child, anoubis_cookie_t parent_cookie,
+    anoubis_cookie_t pgid)
 {
 	struct pe_proc	*proc, *parent;
 
 	parent = pe_proc_get(parent_cookie);
-	proc = pe_proc_alloc(uid, child, pe_proc_ident(parent));
+	proc = pe_proc_alloc(uid, child, pe_proc_ident(parent), pgid);
 	if (!proc) {
 		pe_proc_put(parent);
 		return;
@@ -347,8 +556,20 @@ pe_proc_fork(uid_t uid, anoubis_cookie_t child, anoubis_cookie_t parent_cookie)
 	pe_proc_put(proc);
 }
 
-/*
- * Add another credentials instance to this process.
+/**
+ * Add another credentials instance to this process. This function is
+ * called if the kernel notifies the daemon that new credentials that were
+ * reported as a new process previously, are now used for an already existing
+ * process. The total number of credentials structures with the same
+ * process ID are tracked in the instances field of the process structure.
+ *
+ * @param cookie The cookie of the process that gets a new instance.
+ * @return None.
+ *
+ * NOTE: The caller should probably pair this function with a call to
+ *     pe_proc_exit for the task cookie that was previously reported and
+ *     got replaced, as this task cookie will never be used for a real
+ *     process.
  */
 void pe_proc_addinstance(anoubis_cookie_t cookie)
 {
@@ -359,8 +580,17 @@ void pe_proc_addinstance(anoubis_cookie_t cookie)
 	}
 }
 
-/*
- * Remove a process upon exit.
+/**
+ * Remove a process upon exit. This function is called when the kernel
+ * frees credentials. We reduce the number of instances on the process and
+ * once this number reaches zero the process is removed from the process
+ * tracking.
+ *
+ * @param cookie The cookie of the process that lost an instance.
+ * @return None.
+ *
+ * NOTE: This function calls pe_proc_untrack which will drop the reference
+ *     to the process structure that was obtained by pe_proc_track.
  */
 void pe_proc_exit(anoubis_cookie_t cookie)
 {
@@ -381,8 +611,13 @@ void pe_proc_exit(anoubis_cookie_t cookie)
 	pe_proc_put(proc);
 }
 
-/*
- * Return true if the process is in fact running.
+/**
+ * Return true if the process is in fact running. A process is running if
+ * it is still in the task tracking and has at least one thread assigned to
+ * it.
+ *
+ * @param The cookie of the process to check.
+ * @return True if the process is still running.
  */
 int
 pe_proc_is_running(anoubis_cookie_t cookie)
@@ -394,8 +629,14 @@ pe_proc_is_running(anoubis_cookie_t cookie)
 	return ret;
 }
 
-/*
- * Account for a new thread that is part of the process.
+/**
+ * Add a new (kernel based) thread to the process with the given
+ * task cookie. This is called for threads, even for the master.
+ * A process is alive as long as at least one of its threads is still
+ * alive.
+ *
+ * @param cookie The task cookie.
+ * @return None.
  */
 void
 pe_proc_add_thread(anoubis_cookie_t cookie)
@@ -409,8 +650,13 @@ pe_proc_add_thread(anoubis_cookie_t cookie)
 	}
 }
 
-/*
- * Account for a terminated thread that is part of the process.
+/**
+ * Remove one thread that has exited or left the thread group from the
+ * process. If the last thread of a process exits, an upgrade ends even
+ * if the credentials of the process have been inherited by a file handle.
+ *
+ * @param cookie The task cookie of the terminating thread.
+ * @return None.
  */
 void
 pe_proc_remove_thread(anoubis_cookie_t cookie)
@@ -426,11 +672,22 @@ pe_proc_remove_thread(anoubis_cookie_t cookie)
 	pe_proc_put(proc);
 }
 
-/*
- * Update process attributes after an exec system call.
+/**
+ * Update process attributes in the task tracking after an exec system call
+ * according to the parameters.
+ *
+ * @param cookie The task cookie of the affected process.
+ * @param uid The new user-ID of the process.
+ * @param pid The process ID of the new process.
+ * @param csum The checksum of the binary that is executed by the process.
+ * @param pathhint The path of the binary that is executed by the process.
+ * @param pgid The playground-ID of the new process.
+ * @param secure True if the process performed a secure exec.
+ * @return None.
  */
 void pe_proc_exec(anoubis_cookie_t cookie, uid_t uid, pid_t pid,
-    const struct abuf_buffer csum, const char *pathhint, int secure)
+    const struct abuf_buffer csum, const char *pathhint,
+    anoubis_cookie_t pgid, int secure)
 {
 	struct pe_proc		*proc = pe_proc_get(cookie);
 	struct pe_context	*ctx0, *ctx1;
@@ -440,7 +697,7 @@ void pe_proc_exec(anoubis_cookie_t cookie, uid_t uid, pid_t pid,
 		DEBUG(DBG_PE_PROC, "pe_proc_exec: untracked "
 		    "process %u 0x%08" PRIx64 " execs", pid,
 		    cookie);
-		proc = pe_proc_alloc(uid, cookie, NULL);
+		proc = pe_proc_alloc(uid, cookie, NULL, pgid);
 		pe_proc_track(proc);
 	}
 	/* fill in checksum and pathhint */
@@ -490,6 +747,17 @@ void pe_proc_exec(anoubis_cookie_t cookie, uid_t uid, pid_t pid,
 	pe_proc_put(proc);
 }
 
+/**
+ * Return the flags that should be added to the return value in an
+ * exec system call. This function checks if the process must be
+ * forced into a playground and if the process must do a secure exec.
+ *
+ * @param cookie The task cookie of the process.
+ * @param uid The user-ID of the new process.
+ * @param csum The checksum of the new binary.
+ * @param pathhint The path of the new binary.
+ * @return None.
+ */
 int
 pe_proc_flag_transition(anoubis_cookie_t cookie, uid_t uid,
     const struct abuf_buffer csum, const char *pathhint)
@@ -514,6 +782,14 @@ pe_proc_flag_transition(anoubis_cookie_t cookie, uid_t uid,
 	return ret;
 }
 
+/**
+ * Refresh process contexts after a new policy database was loaded.
+ * This iterates over all processes and creates new process contexts that
+ * reference the newly loaded policies. No context switches happen.
+ *
+ * @param newpdb The new policy database.
+ * @return None.
+ */
 void
 pe_proc_update_db(struct pe_policy_db *newpdb)
 {
@@ -531,13 +807,22 @@ pe_proc_update_db(struct pe_policy_db *newpdb)
 	}
 }
 
-/*
- * This function is not allowed to fail! It must remove all references
- * to the old ruleset from tracked processes.
+/**
+ * Replace all references to a given policy ruleset in all process contexts
+ * with pointers to the new policy ruleset. This function must be called
+ * after a new policy has been loaded.
+ *
+ * @param oldrs The old policy ruleset.
+ * @param prio The ruleset priority.
+ * @param uid The user ID that is affected by the policy load.
+ * @return None.
+ *
+ * NOTE1: This function is not allowed to fail! It must remove all references
+ *     to the old ruleset from tracked processes.
  * NOTE: If proc->context[prio] is not NULL then proc->context[prio]->ruleset
- *       cannot be NULL either. oldrs == NULL is allowed, however.
- *       In the latter case there was no policy before and we refresh all
- *       processes with the given uid.
+ *     cannot be NULL either. oldrs == NULL is allowed, however.
+ *     In the latter case there was no policy before and we refresh all
+ *     processes with the given uid.
  */
 void
 pe_proc_update_db_one(struct apn_ruleset *oldrs, int prio, uid_t uid)
@@ -558,6 +843,16 @@ pe_proc_update_db_one(struct apn_ruleset *oldrs, int prio, uid_t uid)
 	DEBUG(DBG_TRACE, "<pe_proc_update_db_one");
 }
 
+/**
+ * Save the currently active rules context away before it is replaced
+ * with a context obtained via a connect rule.
+ *
+ * @param proc The process.
+ * @param prio The priority of the rules context.
+ * @param cookie The cookie of the task that we will borrow our new context
+ *     from.
+ * @return None.
+ */
 void
 pe_proc_save_ctx(struct pe_proc *proc, int prio, anoubis_cookie_t cookie)
 {
@@ -573,6 +868,15 @@ pe_proc_save_ctx(struct pe_proc *proc, int prio, anoubis_cookie_t cookie)
 	proc->borrow_cookie = cookie;
 }
 
+/**
+ * Restore the saved context of a process after the connection to the
+ * borrowing task is terminated.
+ *
+ * @param proc The process.
+ * @param prio The priority of the affected context.
+ * @param cookie The task cookie of the peer.
+ * @return None.
+ */
 void
 pe_proc_restore_ctx(struct pe_proc *proc, int prio, anoubis_cookie_t cookie)
 {
@@ -596,6 +900,15 @@ pe_proc_restore_ctx(struct pe_proc *proc, int prio, anoubis_cookie_t cookie)
 	}
 }
 
+/**
+ * Return the original (saved) context of the process. Don't use this
+ * unless you know what you are doing. Use pe_proc_get_context instead.
+ *
+ * @param proc The process.
+ * @param prio The priority of the rules context.
+ * @return A pointer to the rules context. No reference to the context is
+ *     obtained.
+ */
 struct pe_context *
 pe_proc_get_savedctx(struct pe_proc *proc, int prio)
 {
@@ -606,6 +919,16 @@ pe_proc_get_savedctx(struct pe_proc *proc, int prio)
 	return proc->saved_ctx[prio];
 }
 
+/**
+ * Modify the saved context of a process. This should only be used if the
+ * ruleset changes. Do not use unless you know what you are doing.
+ *
+ * @param proc The process.
+ * @param prio The prio of the affected rules context.
+ * @param ctx The new rules context. A reference to the context will
+ *     be acquired by the process structure.
+ * @return None.
+ */
 void
 pe_proc_set_savedctx(struct pe_proc *proc, int prio, struct pe_context *ctx)
 {
@@ -619,18 +942,38 @@ pe_proc_set_savedctx(struct pe_proc *proc, int prio, struct pe_context *ctx)
 	proc->saved_ctx[prio] = ctx;
 }
 
+/**
+ * Return non-zero if the process is an upgrade process.
+ *
+ * @param proc The process.
+ * @return Zero if the process is not an upgrade process, non-zero if it is.
+ */
 unsigned int
 pe_proc_is_upgrade(struct pe_proc *proc)
 {
 	return (pe_proc_get_flag(proc, PE_PROC_FLAGS_UPGRADE));
 }
 
+/**
+ * Return non-zero if the process is an upgrade parent process.
+ *
+ * @param proc The process.
+ * @return Zero if the process is not an upgrade parent process, non-zero
+ *     if it is.
+ */
 unsigned int
 pe_proc_is_upgrade_parent(struct pe_proc *proc)
 {
 	return (pe_proc_get_flag(proc, PE_PROC_FLAGS_UPGRADE_PARENT));
 }
 
+/**
+ * Mark the process as a new upgrade process. This makes the process both
+ * an upgrade process and an upgrade parent process.
+ *
+ * @param proc The process.
+ * @return None.
+ */
 void
 pe_proc_upgrade_addmark(struct pe_proc *proc)
 {
@@ -638,6 +981,13 @@ pe_proc_upgrade_addmark(struct pe_proc *proc)
 	pe_proc_set_flag(proc, PE_PROC_FLAGS_UPGRADE_PARENT);
 }
 
+/**
+ * Clear the upgrade mark on a process. This removes all upgrade flags
+ * from the process.
+ *
+ * @param proc The process.
+ * @return None.
+ */
 void
 pe_proc_upgrade_clrmark(struct pe_proc *proc)
 {
@@ -645,20 +995,28 @@ pe_proc_upgrade_clrmark(struct pe_proc *proc)
 	pe_proc_clr_flag(proc, PE_PROC_FLAGS_UPGRADE_PARENT);
 }
 
+/**
+ * Return 1 if a particular flag is set for the process.
+ *
+ * @param proc The process.
+ * @param flag The flag.
+ * @return Zero if the flag is not set, one if it is.
+ */
 static inline unsigned int
 pe_proc_get_flag(struct pe_proc *proc, unsigned int flag)
 {
-	if (!proc) {
-		return (0);
-	}
-
-	if (proc->flags & flag) {
-		return (1);
-	} else {
-		return (0);
-	}
+	if (!proc)
+		return 0;
+	return !!(proc->flags & flag);
 }
 
+/**
+ * Set the given process flags.
+ *
+ * @param proc The process.
+ * @param flag The flag.
+ * @return None.
+ */
 static inline void
 pe_proc_set_flag(struct pe_proc *proc, unsigned int flag)
 {
@@ -668,6 +1026,13 @@ pe_proc_set_flag(struct pe_proc *proc, unsigned int flag)
 	}
 }
 
+/**
+ * Clear the given process flag.
+ *
+ * @param proc The process.
+ * @param flag The flag.
+ * @return None.
+ */
 static inline void
 pe_proc_clr_flag(struct pe_proc *proc, unsigned int flag)
 {
@@ -677,6 +1042,15 @@ pe_proc_clr_flag(struct pe_proc *proc, unsigned int flag)
 	}
 }
 
+/**
+ * Set the upgrade flag of the process proc to the value given by flag.
+ * I.e. the new process will be marked as an upgrade process iff flag is
+ * non-zero.
+ *
+ * @param proc The process.
+ * @param The desired value of the flag.
+ * @return None.
+ */
 static inline void
 pe_proc_upgrade_inherit(struct pe_proc *proc, unsigned int flag)
 {
@@ -687,6 +1061,15 @@ pe_proc_upgrade_inherit(struct pe_proc *proc, unsigned int flag)
 	}
 }
 
+/**
+ * Set the secure-exec flag of the process to the value given by flag.
+ * I.e. the new process will be marked as a secure-exec process iff flag is
+ * non-zero.
+ *
+ * @param proc The process.
+ * @param flag The flag.
+ * @return None.
+ */
 static inline void
 pe_proc_secure_inherit(struct pe_proc *proc, unsigned int flag)
 {
@@ -697,6 +1080,13 @@ pe_proc_secure_inherit(struct pe_proc *proc, unsigned int flag)
 	}
 }
 
+/**
+ * Clear the upgrade and upgrade parent markers on all processes. This
+ * should be called once an upgrade end is detected.
+ *
+ * @param None.
+ * @return None.
+ */
 void
 pe_proc_upgrade_clrallmarks(void)
 {
@@ -707,18 +1097,42 @@ pe_proc_upgrade_clrallmarks(void)
 	}
 }
 
+/**
+ * Hold back the answer to all events of this process. This can be used
+ * if the daemon did not finish processing of an upgrade and the same
+ * process starts a new new upgrade.
+ *
+ * @param proc The process.
+ * @return None.
+ *
+ * NOTE: This function only sets an approriate flag on the process. The
+ *     event handling routines must check for this flag and act upon it.
+ */
 void
 pe_proc_hold(struct pe_proc *proc)
 {
 	pe_proc_set_flag(proc, PE_PROC_FLAGS_HOLD);
 }
 
+/**
+ * Return true if the process is marked with the hold flag (see pe_proc_hold).
+ *
+ * @param proc The process.
+ * @return Non-zero if the hold flag is set, zero if it isn't.
+ */
 int
 pe_proc_is_hold(struct pe_proc *proc)
 {
 	return pe_proc_get_flag(proc, PE_PROC_FLAGS_HOLD);
 }
 
+/**
+ * Clear the hold flags on all processes and mark them as upgrade start
+ * processes.
+ *
+ * @param None.
+ * @return None.
+ */
 void
 pe_proc_release(void)
 {
@@ -732,6 +1146,12 @@ pe_proc_release(void)
 	}
 }
 
+/**
+ * Return true if the process did a secure exec.
+ *
+ * @param proc The process.
+ * @return True if the process did a secure exec, false if it didn't.
+ */
 int
 pe_proc_is_secure(struct pe_proc *proc)
 {

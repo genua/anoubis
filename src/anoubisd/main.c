@@ -1871,7 +1871,8 @@ dispatch_dev2m(int fd, short event __used, void *arg)
 		if ((hdr->msg_flags & EVENTDEV_NEED_REPLY) ||
 		    (hdr->msg_source == ANOUBIS_SOURCE_PROCESS) ||
 		    (hdr->msg_source == ANOUBIS_SOURCE_SFSEXEC) ||
-		    (hdr->msg_source == ANOUBIS_SOURCE_IPC)) {
+		    (hdr->msg_source == ANOUBIS_SOURCE_IPC) ||
+		    (hdr->msg_source == ANOUBIS_SOURCE_PLAYGROUNDPROC)) {
 			/* Send event to policy process for handling. */
 			enqueue(&eventq_m2p, msg);
 			DEBUG(DBG_QUEUE, " >eventq_m2p: %x source=%d",

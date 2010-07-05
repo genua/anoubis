@@ -32,6 +32,7 @@
 #endif
 
 #include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 
 #include <anoubisd.h>
@@ -49,6 +50,10 @@
 #include <dev/anoubis_sfs.h>
 #endif
 
+struct anoubis_event_common_10004 {
+	anoubis_cookie_t task_cookie;
+};
+
 /*
  * This function converts older kernel events to the structure layout
  * expected by the current ANOUBISCORE_VERSION. If the message must be
@@ -59,9 +64,25 @@
 anoubisd_msg_t *
 compat_get_event(anoubisd_msg_t *old, unsigned long version)
 {
+	int					 pre, post, total;
+	struct anoubisd_msg			*n;
+	struct anoubis_event_common		*common;
+	struct anoubis_event_common_10004	*oldcommon;
+	struct eventdev_hdr			*hdr;
+
+	if (version < 0x10001UL) {
+		log_warnx("compat_get_event: Version %lx is too old", version);
+		free(old);
+		return  NULL;
+	}
 	/*
-	 * This conversion function assumes that the current
-	 * ANOUBISCORE_VERSION is 0x00010004UL. Abort if this is not the case.
+	 * If we convert to 0x00010004UL there is nothing todo.
+	 */
+	if (ANOUBISCORE_VERSION == 0x00010004UL)
+		return old;
+	/*
+	 * The rest of this conversion function assumes that the current
+	 * ANOUBISCORE_VERSION is 0x00010005UL. Abort if this is not the case.
 	 */
 	if (ANOUBISCORE_VERSION != 0x10005UL) {
 		log_warnx("compat_get_event: Current verion is %lx but we "
@@ -69,14 +90,31 @@ compat_get_event(anoubisd_msg_t *old, unsigned long version)
 		free(old);
 		return NULL;
 	}
-	if (version < 0x10001UL) {
-		log_warnx("compat_get_event: Version %lx is too old", version);
+	total = old->size - sizeof(struct anoubisd_msg);
+	pre = sizeof(struct eventdev_hdr);
+	if (total < pre + (int)sizeof(struct anoubis_event_common_10004)) {
+		log_warnx("compat_get_event: Dropping short message");
 		free(old);
-		return  NULL;
+		return NULL;
 	}
-	/*
-	 * There have been no structure layout changes between versions
-	 * 0x00010001UL and 0x00010005.
-	 */
-	return  old;
+	post = old->size - pre - sizeof(struct anoubis_event_common_10004);
+	n = msg_factory(ANOUBISD_MSG_EVENTDEV,
+	    pre + sizeof(struct anoubis_event_common) + post);
+	if (n == NULL) {
+		free(old);
+		log_warnx("compat_get_event: Out of memory");
+		return NULL;
+	}
+	memcpy(n->msg, old->msg, pre);
+	oldcommon = (struct anoubis_event_common_10004 *)(old->msg + pre);
+	common = (struct anoubis_event_common *)(n->msg + pre);
+	common->task_cookie = oldcommon->task_cookie;
+#if ANOUBISCORE_VERSION >= ANOUBISCORE_PG_VERSION
+	common->pgid = 0;
+#endif
+	hdr = (struct eventdev_hdr *)n->msg;
+	hdr->msg_size += n->size - old->size;
+	memcpy(common+1, oldcommon+1, post);
+	free(old);
+	return n;
 }

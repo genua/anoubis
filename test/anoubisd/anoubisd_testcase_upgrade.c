@@ -176,28 +176,28 @@ START_TEST(tc_flags)
 {
 	pe_init();
 
-	pe_proc_fork(0, 1, 0);
-	pe_proc_fork(0, 2, 1);
-	pe_proc_fork(0, 3, 1);
-	pe_proc_fork(0, 4, 1);
-	pe_proc_fork(0, 5, 1);
+	pe_proc_fork(0, 1, 0, 0);
+	pe_proc_fork(0, 2, 1, 0);
+	pe_proc_fork(0, 3, 1, 0);
+	pe_proc_fork(0, 4, 1, 0);
+	pe_proc_fork(0, 5, 1, 0);
 
-	pe_proc_fork(0, 21, 2);
-	pe_proc_fork(0, 22, 2);
-	pe_proc_fork(0, 31, 3);
-	pe_proc_fork(0, 32, 3);
-	pe_proc_fork(0, 41, 4);
-	pe_proc_fork(0, 42, 4);
-	pe_proc_fork(0, 51, 5);
-	pe_proc_fork(0, 52, 5);
+	pe_proc_fork(0, 21, 2, 0);
+	pe_proc_fork(0, 22, 2, 0);
+	pe_proc_fork(0, 31, 3, 0);
+	pe_proc_fork(0, 32, 3, 0);
+	pe_proc_fork(0, 41, 4, 0);
+	pe_proc_fork(0, 42, 4, 0);
+	pe_proc_fork(0, 51, 5, 0);
+	pe_proc_fork(0, 52, 5, 0);
 
 	MARK_UPGRADE(2);
 	MARK_UPGRADE(31);
 
-	pe_proc_fork(0, 23, 2);
-	pe_proc_fork(0, 33, 3);
-	pe_proc_fork(0, 311, 31);
-	pe_proc_fork(0, 411, 41);
+	pe_proc_fork(0, 23, 2, 0);
+	pe_proc_fork(0, 33, 3, 0);
+	pe_proc_fork(0, 311, 31, 0);
+	pe_proc_fork(0, 411, 41, 0);
 	pe_proc_exit(52);
 
 	fail_if(pe_proc_get(52), "Process 52 should have terminated");
@@ -218,7 +218,7 @@ START_TEST(tc_flags)
 	ASSERT_NOUPGRADE(1, 3, 4, 5, 21, 22, 23, 311, 32, 33, 41, 411, 42, 51);
 
 	MARK_UPGRADE(51);
-	pe_proc_fork(0, 511, 51);
+	pe_proc_fork(0, 511, 51, 0);
 
 	ASSERT_NOUPGRADE(1, 3, 4, 5, 21, 22, 23, 311, 32, 33, 41, 411, 42,
 	    51, 511);
@@ -226,7 +226,7 @@ START_TEST(tc_flags)
 	pe_upgrade_finish();
 
 	MARK_UPGRADE(51);
-	pe_proc_fork(0, 512, 51);
+	pe_proc_fork(0, 512, 51, 0);
 
 	ASSERT_PARENT(51);
 	ASSERT_UPGRADE_NOPARENT(512);
@@ -274,13 +274,13 @@ START_TEST(tc_files)
 
 	pe_init();
 	sfs_haschecksum_chroot_p = haschecksum;
-	pe_proc_fork(0, 1, 0);
-	pe_proc_fork(0, 2, 1);
-	pe_proc_fork(0, 3, 1);
-	pe_proc_fork(0, 4, 1);
+	pe_proc_fork(0, 1, 0, 0);
+	pe_proc_fork(0, 2, 1, 0);
+	pe_proc_fork(0, 3, 1, 0);
+	pe_proc_fork(0, 4, 1, 0);
 
-	pe_proc_fork(0, 21, 2);
-	pe_proc_fork(0, 31, 3);
+	pe_proc_fork(0, 21, 2, 0);
+	pe_proc_fork(0, 31, 3, 0);
 
 	/* No upgraders */
 	WRITE(1, a1);
@@ -292,8 +292,8 @@ START_TEST(tc_files)
 
 	MARK_UPGRADE(2);
 
-	pe_proc_fork(0, 22, 2);
-	pe_proc_fork(0, 32, 3);
+	pe_proc_fork(0, 22, 2, 0);
+	pe_proc_fork(0, 32, 3, 0);
 
 	/* Upgraders are 2 (Parent) and 22 (Child) */
 	WRITE(1, b1);
@@ -308,9 +308,9 @@ START_TEST(tc_files)
 	MARK_UPGRADE(32);
 
 	/* Upgraders are 2 and 32 (Parent) and 22, 321, 322, 323 (Children) */
-	pe_proc_fork(0, 321, 32);
-	pe_proc_fork(0, 322, 32);
-	pe_proc_fork(0, 323, 32);
+	pe_proc_fork(0, 321, 32, 0);
+	pe_proc_fork(0, 322, 32, 0);
+	pe_proc_fork(0, 323, 32, 0);
 
 	WRITE(1, c1);
 	WRITE(2, c2);		/* Add (cooke 0) */

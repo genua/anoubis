@@ -54,7 +54,11 @@
 #include <linux/anoubis_playground.h>
 
 #ifndef ANOUBIS_SOURCE_PLAYGROUND
-#define ANOUBIS_SOURCE_PLAYGROUND 0xff
+#define ANOUBIS_SOURCE_PLAYGROUND	70
+#endif
+
+#ifndef ANOUBIS_SOURCE_PLAYGROUNDPROC
+#define ANOUBIS_SOURCE_PLAYGROUNDPROC	71
 #endif
 
 #include <linux/anoubis_playground.h>
@@ -70,6 +74,7 @@
 #define ANOUBISCORE_MIN_VERSION ANOUBISCORE_VERSION
 #endif
 #define ANOUBISCORE_LOCK_VERSION 0x00010004UL
+#define ANOUBISCORE_PG_VERSION 0x00010005UL
 
 #include <anoubis_protocol.h>
 
@@ -457,5 +462,21 @@ extern unsigned long	version;
 #define DBG_PE_BORROW	0x10000
 #define DBG_UPGRADE	0x20000
 #define DBG_CSUM	0x40000
+
+
+/**
+ * Temporary compatibility function to make playground code compile
+ * on OpenBSD, too: Return the value of the pgid field in the struct
+ *  anoubis_event_common or zero if the structure does not have this field.
+ */
+static inline anoubis_cookie_t
+extract_pgid(struct anoubis_event_common *common __attribute__((unused)))
+{
+#if ANOUBISCORE_VERSION < ANOUBISCORE_PG_VERSION
+	return 0;
+#else
+	return common->pgid;
+#endif
+}
 
 #endif /* !_ANOUBISD_H */

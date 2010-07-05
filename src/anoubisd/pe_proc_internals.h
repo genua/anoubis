@@ -49,6 +49,7 @@ struct pe_proc {
 	struct pe_proc_ident	 ident;
 	anoubis_cookie_t	 task_cookie;
 	anoubis_cookie_t	 borrow_cookie;
+	anoubis_cookie_t	 pgid;
 
 	/* Per priority contexts */
 	struct pe_context	*context[PE_PRIO_MAX];

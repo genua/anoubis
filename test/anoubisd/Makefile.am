@@ -57,6 +57,7 @@ test_peunit_objs= \
 	$(anoubisdbuilddir)/pe_sfscache.o \
 	$(anoubisdbuilddir)/pe_sfs.o \
 	$(anoubisdbuilddir)/pe_filetree.o \
+	$(anoubisdbuilddir)/pe_playground.o \
 	$(anoubisdbuilddir)/anoubis_alloc.o
 
 test_peunit_LDADD = \

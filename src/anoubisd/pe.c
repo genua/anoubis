@@ -75,6 +75,7 @@ static anoubisd_reply_t	*pe_handle_alf(struct eventdev_hdr *);
 static anoubisd_reply_t	*pe_handle_ipc(struct eventdev_hdr *);
 static anoubisd_reply_t	*pe_handle_sfs(struct eventdev_hdr *);
 static anoubisd_reply_t *pe_handle_playgroundask(struct eventdev_hdr *);
+static anoubisd_reply_t *pe_handle_playgroundproc(struct eventdev_hdr *);
 
 static struct pe_file_event *pe_parse_file_event(struct eventdev_hdr *hdr);
 #ifdef ANOUBIS_SOURCE_SFSPATH
@@ -318,6 +319,9 @@ pe_dispatch_event(struct eventdev_hdr *hdr)
 	case ANOUBIS_SOURCE_PLAYGROUND:
 		reply = pe_handle_playgroundask(hdr);
 		break;
+	case ANOUBIS_SOURCE_PLAYGROUNDPROC:
+		reply = pe_handle_playgroundproc(hdr);
+		break;
 
 	default:
 		log_warnx("pe_dispatch_event: unknown message source %d",
@@ -349,6 +353,7 @@ pe_handle_sfsexec(struct eventdev_hdr *hdr)
 	pe_proc_exec(msg->common.task_cookie,
 	    hdr->msg_uid, hdr->msg_pid, csum,
 	    (msg->flags & ANOUBIS_OPEN_FLAG_PATHHINT) ? msg->pathhint : NULL,
+	    extract_pgid(&msg->common),
 	    (msg->flags & ANOUBIS_OPEN_FLAG_SECUREEXEC));
 
 	return (NULL);
@@ -374,7 +379,7 @@ pe_handle_process(struct eventdev_hdr *hdr)
 	case ANOUBIS_PROCESS_OP_FORK:
 		/* Use cookie of new process */
 		pe_proc_fork(hdr->msg_uid, msg->task_cookie,
-		    msg->common.task_cookie);
+		    msg->common.task_cookie, extract_pgid(&msg->common));
 		break;
 	case ANOUBIS_PROCESS_OP_EXIT:
 		/* NOTE: Do NOT use msg->common.task_cookie here! */
@@ -756,6 +761,24 @@ pe_handle_playgroundask(struct eventdev_hdr *hdr)
 	    pe_proc_get_context(proc, reply->prio));
 	pe_proc_put(proc);
 	return reply;
+}
+
+static anoubisd_reply_t *
+pe_handle_playgroundproc(struct eventdev_hdr *hdr)
+{
+	struct pg_proc_message	*pg;
+	struct pe_proc		*proc;
+
+	if (!hdr || hdr->msg_size < sizeof(struct eventdev_hdr)
+	    + sizeof(struct pg_proc_message))
+		return  NULL;
+	pg = (struct pg_proc_message *)(hdr+1);
+	proc = pe_proc_get(pg->common.task_cookie);
+	if (proc) {
+		pe_proc_set_playgroundid(proc, extract_pgid(&pg->common));
+		pe_proc_put(proc);
+	}
+	return NULL;
 }
 
 void

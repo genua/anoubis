@@ -341,14 +341,12 @@ get_event(int fd)
 		log_warnx(" Bad eventdev message length %d", size);
 		return NULL;
 	}
-	if ((msg_r = malloc(evt->msg_size + sizeof(anoubisd_msg_t))) == NULL) {
+	msg_r = msg_factory(ANOUBISD_MSG_EVENTDEV, evt->msg_size);
+	if (msg_r == NULL) {
 		log_warn("get_event: can't allocate memory");
 		master_terminate(ENOMEM);
 		return NULL;
 	}
-
-	msg_r->size = evt->msg_size + sizeof(anoubisd_msg_t);
-	msg_r->mtype = ANOUBISD_MSG_EVENTDEV;
 	bcopy(evt, msg_r->msg, evt->msg_size);
 	if (version < ANOUBISCORE_VERSION) {
 		msg_r = compat_get_event(msg_r, version);

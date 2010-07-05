@@ -64,6 +64,7 @@ lint_sources = \
 	pe_prefixhash.c \
 	pe_sandbox.c \
 	pe_filetree.c \
+	pe_playground.c \
 	cert.c \
 	session.c \
 	log.c \

@@ -112,11 +112,12 @@ void			 pe_proc_dump(void);
 void			 pe_proc_flush(void);
 struct pe_proc		*pe_proc_get(anoubis_cookie_t cookie);
 void			 pe_proc_put(struct pe_proc *proc);
-void			 pe_proc_fork(uid_t, anoubis_cookie_t,
-			     anoubis_cookie_t);
+void			 pe_proc_fork(uid_t, anoubis_cookie_t cookie,
+			     anoubis_cookie_t parent, anoubis_cookie_t pgid);
 void			 pe_proc_exec(anoubis_cookie_t, uid_t, pid_t,
 			     const struct abuf_buffer csum,
-			     const char *pathhint, int secure);
+			     const char *pathhint, anoubis_cookie_t pgid,
+			     int secure);
 int			 pe_proc_flag_transition(anoubis_cookie_t, uid_t,
 			     const struct abuf_buffer csum,
 			     const char *pathhint);
@@ -240,6 +241,15 @@ int			 pe_prefixhash_add(struct pe_prefixhash *,
 int			 pe_prefixhash_getrules(struct pe_prefixhash *,
 			     const char *, struct apnarr_array *rulesp);
 int			 pe_build_prefixhash(struct apn_rule *);
+
+/* Playground management */
+void			 pe_playground_add(anoubis_cookie_t pgid,
+			     struct pe_proc *);
+void			 pe_playground_delete(anoubis_cookie_t pgid,
+			     struct pe_proc *);
+anoubis_cookie_t	 pe_proc_get_playgroundid(struct pe_proc *);
+void			 pe_proc_set_playgroundid(struct pe_proc *,
+			     anoubis_cookie_t pgid);
 
 /*
  * Entry points exported for the benefit of unit tests.
