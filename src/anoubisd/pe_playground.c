@@ -30,6 +30,8 @@
 #include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/time.h>
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
 
 #ifdef S_SPLINT_S
 #include "splint-includes.h"
@@ -84,12 +86,16 @@ pe_playground_create(anoubis_cookie_t pgid)
 }
 
 void
-pe_playground_add(anoubis_cookie_t pgid, struct pe_proc *proc __used)
+pe_playground_add(anoubis_cookie_t pgid, struct pe_proc *proc)
 {
 	struct playground	*pg = pe_playground_create(pgid);
 
-	if (pg)
+	if (pg) {
 		pg->nrprocs++;
+		DEBUG(DBG_PG, "pe_playground_add: pgid=0x%" PRIx64
+		    " task=0x%" PRIx64 " nrprocs=%d", pg->pgid,
+		    pe_proc_task_cookie(proc), pg->nrprocs);
+	}
 }
 
 void
@@ -99,8 +105,22 @@ pe_playground_delete(anoubis_cookie_t pgid, struct pe_proc *proc __used)
 
 	if (pg && pg->nrprocs > 0) {
 		pg->nrprocs--;
+		DEBUG(DBG_PG, "pe_playground_delete: pgid=0x%" PRIx64
+		    " task=0x%" PRIx64 " nrprocs=%d", pg->pgid,
+		    pe_proc_task_cookie(proc), pg->nrprocs);
 	} else {
 		log_warnx("pe_playground_delete: Invalid playground ID %lld",
 		    (long long)pgid);
+	}
+}
+
+void pe_playground_dump(void)
+{
+	struct playground	*pg;
+
+	log_info("List of known playgrounds:");
+	LIST_FOREACH(pg, &playgrounds, next) {
+		log_info("Playgound ID=%" PRIx64 " procs=%d", pg->pgid,
+		    pg->nrprocs);
 	}
 }

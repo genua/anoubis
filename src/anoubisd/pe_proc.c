@@ -217,7 +217,8 @@ pe_proc_put(struct pe_proc *proc)
 
 	if (!proc || --(proc->refcount))
 		return;
-	pe_playground_delete(proc->pgid, proc);
+	if (proc->pgid)
+		pe_playground_delete(proc->pgid, proc);
 	pe_proc_ident_put(&proc->ident);
 
 	for (i = 0; i < PE_PRIO_MAX; i++) {
@@ -506,10 +507,10 @@ pe_proc_dump(void)
 		ctx0 = proc->context[0];
 		ctx1 = proc->context[1];
 		log_info("proc %p token 0x%08" PRIx64 " borrow token 0x%08"
-		    PRIx64 " pid %d pathhint \"%s\" ctx %p %p "
-		    "alfrules %p %p sbrules %p %p flags 0x%x",
+		    PRIx64 " pgid 0x%08" PRIx64 " pid %d pathhint \"%s\" "
+		    "ctx %p %p alfrules %p %p sbrules %p %p flags 0x%x",
 		    proc, proc->task_cookie,
-		    proc->borrow_cookie, (int)proc->pid,
+		    proc->borrow_cookie, proc->pgid, (int)proc->pid,
 		    proc->ident.pathhint ? proc->ident.pathhint : "",
 		    ctx0, ctx1,
 		    pe_context_get_alfrule(ctx0), pe_context_get_alfrule(ctx1),

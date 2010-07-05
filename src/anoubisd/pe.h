@@ -250,6 +250,7 @@ void			 pe_playground_delete(anoubis_cookie_t pgid,
 anoubis_cookie_t	 pe_proc_get_playgroundid(struct pe_proc *);
 void			 pe_proc_set_playgroundid(struct pe_proc *,
 			     anoubis_cookie_t pgid);
+void			 pe_playground_dump(void);
 
 /*
  * Entry points exported for the benefit of unit tests.

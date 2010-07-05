@@ -786,6 +786,7 @@ pe_dump(void)
 {
 	pe_proc_dump();
 	pe_user_dump();
+	pe_playground_dump();
 }
 
 int

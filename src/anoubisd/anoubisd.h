@@ -462,6 +462,7 @@ extern unsigned long	version;
 #define DBG_PE_BORROW	0x10000
 #define DBG_UPGRADE	0x20000
 #define DBG_CSUM	0x40000
+#define DBG_PG		0x80000
 
 
 /**
