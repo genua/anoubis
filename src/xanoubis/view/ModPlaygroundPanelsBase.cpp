@@ -63,7 +63,52 @@ ModPlaygroundMainPanelBase::ModPlaygroundMainPanelBase( wxWindow* parent, wxWind
 	applicationStartButton = new wxButton( pgPage, wxID_ANY, _("Start Playground"), wxDefaultPosition, wxDefaultSize, 0 );
 	startSizer->Add( applicationStartButton, 0, wxALL, 5 );
 	
-	pgPageSizer->Add( startSizer, 0, wxEXPAND, 5 );
+	pgPageSizer->Add( startSizer, 0, wxALL|wxEXPAND, 5 );
+	
+	wxStaticBoxSizer* pgOverviewSizer;
+	pgOverviewSizer = new wxStaticBoxSizer( new wxStaticBox( pgPage, -1, _("Playground Overview:") ), wxHORIZONTAL );
+	
+	pgGrid = new wxGrid( pgPage, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	
+	// Grid
+	pgGrid->CreateGrid( 1, 2 );
+	pgGrid->EnableEditing( true );
+	pgGrid->EnableGridLines( true );
+	pgGrid->EnableDragGridSize( false );
+	pgGrid->SetMargins( 0, 0 );
+	
+	// Columns
+	pgGrid->EnableDragColMove( false );
+	pgGrid->EnableDragColSize( true );
+	pgGrid->SetColLabelSize( 30 );
+	pgGrid->SetColLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	
+	// Rows
+	pgGrid->EnableDragRowSize( true );
+	pgGrid->SetRowLabelSize( 80 );
+	pgGrid->SetRowLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	
+	// Label Appearance
+	
+	// Cell Defaults
+	pgGrid->SetDefaultCellAlignment( wxALIGN_LEFT, wxALIGN_TOP );
+	pgOverviewSizer->Add( pgGrid, 1, wxALL|wxEXPAND, 5 );
+	
+	wxBoxSizer* pgButtonSizer;
+	pgButtonSizer = new wxBoxSizer( wxVERTICAL );
+	
+	pgEditButton = new wxButton( pgPage, wxID_ANY, _("Edit"), wxDefaultPosition, wxDefaultSize, 0 );
+	pgButtonSizer->Add( pgEditButton, 0, wxALIGN_RIGHT|wxALIGN_TOP|wxALL, 5 );
+	
+	
+	pgButtonSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	pgDeleteButton = new wxButton( pgPage, wxID_ANY, _("Delete"), wxDefaultPosition, wxDefaultSize, 0 );
+	pgButtonSizer->Add( pgDeleteButton, 0, wxALIGN_BOTTOM|wxALIGN_RIGHT|wxALL, 5 );
+	
+	pgOverviewSizer->Add( pgButtonSizer, 0, wxEXPAND, 5 );
+	
+	pgPageSizer->Add( pgOverviewSizer, 1, wxALL|wxEXPAND, 5 );
 	
 	pgPage->SetSizer( pgPageSizer );
 	pgPage->Layout();
@@ -78,6 +123,8 @@ ModPlaygroundMainPanelBase::ModPlaygroundMainPanelBase( wxWindow* parent, wxWind
 	// Connect Events
 	applicationComboBox->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( ModPlaygroundMainPanelBase::onAppStartEnter ), NULL, this );
 	applicationStartButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModPlaygroundMainPanelBase::onAppStart ), NULL, this );
+	pgEditButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModPlaygroundMainPanelBase::onAppStart ), NULL, this );
+	pgDeleteButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModPlaygroundMainPanelBase::onAppStart ), NULL, this );
 }
 
 ModPlaygroundOverviewPanelBase::ModPlaygroundOverviewPanelBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )

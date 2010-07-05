@@ -44,6 +44,7 @@
 #include <wx/button.h>
 #include <wx/sizer.h>
 #include <wx/statbox.h>
+#include <wx/grid.h>
 #include <wx/panel.h>
 #include <wx/bitmap.h>
 #include <wx/image.h>
@@ -68,6 +69,10 @@ class ModPlaygroundMainPanelBase : public wxPanel
 		wxStaticText* applicationLabel;
 		wxComboBox* applicationComboBox;
 		wxButton* applicationStartButton;
+		wxGrid* pgGrid;
+		wxButton* pgEditButton;
+		
+		wxButton* pgDeleteButton;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void onAppStartEnter( wxCommandEvent& event ){ event.Skip(); }
