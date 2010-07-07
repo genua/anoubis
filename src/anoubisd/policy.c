@@ -29,6 +29,8 @@
 
 #include <sys/param.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #ifdef S_SPLINT_S
 #include "splint-includes.h"
@@ -158,7 +160,7 @@ pid_t
 policy_main(int pipes[], int loggers[])
 /*@globals undef eventq_p2m, undef eventq_p2s, undef replyq@*/
 {
-	int		 masterfd, sessionfd, logfd;
+	int		 masterfd, sessionfd, logfd, err;
 	struct event	 ev_sigterm, ev_sigint, ev_sigquit, ev_sigusr1;
 	struct event	 ev_m2p, ev_s2p;
 	struct event	 ev_p2m, ev_p2s;
@@ -199,6 +201,13 @@ policy_main(int pipes[], int loggers[])
 
 	if ((pw = getpwnam(ANOUBISD_USER)) == NULL)
 		fatal("getpwnam");
+	err = mkdir(ANOUBISD_PG, 0750);
+	if (err == 0) {
+		if (chown(ANOUBISD_PG, pw->pw_uid, pw->pw_gid) < 0)
+			fatal("Cannot chown " ANOUBISD_PG);
+	} else if (errno != EEXIST) {
+		fatal("Cannot create " ANOUBISD_PG);
+	}
 
 	if (chroot(PACKAGE_POLICYDIR) == -1)
 		fatal("chroot");
@@ -277,6 +286,7 @@ policy_main(int pipes[], int loggers[])
 	/* Start policy engine */
 	cert_init(1);
 	pe_init();
+	pe_playground_init();
 
 	DEBUG(DBG_TRACE, "policy event loop");
 	if (event_dispatch() == -1)

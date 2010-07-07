@@ -88,7 +88,8 @@ headers = \
 	cfg.h \
 	cert.h \
 	anoubis_alloc.h \
-	pe_filetree.h
+	pe_filetree.h \
+	compat_openat.h
 
 anoubisd_SOURCES = $(lint_sources) $(nolint_sources) $(headers)
 

@@ -229,7 +229,7 @@ pe_proc_put(struct pe_proc *proc)
 }
 
 /**
- * Set the playground ID of a process. This function make sure that the
+ * Set the playground ID of a process. This function makes sure that the
  * playground management accounts for the new pgid of the process.
  *
  * @param proc The process that changes its playgroundid. The process
@@ -704,6 +704,8 @@ void pe_proc_exec(anoubis_cookie_t cookie, uid_t uid, pid_t pid,
 	/* fill in checksum and pathhint */
 	pe_proc_ident_set(&proc->ident, csum, pathhint);
 	pe_proc_set_pid(proc, pid);
+	if (proc->pgid)
+		pe_playground_postexec(proc->pgid, proc);
 	pe_context_exec(proc, uid, &proc->ident);
 	if (secure) {
 		pe_proc_set_flag(proc, PE_PROC_FLAGS_SECUREEXEC);
