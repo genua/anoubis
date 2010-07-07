@@ -61,6 +61,10 @@
 #define ANOUBIS_SOURCE_PLAYGROUNDPROC	71
 #endif
 
+#ifndef ANOUBIS_SOURCE_PLAYGROUNDFILE
+#define ANOUBIS_SOURCE_PLAYGROUNDFILE	72
+#endif
+
 #include <linux/anoubis_playground.h>
 #include <assert.h>
 

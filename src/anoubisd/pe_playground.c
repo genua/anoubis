@@ -60,6 +60,8 @@
  *     The list is rooted at the global variable playgrounds.
  * pgid: The playground ID of the playground.
  * nrprocs: The total number of running processes in the playground.
+ * nrfiles: The total number of playground files that are known to this
+ *     playground.
  * cmd: The command (program) that was first started in the playground.
  *     This is modified once after the first exec in the playground to
  *     make sure that anoubisctl and/or xanoubis do not show up as the
@@ -74,6 +76,7 @@ struct playground {
 	LIST_ENTRY(playground)			 next;
 	anoubis_cookie_t			 pgid;
 	int					 nrprocs;
+	int					 nrfiles;
 	char					*cmd;
 	uid_t					 uid;
 	int					 did_exec;
@@ -81,7 +84,7 @@ struct playground {
 };
 
 /**
- * This is a linked list of all playground that exist in the system.
+ * This is a linked list of all playgrounds that exist in the system.
  * Each entry of the list is a struct playground.
  */
 static LIST_HEAD(, playground)		playgrounds =
@@ -148,6 +151,7 @@ pe_playground_create(anoubis_cookie_t pgid, int do_mkdir)
 		    "directory: %s", anoubis_strerror(-err));
 	pg->pgid = pgid;
 	pg->nrprocs = 0;
+	pg->nrfiles = 0;
 	pg->cmd = NULL;
 	pg->uid = (uid_t)-1;
 	pg->did_exec = 0;
@@ -156,9 +160,53 @@ pe_playground_create(anoubis_cookie_t pgid, int do_mkdir)
 }
 
 /**
+ * Try to remove a playground from the playground list. This will remove
+ * the playground directory in /var/lib/anoubis/playground, too.
+ *
+ * @param The playground structure.
+ * @return None.
+ */
+static void
+pe_playground_trykill(struct playground *pg)
+{
+	DIR		*dir;
+	struct dirent	*dent;
+	char		 buf[100];
+
+	if (pg->nrprocs || pg->nrfiles)
+		return;
+	dir = atfd_fdopendir(&pg->dirfd);
+	if (!dir) {
+		log_warn("pe_playground_trykill: Cannot open directory "
+		    "for playground %" PRIx64, pg->pgid);
+		return;
+	}
+	while ((dent = readdir(dir)) != NULL) {
+		if (strcmp(dent->d_name, ".") == 0)
+			continue;
+		if (strcmp(dent->d_name, "..") == 0)
+			continue;
+		if (atfd_unlinkat(&pg->dirfd, dent->d_name) != 0)
+			log_warn("pe_playground_trykill: Cannot remove "
+			    "entry %s in playground directory %" PRIx64,
+			    dent->d_name, pg->pgid);
+	}
+	closedir(dir);
+	atfd_close(&pg->dirfd);
+	snprintf(buf, sizeof(buf), "%s/%" PRIx64, ANOUBISD_PGCHROOT, pg->pgid);
+	if (rmdir(buf) != 0)
+		log_warn("pe_playground_trykill: Cannot remove playground "
+		    "directory %" PRIx64, pg->pgid);
+	LIST_REMOVE(pg, next);
+	if (pg->cmd)
+		free(pg->cmd);
+	abuf_free_type(pg, struct playground);
+}
+
+/**
  * Read the contents of a playground file in the given playground and
  * store the data in the buffer. At most bufsize-1 bytes are stored and the
- * buffer in terminated by a NUL byte. If an error occurs an appropriate
+ * buffer is terminated by a NUL byte. If an error occurs an appropriate
  * message is logged.
  *
  * @param pg The playground to read from.
@@ -194,11 +242,12 @@ pe_playground_readfile(struct playground *pg, const char *path, char *buf,
 
 /**
  * Write the given string to a file in the playground directory of the
- * playground. This function writes at most strlen(str) bytes to the file
- * descriptor in pg->dirfd. Any error results in an appropriate log message.
+ * playground. The file is created or truncated. This function writes at
+ * most strlen(str) bytes to the file descriptor in pg->dirfd. Any error
+ * results in an appropriate log message.
  *
  * @param pg The playground structure of the playground.
- * @param path The path relative to the playground binary.
+ * @param path The path relative to the playground directory.
  * @param str The string to write.
  * @return None. Appropriate error messages are logged if something goes wrong.
  */
@@ -321,14 +370,158 @@ pe_playground_delete(anoubis_cookie_t pgid, struct pe_proc *proc)
 		DEBUG(DBG_PG, "pe_playground_delete: pgid=0x%" PRIx64
 		    " task=0x%" PRIx64 " nrprocs=%d", pg->pgid,
 		    pe_proc_task_cookie(proc), pg->nrprocs);
+		pe_playground_trykill(pg);
 	} else {
 		log_warnx("pe_playground_delete: Invalid playground ID %lld",
 		    (long long)pgid);
 	}
 }
 
+static void
+pe_playground_devtoname(char *buf, int buflen, uint64_t dev, uint64_t ino)
+{
+	snprintf(buf, buflen, "%" PRIx64 ":%" PRIx64, dev, ino);
+}
+
 /**
- * Dump a list of all playground to the current log file.
+ * Add the file name of a newly instantiated playground file to the
+ * playground structure on disk.
+ *
+ * @param pgid The playground ID.
+ * @param dev The device of the file system that the file lives on.
+ * @param ino The inode of the file.
+ * @param path The path name of the file relative to the root of the
+ *     file system.
+ * @return None.
+ */
+void
+pe_playground_file_instantiate(anoubis_cookie_t pgid, uint64_t dev,
+    uint64_t ino, const char *path)
+{
+	char buf[512];
+	struct playground *pg;
+	int fd, pathoff;
+	int newfile = 1;
+
+	if (!path || path[0] == 0)
+		return;
+	pg = pe_playground_find(pgid);
+	if (!pg) {
+		log_warnx("pe_playground_file_instantiate: File instantiated "
+		    "in unknown playground");
+		pg = pe_playground_create(pgid, 1);
+		if (!pg) {
+			master_terminate(ENOMEM);
+			return;
+		}
+	}
+	pe_playground_devtoname(buf, sizeof(buf), dev, ino);
+	fd = atfd_openat(&pg->dirfd, buf, O_RDWR | O_CREAT, 0640);
+	if (fd < 0) {
+		log_warnx("pe_playground_file_instantiate: Cannot open %s "
+		    "in playground %" PRIx64, buf, pgid);
+		return;
+	}
+	pathoff = 0;
+	while (1) {
+		int count = read(fd, buf, sizeof(buf));
+		int i;
+
+		if (count == 0)
+			break;
+		if (count < 0) {
+			pe_playground_devtoname(buf, sizeof(buf), dev, ino);
+			log_warn("pe_playground_file_instantiate: Error while "
+			    "reading file %s in playgournd %" PRIx64,
+			    buf, pgid);
+			goto done;
+		}
+		newfile = 0;
+		for (i=0; i<count; ++i) {
+			if (pathoff < 0) {
+				/*
+				 * This path does not match. Skip up to
+				 * next NUL byte.
+				 */
+				if (buf[i] == 0)
+					pathoff = 0;
+				continue;
+			}
+			/*
+			 * We had a path match to pathoff. Compare the next
+			 * character.
+			 */
+			if (buf[i] == path[pathoff]) {
+				/*
+				 * The next character mathes. Advance pathoff
+				 * or return if the match is complete.
+				 */
+				if (path[pathoff] == 0)
+					goto done;
+				pathoff++;
+			} else {
+				/*
+				 * This character does not match. Skip
+				 * everything up to the next NUL byte in buf.
+				 * If this is a NUL byte, there's nothting to
+				 * skip.
+				 */
+				if (buf[i] == 0)
+					pathoff = 0;
+				else
+					pathoff = -1;
+			}
+		}
+	}
+	/*
+	 * Append the new path name to the file. Make sure that the previous
+	 * pathname is NUL terminated.
+	 */
+	if (pathoff) {
+		log_warnx("pe_playground_file_instantiate: File not NUL "
+		    "termianted.");
+		if (write(fd, "", 1) != 1) {
+			log_warn("pe_playground_file_instantiate: Failed to "
+			    "write path name");
+			goto done;
+		}
+	}
+	pathoff = strlen(path)+1;
+	if (write(fd, path, pathoff) != pathoff) {
+		log_warnx("pe_playground_file_instantiate: Failed to "
+		    "write path name");
+	}
+	if (newfile)
+		pg->nrfiles++;
+done:
+	close(fd);
+}
+
+/**
+ * Remove a file from a playground after its playground label got removed.
+ *
+ * @param pgid The playground ID.
+ * @param dev The device of the file.
+ * @param ino The inode number of the file.
+ * @return None.
+ */
+void
+pe_playground_file_delete(anoubis_cookie_t pgid, uint64_t dev, uint64_t ino)
+{
+	struct playground *pg = pe_playground_find(pgid);
+	char buf[50];
+
+	if (!pgid)
+		return;
+	pe_playground_devtoname(buf, sizeof(buf), dev, ino);
+	if (atfd_unlinkat(&pg->dirfd, buf) == 0) {
+		pg->nrfiles--;
+		pe_playground_trykill(pg);
+	}
+}
+
+/**
+ * Dump a list of all playgrounds to the current log file.
  *
  * @param None.
  * @return None.
@@ -358,6 +551,8 @@ pe_playground_read(anoubis_cookie_t pgid)
 {
 	struct playground		*pg = pe_playground_find(pgid);
 	char				 buf[512];
+	DIR				*dir;
+	struct dirent			*dent;
 
 	if (pg) {
 		log_warnx("pe_playground_read: Playground %" PRIx64 " exists",
@@ -368,10 +563,10 @@ pe_playground_read(anoubis_cookie_t pgid)
 		 * already exists.
 		 */
 		pg = pe_playground_create(pgid, 0);
+		if (!pg)
+			fatal("pe_playground_read: Out of memory");
 		pg->did_exec = 1;
 	}
-	if (!pg)
-		fatal("pe_playground_read: Out of memory");
 	pg->uid = (uid_t)-1;
 	if (pe_playground_readfile(pg, "UID", buf, sizeof(buf)) >= 0) {
 		int	uid = -1;
@@ -384,6 +579,21 @@ pe_playground_read(anoubis_cookie_t pgid)
 	}
 	if (pe_playground_readfile(pg, "CMD", buf, sizeof(buf)) >= 0)
 		pg->cmd = strdup(buf);
+	dir = atfd_fdopendir(&pg->dirfd);
+	if (dir == NULL) {
+		log_warn("pe_playground_read: Cannot read playground "
+		    "directory for %" PRIx64, pgid);
+		return;
+	}
+	while((dent = readdir(dir)) != NULL) {
+		uint64_t	dev, ino;
+		char		ch;
+		if (sscanf(dent->d_name, "%" PRIx64 ":%" PRIx64 "%c",
+		    &dev, &ino, &ch) == 2)
+			pg->nrfiles++;
+	}
+	closedir(dir);
+	pe_playground_trykill(pg);
 }
 
 /**
@@ -407,7 +617,7 @@ pe_playground_init(void)
 
 		if (dent->d_name[0] == '.')
 			continue;
-		if (sscanf("%" PRIx64 "%c", dent->d_name, &pgid, &dummy) != 1) {
+		if (sscanf(dent->d_name, "%" PRIx64 "%c", &pgid, &dummy) != 1) {
 			log_warnx("pe_playground_init: Skipping malformed "
 			    "entry %s in " ANOUBISD_PG, dent->d_name);
 			continue;

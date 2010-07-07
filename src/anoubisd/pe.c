@@ -76,6 +76,7 @@ static anoubisd_reply_t	*pe_handle_ipc(struct eventdev_hdr *);
 static anoubisd_reply_t	*pe_handle_sfs(struct eventdev_hdr *);
 static anoubisd_reply_t *pe_handle_playgroundask(struct eventdev_hdr *);
 static anoubisd_reply_t *pe_handle_playgroundproc(struct eventdev_hdr *);
+static anoubisd_reply_t *pe_handle_playgroundfile(struct eventdev_hdr *);
 
 static struct pe_file_event *pe_parse_file_event(struct eventdev_hdr *hdr);
 #ifdef ANOUBIS_SOURCE_SFSPATH
@@ -321,6 +322,9 @@ pe_dispatch_event(struct eventdev_hdr *hdr)
 		break;
 	case ANOUBIS_SOURCE_PLAYGROUNDPROC:
 		reply = pe_handle_playgroundproc(hdr);
+		break;
+	case ANOUBIS_SOURCE_PLAYGROUNDFILE:
+		reply = pe_handle_playgroundfile(hdr);
 		break;
 
 	default:
@@ -763,6 +767,13 @@ pe_handle_playgroundask(struct eventdev_hdr *hdr)
 	return reply;
 }
 
+/**
+ * Handle playground process events. These events are sent if the playground
+ * ID of a process changes.
+ *
+ * @param hdr The eventdev header with the playground event.
+ * @return This function always returns NULL.
+ */
 static anoubisd_reply_t *
 pe_handle_playgroundproc(struct eventdev_hdr *hdr)
 {
@@ -777,6 +788,48 @@ pe_handle_playgroundproc(struct eventdev_hdr *hdr)
 	if (proc) {
 		pe_proc_set_playgroundid(proc, extract_pgid(&pg->common));
 		pe_proc_put(proc);
+	}
+	return NULL;
+}
+
+/**
+ * Handle palyground file events. These events are sent if something
+ * interesting happens with an inode that has a playground label.
+ *
+ * @param hdr The eventdev header with the playground event.
+ * @return This function always returns NULL.
+ */
+static anoubisd_reply_t *
+pe_handle_playgroundfile(struct eventdev_hdr *hdr)
+{
+	int				 plen;
+	struct pg_file_message		*pg;
+
+	if (!hdr || hdr->msg_size < sizeof(struct eventdev_hdr)
+	    + sizeof(struct pg_file_message) + 1)
+		return NULL;
+	plen = hdr->msg_size - sizeof(struct eventdev_hdr)
+	    - sizeof(struct pg_file_message);
+	pg = (struct pg_file_message *)(hdr+1);
+	/* Force NULL termination, just in case... */
+	pg->path[plen-1] = 0;
+	DEBUG(DBG_PG, "pe_handle_playgroundfile: Playground file %" PRIx64
+	    ":%" PRIx64 ":%s", pg->dev, pg->ino, pg->path);
+	switch (pg->op) {
+	case ANOUBIS_PGFILE_INSTANTIATE:
+		if (pg->path[0]) {
+			pe_playground_file_instantiate(pg->pgid, pg->dev,
+			    pg->ino, pg->path);
+		} else {
+			log_warnx("pe_handle_playgroundfile: "
+			    "Empty file name length=%d", plen);
+		}
+		break;
+	case ANOUBIS_PGFILE_DELETE:
+		pe_playground_file_delete(pg->pgid, pg->dev, pg->ino);
+		break;
+	default:
+		log_warnx("pe_handle_playgroundfile: Bad operation %d", pg->op);
 	}
 	return NULL;
 }

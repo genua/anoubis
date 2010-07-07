@@ -125,11 +125,33 @@ atfd_openat(struct atfd *atfd, const char *path, int flags, int mode)
 #endif
 }
 
+static inline int
+atfd_unlinkat(struct atfd *atfd, const char *path)
+{
+#ifdef LINUX
+	return unlinkat(atfd->atfd, path, 0);
+#endif
+#ifdef OPENBSD
+	char *fullpath = atfd_openat_path(atfd->prefix, path);
+	int ret;
+
+	if (fullpath == NULL) {
+		errno = -ENOMEM;
+		return -1;
+	}
+	ret = unlink(fullpath);
+	free(fullpath);
+	return ret;
+#endif
+}
+
 static inline DIR *
 atfd_fdopendir(struct atfd *atfd)
 {
 #ifdef LINUX
-	int	dirfd = dup(atfd->atfd);
+	int	dirfd = openat(atfd->atfd, ".", O_RDONLY|O_DIRECTORY);
+	if (dirfd < 0)
+		return NULL;
 	return fdopendir(dirfd);
 #endif
 #ifdef OPENBSD

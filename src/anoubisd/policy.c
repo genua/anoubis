@@ -648,7 +648,8 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 		    (hdr->msg_source != ANOUBIS_SOURCE_PROCESS &&
 		    hdr->msg_source != ANOUBIS_SOURCE_SFSEXEC &&
 		    hdr->msg_source != ANOUBIS_SOURCE_IPC &&
-		    hdr->msg_source != ANOUBIS_SOURCE_PLAYGROUNDPROC)) {
+		    hdr->msg_source != ANOUBIS_SOURCE_PLAYGROUNDPROC &&
+		    hdr->msg_source != ANOUBIS_SOURCE_PLAYGROUNDFILE)) {
 			free(msg);
 			DEBUG(DBG_TRACE, "<dispatch_m2p (not NEED_REPLY)");
 			continue;

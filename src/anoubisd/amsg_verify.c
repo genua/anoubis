@@ -415,6 +415,22 @@ pg_open_message_size(const char *buf, int buflen)
 
 DEFINE_CHECK_FUNCTION(struct, pg_proc_message)
 
+/*
+ * Size of a pg_file_message.
+ */
+static int
+pg_file_message_size(const char *buf, int buflen)
+{
+	struct pg_file_message *pg;
+	DECLARE_SIZE();
+
+	CAST(pg, buf, buflen);
+	SHIFT_FIELD(pg, path, buf, buflen);
+	SHIFT_STRING(buf, buflen);
+
+	RETURN_SIZE();
+}
+
 #ifdef ANOUBIS_SOURCE_SFSPATH
 /*
  * Size of an sfs_path_message structure.
@@ -543,6 +559,7 @@ eventdev_hdr_size(const char *buf, int buflen)
 	VARIANT(ANOUBIS_SOURCE_IPC, ac_ipc_message, buf, buflen);
 	VARIANT(ANOUBIS_SOURCE_PLAYGROUND, pg_open_message, buf, buflen);
 	VARIANT(ANOUBIS_SOURCE_PLAYGROUNDPROC, pg_proc_message, buf, buflen);
+	VARIANT(ANOUBIS_SOURCE_PLAYGROUNDFILE, pg_file_message, buf, buflen);
 	default:
 		return -1;
 	}
