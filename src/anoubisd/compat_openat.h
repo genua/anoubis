@@ -116,7 +116,7 @@ atfd_openat(struct atfd *atfd, const char *path, int flags, int mode)
 	int ret;
 
 	if (fullpath == NULL) {
-		errno = -ENOMEM;
+		errno = ENOMEM;
 		return -1;
 	}
 	ret = open(fullpath, flags, mode);
@@ -136,7 +136,7 @@ atfd_unlinkat(struct atfd *atfd, const char *path)
 	int ret;
 
 	if (fullpath == NULL) {
-		errno = -ENOMEM;
+		errno = ENOMEM;
 		return -1;
 	}
 	ret = unlink(fullpath);
