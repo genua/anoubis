@@ -97,7 +97,7 @@ compat_get_event(anoubisd_msg_t *old, unsigned long version)
 		free(old);
 		return NULL;
 	}
-	post = old->size - pre - sizeof(struct anoubis_event_common_10004);
+	post = total - pre - sizeof(struct anoubis_event_common_10004);
 	n = msg_factory(ANOUBISD_MSG_EVENTDEV,
 	    pre + sizeof(struct anoubis_event_common) + post);
 	if (n == NULL) {
