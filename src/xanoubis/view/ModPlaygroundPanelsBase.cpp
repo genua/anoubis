@@ -94,11 +94,13 @@ ModPlaygroundMainPanelBase::ModPlaygroundMainPanelBase( wxWindow* parent, wxWind
 	pgGrid->SetDefaultCellAlignment( wxALIGN_LEFT, wxALIGN_TOP );
 	pgOverviewSizer->Add( pgGrid, 1, wxALL|wxEXPAND, 5 );
 	
-	wxBoxSizer* pgButtonSizer;
-	pgButtonSizer = new wxBoxSizer( wxVERTICAL );
+	pgPageSizer->Add( pgOverviewSizer, 1, wxALL|wxEXPAND, 5 );
 	
-	pgEditButton = new wxButton( pgPage, wxID_ANY, _("Edit"), wxDefaultPosition, wxDefaultSize, 0 );
-	pgButtonSizer->Add( pgEditButton, 0, wxALIGN_RIGHT|wxALIGN_TOP|wxALL, 5 );
+	wxBoxSizer* pgButtonSizer;
+	pgButtonSizer = new wxBoxSizer( wxHORIZONTAL );
+	
+	pgCommitButton = new wxButton( pgPage, wxID_ANY, _("Commit files..."), wxDefaultPosition, wxDefaultSize, 0 );
+	pgButtonSizer->Add( pgCommitButton, 0, wxALIGN_RIGHT|wxALIGN_TOP|wxALL, 5 );
 	
 	
 	pgButtonSizer->Add( 0, 0, 1, wxEXPAND, 5 );
@@ -106,9 +108,7 @@ ModPlaygroundMainPanelBase::ModPlaygroundMainPanelBase( wxWindow* parent, wxWind
 	pgDeleteButton = new wxButton( pgPage, wxID_ANY, _("Delete"), wxDefaultPosition, wxDefaultSize, 0 );
 	pgButtonSizer->Add( pgDeleteButton, 0, wxALIGN_BOTTOM|wxALIGN_RIGHT|wxALL, 5 );
 	
-	pgOverviewSizer->Add( pgButtonSizer, 0, wxEXPAND, 5 );
-	
-	pgPageSizer->Add( pgOverviewSizer, 1, wxALL|wxEXPAND, 5 );
+	pgPageSizer->Add( pgButtonSizer, 0, wxALIGN_BOTTOM|wxALIGN_RIGHT|wxEXPAND, 5 );
 	
 	pgPage->SetSizer( pgPageSizer );
 	pgPage->Layout();
@@ -123,8 +123,6 @@ ModPlaygroundMainPanelBase::ModPlaygroundMainPanelBase( wxWindow* parent, wxWind
 	// Connect Events
 	applicationComboBox->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( ModPlaygroundMainPanelBase::onAppStartEnter ), NULL, this );
 	applicationStartButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModPlaygroundMainPanelBase::onAppStart ), NULL, this );
-	pgEditButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModPlaygroundMainPanelBase::onAppStart ), NULL, this );
-	pgDeleteButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModPlaygroundMainPanelBase::onAppStart ), NULL, this );
 }
 
 ModPlaygroundOverviewPanelBase::ModPlaygroundOverviewPanelBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )

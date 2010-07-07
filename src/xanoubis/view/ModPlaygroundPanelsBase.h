@@ -70,7 +70,7 @@ class ModPlaygroundMainPanelBase : public wxPanel
 		wxComboBox* applicationComboBox;
 		wxButton* applicationStartButton;
 		wxGrid* pgGrid;
-		wxButton* pgEditButton;
+		wxButton* pgCommitButton;
 		
 		wxButton* pgDeleteButton;
 		
