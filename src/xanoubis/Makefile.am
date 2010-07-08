@@ -561,15 +561,34 @@ xanoubis_SOURCES= \
 # reuse the already compiled objects of xanoubis. Ensure those are
 # built with -fPIC.
 #
+
 if WITH_TESTS
 noinst_PROGRAMS = libGUIcomponents.so
+
+if HAVE_LIBWXGUITESTING
+
+# We want wxGuiTesting and for that we need to compile GUIcomponents
+# with special compiler- and linker-flags
+libGUIcomponents_so_SOURCES  = $(xanoubis_SOURCES)
+libGUIcomponents_so_CPPFLAGS = $(xanoubis_CPPFLAGS) -DUSE_WXGUITESTING
+libGUIcomponents_so_CXXFLAGS = $(shared_AM_CXXFLAGS) $(xanoubis_cxxflags)
+libGUIcomponents_so_LDFLAGS  = $(shared_AM_LDFLAGS) $(SSL_LDFLAGS) \
+	-Wl,-soname,$@
+libGUIcomponents_so_LDADD    = $(xanoubis_ldadd) \
+	-L $(libanoubisbuilddir) -lanoubis
+libGUIcomponents_so_LINK     = $(CXX) $(libGUIcomponents_so_LDFLAGS) -o $@
+
+else # ! HAVE_LIBWXGUITESTING
+# No wxGuiTesting; maybe we can cheat and just link objects together
 if FPIC_HACK
 libGUIcomponents_so_SOURCES =
 libGUIcomponents_so_DEPENDENCIES = $(xanoubis_OBJECTS)
 libGUIcomponents_so_LINK = \
 	$(CXX) $(shared_AM_LDFLAGS) -Wl,-soname,$@ \
 	    -o $@ $(xanoubis_OBJECTS)
-else
+
+else # ! FPIC_HACK
+
 libGUIcomponents_so_SOURCES  = $(xanoubis_SOURCES)
 libGUIcomponents_so_CPPFLAGS = $(xanoubis_CPPFLAGS)
 libGUIcomponents_so_CXXFLAGS = $(shared_AM_CXXFLAGS) $(xanoubis_cxxflags)
@@ -578,8 +597,10 @@ libGUIcomponents_so_LDFLAGS  = $(shared_AM_LDFLAGS) $(SSL_LDFLAGS) \
 libGUIcomponents_so_LDADD    = $(xanoubis_ldadd) \
 	-L $(libanoubisbuilddir) -lanoubis
 libGUIcomponents_so_LINK     = $(CXX) $(libGUIcomponents_so_LDFLAGS) -o $@
-endif
-endif
+
+endif # ! FPIC_HACK
+endif # ! HAVE_LIBWXGUITESTING
+endif # WITH_TESTS
 
 potfiles.frag:
 	echo $(xanoubis_SOURCES) > potfiles.frag

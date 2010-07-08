@@ -43,7 +43,14 @@
 #include <wx/intl.h>
 #include <wx/string.h>
 #include <wx/wxprec.h>
-#include <wx/wx.h>
+
+#ifdef USE_WXGUITESTING
+#	include <wxGuiTest/WxGuiTestApp.h>
+#	define PARENTCLASS wxTst::WxGuiTestApp
+#else /* USE_WXGUITESTING */
+#	include <wx/wx.h>
+#	define PARENTCLASS wxApp
+#endif /* USE_WXGUITESTING */
 
 #include "ComPolicyRequestTask.h"
 #include "ComPolicySendTask.h"
@@ -61,7 +68,7 @@
 /**
  * Main application class of xanoubis.
  */
-class AnoubisGuiApp : public wxApp, private PassphraseReader
+class AnoubisGuiApp : public PARENTCLASS, private PassphraseReader
 {
 	public:
 		/**
@@ -133,6 +140,8 @@ class AnoubisGuiApp : public wxApp, private PassphraseReader
 		wxString readPassphrase(bool *);
 };
 
+#ifndef USE_WXGUITESTING
 DECLARE_APP(AnoubisGuiApp)
+#endif /* USE_WXGUITESTING */
 
 #endif /* __MAIN_H__ */

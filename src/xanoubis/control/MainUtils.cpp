@@ -118,6 +118,11 @@ MainUtils::getIconPath(wxString iconName)
 {
 	wxString iconFileName;
 
+#ifdef USE_WXGUITESTING
+	/* In case of wxGuiTest (running on xen test) icons are in root fs. */
+	return wxT("/") + iconName;
+#endif /* USE_WXGUITESTING */
+
 	iconFileName = paths_.GetDataDir() + wxT("/icons/") + iconName;
 	if (!::wxFileExists(iconFileName)) {
 		/*
@@ -152,7 +157,8 @@ MainUtils::getDataDir(void)
 void
 MainUtils::status(wxString msg)
 {
-	MainFrame *mainFrame = dynamic_cast<MainFrame*>(wxGetApp().GetTopWindow());
+	MainFrame *mainFrame = dynamic_cast<MainFrame*>(
+	    wxGetApp().GetTopWindow());
 	if (mainFrame != NULL) {
 		mainFrame->SetStatusText(msg, 0);
 	}
@@ -232,8 +238,8 @@ MainUtils::checkBootConf(void)
 			msg = _("The Boot Loader configuration has been"
 			    " updated. Please make sure to boot an Anoubis"
 			    " Kernel.");
-			AnMessageDialog dlg(wxGetApp().GetTopWindow(), msg, _("Warning"),
-			    wxOK | wxICON_WARNING);
+			AnMessageDialog dlg(wxGetApp().GetTopWindow(), msg,
+			    _("Warning"), wxOK | wxICON_WARNING);
 			dlg.onNotifyCheck(
 			    wxT("/Options/ShowKernelUpgradeMessage"));
 			dlg.ShowModal();

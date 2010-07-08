@@ -53,6 +53,11 @@ TESTS = \
 noinst_PROGRAMS = test_xanoubis_server testSuite_JobCtrl $(TESTS)
 endif
 
+if HAVE_LIBWXGUITESTING
+TESTS += wxGuiTest_Playground
+noinst_PROGRAMS = test_xanoubis_server testSuite_JobCtrl $(TESTS)
+endif
+
 xanoubisdir       = src/xanoubis
 xanoubisbuilddir  = $(top_builddir)/$(xanoubisdir)
 xanoubissrcdir    = $(top_srcdir)/$(xanoubisdir)
@@ -73,6 +78,10 @@ AM_CPPFLAGS = $(test_cppflags) \
 	-I$(xanoubissrcdir)/widgets \
 	$(WX_CPPFLAGS)
 
+if HAVE_LIBWXGUITESTING
+AM_CPPFLAGS += -DUSE_WXGUITESTING
+endif
+
 AM_CXXFLAGS = \
 	-fno-strict-aliasing \
 	$(prog_AM_CXXFLAGS) \
@@ -82,17 +91,20 @@ AM_CXXFLAGS = \
 	$(NOTIFY_CFLAGS) \
 	$(SSL_CFLAGS)
 
-
 AM_LDFLAGS = $(test_ldflags) \
 	-L$(xanoubisbuilddir)
 
-LDADD = $(test_ldadd) \
+GUITEST_LDADD = $(test_ldadd) \
 	@WX_LIBS@ \
 	@GTK_LIBS@ \
 	@GLIB_LIBS@ \
 	@NOTIFY_LIBS@ \
-	$(SSL_LIBS)
+	$(SSL_LIBS) \
+	-lGUIcomponents
 
+if HAVE_LIBWXGUITESTING
+GUITEST_LDADD += -lwxGuiTestingd -lcppunit
+endif
 
 dependencies = \
 	$(libGUIcomponents) \
@@ -117,7 +129,7 @@ test_xanoubis_server_SOURCES = \
 #
 testSuite_Patterns_CPPFLAGS = $(AM_CPPFLAGS)
 testSuite_Patterns_DEPENDENCIES = $(dependencies)
-testSuite_Patterns_LDADD = $(LDADD) -lGUIcomponents
+testSuite_Patterns_LDADD = $(GUITEST_LDADD)
 
 testSuite_Patterns_SOURCES = \
 	testrunner.cpp \
@@ -131,7 +143,7 @@ testSuite_Patterns_SOURCES = \
 #
 testSuite_Profiles_CPPFLAGS = $(AM_CPPFLAGS)
 testSuite_Profiles_DEPENDENCIES = $(dependencies)
-testSuite_Profiles_LDADD = $(LDADD) -lGUIcomponents
+testSuite_Profiles_LDADD = $(GUITEST_LDADD)
 
 testSuite_Profiles_SOURCES = \
 	testrunner.cpp \
@@ -143,7 +155,7 @@ testSuite_Profiles_SOURCES = \
 #
 testSuite_Policies_CPPFLAGS = $(AM_CPPFLAGS)
 testSuite_Policies_DEPENDENCIES = $(dependencies)
-testSuite_Policies_LDADD = $(LDADD) -lGUIcomponents
+testSuite_Policies_LDADD = $(GUITEST_LDADD)
 
 testSuite_Policies_SOURCES = \
 	testrunner.cpp \
@@ -171,7 +183,7 @@ testSuite_Policies_SOURCES = \
 #
 testSuite_Services_CPPFLAGS = $(AM_CPPFLAGS) -D_PATH_SERVICES=\"/tmp/foobar\"
 testSuite_Services_DEPENDENCIES = $(dependencies)
-testSuite_Services_LDADD = $(LDADD) -lGUIcomponents
+testSuite_Services_LDADD = $(GUITEST_LDADD)
 
 testSuite_Services_SOURCES = \
 	testrunner.cpp \
@@ -182,7 +194,7 @@ testSuite_Services_SOURCES = \
 #
 testSuite_Sandbox_CPPFLAGS = $(AM_CPPFLAGS)
 testSuite_Sandbox_DEPENDENCIES = $(dependencies)
-testSuite_Sandbox_LDADD = $(LDADD) -lGUIcomponents
+testSuite_Sandbox_LDADD = $(GUITEST_LDADD)
 
 testSuite_Sandbox_SOURCES = \
 	testrunner.cpp \
@@ -193,7 +205,7 @@ testSuite_Sandbox_SOURCES = \
 #
 testSuite_Sfs_CPPFLAGS = $(AM_CPPFLAGS)
 testSuite_Sfs_DEPENDENCIES = $(dependencies)
-testSuite_Sfs_LDADD = $(LDADD) -lGUIcomponents
+testSuite_Sfs_LDADD = $(GUITEST_LDADD)
 
 testSuite_Sfs_SOURCES = \
 	testrunner.cpp \
@@ -205,7 +217,7 @@ testSuite_Sfs_SOURCES = \
 #
 testSuite_StringList_CPPFLAGS = $(AM_CPPFLAGS)
 testSuite_StringList_DEPENDENCIES = $(dependencies)
-testSuite_StringList_LDADD = $(LDADD) -lGUIcomponents
+testSuite_StringList_LDADD = $(GUITEST_LDADD)
 
 testSuite_StringList_SOURCES = \
 	testrunner.cpp \
@@ -216,7 +228,7 @@ testSuite_StringList_SOURCES = \
 #
 testSuite_Key_CPPFLAGS = $(AM_CPPFLAGS)
 testSuite_Key_DEPENDENCIES = $(dependencies)
-testSuite_Key_LDADD = $(LDADD) -lGUIcomponents
+testSuite_Key_LDADD = $(GUITEST_LDADD)
 
 testSuite_Key_SOURCES = \
 	testrunner.cpp \
@@ -230,7 +242,7 @@ testSuite_Key_SOURCES = \
 #
 testSuite_JobCtrl_CPPFLAGS = $(AM_CPPFLAGS)
 testSuite_JobCtrl_DEPENDENCIES = $(dependencies)
-testSuite_JobCtrl_LDADD = $(LDADD) -lGUIcomponents
+testSuite_JobCtrl_LDADD = $(GUITEST_LDADD)
 
 testSuite_JobCtrl_SOURCES = \
 	testrunner.cpp \
@@ -250,7 +262,7 @@ testSuite_JobCtrl_SOURCES = \
 #
 testSuite_Notifications_CPPFLAGS = $(AM_CPPFLAGS)
 testSuite_Notifications_DEPENDENCIES = $(dependencies)
-testSuite_Notifications_LDADD = $(LDADD) -lGUIcomponents
+testSuite_Notifications_LDADD = $(GUITEST_LDADD)
 
 testSuite_Notifications_SOURCES = \
 	testrunner.cpp \
@@ -262,7 +274,7 @@ testSuite_Notifications_SOURCES = \
 #
 testSuite_Config_CPPFLAGS = $(AM_CPPFLAGS)
 testSuite_Config_DEPENDENCIES = $(dependencies)
-testSuite_Config_LDADD = $(LDADD) -lGUIcomponents
+testSuite_Config_LDADD = $(GUITEST_LDADD)
 
 testSuite_Config_SOURCES = \
 	testrunner.cpp \
@@ -275,8 +287,23 @@ testSuite_Config_SOURCES = \
 # pidtest
 #
 pidtest_SOURCES = pidtest.cpp
+pidtest_LDADD = @WX_LIBS@
 
 #
 # wxStringTest
 #
 wxStringTest_SOURCES = wxStringTest.cpp
+wxStringTest_LDADD = @WX_LIBS@
+
+#
+# Testsuite: wxGuiTest Playgrond
+#
+if HAVE_LIBWXGUITESTING
+wxGuiTest_Playground_CPPFLAGS = $(AM_CPPFLAGS)
+wxGuiTest_Playground_DEPENDENCIES = $(dependencies)
+wxGuiTest_Playground_LDADD = $(GUITEST_LDADD)
+wxGuiTest_Playground_SOURCES = \
+	wxGuiTestRunner.cpp \
+	wxGuiTest/SuitPlayground.cpp \
+	wxGuiTest/SuitPlayground.h
+endif

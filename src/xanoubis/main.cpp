@@ -62,7 +62,13 @@
 #include "VersionCtrl.h"
 #include "main.h"
 
+#ifdef USE_WXGUITESTING
+#include <wxGuiTest/WxGuiTestHelper.h>
+IMPLEMENT_APP(AnoubisGuiApp)
+#else
 IMPLEMENT_APP_NO_MAIN(AnoubisGuiApp)
+#endif /* USE_WXGUITESTING */
+
 IMPLEMENT_WX_THEME_SUPPORT
 
 AnoubisGuiApp::AnoubisGuiApp(void)
@@ -108,6 +114,7 @@ bool AnoubisGuiApp::OnInit()
 	if (!wxApp::OnInit())
 		return false;
 
+	wxTheApp->SetAppName(wxT("xanoubis"));
 	/*
 	 * Make sure that a ProcCtrl Instance exists before we start any
 	 * helper threads.
@@ -332,6 +339,7 @@ AnoubisGuiApp::readPassphrase(bool *ok)
 	return (result);
 }
 
+#ifndef USE_WXGUITESTING
 int
 main(int argc, char **argv)
 {
@@ -341,3 +349,4 @@ main(int argc, char **argv)
 	}
 	return wxEntry(argc, argv);
 }
+#endif /* USE_WXGUITESTING */

@@ -57,10 +57,10 @@ ModPlaygroundMainPanelBase::ModPlaygroundMainPanelBase( wxWindow* parent, wxWind
 	applicationLabel->Wrap( -1 );
 	startSizer->Add( applicationLabel, 0, wxALL, 5 );
 	
-	applicationComboBox = new wxComboBox( pgPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize( 350,-1 ), 0, NULL, wxTE_PROCESS_ENTER ); 
+	applicationComboBox = new wxComboBox( pgPage, PG_APP_COMBOBOX, wxEmptyString, wxDefaultPosition, wxSize( 350,-1 ), 0, NULL, wxTE_PROCESS_ENTER ); 
 	startSizer->Add( applicationComboBox, 0, wxALL, 5 );
 	
-	applicationStartButton = new wxButton( pgPage, wxID_ANY, _("Start Playground"), wxDefaultPosition, wxDefaultSize, 0 );
+	applicationStartButton = new wxButton( pgPage, PG_APP_STARTBUTTON, _("Start Playground"), wxDefaultPosition, wxDefaultSize, 0 );
 	startSizer->Add( applicationStartButton, 0, wxALL, 5 );
 	
 	pgPageSizer->Add( startSizer, 0, wxALL|wxEXPAND, 5 );

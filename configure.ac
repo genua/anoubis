@@ -109,6 +109,10 @@ dnl checks for libraries
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
 AC_CHECK_LIB(event, event_init)
 AX_CHECK_SSL
+AS_IF(test -e /usr/lib/libwxGuiTestingd.a,
+	[PKG_CHECK_MODULES([CPPUNIT], [cppunit >= 1.12])
+	 AM_CONDITIONAL(HAVE_LIBWXGUITESTING, [true])   ],
+	[AM_CONDITIONAL(HAVE_LIBWXGUITESTING, [false])  ] )
 
 dnl checks for libnotify and its dependencies (xanoubis)
 PKG_CHECK_MODULES([GTK], [gtk+-2.0 >= 2.4.0])
