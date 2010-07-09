@@ -183,6 +183,23 @@ send_upgrade_start(void)
 {
 }
 
+int
+enqueue(Queue * q __used, void *msg __used)
+{
+	return 0;
+}
+
+anoubisd_msg_t *
+msg_factory(int type __used, int size __used)
+{
+	return NULL;
+}
+
+void
+msg_shrink(struct anoubisd_msg *msg __used, int size __used)
+{
+}
+
 unsigned int debug_flags = 0;
 unsigned long version = ANOUBISCORE_VERSION;
 enum anoubisd_process_type anoubisd_process = 0;

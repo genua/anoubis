@@ -173,6 +173,9 @@ static inline u_int64_t __ntohll(u_int64_t arg)
 #define		ANOUBIS_P_VERSION	0x3900
 #define		ANOUBIS_P_VERSIONREPLY	0x3901
 
+#define		ANOUBIS_P_PGLISTREQ	0x3A00
+#define		ANOUBIS_P_PGLISTREP	0x3A01
+
 #define		ANOUBIS_P_MAX		0x3FFF
 
 /* NOTIFY Protocol */
@@ -549,5 +552,33 @@ typedef struct {
 	u32n	type;
 	char	payload[0];
 } __attribute__((packed)) Anoubis_PassphraseMessage;
+
+/* Record types for Anoubis_PgReplyMessages */
+#define ANOUBIS_PGREC_NOTYPE		0	/* Error or empty. */
+#define ANOUBIS_PGREC_PGLIST		1	/* Anoubis_PgInfoRecord list */
+
+typedef struct {
+	u32n	type;
+	u16n	listtype;
+} __attribute__((packed)) Anoubis_PgRequestMessage;
+
+typedef struct {
+	u32n	type;
+	u32n	flags;
+	u32n	error;
+	u16n	nrec;
+	u16n	rectype;
+	char	payload[0];
+} __attribute__((packed)) Anoubis_PgReplyMessage;
+
+typedef struct {
+	u32n			reclen;
+	u32n			uid;
+	u64n			pgid;
+	u64n			starttime;
+	u32n			nrprocs;
+	u32n			nrfiles;
+	char			path[0];
+} __attribute__((packed)) Anoubis_PgInfoRecord;
 
 #endif

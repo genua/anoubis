@@ -372,6 +372,20 @@ anoubisd_msg_csumreply_size(const char *buf, int buflen)
 	RETURN_SIZE();
 }
 
+static int
+anoubisd_msg_pgreply_size(const char *buf, int buflen)
+{
+	struct anoubisd_msg_pgreply	*msg;
+	DECLARE_SIZE();
+
+	CAST(msg, buf, buflen);
+	SHIFT_FIELD(msg, data, buf, buflen);
+	CHECK_LEN(msg->len, buflen);
+	ADD_SIZE(msg->len);
+
+	RETURN_SIZE();
+}
+
 DEFINE_CHECK_FUNCTION(struct, alf_event)
 DEFINE_CHECK_FUNCTION(struct, ac_process_message)
 DEFINE_CHECK_FUNCTION(struct, ac_ipc_message)
@@ -825,6 +839,7 @@ anoubisd_msg_authverify_size(const char *buf, int buflen)
 }
 
 DEFINE_CHECK_FUNCTION(struct, anoubisd_msg_authresult)
+DEFINE_CHECK_FUNCTION(struct, anoubisd_msg_pgrequest)
 
 static int
 anoubisd_msg_size(const char *buf, int buflen)
@@ -863,6 +878,8 @@ anoubisd_msg_size(const char *buf, int buflen)
 	VARIANT(ANOUBISD_MSG_AUTH_RESULT, anoubisd_msg_authresult, buf, buflen);
 	VARIANT(ANOUBISD_MSG_CSMULTIREQUEST, anoubisd_msg_csumop, buf, buflen);
 	VARIANT(ANOUBISD_MSG_CSMULTIREPLY, anoubisd_msg_csumreply, buf, buflen);
+	VARIANT(ANOUBISD_MSG_PGREQUEST, anoubisd_msg_pgrequest, buf, buflen);
+	VARIANT(ANOUBISD_MSG_PGREPLY, anoubisd_msg_pgreply, buf, buflen);
 	default:
 		log_warnx("anoubisd_msg_size: Bad message type %d",
 		    msg->mtype);

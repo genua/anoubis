@@ -40,6 +40,7 @@
 #endif
 
 #include <anoubis_alloc.h>
+#include "aqueue.h"
 
 #define PE_PRIO_ADMIN	0
 #define PE_PRIO_USER1	1
@@ -258,6 +259,8 @@ void			 pe_playground_file_delete(anoubis_cookie_t pgid,
 			     uint64_t dev, uint64_t ino);
 void			 pe_playground_dump(void);
 void			 pe_playground_init(void);
+void			 pe_playground_dispatch_request(anoubisd_msg_t *,
+			     Queue *);
 
 /*
  * Entry points exported for the benefit of unit tests.

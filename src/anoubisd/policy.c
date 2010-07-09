@@ -924,7 +924,10 @@ dispatch_s2p(int fd, short sig __used, void *arg)
 				free(msg);
 			}
 			break;
-
+		case ANOUBISD_MSG_PGREQUEST:
+			pe_playground_dispatch_request(msg, &eventq_p2s);
+			free(msg);
+			break;
 		default:
 
 			DEBUG(DBG_TRACE, "dispatch_s2p: msg type %d",

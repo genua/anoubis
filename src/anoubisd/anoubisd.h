@@ -201,6 +201,8 @@ enum anoubisd_msg_type {
 	ANOUBISD_MSG_AUTH_RESULT,
 	ANOUBISD_MSG_CSMULTIREQUEST,
 	ANOUBISD_MSG_CSMULTIREPLY,
+	ANOUBISD_MSG_PGREQUEST,
+	ANOUBISD_MSG_PGREPLY
 };
 
 /* format of ANOUBISD_MSG_EVENTDEV is struct eventdev_hdr */
@@ -359,6 +361,19 @@ struct anoubisd_msg_config
 	char		chunk[0];	/* socket and trigger list */
 };
 typedef struct anoubisd_msg_config anoubisd_msg_config_t;
+
+struct anoubisd_msg_pgrequest {
+	uint64_t	token;
+	uint32_t	auth_uid;
+	uint32_t	listtype;
+};
+
+struct anoubisd_msg_pgreply {
+	uint64_t	token;
+	uint32_t	flags;
+	uint32_t	len;
+	char		data[0];
+};
 
 /* These are used to populate the logger socketpairs and should
    be even numbers to leave room for the odd endpoints.

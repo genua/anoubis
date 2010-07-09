@@ -350,6 +350,37 @@ dump_csmultireply(Anoubis_CSMultiReplyMessage *m, size_t len __used)
 }
 
 static void
+dump_pgreq(Anoubis_PgRequestMessage *m, size_t len __used)
+{
+	DUMP_NETU(m, listtype);
+}
+
+static void
+dump_pgreply(Anoubis_PgReplyMessage *m, size_t len __used)
+{
+	int	i, off = 0;
+	DUMP_NETU(m, error);
+	DUMP_NETU(m, nrec);
+	DUMP_NETU(m, rectype);
+	snprintf(DSTR, DLEN, " playgrounds:");
+	for (i=0; i<get_value(m->nrec); ++i) {
+		if (get_value(m->rectype) == ANOUBIS_PGREC_PGLIST) {
+			Anoubis_PgInfoRecord	*rec;
+			rec = (Anoubis_PgInfoRecord *)(m->payload + off);
+			off += get_value(rec->reclen);
+			snprintf(DSTR, DLEN, " {");
+			snprintf(DSTR, DLEN, " path=%s", rec->path);
+			DUMP_NETU(rec, uid);
+			DUMP_NETULL(rec, pgid);
+			DUMP_NETULL(rec, starttime);
+			DUMP_NETU(rec, nrprocs);
+			DUMP_NETU(rec, nrfiles);
+			snprintf(DSTR, DLEN, " }");
+		}
+	}
+}
+
+static void
 dump_policychange(Anoubis_PolicyChangeMessage *m, size_t len __used)
 {
 	DUMP_NETU(m, uid);
@@ -407,6 +438,8 @@ void __anoubis_dump(struct anoubis_msg * m, const char * pre, char **pstr)
 	CASE(ANOUBIS_P_CSMULTIREPLY, csmultireply)
 	CASE(ANOUBIS_P_VERSION, general)
 	CASE(ANOUBIS_P_VERSIONREPLY, version)
+	CASE(ANOUBIS_P_PGLISTREQ, pgreq)
+	CASE(ANOUBIS_P_PGLISTREP, pgreply)
 	default:
 		snprintf(DSTR, DLEN, " type = %x", opcode);
 		dump_general(m->u.general, m->length-CSUM_LEN);

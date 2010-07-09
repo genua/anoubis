@@ -1996,3 +1996,66 @@ anoubis_client_version_start(struct anoubis_client *client)
 
 	return (t);
 }
+
+static void
+anoubis_client_pglist_steps(struct anoubis_transaction *t,
+    struct anoubis_msg *m)
+{
+	struct anoubis_client		*client = t->cbdata;
+	int				 ret;
+	unsigned int			 flags;
+
+	ret = anoubis_client_verify(client, m);
+	if (ret < 0)
+		goto err;
+	ret = -EPROTO;
+	if (!VERIFY_LENGTH(m, sizeof(Anoubis_PgReplyMessage))
+	    || get_value(m->u.pgreply->type) != ANOUBIS_P_PGLISTREP)
+		goto err;
+	flags = get_value(m->u.pgreply->flags);
+	/* Start must be set exactly once on the first message. */
+	if ((t->msg == NULL) == ((flags & POLICY_FLAG_START) == 0))
+		goto err;
+	ret = - get_value(m->u.pgreply->error);
+	if ((flags & POLICY_FLAG_END) == 0)
+		return;
+err:
+	/* Do not free the message because of ANOUBIS_T_WANTALL */
+	anoubis_transaction_done(t, -ret);
+	LIST_REMOVE(t, next);
+	client->flags &= ~FLAG_POLICY_PENDING;
+}
+
+struct anoubis_transaction *
+anoubis_client_pglist_start(struct anoubis_client *client,
+    uint32_t listtype)
+{
+	static const u_int32_t nextops[] = { ANOUBIS_P_PGLISTREP, -1 };
+	struct anoubis_msg		*m;
+	struct anoubis_transaction	*t = NULL;
+
+	if ((client->proto & ANOUBIS_PROTO_POLICY) == 0)
+		return NULL;
+	if (client->state != ANOUBIS_STATE_CONNECTED)
+		return NULL;
+	if (client->flags & FLAG_POLICY_PENDING)
+		return NULL;
+	m = anoubis_msg_new(sizeof(Anoubis_PgRequestMessage));
+	if (!m)
+		return NULL;
+	set_value(m->u.pgreq->type, ANOUBIS_P_PGLISTREQ);
+	set_value(m->u.pgreq->listtype, listtype);
+	t = anoubis_transaction_create(0,
+	    ANOUBIS_T_INITSELF|ANOUBIS_T_WANT_ALL,
+	    &anoubis_client_pglist_steps, NULL, client);
+	if (anoubis_client_send(client, m) < 0) {
+		anoubis_msg_free(m);
+		anoubis_transaction_destroy(t);
+		return NULL;
+	}
+	anoubis_transaction_setopcodes(t, nextops);
+	LIST_INSERT_HEAD(&client->ops, t, next);
+	client->flags |= FLAG_POLICY_PENDING;
+
+	return t;
+}

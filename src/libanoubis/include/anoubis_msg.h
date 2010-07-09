@@ -65,6 +65,8 @@ struct anoubis_msg {
 		Anoubis_PolicyChangeMessage * policychange;
 		Anoubis_StatusNotifyMessage * statusnotify;
 		Anoubis_PassphraseMessage *passphrase;
+		Anoubis_PgRequestMessage *pgreq;
+		Anoubis_PgReplyMessage *pgreply;
 		void * buf;
 	} u;
 };

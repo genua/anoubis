@@ -426,6 +426,64 @@ verify_notify(const struct anoubis_msg *m)
 	return 1;
 }
 
+static int
+verify_pgrequest(const struct anoubis_msg *m)
+{
+	if (!VERIFY_LENGTH(m, sizeof(Anoubis_PgRequestMessage)))
+		return 0;
+	return 1;
+}
+
+static int
+verify_pginfo_record(Anoubis_PgInfoRecord *r, int reclen)
+{
+	int		i;
+
+	reclen -= sizeof(Anoubis_PgInfoRecord);
+	/* Make sure that the path name is NUL terminated. */
+	for (i=0; i<reclen; ++i)
+		if (r->path[i] == 0)
+			break;
+	if (i==reclen)
+		return 0;
+	return 1;
+}
+
+static int
+verify_pgreply(const struct anoubis_msg *m)
+{
+	int	off = 0;
+	int	nrec, rectype;
+	if (!VERIFY_LENGTH(m, sizeof(Anoubis_PgReplyMessage)))
+		return 0;
+	if (get_value(m->u.pgreply->error))
+		return 1;
+	nrec = get_value(m->u.pgreply->nrec);
+	rectype = get_value(m->u.pgreply->rectype);
+	while (nrec--) {
+		uint32_t	reclen;
+
+		if (rectype == ANOUBIS_PGREC_PGLIST) {
+			Anoubis_PgInfoRecord	*r;
+			if (!VERIFY_BUFFER(m, pgreply, payload, off,
+			    sizeof(Anoubis_PgInfoRecord)))
+				return 0;
+			r = (Anoubis_PgInfoRecord*)(m->u.pgreply->payload+off);
+			reclen = get_value(r->reclen);
+			if (reclen < sizeof(Anoubis_PgInfoRecord))
+				return 0;
+			if (!VERIFY_BUFFER(m, pgreply, payload, off, reclen))
+				return 0;
+			if (!verify_pginfo_record(r, reclen))
+				return 0;
+		} else {
+			return 0;
+		}
+		off += reclen;
+	}
+	return 1;
+}
+
 DEFINE_STRICT_CHECK_FUNCTION(notifyresult, Anoubis_NotifyResultMessage)
 DEFINE_STRICT_CHECK_FUNCTION(policychange, Anoubis_PolicyChangeMessage)
 DEFINE_STRICT_CHECK_FUNCTION(statusnotify, Anoubis_StatusNotifyMessage)
@@ -458,6 +516,8 @@ anoubis_msg_verify(const struct anoubis_msg *m)
 	CASE(ANOUBIS_P_REPLY, polreply);
 	CASE(ANOUBIS_P_VERSION, general);
 	CASE(ANOUBIS_P_VERSIONREPLY, version);
+	CASE(ANOUBIS_P_PGLISTREQ, pgrequest);
+	CASE(ANOUBIS_P_PGLISTREP, pgreply);
 	CASE(ANOUBIS_N_REGISTER, register);
 	CASE(ANOUBIS_N_UNREGISTER, register);
 	CASE(ANOUBIS_N_ASK, notify);

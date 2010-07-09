@@ -680,6 +680,7 @@ int anoubis_server_process(struct anoubis_server * server, void * buf,
 	case ANOUBIS_N_STATUSNOTIFY:
 	case ANOUBIS_P_REPLY:
 	case ANOUBIS_P_VERSIONREPLY:
+	case ANOUBIS_P_PGLISTREP:
 		/* These are not allowed from the client. */
 		return reply_invalid_token(server, token, opcode);
 	default:

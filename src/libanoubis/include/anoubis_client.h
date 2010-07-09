@@ -203,6 +203,9 @@ struct anoubis_transaction *
 anoubis_client_csmulti_start(struct anoubis_client *client,
     struct anoubis_csmulti_request *request);
 
+struct anoubis_transaction *anoubis_client_pglist_start(
+    struct anoubis_client *client, uint32_t listtype);
+
 __END_DECLS
 
 #endif

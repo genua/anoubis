@@ -123,7 +123,10 @@ static int	dispatch_checksum_list_reply(void *cbdata, int error,
 		    void *data, int len, int end);
 static void	dispatch_csmulti(struct anoubis_server *,
 		    struct anoubis_msg *, uid_t, void *);
+static void	dispatch_pglist(struct anoubis_server *,
+		    struct anoubis_msg *, uid_t, void *);
 static int	dispatch_csmulti_reply(void *, int, void *, int, int);
+static int	dispatch_pglist_reply(void *, int, void *, int, int);
 static void	dispatch_m2s(int, short, void *);
 static void	dispatch_s2m(int, short, void *);
 static void	dispatch_s2p(int, short, void *);
@@ -137,6 +140,8 @@ void		dispatch_p2s_policychange(anoubisd_msg_t *,
 static void	dispatch_p2s_evt_cancel(anoubisd_msg_t *,
 		    struct event_info_session *);
 static void	dispatch_p2s_pol_reply(anoubisd_msg_t *,
+		    struct event_info_session *);
+static void	dispatch_p2s_pg_reply(anoubisd_msg_t *,
 		    struct event_info_session *);
 static void	dispatch_m2s_checksum_reply(anoubisd_msg_t *msg,
 		    struct event_info_session *ev_info);
@@ -254,6 +259,8 @@ session_connect(int fd __used, short event __used, void *arg)
 	    &dispatch_csmulti, info);
 	anoubis_dispatch_create(session->proto, ANOUBIS_P_PASSPHRASE,
 	    &dispatch_passphrase, NULL);
+	anoubis_dispatch_create(session->proto, ANOUBIS_P_PGLISTREQ,
+	    &dispatch_pglist, info);
 	anoubis_dispatch_create(session->proto, ANOUBIS_C_AUTHDATA,
 	    &dispatch_authdata, info);
 	LIST_INSERT_HEAD(&(seg->sessionList), session, nextSession);
@@ -587,6 +594,50 @@ invalid:
 	dispatch_csmulti_reply(server, EINVAL, NULL, 0,
 	    POLICY_FLAG_START | POLICY_FLAG_END);
 	DEBUG(DBG_TRACE, "<dispatch_csmulti (EINVAL)");
+}
+
+static void
+dispatch_pglist(struct anoubis_server *server, struct anoubis_msg *m,
+    uid_t auth_uid, void *arg)
+{
+	struct anoubisd_msg			*msg;
+	struct anoubisd_msg_pgrequest		*pgmsg;
+	struct event_info_session		*ev_info = arg;
+	struct achat_channel			*chan;
+	int					 err;
+
+	DEBUG(DBG_TRACE, ">dispatch_pglist");
+
+	if (!VERIFY_LENGTH(m, sizeof(Anoubis_PgRequestMessage))) {
+		dispatch_pglist_reply(server, EFAULT, NULL, 0,
+		    POLICY_FLAG_START | POLICY_FLAG_END);
+		DEBUG(DBG_TRACE, "<dispatch_pglist(error): verify length");
+		return;
+	}
+
+	msg = msg_factory(ANOUBISD_MSG_PGREQUEST,
+	    sizeof(struct anoubisd_msg_pgrequest));
+	if (!msg) {
+		master_terminate(ENOMEM);
+		return;
+	}
+
+	pgmsg = (struct anoubisd_msg_pgrequest *)msg->msg;
+	pgmsg->auth_uid = auth_uid;
+	pgmsg->listtype = get_value(m->u.pgreq->listtype);
+	chan = anoubis_server_getchannel(server);
+	err = anoubis_policy_comm_addrequest(ev_info->policy, chan,
+	    POLICY_FLAG_START | POLICY_FLAG_END, &dispatch_pglist_reply,
+	    NULL, server, &pgmsg->token);
+	if (err < 0) {
+		log_warnx("Dropping pglist request (error %d)", -err);
+		free(msg);
+		return;
+	}
+
+	enqueue(&eventq_s2p, msg);
+	DEBUG(DBG_QUEUE, " >eventq_s2p");
+	DEBUG(DBG_TRACE, "<dispatch_passphrase");
 }
 
 static void
@@ -1019,6 +1070,49 @@ err:
 }
 
 static int
+dispatch_pglist_reply(void *cbdata, int error, void *data, int len, int flags)
+{
+	struct anoubis_server		*server = cbdata;
+	struct anoubis_msg		*m;
+	int				 ret;
+
+	DEBUG(DBG_TRACE, ">dispatch_pglist_reply");
+	if (flags != (POLICY_FLAG_START | POLICY_FLAG_END))
+		log_warnx("Wrong flags value in dispatch_pglist_reply");
+	if (error)
+		goto err;
+	if (len < (int)sizeof(Anoubis_PgReplyMessage)) {
+		log_warnx(" dispatch_pglist_reply: "
+		    "Short pglist reply message: len=%d\n", len);
+		return -EFAULT;
+	}
+	m = anoubis_msg_new(len);
+	if (!m) {
+		error = ENOMEM;
+		goto err;
+	}
+	memcpy(m->u.buf, data, len);
+	ret = anoubis_msg_send(anoubis_server_getchannel(server), m);
+	anoubis_msg_free(m);
+	DEBUG(DBG_TRACE, "<dispatch_pglist_reply: error=%d", -ret);
+	return ret;
+err:
+	m = anoubis_msg_new(sizeof(Anoubis_PgReplyMessage));
+	if (!m)
+		return -ENOMEM;
+	set_value(m->u.pgreply->type, ANOUBIS_P_PGLISTREP);
+	set_value(m->u.pgreply->flags, flags | POLICY_FLAG_END);
+	set_value(m->u.pgreply->error, error);
+	set_value(m->u.pgreply->nrec, 0);
+	set_value(m->u.pgreply->rectype, 0);
+	ret = anoubis_msg_send(anoubis_server_getchannel(server), m);
+	anoubis_msg_free(m);
+	DEBUG(DBG_TRACE, "<dispatch_pglist_reply: error=%d ret=%d",
+	    error, ret);
+	return ret;
+}
+
+static int
 dispatch_policy(struct anoubis_policy_comm *comm __used, uint64_t token,
     uint32_t uid, void *buf, size_t len, void *arg __used, int flags)
 {
@@ -1216,6 +1310,10 @@ dispatch_p2s(int fd, short sig __used, void *arg)
 		case ANOUBISD_MSG_POLREPLY:
 			DEBUG(DBG_QUEUE, " >p2s");
 			dispatch_p2s_pol_reply(msg, ev_info);
+			break;
+		case ANOUBISD_MSG_PGREPLY:
+			DEBUG(DBG_QUEUE, " >p2s");
+			dispatch_p2s_pg_reply(msg, ev_info);
 			break;
 
 		case ANOUBISD_MSG_EVENTASK:
@@ -1525,6 +1623,28 @@ dispatch_p2s_pol_reply(anoubisd_msg_t *msg, struct event_info_session *ev_info)
 	    reply->token, ret, reply->reply);
 
 	DEBUG(DBG_TRACE, "<dispatch_p2s_pol_reply");
+}
+
+/* Does not free the message */
+static void
+dispatch_p2s_pg_reply(struct anoubisd_msg *msg,
+    struct event_info_session *ev_info)
+{
+	struct anoubisd_msg_pgreply	*pgreply;
+	void				*buf = NULL;
+	int				 end, ret;
+
+	DEBUG(DBG_TRACE, ">dispatch_p2s_pg_reply");
+
+	pgreply = (struct anoubisd_msg_pgreply *)msg->msg;
+	if (pgreply->len)
+		buf = pgreply->data;
+	end = pgreply->flags & POLICY_FLAG_END;
+	ret = anoubis_policy_comm_answer(ev_info->policy, pgreply->token, 0,
+	    buf, pgreply->len, end != 0);
+	DEBUG(DBG_TRACE, ">anoubis_policy_comm_answer: %" PRId64,
+	    pgreply->token);
+	DEBUG(DBG_TRACE, "<dispatch_p2s_pg_reply");
 }
 
 /* Does not free the message */

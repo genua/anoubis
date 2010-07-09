@@ -43,12 +43,15 @@
 
 #include <err.h>
 #include <errno.h>
+#include <stddef.h>
 #ifdef LINUX
 #include <grp.h>
 #include <bsdcompat.h>
 #endif
 
 #include "anoubisd.h"
+#include "amsg.h"
+#include "anoubis_alloc.h"
 #include "pe.h"
 #include "anoubis_alloc.h"
 #include "compat_openat.h"
@@ -625,4 +628,163 @@ pe_playground_init(void)
 		pe_playground_read(pgid);
 	}
 	closedir(pgdir);
+}
+
+static inline struct anoubisd_msg *
+pe_playground_create_pglistmsg(uint64_t token, struct abuf_buffer *payloadp,
+    struct anoubisd_msg_pgreply **daemonreplyp,
+    Anoubis_PgReplyMessage **protoreplyp, unsigned int *reallenp)
+{
+	static const int		 msgsize = 8000;
+	struct abuf_buffer		 buf;
+	struct anoubisd_msg		*msg;
+	struct anoubisd_msg_pgreply	*daemonreply;
+	Anoubis_PgReplyMessage		*protoreply;
+	unsigned int			 reallen;
+
+	msg = msg_factory(ANOUBISD_MSG_PGREPLY, msgsize);
+	if (!msg)
+		return NULL;
+	buf = abuf_open_frommem(msg->msg, 8000);
+	daemonreply = abuf_cast(buf, struct anoubisd_msg_pgreply);
+	if (!daemonreply) {
+		free(msg);
+		return NULL;
+	}
+	daemonreply->token = token;
+	daemonreply->flags = 0;
+	daemonreply->len = sizeof(Anoubis_PgReplyMessage);
+	buf = abuf_open(buf, offsetof(struct anoubisd_msg_pgreply, data));
+	protoreply = abuf_cast(buf, Anoubis_PgReplyMessage);
+	if (!protoreply) {
+		free(msg);
+		return NULL;
+	}
+	set_value(protoreply->type, ANOUBIS_P_PGLISTREP);
+	set_value(protoreply->flags, 0);
+	set_value(protoreply->error, 0);
+	set_value(protoreply->nrec, 0);
+	set_value(protoreply->rectype, ANOUBIS_PGREC_PGLIST);
+	buf = abuf_open(buf, offsetof(Anoubis_PgReplyMessage, payload));
+	reallen = sizeof(struct anoubisd_msg_pgreply)
+	    + sizeof(Anoubis_PgReplyMessage);
+	(*payloadp) = buf;
+	(*daemonreplyp) = daemonreply;
+	(*protoreplyp) = protoreply;
+	(*reallenp) = reallen;
+	return msg;
+}
+
+static int
+pg_playground_send_pglist(uint64_t token, uint32_t auth_uid __used, Queue *q)
+{
+	struct anoubisd_msg		*msg = NULL;
+	struct abuf_buffer		 buf = ABUF_EMPTY;
+	struct anoubisd_msg_pgreply	*daemonreply = NULL;
+	Anoubis_PgReplyMessage		*protoreply = NULL;
+	struct playground		*pg;
+	int				 flags = POLICY_FLAG_START;
+	int				 nrec = 0;
+	unsigned int			 reallen = 0;
+
+	if (LIST_EMPTY(&playgrounds)) {
+		msg = pe_playground_create_pglistmsg(token, &buf, &daemonreply,
+		    &protoreply, &reallen);
+		if (msg == NULL)
+			return -ENOMEM;
+		flags |= POLICY_FLAG_END;
+		daemonreply->flags = flags;
+		set_value(protoreply->flags, flags);
+		msg_shrink(msg, reallen);
+		enqueue(q, msg);
+		return 0;
+	}
+	LIST_FOREACH(pg, &playgrounds, next) {
+		unsigned int			 size;
+		Anoubis_PgInfoRecord		*rec;
+
+		size = sizeof(Anoubis_PgInfoRecord) + 1;
+		if (pg->cmd)
+			size += strlen(pg->cmd);
+		size = (size+7UL) & ~7UL;
+		if (msg && size > abuf_length(buf)) {
+			set_value(protoreply->nrec, nrec);
+			msg_shrink(msg, reallen);
+			enqueue(q, msg);
+			msg = NULL;
+			flags = 0;
+		}
+		if (msg == NULL) {
+			msg = pe_playground_create_pglistmsg(token, &buf,
+			    &daemonreply, &protoreply, &reallen);
+			if (msg == NULL)
+				return -ENOMEM;
+			nrec = 0;
+		}
+		rec = abuf_cast(buf, Anoubis_PgInfoRecord);
+		set_value(rec->reclen, size);
+		set_value(rec->uid, pg->uid);
+		set_value(rec->pgid, pg->pgid);
+		set_value(rec->starttime, 0 /* XXX */);
+		set_value(rec->nrprocs, pg->nrprocs);
+		set_value(rec->nrfiles, pg->nrfiles);
+		if (pg->cmd) {
+			strcpy(rec->path, pg->cmd);
+		} else {
+			rec->path[0] = 0;
+		}
+		buf = abuf_open(buf, size);
+		reallen += size;
+		daemonreply->len += size;
+		nrec++;
+	}
+	flags |= POLICY_FLAG_END;
+	if (msg) {
+		daemonreply->flags = flags;
+		set_value(protoreply->nrec, nrec);
+		set_value(protoreply->flags, flags);
+		msg_shrink(msg, reallen);
+		enqueue(q, msg);
+	}
+	return 0;
+}
+
+void
+pe_playground_dispatch_request(struct anoubisd_msg *inmsg, Queue *queue)
+{
+	int				 err = 0;
+	struct anoubisd_msg_pgrequest	*pgreq;
+	struct anoubisd_msg		*errmsg = NULL;
+	struct abuf_buffer		 buf = ABUF_EMPTY;
+	struct anoubisd_msg_pgreply	*daemonreply = NULL;
+	Anoubis_PgReplyMessage		*protoreply = NULL;
+	unsigned int			 reallen = 0;
+	uint64_t			 token = 0;
+
+	pgreq = (struct anoubisd_msg_pgrequest *)inmsg->msg;
+	switch(pgreq->listtype) {
+	case ANOUBIS_PGREC_PGLIST:
+		token = pgreq->token;
+		err = pg_playground_send_pglist(pgreq->token,
+		    pgreq->auth_uid, queue);
+		break;
+	default:
+		log_warnx("pe_playground_dispatch_request: Dropping invalid "
+		    "message of type %d", pgreq->listtype);
+	}
+	if (err == 0)
+		return;
+	/* Send an error message */
+	errmsg = pe_playground_create_pglistmsg(token, &buf, &daemonreply,
+	    &protoreply, &reallen);
+	if (errmsg == NULL) {
+		master_terminate(ENOMEM);
+		return;
+	}
+	daemonreply->flags = POLICY_FLAG_START | POLICY_FLAG_END;
+	set_value(protoreply->error, -err);
+	set_value(protoreply->rectype, 0);
+	set_value(protoreply->flags, POLICY_FLAG_START | POLICY_FLAG_END);
+	msg_shrink(errmsg, reallen);
+	enqueue(queue, errmsg);
 }
