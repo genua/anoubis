@@ -108,6 +108,16 @@
 #define PGCLI_OUTLEN_COMMAND 8
 
 /**
+ * Field width for device.
+ */
+#define PGCLI_OUTLEN_DEV 8
+
+/**
+ * Field width for filename.
+ */
+#define PGCLI_OUTLEN_FILENAME 8
+
+/**
  * Length of buffer for time printing.
  */
 #define PGCLI_TBUF_LEN 32
@@ -115,7 +125,7 @@
 /**
  * Macro for cleanup on channel create.
  */
-#define PGCLI_CHANNELCREATE_WIPE(channle, rc, msg) \
+#define PGCLI_CHANNELCREATE_WIPE(channel, rc, msg) \
 	do { \
 		if (rc != ACHAT_RC_OK) { \
 			fprintf(stderr, msg); \
@@ -139,7 +149,7 @@
  * This will print out usage information to stderr and exit.
  * The exit code is 1.
  * @param None.
- * @return Nothind.
+ * @return Nothing.
  */
 void usage(void) __dead;
 
@@ -236,6 +246,46 @@ static void pgcli_list_print_msg(struct anoubis_msg *);
  */
 static void pgcli_list_print_record(Anoubis_PgInfoRecord *);
 
+/**
+ * Command: files
+ * This function implements the files command. Communication with the
+ * daemon is established and the list of files of a playground is requested.
+ * The  received messages is printed by pgcli_files_print() and the
+ * communication is closed.
+ * @param[in] 1st The id of playground in question.
+ * @return 0 on success an error else.
+ * @see pgcli_files_print()
+ */
+static int pgcli_files(anoubis_cookie_t);
+
+/**
+ * Print playground file list.
+ * This function will print the header information and iterates over the
+ * given list of messages. Those a split in records for each file
+ * and printed by pgcli_files_print_record().
+ * The printed headers are:\n
+ *	- playground id
+ *	- device number
+ *	- path\n\n
+ * @param[in] 1st The first message in list.
+ * @return Nothing.
+ */
+static void pgcli_files_print_msg(struct anoubis_msg *);
+
+/**
+ * Print playground file record.
+ * This function prints the data of one file record.
+ * The result is a single line in the list of files.
+ * No header information are printed.\n
+ * The printed values are:\n
+ *	- playground id
+ *	- device number
+ *	- path\n\n
+ * @param[in] 1st The record of one playground.
+ * @return Nothing.
+ */
+static void pgcli_files_print_record(Anoubis_PgFileRecord *);
+
 static int auth_callback(struct anoubis_client *, struct anoubis_msg *,
     struct anoubis_msg **);
 
@@ -262,6 +312,7 @@ usage(void)
 	fprintf(stderr, "    <command>:\n");
 	fprintf(stderr, "	start <program>\n");
 	fprintf(stderr, "	list\n");
+	fprintf(stderr, "	files <playground id>\n");
 
 	exit(1);
 }
@@ -269,7 +320,7 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	int		 error = 0;
+	int error = 0;
 
 #ifdef OPENBSD
 
@@ -279,6 +330,7 @@ main(int argc, char *argv[])
 
 #else
 
+	anoubis_cookie_t pgid = 0;
 	int		 ch;
 	char		*command = NULL;
 
@@ -339,6 +391,16 @@ main(int argc, char *argv[])
 			/* NOTREACHED */
 		}
 		error = pgcli_list();
+	} else if (strcmp(command, "files") == 0) {
+		if (argc < 1) {
+			usage();
+			/* NOTREACHED */
+		}
+		if (sscanf(argv[0], "%"PRIx64, &pgid) != 1) {
+			usage();
+			/* NOTREACHED */
+		}
+		error = pgcli_files(pgid);
 	} else {
 		usage();
 	}
@@ -430,23 +492,23 @@ pgcli_create_channel(void)
 	}
 
 	rc = acc_settail(channel, ACC_TAIL_CLIENT);
-	PGCLI_CHANNELCREATE_WIPE(channle, rc, "client settail failed\n");
+	PGCLI_CHANNELCREATE_WIPE(channel, rc, "client settail failed\n");
 
 	rc = acc_setsslmode(channel, ACC_SSLMODE_CLEAR);
-	PGCLI_CHANNELCREATE_WIPE(channle, rc, "client setsslmode failed\n");
+	PGCLI_CHANNELCREATE_WIPE(channel, rc, "client setsslmode failed\n");
 
 	ss.sun_family = AF_UNIX;
 	strlcpy((&ss)->sun_path, PACKAGE_SOCKET, sizeof((&ss)->sun_path));
 
 	rc = acc_setaddr(channel, (struct sockaddr_storage *)&ss,
 	    sizeof(struct sockaddr_un));
-	PGCLI_CHANNELCREATE_WIPE(channle, rc, "client setaddr failed\n");
+	PGCLI_CHANNELCREATE_WIPE(channel, rc, "client setaddr failed\n");
 
 	rc = acc_prepare(channel);
-	PGCLI_CHANNELCREATE_WIPE(channle, rc, "client prepare failed\n");
+	PGCLI_CHANNELCREATE_WIPE(channel, rc, "client prepare failed\n");
 
 	rc = acc_open(channel);
-	PGCLI_CHANNELCREATE_WIPE(channle, rc, "client open failed\n");
+	PGCLI_CHANNELCREATE_WIPE(channel, rc, "client open failed\n");
 
 	return (channel);
 }
@@ -621,6 +683,116 @@ pgcli_list_print_record(Anoubis_PgInfoRecord *record)
 	printf("%*s ", PGCLI_OUTLEN_TIME, timeBufer);
 
 	printf("%-*s\n", PGCLI_OUTLEN_COMMAND, record->path);
+}
+
+int
+pgcli_files(anoubis_cookie_t pgid)
+{
+	int rc = 0;
+
+	struct achat_channel		*channel = NULL;
+	struct anoubis_client		*client = NULL;
+	struct anoubis_msg		*message = NULL;
+	struct anoubis_transaction	*transaction = NULL;
+
+	rc = pgcli_ui_init();
+	if (rc != 0) {
+		return (-1);
+	}
+
+	channel = pgcli_create_channel();
+	if (channel == NULL) {
+		return (-EIO);
+	}
+
+	client = pgcli_create_client(channel);
+	if (client == NULL) {
+		acc_destroy(channel);
+		return (-EIO);
+	}
+
+	/* Connection established. Send message and wait for answer. */
+	transaction = anoubis_client_pglist_start(client,
+	    ANOUBIS_PGREC_FILELIST, pgid);
+	if (transaction == NULL) {
+		PGCLI_CONNECTION_WIPE(channel, client);
+		return (-EFAULT);
+	}
+	while (1) {
+		rc = anoubis_client_wait(client);
+		if (rc <= 0) {
+			anoubis_transaction_destroy(transaction);
+			PGCLI_CONNECTION_WIPE(channel, client);
+			return (rc);
+		}
+		if (transaction->flags & ANOUBIS_T_DONE) {
+			break;
+		}
+	}
+	message = transaction->msg;
+	transaction->msg = NULL;
+
+	/* Print received list. */
+	if (transaction->result == 0) {
+		pgcli_files_print_msg(message);
+	} else {
+		fprintf(stderr, "Playground file list request failed: "
+		    "%d (%s)\n", transaction->result,
+		    anoubis_strerror(transaction->result));
+	}
+
+	/* Cleanup. */
+	pgcli_msglist_free(message);
+	anoubis_transaction_destroy(transaction);
+	PGCLI_CONNECTION_WIPE(channel, client);
+
+	return (0);
+}
+
+void
+pgcli_files_print_msg(struct anoubis_msg *message)
+{
+	int			 offset = 0;
+	int			 i	= 0;
+	Anoubis_PgFileRecord	*record = NULL;
+
+	if (message == NULL ||
+	    !VERIFY_LENGTH(message, sizeof(Anoubis_PgReplyMessage)) ||
+	    get_value(message->u.pgreply->error) != 0) {
+		fprintf(stderr, "Error retrieving playground list\n");
+		return;
+	}
+
+	if (get_value(message->u.pgreply->rectype) != ANOUBIS_PGREC_FILELIST) {
+		fprintf(stderr, "Error: wrong record type in received list.\n");
+		return;
+	}
+
+	/* Print header */
+	printf("%*s ", PGCLI_OUTLEN_ID, "PGID");
+	printf("%*s ", PGCLI_OUTLEN_DEV, "DEV");
+	printf("%-*s\n", PGCLI_OUTLEN_FILENAME, "FILE");
+
+	/* Print table lines */
+	while (message) {
+		for (i=0; i<get_value(message->u.pgreply->nrec); ++i) {
+			record = (Anoubis_PgFileRecord *)(
+			    message->u.pgreply->payload + offset);
+			offset += get_value(record->reclen);
+
+			pgcli_files_print_record(record);
+		}
+
+		message = message->next;
+	}
+}
+
+void
+pgcli_files_print_record(Anoubis_PgFileRecord *record)
+{
+	printf("%*"PRIx64" ", PGCLI_OUTLEN_ID, get_value(record->pgid));
+	printf("%*"PRIx64" ", PGCLI_OUTLEN_DEV, get_value(record->dev));
+	printf("%-*s\n", PGCLI_OUTLEN_FILENAME, record->path);
 }
 
 static int
