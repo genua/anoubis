@@ -43,7 +43,7 @@ playground_LDADD = $(playground_DEPENDENCIES) $(intl_ldadd)
 playground_LDFLAGS= $(AM_LDFLAGS) $(STATIC)
 
 sources= main.c
-headers = playground.h
+headers=
 
 playground_SOURCES = $(sources) $(headers)
 
