@@ -456,6 +456,16 @@ BEGIN_DECLARE_EVENT_TYPES()
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_OPEN_SB_ESCALATIONS, wxNewEventType())
 
 	/**
+	 * Open playground escalations event.
+	 * Broadcast event about the number of new/not answered escalations
+	 * caused by playground policies.
+	 *
+	 * @param GetInt() The count of open ESCALATIONS.
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_OPEN_PLAYGROUND_ESCALATIONS,
+	    wxNewEventType())
+
+	/**
 	 * Notification Result from Daemon arrived.
 	 * Transports the escalation object that was answered as client object.
 	 * The actual Daemon Reply message is already destroyed, the

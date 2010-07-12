@@ -43,13 +43,29 @@ ModPlaygroundOverviewPanelImpl::ModPlaygroundOverviewPanelImpl(wxWindow* parent,
 	stateIconNotConnected_ = utils->loadIcon(
 	    wxT("ModPlayground_black_48.png"));
 	runningPgs_.Printf(wxT("%d"), 0);
+
+	AnEvents::getInstance()->Connect(anEVT_OPEN_PLAYGROUND_ESCALATIONS,
+	    wxCommandEventHandler(ModPlaygroundOverviewPanelImpl::onPlaygroundEscalation),
+	    NULL, this);
 }
 
 ModPlaygroundOverviewPanelImpl::~ModPlaygroundOverviewPanelImpl(void)
 {
+	AnEvents::getInstance()->Disconnect(anEVT_OPEN_PLAYGROUND_ESCALATIONS,
+	    wxCommandEventHandler(ModPlaygroundOverviewPanelImpl::onPlaygroundEscalation),
+	    NULL, this);
+
 	delete stateIconNormal_;
 	delete stateIconError_;
 	delete stateIconNotConnected_;
+}
+
+void
+ModPlaygroundOverviewPanelImpl::onPlaygroundEscalation(wxCommandEvent &event)
+{
+	runningPgs_.Printf(wxT("%d"), event.GetInt());
+	update();
+	event.Skip();
 }
 
 void

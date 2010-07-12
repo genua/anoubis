@@ -160,6 +160,10 @@ NotificationCtrl::answerEscalationNotify(EscalationNotify *notify,
 			wxCommandEvent showEvent(anEVT_OPEN_SB_ESCALATIONS);
 			showEvent.SetInt(escalationCount_[module]);
 			wxPostEvent(anEvents, showEvent);
+		} else if (module.IsSameAs(wxT("PLAYGROUND"))) {
+		    wxCommandEvent showEvent(anEVT_OPEN_PLAYGROUND_ESCALATIONS);
+			showEvent.SetInt(escalationCount_[module]);
+			wxPostEvent(anEvents, showEvent);
 		} else {
 			/* Default do nothing */
 		}
@@ -304,6 +308,10 @@ NotificationCtrl::addEscalationNotify(Notification *notification)
 		wxPostEvent(anEvents, showEvent);
 	} else if (module.IsSameAs(wxT("SANDBOX"))) {
 		wxCommandEvent showEvent(anEVT_OPEN_SB_ESCALATIONS);
+		showEvent.SetInt(escalationCount_[module]);
+		wxPostEvent(anEvents, showEvent);
+	} else if (module.IsSameAs(wxT("PLAYGROUND"))) {
+		wxCommandEvent showEvent(anEVT_OPEN_PLAYGROUND_ESCALATIONS);
 		showEvent.SetInt(escalationCount_[module]);
 		wxPostEvent(anEvents, showEvent);
 	} else {

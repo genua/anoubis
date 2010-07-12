@@ -43,6 +43,14 @@ class ModPlaygroundOverviewPanelImpl : public ModPlaygroundOverviewPanelBase
 		ModPlaygroundOverviewPanelImpl(wxWindow* parent, wxWindowID id);
 		~ModPlaygroundOverviewPanelImpl(void);
 
+		/**
+		 * Handle new Escalation event.
+		 * This just receives the event and updates the view.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		void onPlaygroundEscalation(wxCommandEvent&);
+
 		virtual void update(void);
 };
 

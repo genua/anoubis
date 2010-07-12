@@ -45,6 +45,8 @@
 #include <dev/anoubis_sfs.h>
 #endif
 
+#include <linux/anoubis_playground.h>
+
 #include <anoubis_msg.h>
 #include <wx/string.h>
 #include <wx/intl.h>
@@ -163,6 +165,9 @@ Notification::getModule(void)
 			break;
 		case ANOUBIS_SOURCE_SFS:
 			module_ = wxT("SFS");
+			break;
+		case ANOUBIS_SOURCE_PLAYGROUND:
+			module_ = wxT("PLAYGROUND");
 			break;
 		case ANOUBIS_SOURCE_PROCESS:
 			module_ = wxT("PROCESS");
@@ -341,6 +346,21 @@ Notification::getOperation(void)
 				break;
 			}
 		}
+	} else if (module_ == wxT("PLAYGROUND")) {
+		struct pg_open_message *pg = (struct pg_open_message *)
+		    ((notify_->u.notify)->payload + evoff);
+
+		switch (pg->op) {
+		case ANOUBIS_PLAYGROUND_OP_OPEN:
+			operation = _("open");
+			break;
+		case ANOUBIS_PLAYGROUND_OP_RENAME:
+			operation = _("rename");
+			break;
+		default:
+			operation = _("unknown operation");
+			break;
+		}
 	} else {
 		operation = _("unknown module");
 	}
@@ -421,6 +441,20 @@ Notification::getPath(void)
 			if (!csum.IsEmpty()) {
 				path += wxT("\n(0x") + csum + wxT(")");
 			}
+		}
+	} else if (module_ == wxT("PLAYGROUND")) {
+		struct pg_open_message *pg = (struct pg_open_message *)
+		    ((notify_->u.notify)->payload + evoff);
+
+		if (pg->op == ANOUBIS_PLAYGROUND_OP_OPEN) {
+			path = wxString::Format(wxT("%hs"), pg->pathbuf);
+		} else if (pg->op == ANOUBIS_PLAYGROUND_OP_RENAME) {
+			const char *from = pg->pathbuf;
+			const char *to = from + strlen(from) + 1;
+
+			path = wxString::Format(_("from %hs to %hs"), from, to);
+		} else {
+			path = _("unable to extract path information");
 		}
 	} else {
 		path = _("unable to extract path information");
