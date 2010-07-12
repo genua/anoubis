@@ -366,6 +366,7 @@ struct anoubisd_msg_pgrequest {
 	uint64_t	token;
 	uint32_t	auth_uid;
 	uint32_t	listtype;
+	uint64_t	pgid;
 };
 
 struct anoubisd_msg_pgreply {

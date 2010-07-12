@@ -625,6 +625,7 @@ dispatch_pglist(struct anoubis_server *server, struct anoubis_msg *m,
 	pgmsg = (struct anoubisd_msg_pgrequest *)msg->msg;
 	pgmsg->auth_uid = auth_uid;
 	pgmsg->listtype = get_value(m->u.pgreq->listtype);
+	pgmsg->pgid = get_value(m->u.pgreq->pgid);
 	chan = anoubis_server_getchannel(server);
 	err = anoubis_policy_comm_addrequest(ev_info->policy, chan,
 	    POLICY_FLAG_START | POLICY_FLAG_END, &dispatch_pglist_reply,
@@ -1077,7 +1078,7 @@ dispatch_pglist_reply(void *cbdata, int error, void *data, int len, int flags)
 	int				 ret;
 
 	DEBUG(DBG_TRACE, ">dispatch_pglist_reply");
-	if (flags != (POLICY_FLAG_START | POLICY_FLAG_END))
+	if (flags & ~(POLICY_FLAG_START | POLICY_FLAG_END))
 		log_warnx("Wrong flags value in dispatch_pglist_reply");
 	if (error)
 		goto err;

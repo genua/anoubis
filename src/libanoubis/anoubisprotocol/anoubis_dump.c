@@ -75,6 +75,8 @@ char *__dstr = NULL;
 	snprintf(DSTR, DLEN, " %s = %u", #FIELD, get_value((PTR)->FIELD));
 #define DUMP_NETULL(PTR,FIELD)						\
 	snprintf(DSTR, DLEN, " %s = %" PRIu64, #FIELD, get_value((PTR)->FIELD));
+#define DUMP_NETXLL(PTR,FIELD)						\
+	snprintf(DSTR, DLEN, " %s = %" PRIx64, #FIELD, get_value((PTR)->FIELD));
 
 static void DUMP_DATA_LABEL(const void * _buf, size_t len, const char *label)
 {
@@ -353,30 +355,45 @@ static void
 dump_pgreq(Anoubis_PgRequestMessage *m, size_t len __used)
 {
 	DUMP_NETU(m, listtype);
+	DUMP_NETULL(m, pgid);
 }
 
 static void
 dump_pgreply(Anoubis_PgReplyMessage *m, size_t len __used)
 {
-	int	i, off = 0;
+	int			 i, off = 0;
+	Anoubis_PgInfoRecord	*pgrec = NULL;
+	Anoubis_PgFileRecord	*filerec = NULL;
+
 	DUMP_NETU(m, error);
 	DUMP_NETU(m, nrec);
 	DUMP_NETU(m, rectype);
-	snprintf(DSTR, DLEN, " playgrounds:");
+	snprintf(DSTR, DLEN, " records:");
 	for (i=0; i<get_value(m->nrec); ++i) {
-		if (get_value(m->rectype) == ANOUBIS_PGREC_PGLIST) {
-			Anoubis_PgInfoRecord	*rec;
-			rec = (Anoubis_PgInfoRecord *)(m->payload + off);
-			off += get_value(rec->reclen);
-			snprintf(DSTR, DLEN, " {");
-			snprintf(DSTR, DLEN, " path=%s", rec->path);
-			DUMP_NETU(rec, uid);
-			DUMP_NETULL(rec, pgid);
-			DUMP_NETULL(rec, starttime);
-			DUMP_NETU(rec, nrprocs);
-			DUMP_NETU(rec, nrfiles);
-			snprintf(DSTR, DLEN, " }");
+		snprintf(DSTR, DLEN, " {");
+		switch(get_value(m->rectype)) {
+		case ANOUBIS_PGREC_PGLIST:
+			pgrec = (Anoubis_PgInfoRecord *)(m->payload + off);
+			off += get_value(pgrec->reclen);
+			snprintf(DSTR, DLEN, " path=%s", pgrec->path);
+			DUMP_NETU(pgrec, uid);
+			DUMP_NETULL(pgrec, pgid);
+			DUMP_NETULL(pgrec, starttime);
+			DUMP_NETU(pgrec, nrprocs);
+			DUMP_NETU(pgrec, nrfiles);
+			break;
+		case ANOUBIS_PGREC_FILELIST:
+			filerec = (Anoubis_PgFileRecord *)(m->payload + off);
+			off += get_value(filerec->reclen);
+			DUMP_NETULL(filerec, pgid);
+			DUMP_NETXLL(filerec, dev);
+			DUMP_NETULL(filerec, ino);
+			snprintf(DSTR, DLEN, " path=%s", filerec->path);
+			break;
+		default:
+			DUMP_NETU(m, rectype);
 		}
+		snprintf(DSTR, DLEN, " }");
 	}
 }
 

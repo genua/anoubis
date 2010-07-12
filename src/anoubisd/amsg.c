@@ -222,7 +222,8 @@ _flush_buf(struct msg_buf *mbp)
 	size = write(mbp->fd, ((void*)mbp->wmsg)+mbp->woff,
 	    mbp->wmsg->size - mbp->woff);
 	if (size < 0) {
-		log_warn("write error");
+		if (errno != EAGAIN)
+			log_warn("write error");
 		return;
 	}
 	mbp->woff += size;

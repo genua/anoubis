@@ -2028,7 +2028,7 @@ err:
 
 struct anoubis_transaction *
 anoubis_client_pglist_start(struct anoubis_client *client,
-    uint32_t listtype)
+    uint32_t listtype, uint64_t pgid)
 {
 	static const u_int32_t nextops[] = { ANOUBIS_P_PGLISTREP, -1 };
 	struct anoubis_msg		*m;
@@ -2045,6 +2045,7 @@ anoubis_client_pglist_start(struct anoubis_client *client,
 		return NULL;
 	set_value(m->u.pgreq->type, ANOUBIS_P_PGLISTREQ);
 	set_value(m->u.pgreq->listtype, listtype);
+	set_value(m->u.pgreq->pgid, pgid);
 	t = anoubis_transaction_create(0,
 	    ANOUBIS_T_INITSELF|ANOUBIS_T_WANT_ALL,
 	    &anoubis_client_pglist_steps, NULL, client);

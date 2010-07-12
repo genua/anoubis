@@ -630,75 +630,154 @@ pe_playground_init(void)
 	closedir(pgdir);
 }
 
-static inline struct anoubisd_msg *
-pe_playground_create_pglistmsg(uint64_t token, struct abuf_buffer *payloadp,
-    struct anoubisd_msg_pgreply **daemonreplyp,
-    Anoubis_PgReplyMessage **protoreplyp, unsigned int *reallenp)
+/**
+ * This structure is used to build reply message for user playground
+ * request. It contains all the information that is needed to build
+ * a reply message. Description of individual fields:
+ *
+ * msg The anoubisd_msg structure that is currently under construction.
+ * dmsg A pointer to the anoubis daemon header within the reply message. This
+ *     header is a anoubisd_msg_pgreply structure.
+ * pmsg A pointer to the protocol header within the reply message. This
+ *     header is of type Anoubis_PgReplyMessage.
+ * buf This buffer represents the message payload at the end of the
+ *     message. The caller can use the memory in this buffer for individual
+ *     reply records. Once a record is added the buffer should be modified
+ *     such that it only represents the rest of the payload.
+ * curlen The current length of the message without the (rest of) the payload.
+ *     This is initially set to the size of the daemon header plus the size
+ *     of the protocol header. The caller should adjust this value if
+ *     payload data is added.
+ * nrec The number of records in this message. This is initialized to zero
+ *     and the caller must make sure that this value is adjusted as more
+ *     records are added in the payload area.
+ * flags The flags to use for the next reply. This is initialized to
+ *     POLICY_FLAG_START and is cleared upon a pe_playground_send.
+ */
+struct pg_reply_context {
+	struct anoubisd_msg			*msg;
+	struct anoubisd_msg_pgreply		*dmsg;
+	Anoubis_PgReplyMessage			*pmsg;
+	struct abuf_buffer			 buf;
+	int					 curlen;
+	int					 nrec;
+	int					 flags;
+};
+
+/**
+ * Initialize a pg_reply_context structure. This function assumes
+ * that the reply context is not yet initialized, it does not free
+ * any memory. The context structure itself must be pre-allocated
+ * by the caller. The message within the context is initialized except
+ * for the flags. It does not have the error field set and it does not
+ * contain any records.
+ *
+ * @param ctx The message context to fill (pre-allocated by the caller).
+ * @param token The token for the message reply. The session engine uses
+ *     this value to demultiplex the reply to the correct client.
+ * @param listtype The type of the records that will be added to the message.
+ * @return Zero in case of success, a negative error code (-ENOMEM) if
+ *     an error occured.
+ */
+static int
+pe_playground_init_reply(struct pg_reply_context *ctx, uint64_t token,
+    uint16_t listtype)
 {
 	static const int		 msgsize = 8000;
-	struct abuf_buffer		 buf;
-	struct anoubisd_msg		*msg;
-	struct anoubisd_msg_pgreply	*daemonreply;
-	Anoubis_PgReplyMessage		*protoreply;
-	unsigned int			 reallen;
 
-	msg = msg_factory(ANOUBISD_MSG_PGREPLY, msgsize);
-	if (!msg)
-		return NULL;
-	buf = abuf_open_frommem(msg->msg, 8000);
-	daemonreply = abuf_cast(buf, struct anoubisd_msg_pgreply);
-	if (!daemonreply) {
-		free(msg);
-		return NULL;
+	ctx->msg = msg_factory(ANOUBISD_MSG_PGREPLY, msgsize);
+	if (!ctx->msg)
+		return -ENOMEM;
+	ctx->buf = abuf_open_frommem(ctx->msg->msg, 8000);
+	ctx->dmsg = abuf_cast(ctx->buf, struct anoubisd_msg_pgreply);
+	if (!ctx->dmsg) {
+		free(ctx->msg);
+		return -ENOMEM;
 	}
-	daemonreply->token = token;
-	daemonreply->flags = 0;
-	daemonreply->len = sizeof(Anoubis_PgReplyMessage);
-	buf = abuf_open(buf, offsetof(struct anoubisd_msg_pgreply, data));
-	protoreply = abuf_cast(buf, Anoubis_PgReplyMessage);
-	if (!protoreply) {
-		free(msg);
-		return NULL;
+	ctx->dmsg->token = token;
+	ctx->dmsg->flags = 0;
+	ctx->dmsg->len = sizeof(Anoubis_PgReplyMessage);
+	ctx->buf = abuf_open(ctx->buf,
+	    offsetof(struct anoubisd_msg_pgreply, data));
+	ctx->pmsg = abuf_cast(ctx->buf, Anoubis_PgReplyMessage);
+	if (!ctx->pmsg) {
+		free(ctx->msg);
+		return -ENOMEM;
 	}
-	set_value(protoreply->type, ANOUBIS_P_PGLISTREP);
-	set_value(protoreply->flags, 0);
-	set_value(protoreply->error, 0);
-	set_value(protoreply->nrec, 0);
-	set_value(protoreply->rectype, ANOUBIS_PGREC_PGLIST);
-	buf = abuf_open(buf, offsetof(Anoubis_PgReplyMessage, payload));
-	reallen = sizeof(struct anoubisd_msg_pgreply)
+	set_value(ctx->pmsg->type, ANOUBIS_P_PGLISTREP);
+	set_value(ctx->pmsg->flags, 0);
+	set_value(ctx->pmsg->error, 0);
+	set_value(ctx->pmsg->nrec, 0);
+	set_value(ctx->pmsg->rectype, listtype);
+	ctx->buf = abuf_open(ctx->buf,
+	    offsetof(Anoubis_PgReplyMessage, payload));
+	ctx->curlen = sizeof(struct anoubisd_msg_pgreply)
 	    + sizeof(Anoubis_PgReplyMessage);
-	(*payloadp) = buf;
-	(*daemonreplyp) = daemonreply;
-	(*protoreplyp) = protoreply;
-	(*reallenp) = reallen;
-	return msg;
+	ctx->nrec = 0;
+	ctx->flags = POLICY_FLAG_START;
+	return 0;
 }
 
-static int
-pg_playground_send_pglist(uint64_t token, uint32_t auth_uid __used, Queue *q)
+/**
+ * Send the message in the message context to the given queue.
+ * This function sets the flags fields and the nrec field in the message.
+ * The message is shrinked in size according to the curlen field in the
+ * context.
+ *
+ * @param ctx The message context.
+ * @param q The queue for the message.
+ * @return None.
+ */
+static void
+pe_playground_send_reply(struct pg_reply_context *ctx, Queue *q)
 {
-	struct anoubisd_msg		*msg = NULL;
-	struct abuf_buffer		 buf = ABUF_EMPTY;
-	struct anoubisd_msg_pgreply	*daemonreply = NULL;
-	Anoubis_PgReplyMessage		*protoreply = NULL;
-	struct playground		*pg;
-	int				 flags = POLICY_FLAG_START;
-	int				 nrec = 0;
-	unsigned int			 reallen = 0;
+	ctx->dmsg->flags = ctx->flags;
+	set_value(ctx->pmsg->nrec, ctx->nrec);
+	set_value(ctx->pmsg->flags, ctx->flags);
+	msg_shrink(ctx->msg, ctx->curlen);
+	enqueue(q, ctx->msg);
+	ctx->msg = NULL;
+	ctx->flags = 0;
+}
 
-	if (LIST_EMPTY(&playgrounds)) {
-		msg = pe_playground_create_pglistmsg(token, &buf, &daemonreply,
-		    &protoreply, &reallen);
-		if (msg == NULL)
-			return -ENOMEM;
-		flags |= POLICY_FLAG_END;
-		daemonreply->flags = flags;
-		set_value(protoreply->flags, flags);
-		msg_shrink(msg, reallen);
-		enqueue(q, msg);
-		return 0;
-	}
+/**
+ * Update the reply context fields after a single record has been
+ * added to the context's payload.
+ *
+ * @param ctx The reply context.
+ * @param size The size of the new record.
+ * @return None.
+ */
+static void
+pe_playground_reply_addrecord(struct pg_reply_context *ctx, int size)
+{
+	ctx->buf = abuf_open(ctx->buf, size);
+	ctx->curlen += size;
+	ctx->nrec++;
+	ctx->dmsg->len += size;
+}
+
+/**
+ * Send the list of all known playgrounds to the queue given as parameter.
+ * This function iterates over all playgrounds and sends one or more
+ * messages containing ANOUBIS_PGREC_PGLIST records to the given queue.
+ * Each record represents one playground.
+ *
+ * @param token The token for the playground reply message.
+ * @param auth_uid The authorized user ID of the user asking for the list.
+ *     Not used by this function.
+ * @param q Messages are added to this queue.
+ */
+static int
+pe_playground_send_pglist(uint64_t token, uint32_t auth_uid __used, Queue *q)
+{
+	struct playground		*pg;
+	struct pg_reply_context		 ctx;
+	int				 error;
+
+	error = pe_playground_init_reply(&ctx, token, ANOUBIS_PGREC_PGLIST);
+	if (error < 0)
+		return error;
 	LIST_FOREACH(pg, &playgrounds, next) {
 		unsigned int			 size;
 		Anoubis_PgInfoRecord		*rec;
@@ -707,21 +786,15 @@ pg_playground_send_pglist(uint64_t token, uint32_t auth_uid __used, Queue *q)
 		if (pg->cmd)
 			size += strlen(pg->cmd);
 		size = (size+7UL) & ~7UL;
-		if (msg && size > abuf_length(buf)) {
-			set_value(protoreply->nrec, nrec);
-			msg_shrink(msg, reallen);
-			enqueue(q, msg);
-			msg = NULL;
-			flags = 0;
+		if (size > abuf_length(ctx.buf)) {
+			pe_playground_send_reply(&ctx, q);
+			error = pe_playground_init_reply(&ctx, token,
+			    ANOUBIS_PGREC_PGLIST);
+			if (error < 0)
+				return error;
+			ctx.flags = 0;
 		}
-		if (msg == NULL) {
-			msg = pe_playground_create_pglistmsg(token, &buf,
-			    &daemonreply, &protoreply, &reallen);
-			if (msg == NULL)
-				return -ENOMEM;
-			nrec = 0;
-		}
-		rec = abuf_cast(buf, Anoubis_PgInfoRecord);
+		rec = abuf_cast(ctx.buf, Anoubis_PgInfoRecord);
 		set_value(rec->reclen, size);
 		set_value(rec->uid, pg->uid);
 		set_value(rec->pgid, pg->pgid);
@@ -733,39 +806,226 @@ pg_playground_send_pglist(uint64_t token, uint32_t auth_uid __used, Queue *q)
 		} else {
 			rec->path[0] = 0;
 		}
-		buf = abuf_open(buf, size);
-		reallen += size;
-		daemonreply->len += size;
-		nrec++;
+		pe_playground_reply_addrecord(&ctx, size);
 	}
-	flags |= POLICY_FLAG_END;
-	if (msg) {
-		daemonreply->flags = flags;
-		set_value(protoreply->nrec, nrec);
-		set_value(protoreply->flags, flags);
-		msg_shrink(msg, reallen);
-		enqueue(q, msg);
+	ctx.flags |= POLICY_FLAG_END;
+	pe_playground_send_reply(&ctx, q);
+	return 0;
+}
+
+/**
+ * Append records for all path names that are known for a single playground
+ * file to the message in the reply context. If the message becomes full
+ * it is sent to the queue and a new message is created.
+ *
+ * @param ctx The message context containing the current message. This
+ *     message may or may not contain records.
+ * @param dev The playground ID of the current file. This value is stored in
+ *     each ANOUBIS_PGREC_FILELIST record that is added to the message.
+ * @param dev The device ID of the current file. This value is stored in
+ *     each ANOUBIS_PGREC_FILELIST record that is added to the message.
+ * @param ino The inode number of the  current file. This value is stored in
+ *     each ANOUBIS_PGREC_FILELIST record that is added to the message.
+ * @param fd The file descriptor of the file that contains the playground
+ *     path names for the file. Each pathname results in one record.
+ * @param q Completed messages are added to this queue.
+ * @return Zero in case of success, a negative error code if an error occured.
+ */
+static int
+pe_playground_send_onefile(struct pg_reply_context *ctx, uint64_t pgid,
+    uint64_t dev, uint64_t ino, int fd, Queue *q)
+{
+	char	buf[512];	/* The read buffer. */
+	int	i=0;		/* Current offset in read buffer */
+	int	len=0;		/* Valid bytes in in read buffer */
+	int	recoff = 0;	/* bytes already copied to current record */
+	int	err;
+
+	while (1) {
+		int			 slen, headlen, complete;
+		struct abuf_buffer	 tmp;
+		Anoubis_PgFileRecord	*rec;
+		/*
+		 * If the read buffer is empty (completly processed) try
+		 * to read more data.
+		 */
+		if (i >= len) {
+			len = read(fd, buf, sizeof(buf));
+			if (len < 0)
+				return -errno;
+			if (len == 0)
+				break;
+			i = 0;
+		}
+		/*
+		 * Search for the NUL byte or the end of the buffer and
+		 * copy this data over to the target message.
+		 */
+		complete = 0;
+		for (slen = 0; i+slen < len; slen++) {
+			if (buf[i+slen] == 0) {
+				slen++;
+				complete = 1;
+				break;
+			}
+		}
+		/*
+		 * If this is the start of a new record, we must copy
+		 * the header, otherwise the header is already included.
+		 */
+		if (recoff)
+			headlen = 0;
+		else
+			headlen = sizeof(Anoubis_PgFileRecord);
+		/*
+		 * If the current record (or the known part thereof)
+		 * does not fit into the message, send the message and
+		 * allocate a new one. Partial record data that has
+		 * been copied into the message is first copied over to the
+		 * new message.
+		 */
+		if (recoff + headlen + slen > (int)abuf_length(ctx->buf)) {
+			struct pg_reply_context		nctx;
+
+			err = pe_playground_init_reply(&nctx, ctx->dmsg->token,
+			    ANOUBIS_PGREC_FILELIST);
+			if (err < 0)
+				return err;
+			abuf_copy_part(nctx.buf, 0, ctx->buf, 0, recoff);
+			pe_playground_send_reply(ctx, q);
+			nctx.flags = ctx->flags;
+			(*ctx) = nctx;
+			continue;
+		}
+		/* No header yet, add one. */
+		if (recoff == 0) {
+			rec = abuf_cast(ctx->buf, Anoubis_PgFileRecord);
+			if (!rec)
+				return -ENOMEM;
+			set_value(rec->reclen, 0);
+			set_value(rec->_pad, 0);
+			set_value(rec->pgid, pgid);
+			set_value(rec->dev, dev);
+			set_value(rec->ino, ino);
+			recoff = offsetof(Anoubis_PgFileRecord, path);
+		}
+		/* Append the path data to the current record. */
+		tmp = abuf_open(ctx->buf, recoff);
+		abuf_copy_tobuf(tmp, buf+i, slen);
+		/* Adjust record offset and position in the read buffer. */
+		recoff += slen;
+		i += slen;
+		/*
+		 * If the string is complete (we found a NUL byte) we must
+		 * account for the record in the context.
+		 */
+		if (complete) {
+			int	nrecoff = (recoff + 7UL) & ~7UL;
+
+			if (nrecoff <= (int)abuf_length(ctx->buf))
+				recoff = nrecoff;
+			rec = abuf_cast(ctx->buf, Anoubis_PgFileRecord);
+			if (!rec)
+				return -ENOMEM;
+			set_value(rec->reclen, recoff);
+			pe_playground_reply_addrecord(ctx, recoff);
+			recoff = 0;
+		}
 	}
 	return 0;
 }
 
+/**
+ * Send a list of all files in a particular playground to the user.
+ * Only root is allowed to list files in playgrounds created by the other
+ * users.
+ *
+ * @param token The token that should be used for replies.
+ * @param pgid All files in the playground with the ID should be listed.
+ * @param auth_uid The authorized user-ID of the requesting user.
+ * @param q Messages are appended to this queue.
+ * @return Zero in case of success, a negative error code in case of errors.
+ */
+static int
+pe_playground_send_filelist(uint64_t token, uint64_t pgid, uint32_t auth_uid,
+    Queue *q)
+{
+	struct playground		*pg;
+	int				 error = 0;
+	DIR				*dir;
+	struct dirent			*dent;
+	struct pg_reply_context		 ctx;
+
+	ctx.msg = NULL;
+	pg = pe_playground_find(pgid);
+	if (!pg)
+		return -ESRCH;
+	if (pg->uid != auth_uid && auth_uid != 0)
+		return -EPERM;
+	dir = atfd_fdopendir(&pg->dirfd);
+	if (!dir)
+		return -errno;
+	error = pe_playground_init_reply(&ctx, token, ANOUBIS_PGREC_FILELIST);
+	if (error < 0)
+		goto err;
+
+	while((dent = readdir(dir)) != NULL) {
+		uint64_t		dev, ino;
+		char			ch;
+		int			fd;
+
+		/* Skip entries that do not represent a file. */
+		if (sscanf(dent->d_name, "%" PRIx64 ":%" PRIx64 "%c",
+		    &dev, &ino, &ch) != 2)
+			continue;
+		fd = atfd_openat(&pg->dirfd, dent->d_name, O_RDONLY, 0);
+		if (fd < 0) {
+			error = -errno;
+			goto err;
+		}
+		error = pe_playground_send_onefile(&ctx, pgid, dev, ino, fd, q);
+		close(fd);
+		if (error < 0)
+			goto err;
+	}
+	closedir(dir);
+	ctx.flags |= POLICY_FLAG_END;
+	pe_playground_send_reply(&ctx, q);
+	return 0;
+err:
+	closedir(dir);
+	if (ctx.msg)
+		free(ctx.msg);
+	return error;
+}
+
+/**
+ * This is an external function that handle playground list requests by
+ * the user. The request message is passed as a paramter. Any response
+ * message that must be generated are added to the given queue.
+ *
+ * @param inmsg The request message of type anoubisd_msg_pgrequest.
+ * @param queue Reply messages are added to this queue.
+ * @return None. The user is notified of any error via error messages.
+ */
 void
 pe_playground_dispatch_request(struct anoubisd_msg *inmsg, Queue *queue)
 {
 	int				 err = 0;
-	struct anoubisd_msg_pgrequest	*pgreq;
-	struct anoubisd_msg		*errmsg = NULL;
-	struct abuf_buffer		 buf = ABUF_EMPTY;
-	struct anoubisd_msg_pgreply	*daemonreply = NULL;
-	Anoubis_PgReplyMessage		*protoreply = NULL;
-	unsigned int			 reallen = 0;
 	uint64_t			 token = 0;
+	struct anoubisd_msg_pgrequest	*pgreq;
+	struct pg_reply_context		 ctx;
 
 	pgreq = (struct anoubisd_msg_pgrequest *)inmsg->msg;
 	switch(pgreq->listtype) {
 	case ANOUBIS_PGREC_PGLIST:
 		token = pgreq->token;
-		err = pg_playground_send_pglist(pgreq->token,
+		err = pe_playground_send_pglist(pgreq->token,
+		    pgreq->auth_uid, queue);
+		break;
+	case ANOUBIS_PGREC_FILELIST:
+		token = pgreq->token;
+		err = pe_playground_send_filelist(pgreq->token, pgreq->pgid,
 		    pgreq->auth_uid, queue);
 		break;
 	default:
@@ -775,16 +1035,12 @@ pe_playground_dispatch_request(struct anoubisd_msg *inmsg, Queue *queue)
 	if (err == 0)
 		return;
 	/* Send an error message */
-	errmsg = pe_playground_create_pglistmsg(token, &buf, &daemonreply,
-	    &protoreply, &reallen);
-	if (errmsg == NULL) {
+	err = pe_playground_init_reply(&ctx, token, ANOUBIS_PGREC_NOTYPE);
+	if (err < 0)  {
 		master_terminate(ENOMEM);
 		return;
 	}
-	daemonreply->flags = POLICY_FLAG_START | POLICY_FLAG_END;
-	set_value(protoreply->error, -err);
-	set_value(protoreply->rectype, 0);
-	set_value(protoreply->flags, POLICY_FLAG_START | POLICY_FLAG_END);
-	msg_shrink(errmsg, reallen);
-	enqueue(queue, errmsg);
+	ctx.flags = POLICY_FLAG_START | POLICY_FLAG_END;
+	set_value(ctx.pmsg->error, -err);
+	pe_playground_send_reply(&ctx, queue);
 }

@@ -450,6 +450,20 @@ verify_pginfo_record(Anoubis_PgInfoRecord *r, int reclen)
 }
 
 static int
+verify_pgfile_record(Anoubis_PgFileRecord *r, int reclen)
+{
+	int		i;
+	reclen -= sizeof(Anoubis_PgFileRecord);
+	/* Make sure that the path name is NUL terminated. */
+	for (i=0; i<reclen; ++i)
+		if (r->path[i] == 0)
+			break;
+	if (i==reclen)
+		return 0;
+	return 1;
+}
+
+static int
 verify_pgreply(const struct anoubis_msg *m)
 {
 	int	off = 0;
@@ -468,13 +482,26 @@ verify_pgreply(const struct anoubis_msg *m)
 			if (!VERIFY_BUFFER(m, pgreply, payload, off,
 			    sizeof(Anoubis_PgInfoRecord)))
 				return 0;
-			r = (Anoubis_PgInfoRecord*)(m->u.pgreply->payload+off);
+			r = (Anoubis_PgInfoRecord *)(m->u.pgreply->payload+off);
 			reclen = get_value(r->reclen);
 			if (reclen < sizeof(Anoubis_PgInfoRecord))
 				return 0;
 			if (!VERIFY_BUFFER(m, pgreply, payload, off, reclen))
 				return 0;
 			if (!verify_pginfo_record(r, reclen))
+				return 0;
+		} else if (rectype == ANOUBIS_PGREC_FILELIST) {
+			Anoubis_PgFileRecord	*r;
+			if (!VERIFY_BUFFER(m, pgreply, payload, off,
+			    sizeof(Anoubis_PgFileRecord)))
+				return 0;
+			r = (Anoubis_PgFileRecord *)(m->u.pgreply->payload+off);
+			reclen = get_value(r->reclen);
+			if (reclen < sizeof(Anoubis_PgFileRecord))
+				return 0;
+			if (!VERIFY_BUFFER(m, pgreply, payload, off, reclen))
+				return 0;
+			if (!verify_pgfile_record(r, reclen))
 				return 0;
 		} else {
 			return 0;
