@@ -36,8 +36,7 @@
 #include <anoubis_transaction.h>
 
 /**
- * Common base class of all CSMulti request. Do not try to
- * run or instantiate this task directly.
+ * Common base class of all CSMulti request.
  *
  * This class handles pathname, public keys, csmulti requests and
  * error reporting.
@@ -45,11 +44,6 @@
 class ComCSMultiTask : public ComTask
 {
 	public:
-		/**
-		 * Default constructor.
-		 */
-		ComCSMultiTask(void);
-
 		/**
 		 * Destructor.
 		 */
@@ -114,6 +108,11 @@ class ComCSMultiTask : public ComTask
 		bool haveKeyId(void) const;
 
 	protected:
+		/**
+		 * Default constructor.
+		 */
+		ComCSMultiTask(void);
+
 		std::vector<wxString>		 paths_;
 		struct anoubis_csmulti_request	*csreq_;
 		struct anoubis_csmulti_request	*sigreq_;
