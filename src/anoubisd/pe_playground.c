@@ -34,6 +34,7 @@
 #include <sys/stat.h>
 
 #include <dirent.h>
+#include <time.h>
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
@@ -62,6 +63,10 @@
  * next: Link to the next playground structure on the playground list.
  *     The list is rooted at the global variable playgrounds.
  * pgid: The playground ID of the playground.
+ * founder: The playgrond ID of the initial playground process. The
+ *     playground name is derived from the command of this process and
+ *     the first exec of this process changes the playground name.
+ * starttime: The time that the playground was started.
  * nrprocs: The total number of running processes in the playground.
  * nrfiles: The total number of playground files that are known to this
  *     playground.
@@ -78,6 +83,8 @@
 struct playground {
 	LIST_ENTRY(playground)			 next;
 	anoubis_cookie_t			 pgid;
+	anoubis_cookie_t			 founder;
+	uint64_t				 starttime;
 	int					 nrprocs;
 	int					 nrfiles;
 	char					*cmd;
@@ -153,11 +160,13 @@ pe_playground_create(anoubis_cookie_t pgid, int do_mkdir)
 		log_warnx("pe_playground_create: Cannot open playground "
 		    "directory: %s", anoubis_strerror(-err));
 	pg->pgid = pgid;
+	pg->founder = 0;
 	pg->nrprocs = 0;
 	pg->nrfiles = 0;
 	pg->cmd = NULL;
 	pg->uid = (uid_t)-1;
 	pg->did_exec = 0;
+	pg->starttime = 0;
 	LIST_INSERT_HEAD(&playgrounds, pg, next);
 	return pg;
 }
@@ -287,17 +296,27 @@ pe_playground_writefile(struct playground *pg, const char *path, char *str)
  *
  * @param The playground structure.
  * @param The process that creates the playground.
- * @return None.
+ * @return Returns true if the playground attributes have been changed,
+ *     false otherwise.
  */
-static void
+static int
 pe_playground_initproc(struct playground *pg, struct pe_proc *proc)
 {
 	struct pe_proc_ident	*ident = pe_proc_ident(proc);
-	char			 buf[20];
+	char			 buf[40];
 
+	if (pg->did_exec)
+		return 0;
+	if (pg->founder == 0) {
+		pg->founder = pe_proc_task_cookie(proc);
+	} else if (pg->founder != pe_proc_task_cookie(proc))
+		return 0;
 	pg->uid = pe_proc_get_uid(proc);
-	snprintf(buf, 20, "%d", pg->uid);
+	snprintf(buf, sizeof(buf), "%d", pg->uid);
 	pe_playground_writefile(pg, "UID", buf);
+	pg->starttime = time(NULL);
+	snprintf(buf, sizeof(buf), "%" PRId64, pg->starttime);
+	pe_playground_writefile(pg, "STARTTIME", buf);
 	if (pg->cmd) {
 		free(pg->cmd);
 		pg->cmd = NULL;
@@ -305,10 +324,11 @@ pe_playground_initproc(struct playground *pg, struct pe_proc *proc)
 	if (ident && ident->pathhint)
 		pg->cmd = strdup(ident->pathhint);
 	pe_playground_writefile(pg, "CMD", ident ? ident->pathhint : NULL);
+	return 1;
 }
 
 /**
- * Initailize the fields of the playground structure that depend on the
+ * Initialize the fields of the playground structure that depend on the
  * first playground process. This is only done for the first exec in this
  * playground.
  *
@@ -326,10 +346,8 @@ pe_playground_postexec(anoubis_cookie_t pgid, struct pe_proc *proc)
 		    "%" PRIx64, pgid);
 		return;
 	}
-	if (!pg->did_exec) {
-		pe_playground_initproc(pg, proc);
+	if (pe_playground_initproc(pg, proc))
 		pg->did_exec = 1;
-	}
 }
 
 /**
@@ -346,8 +364,7 @@ pe_playground_add(anoubis_cookie_t pgid, struct pe_proc *proc)
 	struct playground	*pg = pe_playground_create(pgid, 1);
 
 	if (pg) {
-		if (pg->cmd == NULL)
-			pe_playground_initproc(pg, proc);
+		pe_playground_initproc(pg, proc);
 		pg->nrprocs++;
 		DEBUG(DBG_PG, "pe_playground_add: pgid=0x%" PRIx64
 		    " task=0x%" PRIx64 " nrprocs=%d", pg->pgid,
@@ -576,6 +593,10 @@ pe_playground_read(anoubis_cookie_t pgid)
 		sscanf(buf, "%d", &uid);
 		pg->uid = uid;
 	}
+	if (pe_playground_readfile(pg, "STARTTIME", buf, sizeof(buf)) >= 0) {
+		if (sscanf(buf, "%" PRIx64, &pg->starttime) != 1)
+			pg->starttime = 0;
+	}
 	if (pg->cmd) {
 		free(pg->cmd);
 		pg->cmd = NULL;
@@ -798,7 +819,7 @@ pe_playground_send_pglist(uint64_t token, uint32_t auth_uid __used, Queue *q)
 		set_value(rec->reclen, size);
 		set_value(rec->uid, pg->uid);
 		set_value(rec->pgid, pg->pgid);
-		set_value(rec->starttime, 0 /* XXX */);
+		set_value(rec->starttime, pg->starttime);
 		set_value(rec->nrprocs, pg->nrprocs);
 		set_value(rec->nrfiles, pg->nrfiles);
 		if (pg->cmd) {
