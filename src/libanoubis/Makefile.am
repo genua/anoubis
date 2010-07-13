@@ -110,6 +110,7 @@ csources = \
 	anoubisui/csum/csum.c \
 	anoubisui/key/keygen.c \
 	anoubisui/playground/playground.c \
+	anoubisui/playground/playground_files.c \
 	apn/apnescalations.c \
 	apn/apnparser.c \
 	apn/rbtree.c

@@ -30,6 +30,7 @@
 
 #include <sys/types.h>
 #include <sys/cdefs.h>
+#include <stdint.h>
 
 #include <config.h>
 
@@ -65,6 +66,12 @@ int playground_start_exec(char **);
  * @return < 0 if an error occures or > 0 as pid of child.
  */
 int playground_start_fork(char **);
+
+
+/* See playground_files.c for documentation of these functions. */
+int	 pgfile_check(uint64_t dev, uint64_t ino, const char *names[]);
+int	 pgfile_process(uint64_t dev, uint64_t ino, const char *names[]);
+int	 pgfile_composename(char **, uint64_t dev, uint64_t ino, const char *);
 
 __END_DECLS
 

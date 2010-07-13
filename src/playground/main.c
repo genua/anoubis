@@ -113,9 +113,9 @@
 #define PGCLI_OUTLEN_DEV 8
 
 /**
- * Field width for filename.
+ * Field width for inode number.
  */
-#define PGCLI_OUTLEN_FILENAME 8
+#define PGCLI_OUTLEN_INO 8
 
 /**
  * Length of buffer for time printing.
@@ -266,7 +266,7 @@ static int pgcli_files(anoubis_cookie_t);
  * The printed headers are:\n
  *	- playground id
  *	- device number
- *	- path\n\n
+ *	- path
  * @param[in] 1st The first message in list.
  * @return Nothing.
  */
@@ -280,11 +280,17 @@ static void pgcli_files_print_msg(struct anoubis_msg *);
  * The printed values are:\n
  *	- playground id
  *	- device number
- *	- path\n\n
+ *      - inode number
+ *	- path
  * @param[in] 1st The record of one playground.
- * @return Nothing.
+ * @param[in] 2nd If this value is true the record is only printed if it
+ *     references an existing file on a mounted file system. If this value
+ *     is false the record is printed in any case but without a path name.
+ * @return Zero if a record for the file was printed, a negative error
+ *     code if no record was printed (usually because the file name references
+ *     a different file).
  */
-static void pgcli_files_print_record(Anoubis_PgFileRecord *);
+static int pgcli_files_print_record(Anoubis_PgFileRecord *, int needpath);
 
 static int auth_callback(struct anoubis_client *, struct anoubis_msg *,
     struct anoubis_msg **);
@@ -753,8 +759,11 @@ void
 pgcli_files_print_msg(struct anoubis_msg *message)
 {
 	int			 offset = 0;
-	int			 i	= 0;
-	Anoubis_PgFileRecord	*record = NULL;
+	int			 i = 0;
+	Anoubis_PgFileRecord	*rec = NULL;
+	Anoubis_PgFileRecord	*lastrec = NULL;
+	int			 printed = 1;
+
 
 	if (message == NULL ||
 	    !VERIFY_LENGTH(message, sizeof(Anoubis_PgReplyMessage)) ||
@@ -771,28 +780,59 @@ pgcli_files_print_msg(struct anoubis_msg *message)
 	/* Print header */
 	printf("%*s ", PGCLI_OUTLEN_ID, "PGID");
 	printf("%*s ", PGCLI_OUTLEN_DEV, "DEV");
-	printf("%-*s\n", PGCLI_OUTLEN_FILENAME, "FILE");
+	printf("%*s ", PGCLI_OUTLEN_INO, "INODE");
+	printf("%s\n", "FILE");
 
 	/* Print table lines */
 	while (message) {
 		for (i=0; i<get_value(message->u.pgreply->nrec); ++i) {
-			record = (Anoubis_PgFileRecord *)(
+			rec = (Anoubis_PgFileRecord *)(
 			    message->u.pgreply->payload + offset);
-			offset += get_value(record->reclen);
+			offset += get_value(rec->reclen);
 
-			pgcli_files_print_record(record);
+			if (lastrec == NULL
+			    || get_value(rec->dev) != get_value(lastrec->dev)
+			    || get_value(rec->ino) != get_value(lastrec->ino)) {
+				if (!printed) {
+					pgcli_files_print_record(lastrec, 0);
+					printed = 0;
+				}
+				lastrec = rec;
+			}
+			if (pgcli_files_print_record(rec, 1))
+				printed = 1;
 		}
-
 		message = message->next;
 	}
+	if (lastrec && !printed)
+		pgcli_files_print_record(lastrec, 0);
 }
 
-void
-pgcli_files_print_record(Anoubis_PgFileRecord *record)
+int
+pgcli_files_print_record(Anoubis_PgFileRecord *record, int needpath)
 {
+	char		*path = NULL;
+	uint64_t	 dev, ino;
+	int		 error;
+
+	dev = get_value(record->dev);
+	ino = get_value(record->ino);
+	error = pgfile_composename(&path, dev, ino, record->path);
+	if (error) {
+		if (needpath)
+			return 0;
+		path = anoubis_strerror(-error);
+	}
 	printf("%*"PRIx64" ", PGCLI_OUTLEN_ID, get_value(record->pgid));
-	printf("%*"PRIx64" ", PGCLI_OUTLEN_DEV, get_value(record->dev));
-	printf("%-*s\n", PGCLI_OUTLEN_FILENAME, record->path);
+	printf("%*"PRIx64" ", PGCLI_OUTLEN_DEV, dev);
+	printf("%*"PRIx64" ", PGCLI_OUTLEN_INO, ino);
+	if (needpath) {
+		printf("%s\n", path);
+		free(path);
+	} else {
+		printf("(%s)\n", path);
+	}
+	return 1;
 }
 
 static int
