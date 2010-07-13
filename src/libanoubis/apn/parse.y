@@ -351,7 +351,7 @@ alfruleset_l	: alfruleset_l alfruleset
 		| alfruleset
 		;
 
-alfruleset	: ruleid apps optnl '{' optnl alfrule_l '}' nl {
+alfruleset	: ruleid apps optnl '{' optnl alfrule_l '}' optnl {
 			struct apn_rule	*rule;
 
 			rule = calloc(1, sizeof(struct apn_rule));
@@ -928,7 +928,7 @@ sbruleset_l	: sbruleset_l sbruleset
 		| sbruleset
 		;
 
-sbruleset	: ruleid apps optnl '{' optnl sbrule_l '}' nl {
+sbruleset	: ruleid apps optnl '{' optnl sbrule_l '}' optnl {
 			struct apn_rule	*rule;
 
 			rule = calloc(1, sizeof(struct apn_rule));
@@ -1108,27 +1108,22 @@ ctxruleset_l	: ctxruleset_l ctxruleset
 		| ctxruleset
 		;
 
-ctxflags        : ctxnosfs ctxplayground
-                {
-                    $$ = $1 | $2;
-                }
-                | ctxplayground ctxnosfs
-                {
-                    $$ = $1 | $2;
-                }
-                | ctxnosfs
-                {
-                    $$ = $1;
-                }
-                | ctxplayground
-                {
-                    $$ = $1;
-                }
-                | /* empty */
-                {
-                    $$ = 0;
-                }
-                ;
+ctxflags	: ctxnosfs ctxplayground {
+			$$ = $1 | $2;
+		}
+		| ctxplayground ctxnosfs {
+			$$ = $1 | $2;
+		}
+		| ctxnosfs {
+			$$ = $1;
+		}
+		| ctxplayground {
+			$$ = $1;
+		}
+		| /* empty */ {
+			$$ = 0;
+		}
+		;
 
 ctxnosfs	: NOSFS {
 			if (apnrsp->version < APN_PARSER_MKVERSION(1, 1)) {
@@ -1157,7 +1152,7 @@ ctxplayground   : PLAYGROUND {
 		;
 
 
-ctxruleset	: ruleid apps ctxflags optnl '{' optnl ctxrule_l '}' nl {
+ctxruleset	: ruleid apps ctxflags optnl '{' optnl ctxrule_l '}' optnl {
 			struct apn_rule	*rule;
 
 			rule = calloc(1, sizeof(struct apn_rule));
