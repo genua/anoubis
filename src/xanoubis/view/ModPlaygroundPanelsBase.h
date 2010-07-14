@@ -50,6 +50,8 @@
 #include <wx/image.h>
 #include <wx/notebook.h>
 #include <wx/statbmp.h>
+#include <wx/checkbox.h>
+#include <wx/dialog.h>
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -103,6 +105,26 @@ class ModPlaygroundOverviewPanelBase : public wxPanel
 	
 	public:
 		ModPlaygroundOverviewPanelBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 600,-1 ), long style = wxTAB_TRAVERSAL );
+	
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class modPlaygroundCommitDialog
+///////////////////////////////////////////////////////////////////////////////
+class modPlaygroundCommitDialog : public wxDialog 
+{
+	private:
+	
+	protected:
+		wxStaticText* descriptionText;
+		wxGrid* commitFilelistGrid;
+		wxCheckBox* commitScanFilesCheckbox;
+		wxStdDialogButtonSizer* comittButtonSizer;
+		wxButton* comittButtonSizerOK;
+		wxButton* comittButtonSizerCancel;
+	
+	public:
+		modPlaygroundCommitDialog( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Commit Files"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 576,232 ), long style = wxCAPTION|wxCLOSE_BOX|wxMAXIMIZE_BOX|wxMINIMIZE_BOX );
 	
 };
 

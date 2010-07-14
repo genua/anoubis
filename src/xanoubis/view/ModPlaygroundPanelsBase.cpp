@@ -170,3 +170,66 @@ ModPlaygroundOverviewPanelBase::ModPlaygroundOverviewPanelBase( wxWindow* parent
 	this->SetSizer( mainSizer );
 	this->Layout();
 }
+
+modPlaygroundCommitDialog::modPlaygroundCommitDialog( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+	
+	wxBoxSizer* textSizer;
+	textSizer = new wxBoxSizer( wxVERTICAL );
+	
+	descriptionText = new wxStaticText( this, wxID_ANY, _("This is a list of files that have been used or created within the current playground. All selected files will be committed to the file system. Existing files won't be replaced without further permission."), wxDefaultPosition, wxDefaultSize, 0 );
+	descriptionText->Wrap( 522 );
+	textSizer->Add( descriptionText, 0, wxALL|wxEXPAND, 10 );
+	
+	wxStaticBoxSizer* mainSizer;
+	mainSizer = new wxStaticBoxSizer( new wxStaticBox( this, -1, _("Playground Files") ), wxVERTICAL );
+	
+	commitFilelistGrid = new wxGrid( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxRAISED_BORDER|wxVSCROLL );
+	
+	// Grid
+	commitFilelistGrid->CreateGrid( 1, 1 );
+	commitFilelistGrid->EnableEditing( true );
+	commitFilelistGrid->EnableGridLines( true );
+	commitFilelistGrid->EnableDragGridSize( false );
+	commitFilelistGrid->SetMargins( 0, 0 );
+	
+	// Columns
+	commitFilelistGrid->EnableDragColMove( false );
+	commitFilelistGrid->EnableDragColSize( true );
+	commitFilelistGrid->SetColLabelSize( 30 );
+	commitFilelistGrid->SetColLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	
+	// Rows
+	commitFilelistGrid->EnableDragRowSize( true );
+	commitFilelistGrid->SetRowLabelSize( 0 );
+	commitFilelistGrid->SetRowLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	
+	// Label Appearance
+	
+	// Cell Defaults
+	commitFilelistGrid->SetDefaultCellAlignment( wxALIGN_LEFT, wxALIGN_TOP );
+	mainSizer->Add( commitFilelistGrid, 0, wxALL|wxEXPAND, 0 );
+	
+	wxGridSizer* footerSizer;
+	footerSizer = new wxGridSizer( 1, 2, 0, 0 );
+	
+	commitScanFilesCheckbox = new wxCheckBox( this, wxID_ANY, _("Scan files"), wxDefaultPosition, wxDefaultSize, 0 );
+	
+	footerSizer->Add( commitScanFilesCheckbox, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	comittButtonSizer = new wxStdDialogButtonSizer();
+	comittButtonSizerOK = new wxButton( this, wxID_OK );
+	comittButtonSizer->AddButton( comittButtonSizerOK );
+	comittButtonSizerCancel = new wxButton( this, wxID_CANCEL );
+	comittButtonSizer->AddButton( comittButtonSizerCancel );
+	comittButtonSizer->Realize();
+	footerSizer->Add( comittButtonSizer, 1, wxEXPAND, 5 );
+	
+	mainSizer->Add( footerSizer, 1, wxEXPAND, 5 );
+	
+	textSizer->Add( mainSizer, 1, wxEXPAND, 5 );
+	
+	this->SetSizer( textSizer );
+	this->Layout();
+}
