@@ -42,7 +42,8 @@ VersionListCtrl::VersionListCtrl(wxWindow *w, wxWindowID id,
 	addColumn(new VersionTypeProperty);
 	addColumn(new VersionDateProperty);
 	addColumn(new VersionTimeProperty);
-	addColumn(new VersionUsernameProperty);
+	addColumn(new AnStrListProperty<ApnVersion>(
+	    _("User"), &ApnVersion::getUsername));
 	addColumn(new VersionNoProperty);
 }
 
@@ -109,23 +110,6 @@ VersionTimeProperty::getText(AnListClass *obj) const
 
 	if (version != 0)
 		return (version->getTimestamp().FormatTime());
-	else
-		return _("???");
-}
-
-wxString
-VersionUsernameProperty::getHeader(void) const
-{
-	return _("User");
-}
-
-wxString
-VersionUsernameProperty::getText(AnListClass *obj) const
-{
-	ApnVersion *version = dynamic_cast<ApnVersion *>(obj);
-
-	if (version != 0)
-		return (version->getUsername());
 	else
 		return _("???");
 }

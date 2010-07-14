@@ -64,7 +64,6 @@ class VersionListCtrl : public AnListCtrl {
  * @see VersionTypeProperty
  * @see VersionDateProperty
  * @see VersionTimeProperty
- * @see VersionUsernameProperty
  * @see VersionNoProperty
  */
 class ApnVersionProperty : public AnListProperty
@@ -84,7 +83,7 @@ class VersionTypeProperty : public ApnVersionProperty
 };
 
 /**
- * Property for the date of ApnVersion::getTimestamp() 
+ * Property for the date of ApnVersion::getTimestamp()
  */
 class VersionDateProperty : public ApnVersionProperty
 {
@@ -94,19 +93,9 @@ class VersionDateProperty : public ApnVersionProperty
 };
 
 /**
- * Property for the time of ApnVersion::getTimestamp() 
+ * Property for the time of ApnVersion::getTimestamp()
  */
 class VersionTimeProperty : public ApnVersionProperty
-{
-	public:
-		wxString getHeader(void) const;
-		wxString getText(AnListClass *c) const;
-};
-
-/**
- * Property of ApnVersion::getUsername().
- */
-class VersionUsernameProperty : public ApnVersionProperty
 {
 	public:
 		wxString getHeader(void) const;

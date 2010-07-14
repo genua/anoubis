@@ -88,4 +88,97 @@ class AnListProperty
 		virtual AnIconList::IconId getIcon(AnListClass *) const = 0;
 };
 
+/**
+ * Template class that implements list properties for the case where
+ * the accessor functions already return strings. Instantiate as follows:
+ *
+ *	new AnStrListProperty<RowType>(
+ *	    _("HEADER"),
+ *	    &RowType::getTextValue,
+ *	    &RowType::getIconId
+ *      );
+ *
+ * @param T The type of the rows that this property applies to.
+ */
+template <typename T>
+class AnStrListProperty : public AnListProperty {
+private:
+	/**
+	 * The colun header for this property. This is the value
+	 * returned by the getHeader function.
+	 */
+	wxString		header_;
+
+	/**
+	 * A member function pointer that points to a member function
+	 * of the row type T. This member function should return the
+	 * string value that is returned by this property.
+	 */
+	wxString		(T::*textptr_)(void) const;
+
+	/**
+	 * A member function pointer that  points to a member function
+	 * of the row type T. This member function should return the
+	 * icon ID for this row object.
+	 */
+	AnIconList::IconId	(T::*iconptr_)(void) const;
+
+public:
+
+	/**
+	 * Constructor.
+	 *
+	 * @param hdr Used to initialize the header_ member.
+	 * @param tptr Used to initialize the textptr_ member.
+	 * @param iptr Used to initialize the iconptr_ member.
+	 *     If this argument is omitted it defaults to NULL.
+	 */
+	AnStrListProperty(wxString hdr, wxString (T::*tptr)(void) const,
+	    AnIconList::IconId (T::*iptr)(void) const = NULL) :
+	    header_(hdr), textptr_(tptr), iconptr_(iptr) {
+	}
+
+	/**
+	 * This implements AnListProperty::getHeader.
+	 *
+	 * @param None.
+	 * @return The column header.
+	 */
+	wxString getHeader(void) const {
+		return header_;
+	}
+
+	/**
+	 * This implements AnListProperty::getText.
+	 *
+	 * @param obj The row object.
+	 * @return The column text for this row. If the textptr_ member
+	 *     is NULL or obj is not of type T the text "???" is returned.
+	 */
+	wxString getText(AnListClass *obj) const {
+		T	*tobj = dynamic_cast<T *>(obj);
+
+		if (tobj != NULL && textptr_ != NULL)
+			return (tobj->*textptr_)();
+		else
+			return _("???");
+	}
+
+	/**
+	 * This implements AnListProperty::getIcon.
+	 *
+	 * @param The row object.
+	 * @return The iconptr_ member is NULL or obj is not of type T
+	 *     ICON_NONE is returned.
+	 */
+	AnIconList::IconId getIcon(AnListClass *obj) const {
+		T	*tobj = dynamic_cast<T *>(obj);
+
+		if (tobj != NULL && iconptr_ != NULL)
+			return (tobj->*iconptr_)();
+		else
+			return AnIconList::ICON_NONE;
+	}
+};
+
 #endif	/* _ANLISTPROPERTY_H_ */
