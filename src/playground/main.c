@@ -115,7 +115,7 @@
 /**
  * Field width for inode number.
  */
-#define PGCLI_OUTLEN_INO 8
+#define PGCLI_OUTLEN_INODE 8
 
 /**
  * Length of buffer for time printing.
@@ -266,7 +266,8 @@ static int pgcli_files(anoubis_cookie_t);
  * The printed headers are:\n
  *	- playground id
  *	- device number
- *	- path
+ *	- inode number
+ *	- path\n\n
  * @param[in] 1st The first message in list.
  * @return Nothing.
  */
@@ -280,8 +281,8 @@ static void pgcli_files_print_msg(struct anoubis_msg *);
  * The printed values are:\n
  *	- playground id
  *	- device number
- *      - inode number
- *	- path
+ *	- inode number
+ *	- path\n\n
  * @param[in] 1st The record of one playground.
  * @param[in] 2nd If this value is true the record is only printed if it
  *     references an existing file on a mounted file system. If this value
@@ -290,7 +291,7 @@ static void pgcli_files_print_msg(struct anoubis_msg *);
  *     code if no record was printed (usually because the file name references
  *     a different file).
  */
-static int pgcli_files_print_record(Anoubis_PgFileRecord *, int needpath);
+static int pgcli_files_print_record(Anoubis_PgFileRecord *, int);
 
 static int auth_callback(struct anoubis_client *, struct anoubis_msg *,
     struct anoubis_msg **);
@@ -469,7 +470,7 @@ pgcli_ui_init(void)
 	if (keyFile == NULL) {
 		error = asprintf(&keyFile, "%s/%s", homePath, defaultKeyFile);
 		if (error < 0) {
-			fprintf(stderr, "Error while allocating" "memory\n");
+			fprintf(stderr, "Error while allocating memory\n");
 			return 1;
 		}
 		if (stat(keyFile, &sb) == 0) {
@@ -780,7 +781,7 @@ pgcli_files_print_msg(struct anoubis_msg *message)
 	/* Print header */
 	printf("%*s ", PGCLI_OUTLEN_ID, "PGID");
 	printf("%*s ", PGCLI_OUTLEN_DEV, "DEV");
-	printf("%*s ", PGCLI_OUTLEN_INO, "INODE");
+	printf("%*s ", PGCLI_OUTLEN_INODE, "INODE");
 	printf("%s\n", "FILE");
 
 	/* Print table lines */
@@ -825,7 +826,7 @@ pgcli_files_print_record(Anoubis_PgFileRecord *record, int needpath)
 	}
 	printf("%*"PRIx64" ", PGCLI_OUTLEN_ID, get_value(record->pgid));
 	printf("%*"PRIx64" ", PGCLI_OUTLEN_DEV, dev);
-	printf("%*"PRIx64" ", PGCLI_OUTLEN_INO, ino);
+	printf("%*"PRIx64" ", PGCLI_OUTLEN_INODE, ino);
 	if (needpath) {
 		printf("%s\n", path);
 		free(path);

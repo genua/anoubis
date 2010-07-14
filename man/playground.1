@@ -35,7 +35,9 @@
 .Sh SYNOPSIS
 .\" For a program:  program [-abc] file ...
 .Nm playground
-.Op Fl h
+.Op Fl fh
+.Op -k keyfile
+.Op -c certificate
 .Ar command
 .Sh DESCRIPTION
 The
@@ -46,6 +48,15 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl h
 Print usage.
+.It Fl f
+Force.
+E.g usage of key and certificat even if they do not match.
+This option is intended for debugging purposes.
+Its use is not recommended.
+.It Fl k Ar keyfile
+Specify location of private key (default ~/.xanoubis/default.key)
+.It Fl c Ar certfile
+Specify location of certificate. (default ~/.xanoubis/default.crt)
 .It Ar command
 .Pp
 .Bl -tag -width Ds
@@ -65,6 +76,27 @@ After execution of
 or the exit code of \&<program\&> in case of
 an successfull call of
 .Xr exec 3 .
+.It list
+This will print out a list of all known playgrounds.
+The list will provide the following items for each playground:
+.Bl -tag -width Ds
+.It PGID - id of playground
+.It USER - user id
+.It STAT - status: active or inactive
+.It FILES - number of (modified) files
+.It TIME - time of creation
+.It COMMAND - command
+.El
+.It files \&<playground id\&>
+This will print out a list of files assigned to a given playground.
+The playground is specified by its id (in hexadecimal as given by list command).
+The list will provide the following items for each file:
+.Bl -tag -width Ds
+.It PGID - id of playground
+.It DEV - device number
+.It INODE - inode number
+.It FILE - file path
+.El
 .El
 .El
 .\" The following requests should be uncommented and used where appropriate.
