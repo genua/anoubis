@@ -590,6 +590,42 @@ do_copy_ident(char *buf, int *offp, const struct pe_proc_ident *pident,
 	do_copy(buf, offp, pident->pathhint, plen, rpathoffp, rpathlenp);
 }
 
+static struct anoubisd_msg *
+fill_eventask_message(int type, int loglevel, struct eventdev_hdr *hdr,
+    struct anoubisd_reply *reply)
+{
+	struct anoubisd_msg		*msg;
+	struct anoubisd_msg_eventask	*eventask;
+	int				 extra, off;
+
+	extra = hdr->msg_size;
+	extra += pident_size(reply->pident);
+	extra += pident_size(reply->ctxident);
+	msg = msg_factory(type, sizeof(struct anoubisd_msg_eventask) + extra);
+	if (!msg)
+		return NULL;
+	eventask = (anoubisd_msg_eventask_t *)msg->msg;
+	if (reply->ask)
+		eventask->error = 0;
+	else
+		eventask->error = reply->reply;
+	eventask->rule_id = reply->rule_id;
+	eventask->prio = reply->prio;
+	eventask->sfsmatch = reply->sfsmatch;
+	eventask->loglevel = loglevel;
+	off = 0;
+	do_copy(eventask->payload, &off, hdr, hdr->msg_size,
+	    &eventask->evoff, &eventask->evlen);
+	do_copy_ident(eventask->payload, &off, reply->pident,
+	    &eventask->csumoff, &eventask->csumlen, &eventask->pathoff,
+	    &eventask->pathlen);
+	do_copy_ident(eventask->payload, &off, reply->ctxident,
+	    &eventask->ctxcsumoff, &eventask->ctxcsumlen,
+	    &eventask->ctxpathoff, &eventask->ctxpathlen);
+	hdr = (struct eventdev_hdr *)eventask->payload;
+	return msg;
+}
+
 static void
 dispatch_m2p(int fd, short sig __used, void *arg)
 {
@@ -662,36 +698,16 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 		}
 
 		if (reply->ask) {
-			anoubisd_msg_t *nmsg;
-			anoubisd_msg_eventask_t *eventask;
-			int extra, off;
+			anoubisd_msg_t		*nmsg;
 
-			extra = hdr->msg_size;
-			extra += pident_size(reply->pident);
-			extra += pident_size(reply->ctxident);
-			nmsg = msg_factory(ANOUBISD_MSG_EVENTASK,
-			    sizeof(anoubisd_msg_eventask_t) + extra);
+			nmsg = fill_eventask_message(ANOUBISD_MSG_EVENTASK,
+			    0 /* loglevel */, hdr, reply);
 			if (!nmsg) {
 				free(msg);
 				free(reply);
 				master_terminate(ENOMEM);
 				return;
 			}
-			eventask = (anoubisd_msg_eventask_t *)nmsg->msg;
-			eventask->rule_id = reply->rule_id;
-			eventask->prio = reply->prio;
-			eventask->sfsmatch = reply->sfsmatch;
-			off = 0;
-			do_copy(eventask->payload, &off, hdr, hdr->msg_size,
-			    &eventask->evoff, &eventask->evlen);
-			do_copy_ident(eventask->payload, &off, reply->pident,
-			    &eventask->csumoff, &eventask->csumlen,
-			    &eventask->pathoff, &eventask->pathlen);
-			do_copy_ident(eventask->payload, &off, reply->ctxident,
-			    &eventask->ctxcsumoff, &eventask->ctxcsumlen,
-			    &eventask->ctxpathoff, &eventask->ctxpathlen);
-			hdr = (struct eventdev_hdr *)eventask->payload;
-
 			free(msg);
 
 			msg = nmsg;
@@ -782,32 +798,35 @@ token_cmp(void *msg1, void *msg2)
 }
 
 void
-send_lognotify(struct eventdev_hdr *hdr, u_int32_t error, u_int32_t loglevel,
-    u_int32_t rule_id, u_int32_t prio, u_int32_t sfsmatch)
+send_lognotify(struct pe_proc *proc, struct eventdev_hdr *hdr,
+    u_int32_t error, u_int32_t loglevel, u_int32_t rule_id, u_int32_t prio,
+    u_int32_t sfsmatch)
 {
-	int size;
-	anoubisd_msg_t * msg;
-	struct anoubisd_msg_logrequest * req;
+	struct anoubisd_msg		*msg;
+	struct anoubisd_reply		 reply;
 
-	size = sizeof(anoubisd_msg_t)
-	    + sizeof(struct anoubisd_msg_logrequest)
-	    + hdr->msg_size
-	    - sizeof(struct eventdev_hdr);
-	msg = malloc(size);
+	DEBUG(DBG_TRACE, ">send_lognotify: rule_id=%d, prio=%d source=%d",
+	    rule_id, prio, hdr->msg_source);
+	reply.ask = 0;
+	reply.reply = error;
+	reply.rule_id = rule_id;
+	reply.prio = prio;
+	reply.sfsmatch = sfsmatch;
+	if (proc) {
+		reply.pident = pe_proc_ident(proc);
+		reply.ctxident = pe_context_get_ident(
+		    pe_proc_get_context(proc, prio));
+	}
+
+	msg = fill_eventask_message(ANOUBISD_MSG_LOGREQUEST, loglevel,
+	    hdr, &reply);
 	if (!msg) {
 		log_warn("send_lognotify: can't allocate memory");
 		return;
 	}
-	msg->size = size;
-	msg->mtype = ANOUBISD_MSG_LOGREQUEST;
-	req = (struct anoubisd_msg_logrequest *)msg->msg;
-	req->error = error;
-	req->loglevel = loglevel;
-	req->rule_id = rule_id;
-	req->prio = prio;
-	req->sfsmatch = sfsmatch;
-	bcopy(hdr, &req->hdr, hdr->msg_size);
 	enqueue(&eventq_p2s, msg);
+	DEBUG(DBG_QUEUE, ">&eventq_p2s");
+	DEBUG(DBG_QUEUE, "<send_lognotify");
 }
 
 void

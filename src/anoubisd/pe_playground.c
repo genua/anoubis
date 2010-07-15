@@ -1065,3 +1065,52 @@ pe_playground_dispatch_request(struct anoubisd_msg *inmsg, Queue *queue)
 	set_value(ctx.pmsg->error, -err);
 	pe_playground_send_reply(&ctx, queue);
 }
+
+/**
+ * Send an alert message to the session engine when a process is forced
+ * into a playground due to APN rules. The caller must provide the eventdev
+ * header of the exec event. This is turned into a fake event with source
+ * ANOUBIS_SOURCE_PLAYGROUNDPROC. The payload of such an event is a
+ * pg_proc_message structure.
+ *
+ * @param proc The process that triggered the event. The context information
+ *     of this process is added to the notification message.
+ * @param hdr The eventdev header of the exec event. Event data is taken
+ *     from this event where appropriate.
+ * @param ruleid The rule ID of the block that forced this process into
+ *     the playground.
+ * @param prio The priority of the rule that forced this process into
+ *     the playground.
+ * @return None.
+ */
+void
+pe_playground_notify_forced(struct pe_proc *proc, struct eventdev_hdr *orighdr,
+    uint32_t ruleid, uint32_t prio)
+{
+	struct eventdev_hdr		*hdr;
+	struct pg_proc_message		*pg, *origpg;
+	int				 nsize;
+
+	nsize = sizeof(struct eventdev_hdr) + sizeof(struct pg_proc_message);
+	if (nsize > orighdr->msg_size) {
+		log_warnx("pe_playground_notify_force: Short eventdev hdr");
+		return;
+	}
+	hdr = malloc(nsize);
+	if (!hdr) {
+		log_warn("pe_playground_notify_force");
+		return;
+	}
+	origpg = (struct pg_proc_message *)(orighdr+1);
+	pg = (struct pg_proc_message *)(hdr+1);
+	hdr->msg_size = nsize;
+	hdr->msg_source = ANOUBIS_SOURCE_PLAYGROUNDPROC;
+	hdr->msg_flags = 0;
+	hdr->msg_token = orighdr->msg_token;
+	hdr->msg_pid = orighdr->msg_pid;
+	hdr->msg_uid = orighdr->msg_uid;
+	pg->common = origpg->common;
+	send_lognotify(proc, hdr, 0 /* error */, APN_LOG_ALERT,
+	    ruleid, prio, 0 /* sfsmatch */);
+	free(hdr);
+}

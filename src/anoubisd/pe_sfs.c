@@ -191,8 +191,7 @@ pe_sfs_getrules(uid_t uid, int prio, const char *path,
 }
 
 anoubisd_reply_t *
-pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
-    struct eventdev_hdr *hdr)
+pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent)
 {
 	static const char	*verdict[3] = { "allowed", "denied", "asked" };
 	anoubisd_reply_t	*reply = NULL;
@@ -287,7 +286,7 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
 
 	csstr = NULL;
 	if (log != APN_LOG_NONE) {
-		context = pe_context_dump(hdr, proc, prio);
+		context = pe_context_dump(fevent->rawhdr, proc, prio);
 		dump = pe_dump_sfsmsg(fevent);
 		csstr = abuf_convert_tohexstr(fevent->csum);
 	}
@@ -297,17 +296,17 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent,
 		break;
 	case APN_LOG_NORMAL:
 		log_info("token %u: SFS prio %d rule %d %s %s csum=%s (%s)",
-		    hdr->msg_token, prio, rule_id, verdict[decision], dump,
-		    csstr, context);
-		send_lognotify(hdr, decision, log, rule_id, prio,
-		    sfsmatch);
+		    fevent->rawhdr->msg_token, prio, rule_id, verdict[decision],
+		    dump, csstr, context);
+		send_lognotify(proc, fevent->rawhdr, decision, log, rule_id,
+		    prio, sfsmatch);
 		break;
 	case APN_LOG_ALERT:
 		log_warnx("token %u: SFS prio %d rule %d %s %s csum=%s (%s)",
-		    hdr->msg_token, prio, rule_id, verdict[decision], dump,
-		    csstr, context);
-		send_lognotify(hdr, decision, log, rule_id, prio,
-		    sfsmatch);
+		    fevent->rawhdr->msg_token, prio, rule_id, verdict[decision],
+		    dump, csstr, context);
+		send_lognotify(proc, fevent->rawhdr, decision, log, rule_id,
+		    prio, sfsmatch);
 		break;
 	default:
 		log_warnx("pe_decide_sfs: unknown log type %d", log);

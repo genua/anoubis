@@ -589,24 +589,6 @@ eventdev_hdr_size(const char *buf, int buflen)
 	return hdr->msg_size;
 }
 
-/*
- * Size of a struct anoubisd_msg_logrequest
- */
-static int
-anoubisd_msg_logrequest_size(const char *buf, int buflen)
-{
-	struct anoubisd_msg_logrequest	*msg;
-	DECLARE_SIZE();
-	int	evsize;
-
-	CAST(msg, buf, buflen);
-	SHIFT_FIELD(msg, hdr, buf, buflen);
-	evsize = eventdev_hdr_size(buf, buflen);
-	ADD_SIZE(evsize);
-
-	RETURN_SIZE();
-}
-
 DEFINE_CHECK_FUNCTION(struct, eventdev_reply)
 DEFINE_CHECK_FUNCTION(,eventdev_token)
 
@@ -857,7 +839,7 @@ anoubisd_msg_size(const char *buf, int buflen)
 	VARIANT(ANOUBISD_MSG_CHECKSUM_OP, anoubisd_msg_csumop, buf, buflen)
 	VARIANT(ANOUBISD_MSG_CHECKSUMREPLY, anoubisd_msg_csumreply, buf, buflen)
 	VARIANT(ANOUBISD_MSG_EVENTDEV, eventdev_hdr, buf, buflen)
-	VARIANT(ANOUBISD_MSG_LOGREQUEST, anoubisd_msg_logrequest, buf, buflen)
+	VARIANT(ANOUBISD_MSG_LOGREQUEST, anoubisd_msg_eventask, buf, buflen)
 	VARIANT(ANOUBISD_MSG_EVENTREPLY, eventdev_reply, buf, buflen)
 	VARIANT(ANOUBISD_MSG_EVENTCANCEL, eventdev_token, buf, buflen)
 	VARIANT(ANOUBISD_MSG_EVENTASK, anoubisd_msg_eventask, buf, buflen)

@@ -178,45 +178,46 @@ struct anoubisd_msg {
 typedef struct anoubisd_msg anoubisd_msg_t;
 
 enum anoubisd_msg_type {
-	ANOUBISD_MSG_POLREQUEST,
-	ANOUBISD_MSG_POLREQUEST_ABORT,
-	ANOUBISD_MSG_POLREPLY,
-	ANOUBISD_MSG_CHECKSUMREPLY,
-	ANOUBISD_MSG_EVENTDEV,
-	ANOUBISD_MSG_LOGREQUEST,
-	ANOUBISD_MSG_EVENTREPLY,
-	ANOUBISD_MSG_EVENTCANCEL,
-	ANOUBISD_MSG_CHECKSUM_OP,
-	ANOUBISD_MSG_EVENTASK,
-	ANOUBISD_MSG_POLICYCHANGE,
-	ANOUBISD_MSG_SFSCACHE_INVALIDATE,
-	ANOUBISD_MSG_UPGRADE,
-	ANOUBISD_MSG_SFS_UPDATE_ALL,
-	ANOUBISD_MSG_CONFIG,
-	ANOUBISD_MSG_LOGIT,
-	ANOUBISD_MSG_PASSPHRASE,
-	ANOUBISD_MSG_AUTH_REQUEST,
-	ANOUBISD_MSG_AUTH_CHALLENGE,
-	ANOUBISD_MSG_AUTH_VERIFY,
-	ANOUBISD_MSG_AUTH_RESULT,
-	ANOUBISD_MSG_CSMULTIREQUEST,
-	ANOUBISD_MSG_CSMULTIREPLY,
-	ANOUBISD_MSG_PGREQUEST,
-	ANOUBISD_MSG_PGREPLY
+	ANOUBISD_MSG_POLREQUEST,	/* anoubisd_msg_polrequest */
+	ANOUBISD_MSG_POLREQUEST_ABORT,	/* anoubisd_msg_polrequest_abort */
+	ANOUBISD_MSG_POLREPLY,		/* anoubisd_msg_polreply */
+	ANOUBISD_MSG_CHECKSUMREPLY,	/* anoubisd_msg_csumreply */
+	ANOUBISD_MSG_EVENTDEV,		/* struct eventdev_hdr */
+	ANOUBISD_MSG_LOGREQUEST,	/* anoubisd_msg_eventask */
+	ANOUBISD_MSG_EVENTREPLY,	/* struct eventdev_reply */
+	ANOUBISD_MSG_EVENTCANCEL,	/* eventdev_token */
+	ANOUBISD_MSG_CHECKSUM_OP,	/* anoubisd_msg_csumop */
+	ANOUBISD_MSG_EVENTASK,		/* anoubisd_msg_eventask */
+	ANOUBISD_MSG_POLICYCHANGE,	/* anoubisd_msg_pchange */
+	ANOUBISD_MSG_SFSCACHE_INVALIDATE, /* anoubisd_sfscache_invalidate */
+	ANOUBISD_MSG_UPGRADE,		/* anoubisd_msg_upgrade */
+	ANOUBISD_MSG_SFS_UPDATE_ALL,	/* anoubisd_sfs_update_all */
+	ANOUBISD_MSG_CONFIG,		/* anoubisd_msg_config */
+	ANOUBISD_MSG_LOGIT,		/* anoubisd_msg_logit */
+	ANOUBISD_MSG_PASSPHRASE,	/* anoubisd_msg_passphrase */
+	ANOUBISD_MSG_AUTH_REQUEST,	/* anoubisd_msg_authrequest */
+	ANOUBISD_MSG_AUTH_CHALLENGE,	/* anoubisd_msg_authchallenge */
+	ANOUBISD_MSG_AUTH_VERIFY,	/* anoubisd_msg_authverify */
+	ANOUBISD_MSG_AUTH_RESULT,	/* anoubisd_msg_authresult */
+	ANOUBISD_MSG_CSMULTIREQUEST,	/* anoubisd_msg_csumop */
+	ANOUBISD_MSG_CSMULTIREPLY,	/* anoubisd_msg_csumreply */
+	ANOUBISD_MSG_PGREQUEST,		/* anoubisd_msg_pgrequest */
+	ANOUBISD_MSG_PGREPLY		/* anoubisd_msg_pgreply */
 };
 
-/* format of ANOUBISD_MSG_EVENTDEV is struct eventdev_hdr */
-
+/* Format of ANOUBISD_MSG_EVENTASK and ANOUBISD_MSG_LOGREQUEST messages */
 struct anoubisd_msg_eventask
 {
-	u_int32_t	rule_id;
-	u_int32_t	prio;
-	u_int32_t	sfsmatch;
-	u_int16_t	csumoff, csumlen;
-	u_int16_t	pathoff, pathlen;
-	u_int16_t	ctxcsumoff, ctxcsumlen;
-	u_int16_t	ctxpathoff, ctxpathlen;
-	u_int16_t	evoff, evlen;
+	uint32_t	rule_id;
+	uint32_t	prio;
+	uint32_t	sfsmatch;
+	uint32_t	error;		/* Error code (log requests only) */
+	uint32_t	loglevel;	/* Log level (log requests only) */
+	uint16_t	csumoff, csumlen;
+	uint16_t	pathoff, pathlen;
+	uint16_t	ctxcsumoff, ctxcsumlen;
+	uint16_t	ctxpathoff, ctxpathlen;
+	uint16_t	evoff, evlen;
 	char		payload[0];
 };
 typedef struct anoubisd_msg_eventask anoubisd_msg_eventask_t;
@@ -273,18 +274,6 @@ struct anoubisd_sfs_update_all {
 	char		payload[0];
 };
 typedef struct anoubisd_sfs_update_all anoubisd_sfs_update_all_t;
-
-/* format of ANOUBISD_MSG_LOGREQUEST */
-struct anoubisd_msg_logrequest
-{
-	u_int32_t		error;
-	u_int32_t		loglevel;
-	u_int32_t		rule_id;
-	u_int32_t		prio;
-	u_int32_t		sfsmatch;
-	struct eventdev_hdr	hdr;
-	/* Eventdev data follows. */
-};
 
 struct anoubisd_msg_logit {
 	u_int32_t		prio;
@@ -428,8 +417,10 @@ int	dazukofs_ignore(void);
 void	pe_dump(void);
 int	send_policy_data(u_int64_t token, int fd);
 
-void	send_lognotify(struct eventdev_hdr *, u_int32_t, u_int32_t, u_int32_t,
-	    u_int32_t, u_int32_t);
+struct pe_proc;
+
+void	send_lognotify(struct pe_proc *proc, struct eventdev_hdr *,
+	    u_int32_t, u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 void	send_policychange(u_int32_t uid, u_int32_t prio);
 void	flush_log_queue(void);
 

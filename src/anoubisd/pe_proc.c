@@ -171,6 +171,7 @@ pe_proc_flush(void)
 	for (p = TAILQ_FIRST(&tracker); p != TAILQ_END(&tracker); p = pnext) {
 		pnext = TAILQ_NEXT(p, entry);
 		TAILQ_REMOVE(&tracker, p, entry);
+		p->instances = 0;
 		pe_proc_put(p);
 	}
 }
@@ -217,6 +218,11 @@ pe_proc_put(struct pe_proc *proc)
 
 	if (!proc || --(proc->refcount))
 		return;
+	if (proc->instances) {
+		log_warnx("pe_proc_put: PANIC: Remaining instances");
+		master_terminate(EINVAL);
+		return;
+	}
 	if (proc->pgid)
 		pe_playground_delete(proc->pgid, proc);
 	pe_proc_ident_put(&proc->ident);
@@ -292,7 +298,7 @@ pe_proc_alloc(uid_t uid, anoubis_cookie_t cookie, struct pe_proc_ident *pident,
 	proc->uid = uid;
 	proc->flags = 0;
 	proc->refcount = 1;
-	proc->instances = 1;
+	proc->instances = 0;
 	proc->pgid = 0;
 #ifdef ANOUBIS_PROCESS_OP_CREATE
 	proc->threads = 0;
@@ -332,6 +338,7 @@ pe_proc_track(struct pe_proc *proc)
 	DEBUG(DBG_PE_TRACKER, "pe_proc_track: proc %p cookie 0x%08" PRIx64,
 	    proc, proc->task_cookie);
 	proc->refcount++;
+	proc->instances = 1;
 	TAILQ_INSERT_TAIL(&tracker, proc, entry);
 }
 
@@ -755,33 +762,38 @@ void pe_proc_exec(anoubis_cookie_t cookie, uid_t uid, pid_t pid,
  * exec system call. This function checks if the process must be
  * forced into a playground and if the process must do a secure exec.
  *
- * @param cookie The task cookie of the process.
- * @param uid The user-ID of the new process.
- * @param csum The checksum of the new binary.
- * @param pathhint The path of the new binary.
- * @return None.
+ * @param proc The proc structure of the process. The caller must hold
+ *     a reference to the process structure.
+ * @param fevent The file event structure of the exec event.
+ * @return The flags that must be added to a successful reply.
  */
 int
-pe_proc_flag_transition(anoubis_cookie_t cookie, uid_t uid,
-    const struct abuf_buffer csum, const char *pathhint)
+pe_proc_flag_transition(struct pe_proc *proc, struct pe_file_event *fevent)
 {
-	struct pe_proc		*proc = pe_proc_get(cookie);
 	struct pe_proc_ident	 pident = { ABUF_EMPTY, NULL };
 	int			 ret = 0;
 
 	if (!proc)
 		return 0;
-	pe_proc_ident_set(&pident, csum, pathhint);
+	DEBUG(DBG_TRACE, ">pe_proc_flag_transition");
+	pe_proc_ident_set(&pident, fevent->csum, fevent->path);
 #ifdef ANOUBIS_RET_NEED_SECUREEXEC
-	if (pe_context_will_transition(proc, uid, &pident))
+	if (pe_context_will_transition(proc, fevent->uid, &pident))
 		ret |= ANOUBIS_RET_NEED_SECUREEXEC;
 #endif
 #ifdef ANOUBIS_RET_NEED_PLAYGROUND
-	if (pe_context_will_pg(proc, uid, &pident))
-		ret |= ANOUBIS_RET_NEED_PLAYGROUND;
+	{
+		int		ruleid, prio;
+		if (pe_context_will_pg(proc, fevent->uid, &pident,
+		    &ruleid, &prio)) {
+			ret |= ANOUBIS_RET_NEED_PLAYGROUND;
+			pe_playground_notify_forced(proc, fevent->rawhdr,
+			    ruleid, prio);
+		}
+	}
 #endif
 	pe_proc_ident_put(&pident);
-	pe_proc_put(proc);
+	DEBUG(DBG_TRACE, "<pe_proc_flag_transition");
 	return ret;
 }
 

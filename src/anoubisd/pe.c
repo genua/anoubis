@@ -517,6 +517,7 @@ pe_handle_sfs(struct eventdev_hdr *hdr)
 	struct pe_file_event		*fevent;
 	struct pe_proc			*proc;
 
+	DEBUG(DBG_TRACE, ">pe_handle_sfs");
 	if (hdr == NULL) {
 		log_warnx("pe_handle_sfs: empty message");
 		return (NULL);
@@ -530,7 +531,6 @@ pe_handle_sfs(struct eventdev_hdr *hdr)
 		log_warnx("Cannot parse sfsopen message");
 		return NULL;
 	}
-
 	proc = pe_proc_get(fevent->cookie);
 	if (proc && pe_proc_get_pid(proc) == -1)
 		pe_proc_set_pid(proc, hdr->msg_pid);
@@ -560,8 +560,8 @@ pe_handle_sfs(struct eventdev_hdr *hdr)
 	    && pe_proc_is_upgrade(proc))
 		fevent->upgrade_flags |= PE_UPGRADE_WRITEOK;
 
-	reply = pe_decide_sfs(proc, fevent, hdr);
-	reply2 = pe_decide_sandbox(proc, fevent, hdr);
+	reply = pe_decide_sfs(proc, fevent);
+	reply2 = pe_decide_sandbox(proc, fevent);
 
 	/* XXX CEH: This might need more thought. */
 	reply = reply_merge(hdr, reply, reply2);
@@ -575,8 +575,7 @@ pe_handle_sfs(struct eventdev_hdr *hdr)
 	 */
 	if (fevent->amask & APN_SBA_EXEC && reply->reply == 0
 	    && version >= ANOUBISCORE_LOCK_VERSION) {
-		reply->reply = pe_proc_flag_transition(fevent->cookie,
-		    fevent->uid, fevent->csum, fevent->path);
+		reply->reply = pe_proc_flag_transition(proc, fevent);
 	}
 #endif
 	pe_proc_put(proc);
@@ -611,6 +610,7 @@ pe_handle_sfs(struct eventdev_hdr *hdr)
 	abuf_free(fevent->csum);
 	free(fevent);
 
+	DEBUG(DBG_TRACE, "<pe_handle_sfs");
 	return(reply);
 }
 
@@ -864,6 +864,7 @@ pe_parse_file_event(struct eventdev_hdr *hdr)
 
 	if (!hdr)
 		return NULL;
+	DEBUG(DBG_TRACE, ">pe_parse_file_event");
 	kernmsg = (struct sfs_open_message *)(hdr+1);
 	if (hdr->msg_size < sizeof(struct eventdev_hdr))
 		return NULL;
@@ -883,6 +884,7 @@ pe_parse_file_event(struct eventdev_hdr *hdr)
 	ret = malloc(sizeof(struct pe_file_event));
 	if (!ret)
 		return NULL;
+	ret->rawhdr = hdr;
 	ret->cookie = kernmsg->common.task_cookie;
 	ret->path = NULL;
 	ret->csum = ABUF_EMPTY;
@@ -916,6 +918,7 @@ pe_parse_file_event(struct eventdev_hdr *hdr)
 	}
 	ret->uid = hdr->msg_uid;
 	ret->upgrade_flags = 0;
+	DEBUG(DBG_TRACE, "<pe_parse_file_event");
 	return ret;
 }
 

@@ -93,6 +93,7 @@ struct pe_file_event {
 	unsigned int		 amask;
 	int			 uid;
 	unsigned int		 upgrade_flags;
+	struct eventdev_hdr	*rawhdr;
 };
 
 struct pe_path_event {
@@ -119,9 +120,8 @@ void			 pe_proc_exec(anoubis_cookie_t, uid_t, pid_t,
 			     const struct abuf_buffer csum,
 			     const char *pathhint, anoubis_cookie_t pgid,
 			     int secure);
-int			 pe_proc_flag_transition(anoubis_cookie_t, uid_t,
-			     const struct abuf_buffer csum,
-			     const char *pathhint);
+int			 pe_proc_flag_transition(struct pe_proc *proc,
+			     struct pe_file_event *fevent);
 void			 pe_proc_exit(anoubis_cookie_t);
 void			 pe_proc_addinstance(anoubis_cookie_t);
 void			 pe_proc_add_thread(anoubis_cookie_t);
@@ -172,7 +172,7 @@ void			 pe_context_exec(struct pe_proc *, uid_t,
 int			 pe_context_will_transition(struct pe_proc *, uid_t,
 			     struct pe_proc_ident *);
 int			 pe_context_will_pg(struct pe_proc *, uid_t,
-			     struct pe_proc_ident *);
+			     struct pe_proc_ident *, int *ruleidp, int *priop);
 void			 pe_context_fork(struct pe_proc *, struct pe_proc *);
 void			 pe_context_open(struct pe_proc *,
 			     struct eventdev_hdr *);
@@ -220,9 +220,9 @@ struct pe_file_node	*pe_upgrade_filelist_get(void);
 /* Subsystem entry points for Policy decisions. */
 anoubisd_reply_t	*pe_decide_alf(struct pe_proc *, struct eventdev_hdr *);
 anoubisd_reply_t	*pe_decide_sfs(struct pe_proc *,
-			     struct pe_file_event *, struct eventdev_hdr *);
+			     struct pe_file_event *);
 anoubisd_reply_t	*pe_decide_sandbox(struct pe_proc *proc,
-			     struct pe_file_event *, struct eventdev_hdr *);
+			     struct pe_file_event *);
 int			 pe_sfs_getrules(uid_t, int, const char *,
 			     struct apnarr_array *);
 int			 pe_sb_getrules(struct pe_proc *, uid_t, int,
@@ -260,7 +260,10 @@ void			 pe_playground_file_delete(anoubis_cookie_t pgid,
 void			 pe_playground_dump(void);
 void			 pe_playground_init(void);
 void			 pe_playground_dispatch_request(anoubisd_msg_t *,
-			     Queue *);
+			     Queue *queue);
+void			 pe_playground_notify_forced(struct pe_proc *proc,
+			     struct eventdev_hdr *hdr, uint32_t ruleid,
+			     uint32_t prio);
 
 /*
  * Entry points exported for the benefit of unit tests.

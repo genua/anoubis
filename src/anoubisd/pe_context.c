@@ -540,7 +540,7 @@ pe_context_will_transition(struct pe_proc *proc, uid_t uid,
 
 int
 pe_context_will_pg(struct pe_proc *proc, uid_t uid,
-    struct pe_proc_ident *pident)
+    struct pe_proc_ident *pident, int *ruleidp, int *priop)
 {
 	int			 i;
 	struct apn_ruleset	*ruleset;
@@ -570,6 +570,10 @@ pe_context_will_pg(struct pe_proc *proc, uid_t uid,
 		}
 		if (pe_context_is_pg(newctx)) {
 			pe_context_put(newctx);
+			if (ruleidp)
+				(*ruleidp) = newctx->ctxrule->apn_id;
+			if (priop)
+				(*priop) = i;
 			return 1;
 		}
 		pe_context_put(newctx);

@@ -1295,10 +1295,9 @@ dispatch_m2s(int fd, short sig __used, void *arg)
 static void
 dispatch_p2s(int fd, short sig __used, void *arg)
 {
-	struct event_info_session *ev_info = (struct event_info_session*)arg;
-	struct eventdev_hdr *hdr;
-	struct anoubisd_msg_logrequest *log;
-	anoubisd_msg_t *msg;
+	struct event_info_session	*ev_info = arg;
+	struct eventdev_hdr		*hdr;
+	anoubisd_msg_t			*msg;
 
 	DEBUG(DBG_TRACE, ">dispatch_p2s");
 
@@ -1323,9 +1322,7 @@ dispatch_p2s(int fd, short sig __used, void *arg)
 			break;
 
 		case ANOUBISD_MSG_LOGREQUEST:
-			log = (struct anoubisd_msg_logrequest*)msg->msg;
-			DEBUG(DBG_QUEUE, " >p2s: log %x",
-				log->hdr.msg_token);
+			DEBUG(DBG_QUEUE, " >p2s: log");
 			dispatch_p2s_log_request(msg, ev_info);
 			break;
 		case ANOUBISD_MSG_POLICYCHANGE:
@@ -1378,54 +1375,6 @@ dispatch_p2s_policychange(anoubisd_msg_t *msg,
 	DEBUG(DBG_TRACE, "<dispatch_p2s_policychange");
 }
 
-void
-dispatch_p2s_log_request(anoubisd_msg_t *msg,
-    struct event_info_session *ev_info)
-{
-	unsigned int extra;
-	struct anoubisd_msg_logrequest * req;
-	struct anoubis_msg * m;
-	anoubis_cookie_t task = 0;
-
-	DEBUG(DBG_TRACE, ">dispatch_p2s_log_request");
-
-	req = (struct anoubisd_msg_logrequest *)msg->msg;
-	extra = req->hdr.msg_size - sizeof(struct eventdev_hdr);
-	m = anoubis_msg_new(sizeof(Anoubis_NotifyMessage) + extra);
-	if (extra >= sizeof(struct anoubis_event_common))
-		task = ((struct anoubis_event_common *)
-		    ((&req->hdr)+1))->task_cookie;
-	if (!m) {
-		/* malloc failure, then we don't send the message */
-		DEBUG(DBG_TRACE, "<dispatch_p2s_log_request (bad new)");
-		return;
-	}
-	set_value(m->u.notify->type, ANOUBIS_N_LOGNOTIFY);
-	m->u.notify->token = req->hdr.msg_token;
-	set_value(m->u.notify->pid, req->hdr.msg_pid);
-	set_value(m->u.notify->task_cookie, task);
-	set_value(m->u.notify->rule_id, req->rule_id);
-	set_value(m->u.notify->prio, req->prio);
-	set_value(m->u.notify->uid, req->hdr.msg_uid);
-	set_value(m->u.notify->subsystem, req->hdr.msg_source);
-	set_value(m->u.notify->sfsmatch, req->sfsmatch);
-	set_value(m->u.notify->loglevel, req->loglevel);
-	set_value(m->u.notify->error, req->error);
-	set_value(m->u.notify->csumoff, 0);
-	set_value(m->u.notify->csumlen, 0);
-	set_value(m->u.notify->pathoff, 0);
-	set_value(m->u.notify->pathlen, 0);
-	set_value(m->u.notify->ctxcsumoff, 0);
-	set_value(m->u.notify->ctxcsumlen, 0);
-	set_value(m->u.notify->ctxpathoff, 0);
-	set_value(m->u.notify->ctxpathlen, 0);
-	set_value(m->u.notify->evoff, 0);
-	set_value(m->u.notify->evlen, extra);
-	memcpy(m->u.notify->payload, (&req->hdr)+1, extra);
-	__send_notify(m, ev_info);
-	DEBUG(DBG_TRACE, "<dispatch_p2s_log_request");
-}
-
 /*
  * Copy @srclen bytes from @srcbuf to @dstbuf. The data in @srcbuf starts
  * at offset @srcoff and the target of the copy is the offset pointed to
@@ -1447,69 +1396,39 @@ do_copy(char *dstbuf, int *offp, const char *srcbuf, int srcoff, int srclen,
 	memcpy(dstp, srcp, srclen);
 }
 
-
-static void
-dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
-    struct event_info_session *ev_info)
+static struct anoubis_msg *
+eventask_to_notify(int notifytype, struct anoubisd_msg_eventask *eventask)
 {
-	struct anoubis_notify_head * head;
-	struct anoubis_msg * m;
-	anoubisd_msg_eventask_t *eventask = NULL;
-	struct eventdev_hdr *hdr;
-	struct session	*sess;
-	struct cbdata	*cbdata;
-	unsigned int extra;
-	int sent, off;
-	u_int64_t task = 0;
-	u_int32_t rule_id = 0, prio = 0, sfsmatch = ANOUBIS_SFS_NONE;
-	int plen = 0, cslen = 0, ctxplen = 0, ctxcslen = 0;
+	uint64_t		 task = 0;
+	int			 plen = 0, cslen = 0, ctxplen = 0, ctxcslen = 0;
+	unsigned int		 extra;
+	struct eventdev_hdr	*hdr;
+	int			 off;
+	struct anoubis_msg	*m;
 
-	DEBUG(DBG_TRACE, ">dispatch_p2s_evt_request");
-
-	eventask = (anoubisd_msg_eventask_t *)(msg->msg);
-	rule_id = eventask->rule_id;
-	prio = eventask->prio;
-	hdr = (struct eventdev_hdr *)
-	    (eventask->payload + eventask->evoff);
+	hdr = (struct eventdev_hdr *)(eventask->payload + eventask->evoff);
 	plen = eventask->pathlen;
 	cslen = eventask->csumlen;
 	ctxplen = eventask->ctxpathlen;
 	ctxcslen = eventask->ctxcsumlen;
-	sfsmatch = eventask->sfsmatch;
-
-	if ((hdr->msg_flags & EVENTDEV_NEED_REPLY) == 0) {
-		log_warn("dispatch_p2s: bad flags %x", hdr->msg_flags);
-	}
-
 	extra = hdr->msg_size - sizeof(struct eventdev_hdr);
 	if (extra >= sizeof(struct anoubis_event_common))
 		task = ((struct anoubis_event_common*)(hdr+1))->task_cookie;
 	m = anoubis_msg_new(sizeof(Anoubis_NotifyMessage)
 	    + extra + plen + cslen + ctxplen + ctxcslen);
-	if (!m) {
-		/* malloc failure, then we don't send the message */
-		DEBUG(DBG_TRACE, "<dispatch_p2s_evt_request (bad new)");
-		return;
-	}
-
-	if ((cbdata = malloc(sizeof(struct cbdata))) == NULL) {
-		/* malloc failure, then we don't send the message */
-		anoubis_msg_free(m);
-		DEBUG(DBG_TRACE, "<dispatch_p2s_evt_request (bad cbdata)");
-		return;
-	}
-	cbdata->ev_token = hdr->msg_token;
-	cbdata->ev_info = ev_info;
-
-	set_value(m->u.notify->type, ANOUBIS_N_ASK);
+	if (!m)
+		return NULL;
+	set_value(m->u.notify->type, notifytype);
 	m->u.notify->token = hdr->msg_token;
 	set_value(m->u.notify->pid, hdr->msg_pid);
 	set_value(m->u.notify->task_cookie, task);
-	set_value(m->u.notify->rule_id, rule_id);
-	set_value(m->u.notify->prio, prio);
+	set_value(m->u.notify->rule_id, eventask->rule_id);
+	set_value(m->u.notify->prio, eventask->prio);
 	set_value(m->u.notify->uid, hdr->msg_uid);
 	set_value(m->u.notify->subsystem, hdr->msg_source);
-	set_value(m->u.notify->sfsmatch, sfsmatch);
+	set_value(m->u.notify->sfsmatch, eventask->sfsmatch);
+	set_value(m->u.notify->loglevel, eventask->loglevel);
+	set_value(m->u.notify->error, eventask->error);
 	off = 0;
 	do_copy(m->u.notify->payload, &off, (void*)&hdr[1], 0, extra,
 	    &m->u.notify->evoff, &m->u.notify->evlen);
@@ -1525,6 +1444,56 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 	do_copy(m->u.notify->payload, &off, eventask->payload,
 	    eventask->ctxpathoff, ctxplen, &m->u.notify->ctxpathoff,
 	    &m->u.notify->ctxpathlen);
+	return m;
+}
+
+void
+dispatch_p2s_log_request(anoubisd_msg_t *msg,
+    struct event_info_session *ev_info)
+{
+	struct anoubisd_msg_eventask	*eventask;
+	struct anoubis_msg		*m;
+
+	DEBUG(DBG_TRACE, ">dispatch_p2s_log_request");
+
+	eventask = (struct anoubisd_msg_eventask *)msg->msg;
+	m = eventask_to_notify(ANOUBIS_N_LOGNOTIFY, eventask);
+	if (!m) {
+		log_warnx("Out of memory in dispatch_p2s_log_request");
+		return;
+	}
+	__send_notify(m, ev_info);
+	DEBUG(DBG_TRACE, "<dispatch_p2s_log_request");
+}
+
+static void
+dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
+    struct event_info_session *ev_info)
+{
+	struct anoubis_notify_head	*head;
+	struct anoubis_msg		*m;
+	struct anoubisd_msg_eventask	*eventask = NULL;
+	struct session			*sess;
+	struct cbdata			*cbdata;
+	int				 sent;
+
+	DEBUG(DBG_TRACE, ">dispatch_p2s_evt_request");
+
+	eventask = (anoubisd_msg_eventask_t *)(msg->msg);
+	m = eventask_to_notify(ANOUBIS_N_ASK, eventask);
+	if (!m) {
+		log_warn("Out of memory in dispatch_p2s_evt_request");
+		return;
+	}
+	cbdata = malloc(sizeof(struct cbdata));
+	if (cbdata == NULL) {
+		anoubis_msg_free(m);
+		log_warn("Out of memory in dispatch_p2s_evt_request");
+		return;
+	}
+	cbdata->ev_token = m->u.notify->token;
+	cbdata->ev_info = ev_info;
+
 	head = anoubis_notify_create_head(m, notify_callback, cbdata);
 	cbdata->ev_head = head;
 
@@ -1551,14 +1520,14 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 			log_warn("anoubis_notify: Error code %d", -ret);
 		if (ret > 0) {
 			DEBUG(DBG_TRACE, " >anoubis_notify: %x",
-			    hdr->msg_token);
+			    cbdata->ev_token);
 			sent = 1;
 		}
 	}
 
 	if (sent) {
 		enqueue(&headq, cbdata);
-		DEBUG(DBG_TRACE, " >headq: %x", hdr->msg_token);
+		DEBUG(DBG_TRACE, " >headq: %x", cbdata->ev_token);
 	} else {
 		anoubis_notify_destroy_head(head);
 		notify_callback(NULL, EPERM, cbdata);
@@ -1596,8 +1565,7 @@ dispatch_p2s_evt_cancel(anoubisd_msg_t *msg,
 	cbdatatmp.ev_token = *token;
 	if ((cbdata = queue_find(&headq, &cbdatatmp, cbdata_cmp))) {
 		head = cbdata->ev_head;
-		anoubis_notify_sendreply(head, EPERM /* XXX RD */,
-		    NULL, 0);
+		anoubis_notify_sendreply(head, EPERM, NULL, 0);
 		DEBUG(DBG_TRACE, " >anoubis_notify_sendreply: %x",
 			    cbdata->ev_token);
 	}

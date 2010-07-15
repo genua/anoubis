@@ -324,12 +324,8 @@ typedef struct {
 	u32n	uid;
 	u32n	subsystem;
 	u32n	sfsmatch;
-	/*
-	 * The following two fields are only valid if the message type
-	 * is ANOUBIS_N_LOGNOTIFY.
-	 */
-	u32n	loglevel;
-	u32n	error;
+	u32n	loglevel;	/* Only valid for ANOUBIS_N_LOGNOTIFY */
+	u32n	error;		/* Only valid for ANOUBIS_N_LOGNOTIFY */
 	u16n	csumoff, csumlen;
 	u16n	pathoff, pathlen;
 	u16n	ctxcsumoff, ctxcsumlen;

@@ -287,8 +287,7 @@ pe_sb_dumpevent(struct pe_file_event *sbevent)
  * a default deny rule.
  */
 anoubisd_reply_t *
-pe_decide_sandbox(struct pe_proc *proc, struct pe_file_event *sbevent,
-    struct eventdev_hdr *hdr)
+pe_decide_sandbox(struct pe_proc *proc, struct pe_file_event *sbevent)
 {
 	struct result		 res[3];
 	struct result		 final;
@@ -391,7 +390,7 @@ pe_decide_sandbox(struct pe_proc *proc, struct pe_file_event *sbevent,
 	if (final.log == -1)
 		final.log = APN_LOG_NONE;
 	if (final.log != APN_LOG_NONE) {
-		context = pe_context_dump(hdr, proc, final.prio);
+		context = pe_context_dump(sbevent->rawhdr, proc, final.prio);
 		dump = pe_sb_dumpevent(sbevent);
 	}
 
@@ -400,20 +399,20 @@ pe_decide_sandbox(struct pe_proc *proc, struct pe_file_event *sbevent,
 	case APN_LOG_NONE:
 		break;
 	case APN_LOG_NORMAL:
-		hdr->msg_source = ANOUBIS_SOURCE_SANDBOX;
+		sbevent->rawhdr->msg_source = ANOUBIS_SOURCE_SANDBOX;
 		log_info("token %u: SANDBOX prio %d rule %d %s %s (%s)",
-		    hdr->msg_token, final.prio, final.rule_id,
+		    sbevent->rawhdr->msg_token, final.prio, final.rule_id,
 		    verdict[final.decision], dump, context);
-		send_lognotify(hdr, final.decision, final.log, final.rule_id,
-		    final.prio, ANOUBIS_SFS_NONE);
+		send_lognotify(proc, sbevent->rawhdr, final.decision,
+		    final.log, final.rule_id, final.prio, ANOUBIS_SFS_NONE);
 		break;
 	case APN_LOG_ALERT:
-		hdr->msg_source = ANOUBIS_SOURCE_SANDBOX;
+		sbevent->rawhdr->msg_source = ANOUBIS_SOURCE_SANDBOX;
 		log_warnx("token %u: SANDBOX prio %d rule %d %s %s (%s)",
-		    hdr->msg_token, final.prio, final.rule_id,
+		    sbevent->rawhdr->msg_token, final.prio, final.rule_id,
 		    verdict[final.decision], dump, context);
-		send_lognotify(hdr, final.decision, final.log, final.rule_id,
-		    final.prio, ANOUBIS_SFS_NONE);
+		send_lognotify(proc, sbevent->rawhdr, final.decision,
+		    final.log, final.rule_id, final.prio, ANOUBIS_SFS_NONE);
 		break;
 	default:
 		log_warnx(" pe_decide_sandbox: unknown log type %d", final.log);

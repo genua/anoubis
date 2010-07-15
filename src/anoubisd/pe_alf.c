@@ -153,14 +153,14 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 		log_info("token %u: ALF %s prio %d rule %d %s %s (%s)",
 		    hdr->msg_token, prefix, prio,
 		    rule_id, verdict[decision], dump, context);
-		send_lognotify(hdr, decision, log, rule_id, prio,
+		send_lognotify(proc, hdr, decision, log, rule_id, prio,
 		    ANOUBIS_SFS_NONE);
 		break;
 	case APN_LOG_ALERT:
 		log_warnx("token %u: ALF %s prio %d rule %d %s %s (%s)",
 		    hdr->msg_token, prefix, prio,
 		    rule_id, verdict[decision], dump, context);
-		send_lognotify(hdr, decision, log, rule_id, prio,
+		send_lognotify(proc, hdr, decision, log, rule_id, prio,
 		    ANOUBIS_SFS_NONE);
 		break;
 	default:
