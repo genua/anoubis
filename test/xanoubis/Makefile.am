@@ -252,6 +252,7 @@ testSuite_JobCtrl_SOURCES = \
 	suite_JobCtrl/TaskEventSpy.h \
 	suite_JobCtrl/tc_Disconnected.cpp \
 	suite_JobCtrl/tc_Connected.cpp \
+	suite_JobCtrl/tc_Playground.cpp \
 	suite_JobCtrl/tc_SfsList.cpp \
 	suite_JobCtrl/testSuite.cpp \
 	suite_JobCtrl/utils.cpp \

@@ -25,6 +25,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <config.h>
 #include <check.h>
 
 #include <wx/app.h>
@@ -33,6 +34,7 @@
 
 extern TCase *getTc_JobCtrlDisconnected(void);
 extern TCase *getTc_JobCtrlConnected(void);
+extern TCase *getTc_JobCtrlPlayground(void);
 extern TCase *getTc_JobCtrlSfsList(void);
 
 Suite *
@@ -42,6 +44,11 @@ getTestSuite(void)
 
 	suite_add_tcase(testSuite, getTc_JobCtrlDisconnected());
 	suite_add_tcase(testSuite, getTc_JobCtrlConnected());
+
+	#ifdef LINUX
+	suite_add_tcase(testSuite, getTc_JobCtrlPlayground());
+	#endif
+
 	suite_add_tcase(testSuite, getTc_JobCtrlSfsList());
 
 	return (testSuite);

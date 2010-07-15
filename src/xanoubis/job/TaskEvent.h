@@ -97,6 +97,12 @@ BEGIN_DECLARE_EVENT_TYPES()
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anTASKEVT_VERSION, wxNewEventType())
 
+	/**
+	 * Event-type of TaskEvent when a list of playgrounds arrived from
+	 * anoubisd.
+	 * @see PlaygroundListTask
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anTASKEVT_PG_LIST, wxNewEventType())
 END_DECLARE_EVENT_TYPES()
 //@}
 

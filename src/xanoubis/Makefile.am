@@ -543,6 +543,10 @@ xanoubis_SOURCES= \
 	job/JobCtrl.h \
 	job/JobThread.cpp \
 	job/JobThread.h \
+	job/PlaygroundTask.cpp \
+	job/PlaygroundTask.h \
+	job/PlaygroundListTask.cpp \
+	job/PlaygroundListTask.h \
 	job/Task.cpp \
 	job/Task.h \
 	job/TaskEvent.cpp \
