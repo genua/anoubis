@@ -27,6 +27,7 @@
 
 #include "config.h"
 
+#include <sys/ioctl.h>
 #include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/time.h>
@@ -621,7 +622,7 @@ pe_playground_read(anoubis_cookie_t pgid)
 }
 
 /**
- * Initialize the playground subsystem.
+ * Initialize the playground subsystem in the policy engine.
  *
  * @param None.
  * @return None.
@@ -649,6 +650,57 @@ pe_playground_init(void)
 		pe_playground_read(pgid);
 	}
 	closedir(pgdir);
+}
+
+/**
+ * Parse the playground directory and extract the maximum playground ID.
+ * This value is sent to the kernel via an appropriate ioctl. This function
+ * is called by the master process during startup.
+ *
+ * @param anoubisfd The file descriptor for the anoubis device.
+ * @param eventfd The event file descriptor. This is used for authentication
+ *     with the kernel.
+ * @return None. An error message is logged if the request fails.
+ */
+void
+pe_playground_initpgid(int anoubisfd __used, int eventfd __used)
+{
+	DIR			*pgdir;
+	struct dirent		*dent;
+	anoubis_cookie_t	 maxpgid = 0;
+
+	pgdir = opendir(ANOUBISD_PG);
+	if (pgdir == NULL) {
+		log_warnx("No playground directory. Not setting initial "
+		    "playground ID.");
+		return; 
+	}
+	while ((dent = readdir(pgdir)) != NULL) {
+		char			dummy;
+		anoubis_cookie_t	pgid;
+
+		if (dent->d_name[0] == '.')
+			continue;
+		if (sscanf(dent->d_name, "%" PRIx64 "%c", &pgid, &dummy) == 1) {
+			if (pgid > maxpgid)
+				maxpgid = pgid;
+		}
+	}
+	closedir(pgdir);
+	if  (maxpgid == 0)
+		return;
+#if ANOUBISCORE_VERSION >= ANOUBISCORE_PG_VERSION
+	{
+		struct anoubis_ioctl_lastpgid		lastpgid;
+
+		lastpgid.lastpgid = maxpgid;
+		lastpgid.fd = eventfd;
+		if (ioctl(anoubisfd, ANOUBIS_SET_LASTPGID, &lastpgid) < 0) {
+			if (errno != ERANGE)
+				log_warn("Cannot set initial playground ID");
+		}
+	}
+#endif
 }
 
 /**

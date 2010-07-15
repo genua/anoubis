@@ -395,14 +395,19 @@ pid_t	policy_main(int[], int[]);
 pid_t	upgrade_main(int[], int[]);
 pid_t	logger_main(int[], int[]);
 
-void	pe_init(void);
-void	pe_shutdown(void);
-void	pe_reconfigure(void);
-void	log_init(int fd);
-void	log_warn(const char *, ...) __attribute__ ((format (printf, 1, 2)));
-void	log_warnx(const char *, ...) __attribute__ ((format (printf, 1, 2)));
-void	log_info(const char *, ...) __attribute__ ((format (printf, 1, 2)));
-void	log_debug(const char *, ...) __attribute__ ((format (printf, 1, 2)));
+extern void	pe_init(void);
+extern void	pe_shutdown(void);
+extern void	pe_reconfigure(void);
+extern void	pe_playground_initpgid(int, int);
+extern void	log_init(int fd);
+extern void	log_warn(const char *, ...)
+		    __attribute__ ((format (printf, 1, 2)));
+extern void	log_warnx(const char *, ...)
+		    __attribute__ ((format (printf, 1, 2)));
+extern void	log_info(const char *, ...)
+		    __attribute__ ((format (printf, 1, 2)));
+extern void	log_debug(const char *, ...)
+		    __attribute__ ((format (printf, 1, 2)));
 
 void anoubisd_defaultsigset(sigset_t *);
 

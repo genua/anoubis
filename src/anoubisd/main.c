@@ -769,11 +769,6 @@ main(int argc, char *argv[])
 		main_shutdown(1);
 	}
 
-	/*
-	 * ioctl is declared with varadic parameters, which is
-	 * impossible to annotate properly. We therefore temporarily
-	 * disable checking for passed NULL pointers.
-	 */
 	if (ioctl(eventfds[1], ANOUBIS_DECLARE_FD, eventfds[0]) < 0) {
 		log_warn("ioctl");
 		close(eventfds[0]);
@@ -786,7 +781,7 @@ main(int argc, char *argv[])
 		close(eventfds[1]);
 		main_shutdown(1);
 	}
-	/*@=nullpass@*/
+	pe_playground_initpgid(eventfds[1], eventfds[0]);
 	/* Note that we keep the anoubis device open for subsequent ioctls. */
 
 	/* Five second timer for statistics ioctl */
