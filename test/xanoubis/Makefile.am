@@ -48,6 +48,7 @@ TESTS = \
 	testSuite_Key \
 	testSuite_Notifications \
 	testSuite_Config \
+	testSuite_Playground \
 	pidtest \
 	wxStringTest
 noinst_PROGRAMS = test_xanoubis_server testSuite_JobCtrl $(TESTS)
@@ -283,6 +284,19 @@ testSuite_Config_SOURCES = \
 	suite_Config/tc_Config.cpp \
 	suite_Config/AnEventsSpy.cpp \
 	suite_Config/AnEventsSpy.h
+
+#
+# Testsuite: Playground
+#
+testSuite_Playground_CPPFLAGS = $(AM_CPPFLAGS)
+testSuite_Playground_DEPENDENCIES = $(dependencies)
+testSuite_Playground_LDADD = $(GUITEST_LDADD)
+
+testSuite_Playground_SOURCES = \
+	testrunner.cpp \
+	suite_Playground/testSuite.cpp \
+	suite_Playground/tc_PlaygroundInfoEntry.cpp \
+	suite_Playground/tc_PlaygroundFileEntry.cpp
 
 #
 # pidtest

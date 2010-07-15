@@ -303,6 +303,10 @@ xanoubis_SOURCES= \
 	model/SimpleOverviewRow.h \
 	model/SimpleOverviewTable.cpp \
 	model/SimpleOverviewTable.h \
+	model/PlaygroundInfoEntry.cpp \
+	model/PlaygroundInfoEntry.h \
+	model/PlaygroundFileEntry.cpp \
+	model/PlaygroundFileEntry.h \
 	view/DlgBackupPolicyBase.h \
 	view/DlgBackupPolicyBase.cpp \
 	view/DlgBackupPolicyImpl.h \
