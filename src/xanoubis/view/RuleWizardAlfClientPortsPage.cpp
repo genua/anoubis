@@ -33,7 +33,18 @@
 
 #include "RuleWizardAlfClientPortsPage.h"
 #include "RuleWizardAlfDlgAddService.h"
-#include "RuleWizardServiceProperty.h"
+
+static wxString
+protoToString(unsigned int proto)
+{
+	return proto == Service::TCP ? wxT("tcp") : wxT("udp");
+}
+
+static AnIconList::IconId
+defaultToIcon(bool val)
+{
+	return val ? AnIconList::ICON_OK : AnIconList::ICON_NONE;
+}
 
 RuleWizardAlfClientPortsPage::RuleWizardAlfClientPortsPage(wxWindow *parent,
     RuleWizardHistory *history) : RuleWizardAlfServicePageBase(parent)
@@ -48,20 +59,24 @@ RuleWizardAlfClientPortsPage::RuleWizardAlfClientPortsPage(wxWindow *parent,
 	width = portListCtrl->GetClientSize().GetWidth() / 4;
 
 	/* Create columns */
-	col = portListCtrl->addColumn(new RuleWizardServiceProperty(
-	    RuleWizardServiceProperty::NAME));
+	col = portListCtrl->addColumn(new AnFmtListProperty<Service>(
+	    _("Servicename"), &Service::getName));
 	col->setWidth(width);
 
-	col = portListCtrl->addColumn(new RuleWizardServiceProperty(
-	    RuleWizardServiceProperty::PORT));
+	col = portListCtrl->addColumn(
+	    new AnFmtListProperty<Service, unsigned int>(
+	    _("Portnumber"), &Service::getPort));
 	col->setWidth(width);
 
-	col = portListCtrl->addColumn(new RuleWizardServiceProperty(
-	    RuleWizardServiceProperty::PROTOCOL));
+	col = portListCtrl->addColumn(
+	    new AnFmtListProperty<Service, unsigned int>(
+	    _("Protocol"), &Service::getPort, NULL, &protoToString));
 	col->setWidth(width);
 
-	col = portListCtrl->addColumn(new RuleWizardServiceProperty(
-	    RuleWizardServiceProperty::DEFAULT));
+	col = portListCtrl->addColumn(
+	    new AnFmtListProperty<Service, bool, bool>(
+	    _("Standard"), &Service::isDefault, &Service::isDefault,
+	    &DefaultConversions::toEmpty, &defaultToIcon));
 	col->setWidth(width);
 
 	/* Assign model */

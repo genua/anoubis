@@ -31,20 +31,27 @@
 #include <ServiceList.h>
 
 #include "RuleWizardAlfDlgAddService.h"
-#include "RuleWizardServiceProperty.h"
 #include "main.h"
+
+static wxString
+protoToString(unsigned int proto)
+{
+	return proto == Service::TCP ? wxT("tcp") : wxT("udp");
+}
 
 RuleWizardAlfDlgAddService::RuleWizardAlfDlgAddService(wxWindow *parent)
     : RuleWizardAlfDlgAddServiceBase(parent)
 {
 	int		 width;
 
-	serviceListCtrl->addColumn(new RuleWizardServiceProperty(
-	    RuleWizardServiceProperty::NAME));
-	serviceListCtrl->addColumn(new RuleWizardServiceProperty(
-	    RuleWizardServiceProperty::PORT));
-	serviceListCtrl->addColumn(new RuleWizardServiceProperty(
-	    RuleWizardServiceProperty::PROTOCOL));
+	serviceListCtrl->addColumn(new AnFmtListProperty<Service>(
+	     _("Servicename"), &Service::getName));
+	serviceListCtrl->addColumn(
+	    new AnFmtListProperty<Service, unsigned int>(
+	    _("Portnumber"), &Service::getPort));
+	serviceListCtrl->addColumn(
+	    new AnFmtListProperty<Service, unsigned int>(
+	    _("Protocol"), &Service::getPort, NULL, &protoToString));
 
 	/* The model, fill with system-services */
 	serviceList_ = new ServiceList;

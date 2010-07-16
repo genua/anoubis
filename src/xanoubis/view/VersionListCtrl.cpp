@@ -31,6 +31,11 @@
 #include "ModAnoubisMainPanelImpl.h"
 #include "VersionCtrl.h"
 
+static wxString getAutoStore(bool autostore)
+{
+	return autostore ? _("Auto") : _("Manual");
+}
+
 VersionListCtrl::VersionListCtrl(wxWindow *w, wxWindowID id,
     const wxPoint &p, const wxSize &sz, long type)
     : AnListCtrl(w, id, p, sz, type | wxLC_VIRTUAL)
@@ -39,12 +44,18 @@ VersionListCtrl::VersionListCtrl(wxWindow *w, wxWindowID id,
 	setStateKey(wxT("/State/VersionListCtrl"));
 
 	/* Setup properties of the view */
-	addColumn(new VersionTypeProperty);
-	addColumn(new VersionDateProperty);
-	addColumn(new VersionTimeProperty);
-	addColumn(new AnStrListProperty<ApnVersion>(
+	addColumn(new AnFmtListProperty<ApnVersion, bool>(
+	    _("Type"), &ApnVersion::isAutoStore, NULL, &getAutoStore));
+	addColumn(new AnFmtListProperty<ApnVersion, wxDateTime>(
+	    _("Date"), &ApnVersion::getTimestamp, NULL,
+	    &DefaultConversions::toDate));
+	addColumn(new AnFmtListProperty<ApnVersion, wxDateTime>(
+	    _("Time"), &ApnVersion::getTimestamp, NULL,
+	    &DefaultConversions::toTime));
+	addColumn(new AnFmtListProperty<ApnVersion>(
 	    _("User"), &ApnVersion::getUsername));
-	addColumn(new VersionNoProperty);
+	addColumn(new AnFmtListProperty<ApnVersion, int>(
+	    _("Version"), &ApnVersion::getVersionNo));
 }
 
 void
@@ -55,78 +66,4 @@ VersionListCtrl::update(void)
 
 	SetItemCount(nSize);
 	RefreshItems(0, nSize-1);
-}
-
-AnIconList::IconId
-ApnVersionProperty::getIcon(AnListClass *) const
-{
-	return (AnIconList::ICON_NONE);
-}
-
-wxString
-VersionTypeProperty::getHeader(void) const
-{
-	return _("Type");
-}
-
-wxString
-VersionTypeProperty::getText(AnListClass *obj) const
-{
-	ApnVersion *version = dynamic_cast<ApnVersion *>(obj);
-
-	if (version != 0)
-		return (version->isAutoStore() ? _("Auto") : _("Manual"));
-	else
-		return _("???");
-}
-
-wxString
-VersionDateProperty::getHeader(void) const
-{
-	return _("Date");
-}
-
-wxString
-VersionDateProperty::getText(AnListClass *obj) const
-{
-	ApnVersion *version = dynamic_cast<ApnVersion *>(obj);
-
-	if (version != 0)
-		return (version->getTimestamp().FormatDate());
-	else
-		return _("???");
-}
-
-wxString
-VersionTimeProperty::getHeader(void) const
-{
-	return _("Time");
-}
-
-wxString
-VersionTimeProperty::getText(AnListClass *obj) const
-{
-	ApnVersion *version = dynamic_cast<ApnVersion *>(obj);
-
-	if (version != 0)
-		return (version->getTimestamp().FormatTime());
-	else
-		return _("???");
-}
-
-wxString
-VersionNoProperty::getHeader(void) const
-{
-	return _("Version");
-}
-
-wxString
-VersionNoProperty::getText(AnListClass *obj) const
-{
-	ApnVersion *version = dynamic_cast<ApnVersion *>(obj);
-
-	if (version != 0)
-		return (wxString::Format(wxT("%d"), version->getVersionNo()));
-	else
-		return _("???");
 }

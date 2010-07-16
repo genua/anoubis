@@ -433,8 +433,6 @@ xanoubis_SOURCES= \
 	view/RuleWizardSandboxWritePage.h \
 	view/RuleWizardSandboxWriteFilesPage.cpp \
 	view/RuleWizardSandboxWriteFilesPage.h \
-	view/RuleWizardServiceProperty.cpp \
-	view/RuleWizardServiceProperty.h \
 	view/RuleWizardFinalPage.cpp \
 	view/RuleWizardFinalPage.h \
 	view/RuleWizardHistory.cpp \

@@ -29,8 +29,10 @@
 #define _ANLISTPROPERTY_H_
 
 #include <wx/string.h>
+#include <wx/datetime.h>
 
 #include "AnIconList.h"
+#include "DefaultConversions.h"
 
 class AnListClass;
 
@@ -89,39 +91,65 @@ class AnListProperty
 };
 
 /**
- * Template class that implements list properties for the case where
- * the accessor functions already return strings. Instantiate as follows:
+ * This template can be used to construct list properties without the
+ * need to implement them manually. This template class can be used if
+ * the following conditions are met:
+ * - All rows have a common base class that allows us to extract the
+ *   property.
+ * - There is a function in the base class that returns the "natural"
+ *   representation of the property. This "natural" representation is
+ *   converted to a wxString (or AnIconList::IconId) with a conversion
+ *   function that must be provided by the user.
  *
- *	new AnStrListProperty<RowType>(
- *	    _("HEADER"),
- *	    &RowType::getTextValue,
- *	    &RowType::getIconId
- *      );
- *
- * @param T The type of the rows that this property applies to.
+ * @param ROWTYPE The common base type of all rows.
+ * @param TEXTTYPE The natural type of the property for the string value.
+ *     This defaults to wxString.
+ * @param ICONTYPE The naturlal type of the property for the icon value.
+ *     This default to AnIcontList::IconId.
  */
-template <typename T>
-class AnStrListProperty : public AnListProperty {
+template <typename ROWTYPE, typename TEXTTYPE = wxString,
+    typename ICONTYPE = AnIconList::IconId>
+class AnFmtListProperty : public AnListProperty {
 private:
 	/**
-	 * The colun header for this property. This is the value
+	 * The column header for this property. This is the value
 	 * returned by the getHeader function.
 	 */
 	wxString		header_;
 
 	/**
 	 * A member function pointer that points to a member function
-	 * of the row type T. This member function should return the
-	 * string value that is returned by this property.
+	 * of the row type ROWTYPE. This member function should return natural
+	 * representation of the value that is returned by the getText
+	 * function of this property.
 	 */
-	wxString		(T::*textptr_)(void) const;
+	TEXTTYPE		(ROWTYPE::*textptr_)(void) const;
 
 	/**
 	 * A member function pointer that  points to a member function
-	 * of the row type T. This member function should return the
-	 * icon ID for this row object.
+	 * of the row type ROWTYPE. This member function should return the
+	 * natural representation of the value that is returned by the
+	 * getIcon function of this property.
 	 */
-	AnIconList::IconId	(T::*iconptr_)(void) const;
+	ICONTYPE		(ROWTYPE::*iconptr_)(void) const;
+
+	/**
+	 * A function pointer that can convert a TEXTTYPE value to
+	 * a wxString. This is used to convert the natural representation
+	 * of the getText value to a wxString. If this value is NULL the
+	 * appropriate toString function from the DefaultConversions class
+	 * is used.
+	 */
+	wxString		(*textconv_)(TEXTTYPE);
+
+	/**
+	 * A pointer to a function that can convert an ICONTYPE value
+	 * into an AnIconList::IconId. This is used to convert the natural
+	 * representation of the getIcon value to an AnIconList::IconId. If
+	 * this value is NULL the appropriate toString function from the
+	 * DefaultConversions class is used.
+	 */
+	AnIconList::IconId	(*iconconv_)(ICONTYPE);
 
 public:
 
@@ -132,14 +160,22 @@ public:
 	 * @param tptr Used to initialize the textptr_ member.
 	 * @param iptr Used to initialize the iconptr_ member.
 	 *     If this argument is omitted it defaults to NULL.
+	 * @param tconv Used to initialize the textconv_ member.
+	 * @param iconconv Used to initialize the iconconv_ member.
 	 */
-	AnStrListProperty(wxString hdr, wxString (T::*tptr)(void) const,
-	    AnIconList::IconId (T::*iptr)(void) const = NULL) :
-	    header_(hdr), textptr_(tptr), iconptr_(iptr) {
+	AnFmtListProperty(
+	    wxString hdr,
+	    TEXTTYPE (ROWTYPE::*tptr)(void) const,
+	    ICONTYPE (ROWTYPE::*iptr)(void) const = NULL,
+	    wxString (*tconv)(TEXTTYPE) = NULL,
+	    AnIconList::IconId (*iconconv)(ICONTYPE) = NULL
+	) : header_(hdr), textptr_(tptr), iconptr_(iptr),
+	    textconv_(tconv), iconconv_(iconconv) {
 	}
 
 	/**
-	 * This implements AnListProperty::getHeader.
+	 * This implements AnListProperty::getHeader. It returns the
+	 * value stored in the header_ member.
 	 *
 	 * @param None.
 	 * @return The column header.
@@ -149,35 +185,56 @@ public:
 	}
 
 	/**
-	 * This implements AnListProperty::getText.
+	 * This implements AnListProperty::getText. It extracts the natural
+	 * value from the row object using the method pointed to by
+	 * textptr_. Either the textconv_ function or a default conversion
+	 * is used to convert this to a wxString.
 	 *
 	 * @param obj The row object.
-	 * @return The column text for this row. If the textptr_ member
-	 *     is NULL or obj is not of type T the text "???" is returned.
+	 * @return The column text for this row. If the textptr_ or the
+	 *     textconv_ member is NULL or obj is not of type ROWTYPE the text
+	 *     "???" is returned.
 	 */
 	wxString getText(AnListClass *obj) const {
-		T	*tobj = dynamic_cast<T *>(obj);
+		ROWTYPE		*tobj = dynamic_cast<ROWTYPE *>(obj);
 
-		if (tobj != NULL && textptr_ != NULL)
-			return (tobj->*textptr_)();
-		else
+		if (tobj != NULL && textptr_ != NULL) {
+			TEXTTYPE	val = (tobj->*textptr_)();
+
+			if (textconv_) {
+				return (*textconv_)(val);
+			} else {
+				return DefaultConversions::toString(val);
+			}
+		} else {
 			return _("???");
+		}
 	}
 
 	/**
-	 * This implements AnListProperty::getIcon.
+	 * This implements AnListProperty::getIcon. It extracts the natural
+	 * value from the row object using the method pointed to by
+	 * iconptr_. Either the iconconv_ function or a default conversion
+	 * is used to convert this to an AnIconList::IconId.
 	 *
 	 * @param The row object.
-	 * @return The iconptr_ member is NULL or obj is not of type T
+	 * @return The iconptr_ member is NULL or obj is not of type ROWTYPE
 	 *     ICON_NONE is returned.
 	 */
 	AnIconList::IconId getIcon(AnListClass *obj) const {
-		T	*tobj = dynamic_cast<T *>(obj);
+		ROWTYPE		*tobj = dynamic_cast<ROWTYPE *>(obj);
 
-		if (tobj != NULL && iconptr_ != NULL)
-			return (tobj->*iconptr_)();
-		else
+		if (tobj != NULL && iconptr_ != NULL) {
+			ICONTYPE	val = (tobj->*iconptr_)();
+
+			if (iconconv_) {
+				return (*iconconv_)(val);
+			} else {
+				return DefaultConversions::toIcon(val);
+			}
+		} else {
 			return AnIconList::ICON_NONE;
+		}
 	}
 };
 
