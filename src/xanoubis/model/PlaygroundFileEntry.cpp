@@ -27,10 +27,18 @@
 
 #include "PlaygroundFileEntry.h"
 
-PlaygroundFileEntry::PlaygroundFileEntry(uint64_t pgid, wxString path)
+PlaygroundFileEntry::PlaygroundFileEntry(
+    uint64_t pgid, uint64_t device, uint64_t inode)
 {
 	this->pgid_ = pgid;
-	this->path_ = path;
+	this->device_ = device;
+	this->inode_ = inode;
+}
+
+void
+PlaygroundFileEntry::addPath(wxString path)
+{
+	this->paths_.push_back(path);
 }
 
 uint64_t
@@ -39,8 +47,20 @@ PlaygroundFileEntry::getPgid() const
 	return this->pgid_;
 }
 
-wxString
-PlaygroundFileEntry::getPath() const
+uint64_t
+PlaygroundFileEntry::getDevice() const
 {
-	return this->path_;
+	return this->device_;
+}
+
+uint64_t
+PlaygroundFileEntry::getInode() const
+{
+	return this->inode_;
+}
+
+const std::vector<wxString>
+PlaygroundFileEntry::getPaths() const
+{
+	return this->paths_;
 }

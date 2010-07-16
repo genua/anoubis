@@ -31,13 +31,19 @@
 START_TEST(entry_init_verify)
 {
 	/* create an instance */
-	wxString path = wxT("Hello world");
+	wxString path1 = wxT("Hello");
+	wxString path2 = wxT("World");
 	PlaygroundFileEntry* entry =
-	    new PlaygroundFileEntry(1, path);
+	    new PlaygroundFileEntry(1, 2, 3);
+	entry->addPath(path1);
+	entry->addPath(path2);
 
 	/* make sure that all getters return what we created */
 	fail_if(entry->getPgid() != 1);
-	fail_if(entry->getPath().Cmp(path) != 0);
+	fail_if(entry->getDevice() != 2);
+	fail_if(entry->getInode() != 3);
+	fail_if(entry->getPaths()[0].Cmp(path1) != 0);
+	fail_if(entry->getPaths()[1].Cmp(path2) != 0);
 
 	delete(entry);
 }

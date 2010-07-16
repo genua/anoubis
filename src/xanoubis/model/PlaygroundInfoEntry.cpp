@@ -28,7 +28,8 @@
 #include "PlaygroundInfoEntry.h"
 
 PlaygroundInfoEntry::PlaygroundInfoEntry(uint64_t pgid, uid_t uid,
-    wxDateTime starttime, bool isactive, unsigned int numfiles, wxString path)
+    wxDateTime starttime, bool isactive, unsigned int numfiles,
+    const wxString path)
 {
 	this->pgid_ = pgid;
 	this->uid_ = uid;
@@ -68,7 +69,7 @@ PlaygroundInfoEntry::getNumFiles() const
 	return this->numfiles_;
 }
 
-wxString
+const wxString
 PlaygroundInfoEntry::getPath() const
 {
 	return this->path_;

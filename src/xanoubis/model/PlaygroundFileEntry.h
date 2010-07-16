@@ -30,6 +30,7 @@
 
 #include <unistd.h>
 #include <wx/string.h>
+#include <vector>
 
 #include "AnListClass.h"
 #include "anoubis_protocol.h"
@@ -37,17 +38,26 @@
 
 
 /**
- * A single file within a playground.
+ * A single file within a playground, identified by device/inode.
+ * Each file may have zero or more filenames associated with it.
  */
 class PlaygroundFileEntry : public AnListClass
 {
 	public:
 		/**
 		 * public c'tor.
-		 * @param pgid  playground id
-		 * @param path  full qualified filename
+		 * @param pgid    playground id
+		 * @param device  device of this file
+		 * @param inode   inode of this file
 		 */
-		PlaygroundFileEntry(uint64_t, wxString);
+		PlaygroundFileEntry(uint64_t pgid,
+		    uint64_t device, uint64_t inode);
+
+		/**
+		 * Add a path to this entry.
+		 * @param 1st  the (absolute) filename to add
+		 */
+		void addPath(wxString);
 
 		/**
 		 * Returns the ID of the playground that this file belongs to.
@@ -56,16 +66,30 @@ class PlaygroundFileEntry : public AnListClass
 		uint64_t getPgid(void) const;
 
 		/**
-		 * Returns the absolute path of the file.
-		 * Note: backend will calculate absolute filename from
-		 * relative path, device and inode.
-		 * @return absolute path
+		 * Return the device number of this file
 		 */
-		wxString getPath(void) const;
+		uint64_t getDevice(void) const;
+
+		/**
+		 * Return the inode of this file
+		 */
+		uint64_t getInode(void) const;
+
+		/**
+		 * Returns the absolute path(s) of the file.
+		 * @return vector of filenames
+		 */
+		const std::vector<wxString> getPaths(void) const;
 
 	private:
 		uint64_t  pgid_;    /**< playground ID */
-		wxString  path_;    /**< file path */
+		uint64_t  device_;  /**< device */
+		uint64_t  inode_;   /**< inode */
+
+		/**
+		 * file path(s) associated with this dev/inode tuple
+		 */
+		std::vector<wxString> paths_;
 };
 
 #endif	/* _PLAYGROUNDFILEENTRY_H_ */

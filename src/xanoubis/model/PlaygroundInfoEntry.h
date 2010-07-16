@@ -56,7 +56,7 @@ class PlaygroundInfoEntry : public AnListClass
 		 */
 		PlaygroundInfoEntry(uint64_t pgid, uid_t uid,
 		    wxDateTime starttime, bool isactive,
-		    unsigned int numfiles, wxString path);
+		    unsigned int numfiles, const wxString path);
 
 		/**
 		 * Returns the ID of the playground.
@@ -93,7 +93,7 @@ class PlaygroundInfoEntry : public AnListClass
 		 * Returns the command that was initially run in this PG.
 		 * @return initial playground command
 		 */
-		 wxString getPath(void ) const;
+		 const wxString getPath(void ) const;
 
 	private:
 		uint64_t      pgid_;       /**< Playground ID  */
