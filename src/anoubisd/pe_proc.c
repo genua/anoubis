@@ -787,8 +787,11 @@ pe_proc_flag_transition(struct pe_proc *proc, struct pe_file_event *fevent)
 		if (pe_context_will_pg(proc, fevent->uid, &pident,
 		    &ruleid, &prio)) {
 			ret |= ANOUBIS_RET_NEED_PLAYGROUND;
-			pe_playground_notify_forced(proc, fevent->rawhdr,
-			    ruleid, prio);
+			/* Only notify if not yet in a playground */
+			if (pe_proc_get_playgroundid(proc) == 0) {
+				pe_playground_notify_forced(&pident,
+				    fevent->rawhdr, ruleid, prio);
+			}
 		}
 	}
 #endif

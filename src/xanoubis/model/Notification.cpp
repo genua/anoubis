@@ -167,6 +167,7 @@ Notification::getModule(void)
 			module_ = wxT("SFS");
 			break;
 		case ANOUBIS_SOURCE_PLAYGROUND:
+		case ANOUBIS_SOURCE_PLAYGROUNDPROC:
 			module_ = wxT("PLAYGROUND");
 			break;
 		case ANOUBIS_SOURCE_PROCESS:
@@ -252,6 +253,10 @@ Notification::getAction(void)
 	int	 error;
 
 	if (notify_) {
+		int	subsystem = get_value(notify_->u.notify->subsystem);
+
+		if (subsystem == ANOUBIS_SOURCE_PLAYGROUNDPROC)
+			return wxEmptyString;
 		error = get_value((notify_->u.notify)->error);
 		if (error == 0) {
 			action = _("was allowed");
@@ -347,19 +352,27 @@ Notification::getOperation(void)
 			}
 		}
 	} else if (module_ == wxT("PLAYGROUND")) {
-		struct pg_open_message *pg = (struct pg_open_message *)
-		    ((notify_->u.notify)->payload + evoff);
+		int	subsystem = get_value(notify_->u.notify->subsystem);
 
-		switch (pg->op) {
-		case ANOUBIS_PLAYGROUND_OP_OPEN:
-			operation = _("open");
-			break;
-		case ANOUBIS_PLAYGROUND_OP_RENAME:
-			operation = _("rename");
-			break;
-		default:
-			operation = _("unknown operation");
-			break;
+		if (subsystem == ANOUBIS_SOURCE_PLAYGROUND) {
+			struct pg_open_message *pg = (struct pg_open_message *)
+			    ((notify_->u.notify)->payload + evoff);
+
+			switch (pg->op) {
+			case ANOUBIS_PLAYGROUND_OP_OPEN:
+				operation = _("open");
+				break;
+			case ANOUBIS_PLAYGROUND_OP_RENAME:
+				operation = _("rename");
+				break;
+			default:
+				operation = _("unknown operation");
+				break;
+			}
+		} else if (subsystem == ANOUBIS_SOURCE_PLAYGROUNDPROC) {
+			return _("playground enforced for program");
+		} else {
+			operation = _("unknown module");
 		}
 	} else {
 		operation = _("unknown module");
@@ -443,16 +456,26 @@ Notification::getPath(void)
 			}
 		}
 	} else if (module_ == wxT("PLAYGROUND")) {
-		struct pg_open_message *pg = (struct pg_open_message *)
-		    ((notify_->u.notify)->payload + evoff);
+		int	subsystem = get_value(notify_->u.notify->subsystem);
 
-		if (pg->op == ANOUBIS_PLAYGROUND_OP_OPEN) {
-			path = wxString::Format(wxT("%hs"), pg->pathbuf);
-		} else if (pg->op == ANOUBIS_PLAYGROUND_OP_RENAME) {
-			const char *from = pg->pathbuf;
-			const char *to = from + strlen(from) + 1;
+		if (subsystem == ANOUBIS_SOURCE_PLAYGROUND) {
+			struct pg_open_message *pg = (struct pg_open_message *)
+			    ((notify_->u.notify)->payload + evoff);
 
-			path = wxString::Format(_("from %hs to %hs"), from, to);
+			if (pg->op == ANOUBIS_PLAYGROUND_OP_OPEN) {
+				path = wxString::Format(wxT("%hs"),
+				    pg->pathbuf);
+			} else if (pg->op == ANOUBIS_PLAYGROUND_OP_RENAME) {
+				const char *from = pg->pathbuf;
+				const char *to = from + strlen(from) + 1;
+
+				path = wxString::Format(_("from %hs to %hs"),
+				    from, to);
+			} else {
+				path = _("unable to extract path information");
+			}
+		} else if (subsystem == ANOUBIS_SOURCE_PLAYGROUNDPROC) {
+			return getOrigin();
 		} else {
 			path = _("unable to extract path information");
 		}

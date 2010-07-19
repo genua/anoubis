@@ -798,25 +798,22 @@ token_cmp(void *msg1, void *msg2)
 }
 
 void
-send_lognotify(struct pe_proc *proc, struct eventdev_hdr *hdr,
-    u_int32_t error, u_int32_t loglevel, u_int32_t rule_id, u_int32_t prio,
-    u_int32_t sfsmatch)
+__send_lognotify(struct pe_proc_ident *pident, struct pe_proc_ident *ctxident,
+    struct eventdev_hdr *hdr, u_int32_t error, u_int32_t loglevel,
+    u_int32_t rule_id, u_int32_t prio, u_int32_t sfsmatch)
 {
 	struct anoubisd_msg		*msg;
 	struct anoubisd_reply		 reply;
 
-	DEBUG(DBG_TRACE, ">send_lognotify: rule_id=%d, prio=%d source=%d",
+	DEBUG(DBG_TRACE, ">__send_lognotify: rule_id=%d, prio=%d source=%d",
 	    rule_id, prio, hdr->msg_source);
 	reply.ask = 0;
 	reply.reply = error;
 	reply.rule_id = rule_id;
 	reply.prio = prio;
 	reply.sfsmatch = sfsmatch;
-	if (proc) {
-		reply.pident = pe_proc_ident(proc);
-		reply.ctxident = pe_context_get_ident(
-		    pe_proc_get_context(proc, prio));
-	}
+	reply.pident = pident;
+	reply.ctxident = ctxident;
 
 	msg = fill_eventask_message(ANOUBISD_MSG_LOGREQUEST, loglevel,
 	    hdr, &reply);
@@ -826,7 +823,23 @@ send_lognotify(struct pe_proc *proc, struct eventdev_hdr *hdr,
 	}
 	enqueue(&eventq_p2s, msg);
 	DEBUG(DBG_QUEUE, ">&eventq_p2s");
-	DEBUG(DBG_QUEUE, "<send_lognotify");
+	DEBUG(DBG_QUEUE, "<__send_lognotify");
+}
+
+void
+send_lognotify(struct pe_proc *proc, struct eventdev_hdr *hdr,
+    u_int32_t error, u_int32_t loglevel, u_int32_t rule_id, u_int32_t prio,
+    u_int32_t sfsmatch)
+{
+	struct pe_proc_ident	*pident = NULL;
+	struct pe_proc_ident	*ctxident = NULL;
+	if (proc) {
+		pident = pe_proc_ident(proc);
+		ctxident = pe_context_get_ident(
+		    pe_proc_get_context(proc, prio));
+	}
+	return __send_lognotify(pident, ctxident, hdr, error, loglevel,
+	    rule_id, prio, sfsmatch);
 }
 
 void

@@ -35,6 +35,7 @@
 #include "NotificationPerspective.h"
 #include "Singleton.h"
 #include "EscalationNotify.h"
+#include "AlertNotify.h"
 
 WX_DECLARE_STRING_HASH_MAP(long, Str2LongHash);
 
@@ -186,7 +187,7 @@ class NotificationCtrl : public wxEvtHandler, public Singleton<NotificationCtrl>
 		/**
 		 * Enqueue alert notifies.
 		 */
-		void addAlertNotify(Notification *notification);
+		void addAlertNotify(AlertNotify *notification);
 
 		/**
 		 * Handle answer results.

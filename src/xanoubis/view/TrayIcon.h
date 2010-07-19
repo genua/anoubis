@@ -48,6 +48,7 @@ class TrayIcon : public wxTaskBarIcon
 		unsigned int            escalationTimeout_;
 		unsigned int            alertTimeout_;
 		NotifyNotification	*notification;
+		NotifyNotification	*pgnotify;
 		wxProcess		*dBusProc_;
 		bool			acceptActions_;
 
@@ -177,6 +178,7 @@ class TrayIcon : public wxTaskBarIcon
 		void OnLeftButtonClick(wxTaskBarIconEvent&);
 		void OnGuiRestore(wxCommandEvent&);
 		void OnGuiExit(wxCommandEvent&);
+		void OnPgNotifyClosed(wxCommandEvent&);
 		void systemNotifyCallback(void);
 
 		virtual wxMenu *CreatePopupMenu(void);
@@ -193,12 +195,27 @@ class TrayIcon : public wxTaskBarIcon
 		 */
 		virtual bool SetIcon(const wxIcon&, const wxString&);
 
-	DECLARE_EVENT_TABLE()
+		/**
+		 * This function can be called to notify the user of a
+		 * process that has been forced into the playground by
+		 * an APN rule. The ID of the notification must be in
+		 * the GetExtraLong() field of the event.
+		 *
+		 * @param ev The event.
+		 * @return None.
+		 */
+		void OnPgForced(wxCommandEvent &ev);
 
 	enum {
 		GUI_EXIT = 12001,
 		GUI_RESTORE
 	};
+	DECLARE_EVENT_TABLE()
 };
+
+BEGIN_DECLARE_EVENT_TYPES()
+DECLARE_LOCAL_EVENT_TYPE(TRAY_PGNOTIFY_CLOSED, wxNewEventType())
+END_DECLARE_EVENT_TYPES()
+
 
 #endif	/* _TRAYICON_H_ */

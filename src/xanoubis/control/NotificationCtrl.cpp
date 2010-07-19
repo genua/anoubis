@@ -250,7 +250,7 @@ NotificationCtrl::onUpdatePerspectives(wxCommandEvent & event)
 	} else if (IS_DAEMONANSWEROBJ(notification)) {
 		addDaemonAnswerNotify(notification);
 	} else if (IS_ALERTOBJ(notification)) {
-		addAlertNotify(notification);
+		addAlertNotify(dynamic_cast<AlertNotify *>(notification));
 	} else if (IS_STATUSOBJ(notification)) {
 		/* remove the old status message */
 		if (stats_.getSize() > 0) {
@@ -342,7 +342,7 @@ NotificationCtrl::addDaemonAnswerNotify(Notification *notification)
 }
 
 void
-NotificationCtrl::addAlertNotify(Notification *notification)
+NotificationCtrl::addAlertNotify(AlertNotify *notification)
 {
 	wxCommandEvent  showEvent(anEVT_OPEN_ALERTS);
 
@@ -352,6 +352,13 @@ NotificationCtrl::addAlertNotify(Notification *notification)
 	showEvent.SetInt(messages_.getSize());
 	showEvent.SetExtraLong(true);
 	wxPostEvent(AnEvents::instance(), showEvent);
+
+	if (notification->getSubsystem() == ANOUBIS_SOURCE_PLAYGROUNDPROC) {
+		wxCommandEvent	pgevent(anEVT_PLAYGROUND_FORCED);
+
+		pgevent.SetExtraLong(notification->getId());
+		wxPostEvent(AnEvents::instance(), pgevent);
+	}
 }
 
 EscalationNotify *

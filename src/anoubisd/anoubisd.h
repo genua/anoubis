@@ -53,18 +53,6 @@
 /* This file can be included from both linux and OpenBSD. */
 #include <linux/anoubis_playground.h>
 
-#ifndef ANOUBIS_SOURCE_PLAYGROUND
-#define ANOUBIS_SOURCE_PLAYGROUND	70
-#endif
-
-#ifndef ANOUBIS_SOURCE_PLAYGROUNDPROC
-#define ANOUBIS_SOURCE_PLAYGROUNDPROC	71
-#endif
-
-#ifndef ANOUBIS_SOURCE_PLAYGROUNDFILE
-#define ANOUBIS_SOURCE_PLAYGROUNDFILE	72
-#endif
-
 #include <linux/anoubis_playground.h>
 #include <assert.h>
 
@@ -423,7 +411,11 @@ void	pe_dump(void);
 int	send_policy_data(u_int64_t token, int fd);
 
 struct pe_proc;
+struct pe_proc_ident;
 
+void	__send_lognotify(struct pe_proc_ident *pident,
+	    struct pe_proc_ident *ctxident, struct eventdev_hdr *,
+	    u_int32_t, u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 void	send_lognotify(struct pe_proc *proc, struct eventdev_hdr *,
 	    u_int32_t, u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 void	send_policychange(u_int32_t uid, u_int32_t prio);

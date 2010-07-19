@@ -55,6 +55,7 @@
 #include "main.h"
 #include "TrayIcon.h"
 #include "MainUtils.h"
+#include "NotificationCtrl.h"
 
 #define MAX_MESSAGE	128
 #define MAX_PATH	1024
@@ -84,17 +85,31 @@
 		} \
 	} while (0)
 
+DEFINE_LOCAL_EVENT_TYPE(TRAY_PGNOTIFY_CLOSED)
+
 BEGIN_EVENT_TABLE(TrayIcon, wxTaskBarIcon)
 	EVT_MENU(GUI_EXIT, TrayIcon::OnGuiExit)
 	EVT_MENU(GUI_RESTORE, TrayIcon::OnGuiRestore)
 	EVT_TASKBAR_LEFT_DOWN(TrayIcon::OnLeftButtonClick)
+	EVT_COMMAND(wxID_ANY, TRAY_PGNOTIFY_CLOSED,
+	    TrayIcon::OnPgNotifyClosed)
 END_EVENT_TABLE()
 
 static void
 close_callback(NotifyNotification *, void *user_data)
 {
-	TrayIcon	*inst = (TrayIcon*)user_data;
+	TrayIcon	*inst = (TrayIcon *)user_data;
 	inst->notifyClosed();
+}
+
+static void
+pg_close_callback(NotifyNotification *n, void *user_data)
+{
+	TrayIcon	*tray = (TrayIcon *)user_data;
+	wxCommandEvent	 ev(TRAY_PGNOTIFY_CLOSED);
+
+	ev.SetClientData(n);
+	wxPostEvent(tray, ev);
 }
 
 TrayIcon::TrayIcon(void)
@@ -161,6 +176,8 @@ TrayIcon::TrayIcon(void)
 	anEvents->Connect(anEVT_ALERTNOTIFY_OPTIONS,
 	    wxCommandEventHandler(TrayIcon::OnAlertSettingsChanged), NULL,
 	    this);
+	anEvents->Connect(anEVT_PLAYGROUND_FORCED,
+	    wxCommandEventHandler(TrayIcon::OnPgForced), NULL, this);
 }
 
 TrayIcon::~TrayIcon(void)
@@ -190,6 +207,8 @@ TrayIcon::~TrayIcon(void)
 	anEvents->Disconnect(anEVT_ALERTNOTIFY_OPTIONS,
 	    wxCommandEventHandler(TrayIcon::OnAlertSettingsChanged), NULL,
 	    this);
+	anEvents->Disconnect(anEVT_PLAYGROUND_FORCED,
+	    wxCommandEventHandler(TrayIcon::OnPgForced), NULL, this);
 }
 
 void
@@ -656,4 +675,49 @@ TrayIcon::SetIcon(const wxIcon& icon, const wxString& tooltip)
 #endif /* __WXGTK__ */
 
 	return (wxTaskBarIcon::SetIcon(icon, tooltip));
+}
+
+void
+TrayIcon::OnPgNotifyClosed(wxCommandEvent &ev)
+{
+	NotifyNotification	*notify;
+
+	notify = (NotifyNotification*)ev.GetClientData();
+	if (notify) {
+		wxGetApp().Yield(false);
+		g_object_unref(notify);
+	}
+}
+
+void
+TrayIcon::OnPgForced(wxCommandEvent &ev)
+{
+	long			 id = ev.GetExtraLong();
+	Notification		*n;
+	NotifyNotification	*notify;
+	wxString		 msg;
+
+	n = NotificationCtrl::instance()->getNotification(id);
+	if (n == NULL)
+		return;
+	msg = wxString::Format(_("Program %ls will be started in a playground"),
+	    n->getPath().c_str());
+	notify = notify_notification_new("Anoubis", msg.fn_str(), NULL, NULL);
+	g_signal_connect(notify, "closed", G_CALLBACK(pg_close_callback), this);
+	notify_notification_set_timeout(notify, 5*ONE_SECOND);
+#ifdef __WXGTK__
+	{
+		/*
+		 * NOTE: notify-osd will ignore this but notification-daemon
+		 * NOTE: accepts the position hints.
+		 */
+		wxWindow        *win = (wxWindow*)m_iconWnd;
+		if (win) {
+			notify_notification_attach_to_widget(notify,
+			    win->m_widget);
+		}
+	}
+#endif
+	if (notify_notification_show(notify, NULL))
+		wxGetApp().Yield(false);
 }

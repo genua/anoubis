@@ -673,7 +673,7 @@ pe_playground_initpgid(int anoubisfd __used, int eventfd __used)
 	if (pgdir == NULL) {
 		log_warnx("No playground directory. Not setting initial "
 		    "playground ID.");
-		return; 
+		return;
 	}
 	while ((dent = readdir(pgdir)) != NULL) {
 		char			dummy;
@@ -1123,10 +1123,11 @@ pe_playground_dispatch_request(struct anoubisd_msg *inmsg, Queue *queue)
  * into a playground due to APN rules. The caller must provide the eventdev
  * header of the exec event. This is turned into a fake event with source
  * ANOUBIS_SOURCE_PLAYGROUNDPROC. The payload of such an event is a
- * pg_proc_message structure.
+ * pg_proc_message structure. The event is logged to syslog, too.
  *
- * @param proc The process that triggered the event. The context information
- *     of this process is added to the notification message.
+ * @param ident The process identifier of the process after a successful
+ *     exec. This identifier is added to the log message for both the process
+ *     and the context information.
  * @param hdr The eventdev header of the exec event. Event data is taken
  *     from this event where appropriate.
  * @param ruleid The rule ID of the block that forced this process into
@@ -1136,8 +1137,8 @@ pe_playground_dispatch_request(struct anoubisd_msg *inmsg, Queue *queue)
  * @return None.
  */
 void
-pe_playground_notify_forced(struct pe_proc *proc, struct eventdev_hdr *orighdr,
-    uint32_t ruleid, uint32_t prio)
+pe_playground_notify_forced(struct pe_proc_ident *ident,
+    struct eventdev_hdr *orighdr, uint32_t ruleid, uint32_t prio)
 {
 	struct eventdev_hdr		*hdr;
 	struct pg_proc_message		*pg, *origpg;
@@ -1162,7 +1163,10 @@ pe_playground_notify_forced(struct pe_proc *proc, struct eventdev_hdr *orighdr,
 	hdr->msg_pid = orighdr->msg_pid;
 	hdr->msg_uid = orighdr->msg_uid;
 	pg->common = origpg->common;
-	send_lognotify(proc, hdr, 0 /* error */, APN_LOG_ALERT,
+	log_warnx("%s (pid=%d, uid=%d) is forced into a playground ruleid "
+	    "%d prio %d", ident ? ident->pathhint : NULL, hdr->msg_pid,
+	    hdr->msg_uid, ruleid, prio);
+	__send_lognotify(ident, ident, hdr, 0 /* error */, APN_LOG_ALERT,
 	    ruleid, prio, 0 /* sfsmatch */);
 	free(hdr);
 }

@@ -96,6 +96,14 @@ send_policychange(u_int32_t uid __used, u_int32_t prio __used)
 }
 
 void
+__send_lognotify(struct pe_proc_ident *pident __used,
+    struct pe_proc_ident *ctxident __used, struct eventdev_hdr *hdr __used,
+    u_int32_t error __used, u_int32_t loglevel __used,
+    u_int32_t rule_id __used, u_int32_t prio __used, u_int32_t sfsmatch __used)
+{
+}
+
+void
 send_lognotify(struct pe_proc *proc __used, struct eventdev_hdr *hdr __used,
     u_int32_t error __used, u_int32_t loglevel __used,
     u_int32_t rule_id __used, u_int32_t prio __used, u_int32_t sfsmatch __used)

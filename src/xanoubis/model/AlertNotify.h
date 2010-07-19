@@ -45,6 +45,7 @@ class AlertNotify : public Notification {
 		AlertNotify(wxString);
 		AlertNotify(struct anoubis_msg *);
 		~AlertNotify(void);
+		int getSubsystem(void) const;
 };
 
 #endif	/* _ALERTNOTIFY_H_ */
