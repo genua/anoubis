@@ -38,6 +38,7 @@
 #include <wx/filename.h>
 #include <wx/module.h>
 
+#include <PlaygroundFilesTask.h>
 #include <PlaygroundListTask.h>
 #include <JobCtrl.h>
 
@@ -115,26 +116,43 @@ teardown(void)
 
 START_TEST(fetch_list)
 {
-	TaskEventSpy spy(jobCtrl, anTASKEVT_PG_LIST);
-	PlaygroundListTask task;
+	TaskEventSpy listSpy(jobCtrl, anTASKEVT_PG_LIST);
+	TaskEventSpy filesSpy(jobCtrl, anTASKEVT_PG_FILES);
+	PlaygroundListTask listTask;
+	PlaygroundFilesTask filesTask;
 
-	jobCtrl->addTask(&task);
-	spy.waitForInvocation(1);
+	jobCtrl->addTask(&listTask);
+	listSpy.waitForInvocation(1);
 
-	fail_unless(task.getComTaskResult() == ComTask::RESULT_SUCCESS,
+	fail_unless(listTask.getComTaskResult() == ComTask::RESULT_SUCCESS,
 	    "Failed to fetch playground-list");
 
-	task.setFirstRecord();
+	listTask.setFirstRecord();
 	int numRecords = 0;
-	while (task.setNextRecord()) {
-		fail_unless(task.getCommand() == wxT("/bin/bash"),
-		    "Wrong command: %hs", task.getCommand().c_str());
-		fail_unless(task.getUID() == (int)getuid(),
-		    "Wrong uid: %i", task.getUID());
-		fail_unless(task.getNumFiles() == 1,
-		    "Wrong number of files: %i", task.getNumFiles());
+	while (listTask.setNextRecord()) {
+		fail_unless(listTask.getCommand() == wxT("/bin/bash"),
+		    "Wrong command: %hs", listTask.getCommand().c_str());
+		fail_unless(listTask.getUID() == (int)getuid(),
+		    "Wrong uid: %i", listTask.getUID());
+		fail_unless(listTask.getNumFiles() == 1,
+		    "Wrong number of files: %i", listTask.getNumFiles());
 
 		numRecords++;
+
+		/* Fetch files for the current playground */
+		filesTask.setRequestedPGID(listTask.getPGID());
+		jobCtrl->addTask(&filesTask);
+		filesSpy.waitForInvocation(numRecords);
+
+		filesTask.setFirstRecord();
+		int numFiles = 0;
+		while (filesTask.setNextRecord()) {
+			fail_unless(filesTask.getPath().EndsWith(wxT("xxx")));
+			numFiles++;
+		}
+
+		fail_unless(numFiles == 1,
+		    "Wrong number of files: %i", numFiles);
 	}
 
 	fail_unless(numRecords == 2,

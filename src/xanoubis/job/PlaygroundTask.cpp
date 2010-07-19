@@ -98,6 +98,8 @@ PlaygroundTask::done(void)
 		anoubis_transaction_destroy(ta_);
 		ta_ = NULL;
 		setComTaskResult(RESULT_SUCCESS);
+
+		return (true);
 	}
 
 	return (false);

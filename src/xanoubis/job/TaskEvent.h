@@ -103,6 +103,13 @@ BEGIN_DECLARE_EVENT_TYPES()
 	 * @see PlaygroundListTask
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anTASKEVT_PG_LIST, wxNewEventType())
+
+	/**
+	 * Event-type of TaskEvent when a list of file in a playground arrived
+	 * from anoubisd.
+	 * @see PlaygroundFilesTask
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anTASKEVT_PG_FILES, wxNewEventType())
 END_DECLARE_EVENT_TYPES()
 //@}
 

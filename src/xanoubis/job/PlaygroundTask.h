@@ -28,7 +28,7 @@
 #ifndef _PLAYGROUNDTASK_H_
 #define _PLAYGROUNDTASK_H_
 
-
+#include <anoubis_msg.h>
 #include "ComTask.h"
 
 /**
@@ -68,21 +68,149 @@ class PlaygroundTask : public ComTask
 		~PlaygroundTask(void);
 
 		/**
+		 * Playground-id of request-message.
+		 * Derivated classes are able to modify the id.
+		 */
+		uint64_t pgid_;
+
+		/**
 		 * The answer from the daemon.
 		 * Set to NULL, of no answer is available.
 		 */
 		struct anoubis_msg *result_;
+
+		/**
+		 * Iterator can be used to iterate over the content of a
+		 * anoubis_msg.
+		 * The iterator extracts records of type T.
+		 */
+		template <class T>
+		class iterator
+		{
+		public:
+			/**
+			 * Creates an empty iterator.
+			 * The next() operation will always return false.
+			 */
+			iterator(void)
+			{
+				message_ = 0;
+				record_ = 0;
+				number_ = 0;
+				offset_ = 0;
+			}
+
+			/**
+			 * Iterator walks through the given anoubis_msg.
+			 * @param msg The source message
+			 */
+			iterator(struct anoubis_msg *msg)
+			{
+				message_ = msg;
+				record_ = 0;
+				number_ = 0;
+				offset_ = 0;
+			}
+
+			/**
+			 * Copy-c'tor.
+			 */
+			iterator(const iterator<T> &other)
+			{
+				message_ = other.message_;
+				record_ = other.record_;
+				number_ = other.number_;
+				offset_ = other.offset_;
+			}
+
+			/**
+			 * Assignment-operator.
+			 */
+			iterator<T> &operator = (const iterator<T> &other)
+			{
+				message_ = other.message_;
+				record_ = other.record_;
+				number_ = other.number_;
+				offset_ = other.offset_;
+
+				return (*this);
+			}
+
+			/**
+			 * Switches the iterator to the next record.
+			 * @return Returns true, if the operation succeeded. If
+			 *         the end of the list was reached, false is
+			 *         returned.
+			 */
+			bool
+			next(void)
+			{
+				if (!message_) {
+					/* No more messages available */
+					return (false);
+				}
+
+				if (number_ >=
+				    get_value(message_->u.pgreply->nrec)) {
+					/* Number of records reached,
+					 * try next message-fragment
+					 */
+					message_ = message_->next;
+					number_ = 0;
+					offset_ = 0;
+
+					return next();
+				}
+
+				/* Extract next record */
+				record_ = (T *)
+				    (message_->u.pgreply->payload + offset_);
+				number_++;
+				offset_ += get_value(record_->reclen);
+
+				return (true);
+			}
+
+			/**
+			 * Returns the current record, where the iterator
+			 * points to.
+			 * @return The current records. Returns NULL, if no
+			 *         current element is available.
+			 */
+			T *
+			current(void) const
+			{
+				return (record_);
+			}
+
+		private:
+			/**
+			 * Current message used for iterating through all
+			 * playgrounds.
+			 */
+			struct anoubis_msg *message_;
+
+			/**
+			* Current record-number.
+			*/
+			int number_;
+
+			/**
+			* Current offset within message_ payload.
+			*/
+			int offset_;
+
+			/**
+			 * Current record.
+			 */
+			T *record_;
+		};
 
 	private:
 		/**
 		 * List-type of request-message
 		 */
 		uint32_t listtype_;
-
-		/**
-		 * Playground-id of request-message.
-		 */
-		uint64_t pgid_;
 
 		/**
 		 * The transaction.

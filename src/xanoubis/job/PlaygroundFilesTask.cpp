@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2010 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,47 +25,81 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Task.h"
+#include "PlaygroundFilesTask.h"
 #include "TaskEvent.h"
 
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_DUMMY)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUMCALC)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_REGISTER)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_POLICY_SEND)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_POLICY_REQUEST)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_ADD)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_GET)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_DEL)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_SFS_LIST)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_VERSION)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_PG_LIST)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_PG_FILES)
-
-TaskEvent::TaskEvent(Task *task, int id)
-    : wxEvent(id, task->getEventType())
+PlaygroundFilesTask::PlaygroundFilesTask(void)
+    : PlaygroundTask(ANOUBIS_PGREC_FILELIST, 0)
 {
-	this->m_propagationLevel = wxEVENT_PROPAGATE_MAX;
-	this->task_ = task;
 }
 
-TaskEvent::TaskEvent(const TaskEvent &other)
-    : wxEvent(other.GetId(), other.GetEventType())
+PlaygroundFilesTask::PlaygroundFilesTask(uint64_t pgid)
+    : PlaygroundTask(ANOUBIS_PGREC_FILELIST, pgid)
 {
-	SetEventObject(other.GetEventObject());
-	SetTimestamp(other.GetTimestamp());
-
-	this->m_propagationLevel = wxEVENT_PROPAGATE_MAX;
-	this->task_ = other.task_;
 }
 
-wxEvent *
-TaskEvent::Clone(void) const
+wxEventType
+PlaygroundFilesTask::getEventType(void) const
 {
-	return new TaskEvent(*this);
+	return (anTASKEVT_PG_FILES);
 }
 
-Task *
-TaskEvent::getTask(void) const
+uint64_t
+PlaygroundFilesTask::getRequestedPGID(void) const
 {
-	return (this->task_);
+	return (pgid_);
+}
+
+void
+PlaygroundFilesTask::setRequestedPGID(uint64_t pgid)
+{
+	pgid_ = pgid;
+}
+
+void
+PlaygroundFilesTask::setFirstRecord(void)
+{
+	it_ = iterator<Anoubis_PgFileRecord>(result_);
+}
+
+bool
+PlaygroundFilesTask::setNextRecord(void)
+{
+	return (it_.next());
+}
+
+uint64_t
+PlaygroundFilesTask::getPGID(void) const
+{
+	if (it_.current())
+		return (get_value(it_.current()->pgid));
+	else
+		return (0);
+}
+
+uint64_t
+PlaygroundFilesTask::getDevice(void) const
+{
+	if (it_.current())
+		return (get_value(it_.current()->dev));
+	else
+		return (0);
+}
+
+uint64_t
+PlaygroundFilesTask::getInode(void) const
+{
+	if (it_.current())
+		return (get_value(it_.current()->ino));
+	else
+		return (0);
+}
+
+wxString
+PlaygroundFilesTask::getPath(void) const
+{
+	if (it_.current() && it_.current()->path != 0)
+		return (wxString::FromAscii(it_.current()->path));
+	else
+		return (wxEmptyString);
 }

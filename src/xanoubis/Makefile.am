@@ -547,6 +547,8 @@ xanoubis_SOURCES= \
 	job/JobThread.h \
 	job/PlaygroundTask.cpp \
 	job/PlaygroundTask.h \
+	job/PlaygroundFilesTask.cpp \
+	job/PlaygroundFilesTask.h \
 	job/PlaygroundListTask.cpp \
 	job/PlaygroundListTask.h \
 	job/Task.cpp \

@@ -25,17 +25,12 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <anoubis_protocol.h>
-
 #include "PlaygroundListTask.h"
 #include "TaskEvent.h"
 
 PlaygroundListTask::PlaygroundListTask(void)
     : PlaygroundTask(ANOUBIS_PGREC_PGLIST, 0)
 {
-	record_ = 0;
-	number_ = 0;
-	offset_ = 0;
 }
 
 wxEventType
@@ -47,43 +42,20 @@ PlaygroundListTask::getEventType(void) const
 void
 PlaygroundListTask::setFirstRecord(void)
 {
-	message_ = result_;
-	record_ = 0;
-	number_ = 0;
-	offset_ = 0;
+	it_ = iterator<Anoubis_PgInfoRecord>(result_);
 }
 
 bool
 PlaygroundListTask::setNextRecord(void)
 {
-	if (!message_) {
-		/* No more messages available */
-		return (false);
-	}
-
-	if (number_ >= get_value(message_->u.pgreply->nrec)) {
-		/* Number of records reached, try next message-fragment */
-		message_ = message_->next;
-		number_ = 0;
-		offset_ = 0;
-
-		return setNextRecord();
-	}
-
-	/* Extract next record */
-	record_ = (Anoubis_PgInfoRecord *)
-	    (message_->u.pgreply->payload + offset_);
-	number_++;
-	offset_ += get_value(record_->reclen);
-
-	return (true);
+	return (it_.next());
 }
 
 uint64_t
 PlaygroundListTask::getPGID(void) const
 {
-	if (record_)
-		return (get_value(record_->pgid));
+	if (it_.current())
+		return (get_value(it_.current()->pgid));
 	else
 		return (0);
 }
@@ -91,8 +63,8 @@ PlaygroundListTask::getPGID(void) const
 int
 PlaygroundListTask::getUID(void) const
 {
-	if (record_)
-		return (get_value(record_->uid));
+	if (it_.current())
+		return (get_value(it_.current()->uid));
 	else
 		return (0);
 }
@@ -100,8 +72,8 @@ PlaygroundListTask::getUID(void) const
 bool
 PlaygroundListTask::isActive(void) const
 {
-	if (record_)
-		return (get_value(record_->nrprocs) > 0);
+	if (it_.current())
+		return (get_value(it_.current()->nrprocs) > 0);
 	else
 		return (false);
 }
@@ -109,8 +81,8 @@ PlaygroundListTask::isActive(void) const
 int
 PlaygroundListTask::getNumFiles(void) const
 {
-	if (record_)
-		return (get_value(record_->nrfiles));
+	if (it_.current())
+		return (get_value(it_.current()->nrfiles));
 	else
 		return (0);
 }
@@ -120,8 +92,8 @@ PlaygroundListTask::getTime(void) const
 {
 	wxDateTime dt;
 
-	if (record_) {
-		time_t t = get_value(record_->starttime);
+	if (it_.current()) {
+		time_t t = get_value(it_.current()->starttime);
 		dt.Set(t);
 	}
 
@@ -131,8 +103,8 @@ PlaygroundListTask::getTime(void) const
 wxString
 PlaygroundListTask::getCommand(void) const
 {
-	if (record_)
-		return (wxString::FromAscii(record_->path));
+	if (it_.current())
+		return (wxString::FromAscii(it_.current()->path));
 	else
 		return (wxEmptyString);
 }

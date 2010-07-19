@@ -25,42 +25,67 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _PLAYGROUNDLISTTASK_H_
-#define _PLAYGROUNDLISTTASK_H_
-
-#include <anoubis_msg.h>
+#ifndef _PLAYGROUNDFILESTASK_H_
+#define _PLAYGROUNDFILESTASK_H_
 
 #include "PlaygroundTask.h"
 
 /**
- * Task fetches a list with all available playgrounds from the daemon.
+ * Task fetches a list with playground-files from the daemon.
  *
  * The task implements an iterator, where you are able to iterate over all
- * playgrounds.
+ * files.
  *
  * setFirstRecords() resets the iterator. setNextRecords() returns true until
  * the end of the list is reached. So you can write something like this:
  *
  * <pre>
- * PlaygroundListTask task;
+ * PlaygroundFilesTask task;
  *
  * while (task.setNextRecord()) {
  *     // Do something
  * }
  * </pre>
  */
-class PlaygroundListTask : public PlaygroundTask
+class PlaygroundFilesTask : public PlaygroundTask
 {
 	public:
 		/**
-		 * Std-c'tor.
+		 * Creates an task to fetch playground-files from the daemon.
+		 * You need to provide the playground-id before sending the
+		 * task!
+		 * @see setRequestPGID()
 		 */
-		PlaygroundListTask(void);
+		PlaygroundFilesTask(void);
+
+		/**
+		 * Creates a task to fetch a list of playground-files from the
+		 * daemon.
+		 * @param pgid The id of the requested playground
+		 */
+		PlaygroundFilesTask(uint64_t);
 
 		/**
 		 * Implementation of Task::getEventType().
 		 */
 		wxEventType getEventType(void) const;
+
+		/**
+		 * Returns the requested playground-id.
+		 * Depending on the operation, this playground-id is send to
+		 * the daemon.
+		 * @return The requested PGID send to the daemon
+		 */
+		uint64_t getRequestedPGID(void) const;
+
+		/**
+		 * Updates the requested playground-id.
+		 * Calling this method is useful when reusing the task for more
+		 * than one request. Then you can update the playground-id send
+		 * to the daemon.
+		 * @param pgid The new playground-id send to the daemon
+		 */
+		void setRequestedPGID(uint64_t);
 
 		/**
 		 * Resets the iterator.
@@ -76,48 +101,36 @@ class PlaygroundListTask : public PlaygroundTask
 		bool setNextRecord(void);
 
 		/**
-		 * Returns the playground-id of the current playground-record.
-		 * @return PGID of the current playground
-		 */
+		* Returns the playground-id of the current file-record.
+		* @return PGID of the current file
+		*/
 		uint64_t getPGID(void) const;
 
 		/**
-		 * Returns the user-id of the current playground-record.
-		 * @return Uid of current playground
+		 * Returns the device of the current file-record.
+		 * @return Device-id of the current file
 		 */
-		int getUID(void) const;
+		uint64_t getDevice(void) const;
 
 		/**
-		 * Returns true, if the current playground-record is active.
-		 * @return true, if the current playground is active.
+		 * Returns the inode of the current file-record.
+		 * @return Inode of the current file
 		 */
-		bool isActive(void) const;
+		uint64_t getInode(void) const;
 
 		/**
-		 * Returns the number of files of the current
-		 * playground-record.
-		 * @return Number of files of the current playground
+		 * Returns the relative path of the current file-record.
+		 * The path is relative to the mount-point of the device.
+		 * @return Relative path of the current file
 		 */
-		int getNumFiles(void) const;
-
-		/**
-		 * Returns the start-time of the current playground-record.
-		 * @return Timestamp of current playground
-		 */
-		wxDateTime getTime(void) const;
-
-		/**
-		 * Returns the command of the current playground-record.
-		 * @return Command executed by the current playground
-		 */
-		wxString getCommand(void) const;
+		wxString getPath(void) const;
 
 	private:
 		/**
-		 * Iterator used for iterating through the list of playgrounds
-		 * in the reply-message.
+		 * Iterator used for iterating through the list of files in the
+		 * reply-message.
 		 */
-		iterator<Anoubis_PgInfoRecord> it_;
+		iterator<Anoubis_PgFileRecord> it_;
 };
 
-#endif /* _PLAYGROUNDLISTTASK_H_ */
+#endif /* _PLAYGROUNDFILESTASK_H_ */
