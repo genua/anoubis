@@ -612,6 +612,15 @@ BEGIN_DECLARE_EVENT_TYPES()
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_ROW_UPDATE, wxNewEventType())
 
+	/**
+	 * Playground error event.
+	 *
+	 * An error occured while updating playground or file list.
+	 *
+	 * Use PlaygroundCrl::getErrors() to get a list of error-messages.
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_PLAYGROUND_ERROR, wxNewEventType())
+
 END_DECLARE_EVENT_TYPES()
 /**
  * @}
