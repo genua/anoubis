@@ -396,6 +396,8 @@ xanoubis_SOURCES= \
 	view/ModSbPanelsBase.h \
 	view/OverviewAttrProvider.cpp \
 	view/OverviewAttrProvider.h \
+	view/PlaygroundListProperty.cpp \
+	view/PlaygroundListProperty.h \
 	view/ProfileListCtrl.cpp \
 	view/ProfileListCtrl.h \
 	view/RuleWizard.cpp \
@@ -458,8 +460,6 @@ xanoubis_SOURCES= \
 	control/NotificationCtrl.h \
 	control/MainUtils.cpp \
 	control/MainUtils.h \
-	control/PlaygroundCtrl.cpp \
-	control/PlaygroundCtrl.h \
 	control/RuleSetClearModifiedVisitor.cpp \
 	control/RuleSetClearModifiedVisitor.h \
 	control/RuleSetSearchPolicyVisitor.cpp \
@@ -470,6 +470,8 @@ xanoubis_SOURCES= \
 	control/SimpleOverviewVisitor.h \
 	control/VersionCtrl.cpp \
 	control/VersionCtrl.h \
+	control/PlaygroundCtrl.h \
+	control/PlaygroundCtrl.cpp \
 	control/PolicyCtrl.cpp \
 	control/PolicyCtrl.h \
 	control/ProcCtrl.cpp \

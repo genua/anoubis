@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: anoubis 0.9.3.25.426.809\n"
+"Project-Id-Version: anoubis 0.9.3.25.453.839\n"
 "Report-Msgid-Bugs-To: anoubis@lists.anoubis.org\n"
-"POT-Creation-Date: 2010-07-13 15:52+0200\n"
+"POT-Creation-Date: 2010-07-20 10:40+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -86,7 +86,8 @@ msgstr ""
 #: src/xanoubis/model/SbOverviewTable.cpp:74
 #: src/xanoubis/model/SfsOverviewTable.cpp:74
 #: src/xanoubis/view/DlgRuleEditorListProperty.cpp:59
-#: src/xanoubis/view/VersionListCtrl.cpp:119
+#: src/xanoubis/view/PlaygroundListProperty.cpp:55
+#: src/xanoubis/view/VersionListCtrl.cpp:56
 msgid "User"
 msgstr ""
 
@@ -111,13 +112,9 @@ msgstr ""
 #: src/xanoubis/view/ModSfsListProperty.cpp:105
 #: src/xanoubis/view/ModSfsListProperty.cpp:125
 #: src/xanoubis/view/ProfileListCtrl.cpp:68
-#: src/xanoubis/view/VersionListCtrl.cpp:79
-#: src/xanoubis/view/VersionListCtrl.cpp:96
-#: src/xanoubis/view/VersionListCtrl.cpp:113
-#: src/xanoubis/view/VersionListCtrl.cpp:130
-#: src/xanoubis/view/VersionListCtrl.cpp:147
 #: src/xanoubis/widgets/AnTable.cpp:262 src/xanoubis/widgets/AnTable.cpp:265
 #: src/xanoubis/widgets/AnTable.cpp:268
+#: src/xanoubis/widgets/AnListProperty.h:210
 msgid "???"
 msgstr ""
 
@@ -133,27 +130,27 @@ msgid "was asked"
 msgstr ""
 
 #: src/xanoubis/model/EscalationNotify.cpp:166
-#: src/xanoubis/model/Notification.cpp:257
+#: src/xanoubis/model/Notification.cpp:262
 msgid "was allowed"
 msgstr ""
 
 #: src/xanoubis/model/EscalationNotify.cpp:168
-#: src/xanoubis/model/Notification.cpp:259
+#: src/xanoubis/model/Notification.cpp:264
 msgid "was denied"
 msgstr ""
 
 #: src/xanoubis/model/Module.cpp:36 src/xanoubis/model/Module.cpp:37
-#: src/xanoubis/model/Module.cpp:38 src/xanoubis/model/Notification.cpp:300
-#: src/xanoubis/model/Notification.cpp:547
+#: src/xanoubis/model/Module.cpp:38 src/xanoubis/model/Notification.cpp:305
+#: src/xanoubis/model/Notification.cpp:570
 msgid "unknown"
 msgstr ""
 
 #: src/xanoubis/model/Notification.cpp:98
-#: src/xanoubis/model/Notification.cpp:274
-#: src/xanoubis/model/Notification.cpp:415
-#: src/xanoubis/model/Notification.cpp:497
-#: src/xanoubis/model/Notification.cpp:526
-#: src/xanoubis/model/Notification.cpp:560
+#: src/xanoubis/model/Notification.cpp:279
+#: src/xanoubis/model/Notification.cpp:428
+#: src/xanoubis/model/Notification.cpp:520
+#: src/xanoubis/model/Notification.cpp:549
+#: src/xanoubis/model/Notification.cpp:583
 msgid "no notify data available"
 msgstr ""
 
@@ -161,7 +158,7 @@ msgstr ""
 msgid "unknown address type"
 msgstr ""
 
-#: src/xanoubis/model/Notification.cpp:179
+#: src/xanoubis/model/Notification.cpp:180
 #: src/xanoubis/model/AlfCapabilityFilterPolicy.cpp:223
 #: src/xanoubis/model/AlfFilterPolicy.cpp:326
 #: src/xanoubis/model/AlfFilterPolicy.cpp:381
@@ -174,73 +171,79 @@ msgstr ""
 msgid "(unknown)"
 msgstr ""
 
-#: src/xanoubis/model/Notification.cpp:205
+#: src/xanoubis/model/Notification.cpp:206
 msgid "(A): "
 msgstr ""
 
-#: src/xanoubis/model/Notification.cpp:209
+#: src/xanoubis/model/Notification.cpp:210
 #, c-format
 msgid "Rule %d: "
 msgstr ""
 
-#: src/xanoubis/model/Notification.cpp:317
+#: src/xanoubis/model/Notification.cpp:322
 msgid " (unknown protocol)"
 msgstr ""
 
-#: src/xanoubis/model/Notification.cpp:337
+#: src/xanoubis/model/Notification.cpp:342
 msgid " (valid checksum/signature)"
 msgstr ""
 
-#: src/xanoubis/model/Notification.cpp:341
+#: src/xanoubis/model/Notification.cpp:346
 msgid " (invalid checksum/signature)"
 msgstr ""
 
-#: src/xanoubis/model/Notification.cpp:345
+#: src/xanoubis/model/Notification.cpp:350
 msgid " (unknown checksum/signature)"
 msgstr ""
 
-#: src/xanoubis/model/Notification.cpp:355
+#: src/xanoubis/model/Notification.cpp:363
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:884
 msgid "open"
 msgstr ""
 
-#: src/xanoubis/model/Notification.cpp:358
+#: src/xanoubis/model/Notification.cpp:366
 msgid "rename"
 msgstr ""
 
-#: src/xanoubis/model/Notification.cpp:361
+#: src/xanoubis/model/Notification.cpp:369
 msgid "unknown operation"
 msgstr ""
 
-#: src/xanoubis/model/Notification.cpp:365
+#: src/xanoubis/model/Notification.cpp:373
+msgid "playground enforced for program"
+msgstr ""
+
+#: src/xanoubis/model/Notification.cpp:375
+#: src/xanoubis/model/Notification.cpp:378
 msgid "unknown module"
 msgstr ""
 
-#: src/xanoubis/model/Notification.cpp:438
+#: src/xanoubis/model/Notification.cpp:451
 msgid "no path information available"
 msgstr ""
 
-#: src/xanoubis/model/Notification.cpp:455
+#: src/xanoubis/model/Notification.cpp:472
 #, c-format
 msgid "from %hs to %hs"
 msgstr ""
 
-#: src/xanoubis/model/Notification.cpp:457
-#: src/xanoubis/model/Notification.cpp:460
+#: src/xanoubis/model/Notification.cpp:475
+#: src/xanoubis/model/Notification.cpp:480
+#: src/xanoubis/model/Notification.cpp:483
 msgid "unable to extract path information"
 msgstr ""
 
-#: src/xanoubis/model/Notification.cpp:507
+#: src/xanoubis/model/Notification.cpp:530
 #, c-format
 msgid "%ls(Pid: %d, Uid: %ls/%d)"
 msgstr ""
 
-#: src/xanoubis/model/Notification.cpp:511
+#: src/xanoubis/model/Notification.cpp:534
 #, c-format
 msgid "Pid: %d, Uid: %ls/%d"
 msgstr ""
 
-#: src/xanoubis/model/Notification.cpp:540
+#: src/xanoubis/model/Notification.cpp:563
 #, c-format
 msgid ""
 "%ls\n"
@@ -519,7 +522,7 @@ msgid "Log Viewer"
 msgstr ""
 
 #: src/xanoubis/view/DlgLogViewer.cpp:214
-#: src/xanoubis/view/VersionListCtrl.cpp:102
+#: src/xanoubis/view/VersionListCtrl.cpp:53
 msgid "Time"
 msgstr ""
 
@@ -1105,11 +1108,12 @@ msgid "Binary:"
 msgstr ""
 
 #: src/xanoubis/view/DlgRuleEditorListProperty.cpp:57
+#: src/xanoubis/view/PlaygroundListProperty.cpp:54
 msgid "Id"
 msgstr ""
 
 #: src/xanoubis/view/DlgRuleEditorListProperty.cpp:58
-#: src/xanoubis/view/VersionListCtrl.cpp:68
+#: src/xanoubis/view/VersionListCtrl.cpp:48
 msgid "Type"
 msgstr ""
 
@@ -1137,7 +1141,8 @@ msgid "Direction"
 msgstr ""
 
 #: src/xanoubis/view/DlgRuleEditorListProperty.cpp:69
-#: src/xanoubis/view/RuleWizardServiceProperty.cpp:45
+#: src/xanoubis/view/RuleWizardAlfClientPortsPage.cpp:73
+#: src/xanoubis/view/RuleWizardAlfDlgAddService.cpp:54
 msgid "Protocol"
 msgstr ""
 
@@ -1240,6 +1245,7 @@ msgid "Help"
 msgstr ""
 
 #: src/xanoubis/view/MainFrameBase.cpp:85
+#: src/xanoubis/view/PlaygroundListProperty.cpp:56
 msgid "Status"
 msgstr ""
 
@@ -1415,7 +1421,7 @@ msgstr ""
 #: src/xanoubis/view/ModPlaygroundOverviewPanelImpl.cpp:81
 #: src/xanoubis/view/ModSfsOverviewPanelImpl.cpp:70
 #: src/xanoubis/view/ModSbOverviewPanelImpl.cpp:71
-#: src/xanoubis/view/TrayIcon.cpp:302
+#: src/xanoubis/view/TrayIcon.cpp:321
 msgid "not connected"
 msgstr ""
 
@@ -2163,9 +2169,6 @@ msgstr ""
 #: src/xanoubis/view/RuleWizardContextExceptionPage.cpp:62
 #: src/xanoubis/view/RuleWizardSandboxProperty.cpp:49
 #: src/xanoubis/view/RuleWizardSandboxProperty.cpp:58
-#: src/xanoubis/view/RuleWizardServiceProperty.cpp:49
-#: src/xanoubis/view/RuleWizardServiceProperty.cpp:58
-#: src/xanoubis/view/RuleWizardServiceProperty.cpp:72
 msgid "(null)"
 msgstr ""
 
@@ -2590,6 +2593,26 @@ msgstr ""
 msgid "open requests (SB): "
 msgstr ""
 
+#: src/xanoubis/view/PlaygroundListProperty.cpp:57
+msgid "Files"
+msgstr ""
+
+#: src/xanoubis/view/PlaygroundListProperty.cpp:58
+msgid "Start Time"
+msgstr ""
+
+#: src/xanoubis/view/PlaygroundListProperty.cpp:59
+msgid "Command"
+msgstr ""
+
+#: src/xanoubis/view/PlaygroundListProperty.cpp:86
+msgid "active"
+msgstr ""
+
+#: src/xanoubis/view/PlaygroundListProperty.cpp:88
+msgid "inactive"
+msgstr ""
+
 #: src/xanoubis/view/ProfileListCtrl.cpp:57
 msgid "Profile"
 msgstr ""
@@ -2696,14 +2719,29 @@ msgid ""
 "network services (client functionality)?"
 msgstr ""
 
-#: src/xanoubis/view/RuleWizardAlfClientPortsPage.cpp:88
+#: src/xanoubis/view/RuleWizardAlfClientPortsPage.cpp:63
+#: src/xanoubis/view/RuleWizardAlfDlgAddService.cpp:48
+msgid "Servicename"
+msgstr ""
+
+#: src/xanoubis/view/RuleWizardAlfClientPortsPage.cpp:68
+#: src/xanoubis/view/RuleWizardAlfDlgAddService.cpp:51
+msgid "Portnumber"
+msgstr ""
+
+#: src/xanoubis/view/RuleWizardAlfClientPortsPage.cpp:78
+#: src/xanoubis/view/RuleWizardSandboxProperty.cpp:46
+msgid "Standard"
+msgstr ""
+
+#: src/xanoubis/view/RuleWizardAlfClientPortsPage.cpp:103
 #, c-format
 msgid ""
 "Options for restricted network access\n"
 "of application \"%ls\":"
 msgstr ""
 
-#: src/xanoubis/view/RuleWizardAlfDlgAddService.cpp:122
+#: src/xanoubis/view/RuleWizardAlfDlgAddService.cpp:129
 msgid "custom"
 msgstr ""
 
@@ -2747,11 +2785,6 @@ msgstr ""
 msgid "Grant EXECUTE access:"
 msgstr ""
 
-#: src/xanoubis/view/RuleWizardSandboxProperty.cpp:46
-#: src/xanoubis/view/RuleWizardServiceProperty.cpp:46
-msgid "Standard"
-msgstr ""
-
 #: src/xanoubis/view/RuleWizardSandboxReadPage.cpp:70
 #, c-format
 msgid ""
@@ -2786,14 +2819,6 @@ msgstr ""
 
 #: src/xanoubis/view/RuleWizardSandboxWriteFilesPage.cpp:94
 msgid "Grant WRITE access:"
-msgstr ""
-
-#: src/xanoubis/view/RuleWizardServiceProperty.cpp:43
-msgid "Servicename"
-msgstr ""
-
-#: src/xanoubis/view/RuleWizardServiceProperty.cpp:44
-msgid "Portnumber"
 msgstr ""
 
 #: src/xanoubis/view/RuleWizardHistory.cpp:454
@@ -3314,47 +3339,52 @@ msgstr ""
 msgid "Rule wizard add service"
 msgstr ""
 
-#: src/xanoubis/view/TrayIcon.cpp:286
+#: src/xanoubis/view/TrayIcon.cpp:305
 msgid "&Restore xanoubis"
 msgstr ""
 
-#: src/xanoubis/view/TrayIcon.cpp:287
+#: src/xanoubis/view/TrayIcon.cpp:306
 msgid "E&xit xanoubis"
 msgstr ""
 
-#: src/xanoubis/view/TrayIcon.cpp:298
+#: src/xanoubis/view/TrayIcon.cpp:317
 msgid "Messages: "
 msgstr ""
 
-#: src/xanoubis/view/TrayIcon.cpp:304
+#: src/xanoubis/view/TrayIcon.cpp:323
 msgid "connected with "
 msgstr ""
 
-#: src/xanoubis/view/TrayIcon.cpp:319
+#: src/xanoubis/view/TrayIcon.cpp:338
 msgid "Couldn't send Escalation"
 msgstr ""
 
-#: src/xanoubis/view/TrayIcon.cpp:333
+#: src/xanoubis/view/TrayIcon.cpp:352
 msgid "Couldn't send Alert"
 msgstr ""
 
-#: src/xanoubis/view/TrayIcon.cpp:337
+#: src/xanoubis/view/TrayIcon.cpp:356
 msgid "No messages\n"
 msgstr ""
 
-#: src/xanoubis/view/VersionListCtrl.cpp:77
+#: src/xanoubis/view/TrayIcon.cpp:703
+#, c-format
+msgid "Program %ls will be started in a playground"
+msgstr ""
+
+#: src/xanoubis/view/VersionListCtrl.cpp:36
 msgid "Auto"
 msgstr ""
 
-#: src/xanoubis/view/VersionListCtrl.cpp:77
+#: src/xanoubis/view/VersionListCtrl.cpp:36
 msgid "Manual"
 msgstr ""
 
-#: src/xanoubis/view/VersionListCtrl.cpp:85
+#: src/xanoubis/view/VersionListCtrl.cpp:50
 msgid "Date"
 msgstr ""
 
-#: src/xanoubis/view/VersionListCtrl.cpp:136
+#: src/xanoubis/view/VersionListCtrl.cpp:58
 msgid "Version"
 msgstr ""
 
