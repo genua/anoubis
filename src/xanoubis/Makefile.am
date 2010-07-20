@@ -261,6 +261,7 @@ xanoubis_SOURCES= \
 	model/ContextAppPolicy.h \
 	model/ContextFilterPolicy.cpp \
 	model/ContextFilterPolicy.h \
+	model/DefaultConversions.h \
 	model/DefaultFilterPolicy.cpp \
 	model/DefaultFilterPolicy.h \
 	model/FilterPolicy.cpp \
