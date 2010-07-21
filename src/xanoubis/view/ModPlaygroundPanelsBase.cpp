@@ -31,6 +31,8 @@
 // PLEASE DO "NOT" EDIT THIS FILE!
 ///////////////////////////////////////////////////////////////////////////
 
+#include "AnGrid.h"
+
 #include "ModPlaygroundPanelsBase.h"
 
 ///////////////////////////////////////////////////////////////////////////
@@ -65,10 +67,10 @@ ModPlaygroundMainPanelBase::ModPlaygroundMainPanelBase( wxWindow* parent, wxWind
 	
 	pgPageSizer->Add( startSizer, 0, wxALL|wxEXPAND, 5 );
 	
-	wxStaticBoxSizer* pgOverviewSizer;
-	pgOverviewSizer = new wxStaticBoxSizer( new wxStaticBox( pgPage, -1, _("Playground Overview:") ), wxHORIZONTAL );
+	wxStaticBoxSizer* pgOverviewListSizer;
+	pgOverviewListSizer = new wxStaticBoxSizer( new wxStaticBox( pgPage, -1, _("Playground Overview:") ), wxVERTICAL );
 	
-	pgGrid = new wxGrid( pgPage, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	pgGrid = new AnGrid( pgPage, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
 	
 	// Grid
 	pgGrid->CreateGrid( 1, 2 );
@@ -78,6 +80,8 @@ ModPlaygroundMainPanelBase::ModPlaygroundMainPanelBase( wxWindow* parent, wxWind
 	pgGrid->SetMargins( 0, 0 );
 	
 	// Columns
+	pgGrid->SetColSize( 0, 80 );
+	pgGrid->SetColSize( 1, 80 );
 	pgGrid->EnableDragColMove( false );
 	pgGrid->EnableDragColSize( true );
 	pgGrid->SetColLabelSize( 30 );
@@ -85,30 +89,35 @@ ModPlaygroundMainPanelBase::ModPlaygroundMainPanelBase( wxWindow* parent, wxWind
 	
 	// Rows
 	pgGrid->EnableDragRowSize( true );
-	pgGrid->SetRowLabelSize( 80 );
+	pgGrid->SetRowLabelSize( 0 );
 	pgGrid->SetRowLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
 	
 	// Label Appearance
+	pgGrid->SetLabelFont( wxFont( wxNORMAL_FONT->GetPointSize(), 70, 90, 90, false, wxEmptyString ) );
 	
 	// Cell Defaults
 	pgGrid->SetDefaultCellAlignment( wxALIGN_LEFT, wxALIGN_TOP );
-	pgOverviewSizer->Add( pgGrid, 1, wxALL|wxEXPAND, 5 );
-	
-	pgPageSizer->Add( pgOverviewSizer, 1, wxALL|wxEXPAND, 5 );
+	pgOverviewListSizer->Add( pgGrid, 1, wxALL|wxEXPAND, 5 );
 	
 	wxBoxSizer* pgButtonSizer;
 	pgButtonSizer = new wxBoxSizer( wxHORIZONTAL );
 	
 	pgCommitButton = new wxButton( pgPage, wxID_ANY, _("Commit files..."), wxDefaultPosition, wxDefaultSize, 0 );
+	pgCommitButton->Enable( false );
+	
 	pgButtonSizer->Add( pgCommitButton, 0, wxALIGN_RIGHT|wxALIGN_TOP|wxALL, 5 );
 	
 	
 	pgButtonSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	pgDeleteButton = new wxButton( pgPage, wxID_ANY, _("Delete"), wxDefaultPosition, wxDefaultSize, 0 );
+	pgDeleteButton->Enable( false );
+	
 	pgButtonSizer->Add( pgDeleteButton, 0, wxALIGN_BOTTOM|wxALIGN_RIGHT|wxALL, 5 );
 	
-	pgPageSizer->Add( pgButtonSizer, 0, wxALIGN_BOTTOM|wxALIGN_RIGHT|wxEXPAND, 5 );
+	pgOverviewListSizer->Add( pgButtonSizer, 0, wxALIGN_BOTTOM|wxALIGN_RIGHT|wxEXPAND, 5 );
+	
+	pgPageSizer->Add( pgOverviewListSizer, 1, wxALL|wxEXPAND, 5 );
 	
 	pgPage->SetSizer( pgPageSizer );
 	pgPage->Layout();
@@ -123,6 +132,7 @@ ModPlaygroundMainPanelBase::ModPlaygroundMainPanelBase( wxWindow* parent, wxWind
 	// Connect Events
 	applicationComboBox->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( ModPlaygroundMainPanelBase::onAppStartEnter ), NULL, this );
 	applicationStartButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModPlaygroundMainPanelBase::onAppStart ), NULL, this );
+	pgGrid->Connect( wxEVT_GRID_SELECT_CELL, wxGridEventHandler( ModPlaygroundMainPanelBase::OnCellSelect ), NULL, this );
 }
 
 ModPlaygroundOverviewPanelBase::ModPlaygroundOverviewPanelBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )

@@ -58,8 +58,8 @@ PlaygroundCtrl::~PlaygroundCtrl(void)
 	clearPlaygroundFiles();
 }
 
-const AnRowProvider *
-PlaygroundCtrl::getInfoProvider(void) const
+AnRowProvider *
+PlaygroundCtrl::getInfoProvider(void)
 {
 	return (&playgroundInfo_);
 }
@@ -235,6 +235,7 @@ PlaygroundCtrl::extractListTask(PlaygroundListTask *task)
 	PlaygroundInfoEntry *entry = NULL;
 
 	clearPlaygroundInfo();
+	task->setFirstRecord();
 	while (task->setNextRecord()) {
 		entry = new PlaygroundInfoEntry(task->getPGID(),
 		    task->getUID(), task->getTime(), task->isActive(),

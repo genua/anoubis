@@ -26,7 +26,8 @@
  */
 
 #include "AnTable.h"
-
+#include "AnEvents.h"
+#include <wx/event.h>
 
 AnTable::AnTable(const wxString & configPath)
 {
@@ -173,27 +174,25 @@ AnTable::assignColumnWidth(void) const
 void
 AnTable::setRowProvider(AnRowProvider *rowProvider)
 {
-	wxGrid	*grid;
-	int	 oldSize;
-	int	 newSize;
+	if (rowProvider_ != NULL) {
+		rowProvider_->Disconnect(anEVT_ROW_UPDATE,
+		    wxCommandEventHandler(AnTable::onRowUpdate), NULL, this);
+		rowProvider_->Disconnect(anEVT_ROW_SIZECHANGE,
+		    wxCommandEventHandler(AnTable::onRowSizeChange),
+		    NULL, this);
+	}
 
 	rowProvider_ = rowProvider;
-	grid = GetView();
 
-	if (grid == NULL) {
-		return;
+	if (rowProvider_ != NULL) {
+		rowProvider_->Connect(anEVT_ROW_UPDATE,
+		    wxCommandEventHandler(AnTable::onRowUpdate), NULL, this);
+		rowProvider_->Connect(anEVT_ROW_SIZECHANGE,
+		    wxCommandEventHandler(AnTable::onRowSizeChange),
+		    NULL, this);
 	}
 
-	oldSize = grid->GetNumberRows();
-	newSize = rowProvider_->getSize();
-
-	if (oldSize < newSize) {
-		fireRowsInserted(0, (newSize - oldSize));
-	} else if (oldSize > newSize) {
-		fireRowsRemoved(0, (oldSize - newSize));
-	}
-
-	grid->ForceRefresh();
+	updateGrid();
 }
 
 AnRowProvider *
@@ -279,6 +278,46 @@ void
 AnTable::SetValue(int, int, const wxString &)
 {
 	/* Our tables are read only. */
+}
+
+void
+AnTable::onRowUpdate(wxCommandEvent &)
+{
+	updateGrid();
+}
+
+void
+AnTable::onRowSizeChange(wxCommandEvent &)
+{
+	updateGrid();
+}
+
+void
+AnTable::updateGrid(void)
+{
+	wxGrid	*grid;
+	int	 oldSize;
+	int	 newSize;
+
+	grid = GetView();
+	if (grid == NULL) {
+		return;
+	}
+
+	oldSize = grid->GetNumberRows();
+	if (rowProvider_ != NULL) {
+		newSize = rowProvider_->getSize();
+	} else {
+		newSize = 0;
+	}
+
+	if (oldSize < newSize) {
+		fireRowsInserted(0, (newSize - oldSize));
+	} else if (oldSize > newSize) {
+		fireRowsRemoved(0, (oldSize - newSize));
+	}
+
+	grid->ForceRefresh();
 }
 
 void

@@ -34,12 +34,21 @@
 #include <anoubis_errno.h>
 #include <anoubis_playground.h>
 #include <signal.h>
+#include <wx/log.h>
 #include <wx/tokenzr.h>
 
+#include "AnGrid.h"
 #include "AnMessageDialog.h"
 #include "AnPickFromFs.h"
+#include "AnTable.h"
 #include "Debug.h"
 #include "ModPlaygroundMainPanelImpl.h"
+#include "PlaygroundCtrl.h"
+#include "PlaygroundListProperty.h"
+
+#define ADD_PROPERTY(table, type, width) \
+	table->addProperty(new PlaygroundListProperty( \
+	    PlaygroundListProperty::type), width)
 
 #ifdef LINUX
 static void
@@ -60,10 +69,39 @@ chldhandler(int)
 ModPlaygroundMainPanelImpl::ModPlaygroundMainPanelImpl(wxWindow* parent,
     wxWindowID id) : ModPlaygroundMainPanelBase(parent, id)
 {
+	AnTable *table = NULL;
+	PlaygroundCtrl *playgroundCtrl = NULL;
+
+	table = new AnTable(wxT("/State/ModPlayground/Columns/Playgrounds/"));
+	playgroundCtrl = PlaygroundCtrl::instance();
+
+	ADD_PROPERTY(table, PROPERTY_ID, 45);
+	ADD_PROPERTY(table, PROPERTY_USER, 55);
+	ADD_PROPERTY(table, PROPERTY_STAT, 70);
+	ADD_PROPERTY(table, PROPERTY_FILES, 80);
+	ADD_PROPERTY(table, PROPERTY_TIME, 200);
+	ADD_PROPERTY(table, PROPERTY_COMMAND, 270);
+
+	pgGrid->SetTable(table, true, wxGrid::wxGridSelectRows);
+	pgGrid->setCursorVisibility(false);
+	table->setRowProvider(playgroundCtrl->getInfoProvider());
+	table->assignColumnWidth();
+
+	playgroundCtrl->Connect(anEVT_PLAYGROUND_ERROR, wxCommandEventHandler(
+	    ModPlaygroundMainPanelImpl::onPlaygroundError), NULL, this);
 }
 
 ModPlaygroundMainPanelImpl::~ModPlaygroundMainPanelImpl(void)
 {
+	PlaygroundCtrl::instance()->Disconnect(anEVT_PLAYGROUND_ERROR,
+	    wxCommandEventHandler(
+	    ModPlaygroundMainPanelImpl::onPlaygroundError), NULL, this);
+}
+
+void
+ModPlaygroundMainPanelImpl::update(void)
+{
+	PlaygroundCtrl::instance()->updatePlaygroundInfo();
 }
 
 void
@@ -76,6 +114,21 @@ void
 ModPlaygroundMainPanelImpl::onAppStart(wxCommandEvent &)
 {
 	startApplication();
+}
+
+void
+ModPlaygroundMainPanelImpl::onPlaygroundError(wxCommandEvent &)
+{
+	const wxArrayString &errors = PlaygroundCtrl::instance()->getErrors();
+
+	for (unsigned int i=0; i<errors.Count(); i++) {
+		wxLogError(errors[i]);
+	}
+
+	if (errors.Count() > 1) {
+		wxLogError(_("Multiple errors occured while processing the "
+		    "Playground request"));
+	}
 }
 
 void

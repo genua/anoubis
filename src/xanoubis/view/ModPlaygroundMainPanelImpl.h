@@ -47,6 +47,13 @@ class ModPlaygroundMainPanelImpl : public ModPlaygroundMainPanelBase
 		 */
 		~ModPlaygroundMainPanelImpl(void);
 
+		/**
+		 * Updates the main panel.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void update(void);
+
 	private:
 		/**
 		 * Handle <Return> events of AppComboBox.
@@ -61,6 +68,13 @@ class ModPlaygroundMainPanelImpl : public ModPlaygroundMainPanelBase
 		 * @return Nothing.
 		 */
 		virtual void onAppStart(wxCommandEvent &);
+
+		/**
+		 * Handle error event form PlaygroundCtrl.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onPlaygroundError(wxCommandEvent &);
 
 		/**
 		 * Start application.

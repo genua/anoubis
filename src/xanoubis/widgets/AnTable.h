@@ -45,7 +45,7 @@
  * The columns are feed by adding properties and a
  * row provider is asked for the data.
  */
-class AnTable : public wxGridTableBase
+class AnTable : public wxGridTableBase, public wxEvtHandler
 {
 	public:
 		/**
@@ -214,6 +214,29 @@ class AnTable : public wxGridTableBase
 		 * Store configuration path.
 		 */
 		wxString configPath_;
+
+		/**
+		 * Handle row update events.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onRowUpdate(wxCommandEvent &);
+
+		/**
+		 * Handle row size change events.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onRowSizeChange(wxCommandEvent &);
+
+		/**
+		 * Update grid.
+		 * This method will determine the new size of the table
+		 * and inform the grid about the change.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void updateGrid(void);
 
 		/**
 		 * Fires an row-insert-message.

@@ -34,6 +34,8 @@
 #ifndef __ModPlaygroundPanelsBase__
 #define __ModPlaygroundPanelsBase__
 
+class AnGrid;
+
 #include <wx/string.h>
 #include <wx/stattext.h>
 #include <wx/gdicmn.h>
@@ -73,7 +75,7 @@ class ModPlaygroundMainPanelBase : public wxPanel
 		wxStaticText* applicationLabel;
 		wxComboBox* applicationComboBox;
 		wxButton* applicationStartButton;
-		wxGrid* pgGrid;
+		AnGrid* pgGrid;
 		wxButton* pgCommitButton;
 		
 		wxButton* pgDeleteButton;
@@ -81,6 +83,7 @@ class ModPlaygroundMainPanelBase : public wxPanel
 		// Virtual event handlers, overide them in your derived class
 		virtual void onAppStartEnter( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAppStart( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnCellSelect( wxGridEvent& event ){ event.Skip(); }
 		
 	
 	public:

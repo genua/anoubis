@@ -41,7 +41,7 @@
 /**
  * Controller class to do all aspects about playgrounds.
  */
-class PlaygroundCtrl : public Singleton<PlaygroundCtrl> , private wxEvtHandler
+class PlaygroundCtrl : public Singleton<PlaygroundCtrl> , public wxEvtHandler
 {
 	public:
 		/**
@@ -56,7 +56,7 @@ class PlaygroundCtrl : public Singleton<PlaygroundCtrl> , private wxEvtHandler
 		 * @param None.
 		 * @return Playground list row provider.
 		 */
-		const AnRowProvider * getInfoProvider(void) const;
+		AnRowProvider *getInfoProvider(void);
 
 		/**
 		 * Command: Update the list of playground infos.

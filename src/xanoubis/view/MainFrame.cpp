@@ -53,6 +53,8 @@
 #include "MainUtils.h"
 #include "ModAnoubis.h"
 #include "ModAnoubisMainPanelImpl.h"
+#include "ModPlayground.h"
+#include "ModPlaygroundMainPanelImpl.h"
 #include "ModSfs.h"
 #include "Module.h"
 #include "RuleWizard.h"
@@ -332,6 +334,9 @@ MainFrame::OnTbModuleSelect(wxCommandEvent& event)
 
 	if (id == MODANOUBIS_ID_MAINPANEL) {
 		((ModAnoubisMainPanelImpl *)modulePanel)->update();
+	}
+	if (id == MODPG_ID_MAINPANEL) {
+		((ModPlaygroundMainPanelImpl *)modulePanel)->update();
 	}
 	event.Skip();
 }
