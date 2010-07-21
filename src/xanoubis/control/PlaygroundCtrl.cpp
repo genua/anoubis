@@ -25,13 +25,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <anoubis_errno.h>
+#include <set>
 
+#include "anoubis_errno.h"
 #include "AnEvents.h"
 #include "JobCtrl.h"
 #include "PlaygroundCtrl.h"
 #include "PlaygroundInfoEntry.h"
-
+#include "PlaygroundFileEntry.h"
 #include "Singleton.cpp"
 template class Singleton<PlaygroundCtrl>;
 
@@ -39,6 +40,10 @@ PlaygroundCtrl::~PlaygroundCtrl(void)
 {
 	JobCtrl::getInstance()->Disconnect(anTASKEVT_PG_LIST,
 	    wxTaskEventHandler(PlaygroundCtrl::OnPlaygroundListArrived),
+	    NULL, this);
+
+	JobCtrl::getInstance()->Disconnect(anTASKEVT_PG_FILES,
+	    wxTaskEventHandler(PlaygroundCtrl::OnPlaygroundFilesArrived),
 	    NULL, this);
 
 	/* Remove remaining tasks */
@@ -49,19 +54,32 @@ PlaygroundCtrl::~PlaygroundCtrl(void)
 		delete t;
 	}
 
-	clearPlaygroundList();
+	clearPlaygroundInfo();
+	clearPlaygroundFiles();
 }
 
 const AnRowProvider *
 PlaygroundCtrl::getInfoProvider(void) const
 {
-	return (&playgroundList_);
+	return (&playgroundInfo_);
 }
 
 bool
-PlaygroundCtrl::updatePlaygroundList(void)
+PlaygroundCtrl::updatePlaygroundInfo(void)
 {
 	return (createListTask());
+}
+
+const AnRowProvider *
+PlaygroundCtrl::getFileProvider(void) const
+{
+	return (&playgroundFiles_);
+}
+
+bool
+PlaygroundCtrl::updatePlaygroundFiles(uint64_t pgid)
+{
+	return (createFileTask(pgid));
 }
 
 const wxArrayString &
@@ -74,6 +92,9 @@ PlaygroundCtrl::PlaygroundCtrl(void) : Singleton<PlaygroundCtrl>()
 {
 	JobCtrl::getInstance()->Connect(anTASKEVT_PG_LIST,
 	    wxTaskEventHandler(PlaygroundCtrl::OnPlaygroundListArrived),
+	    NULL, this);
+	JobCtrl::getInstance()->Connect(anTASKEVT_PG_FILES,
+	    wxTaskEventHandler(PlaygroundCtrl::OnPlaygroundFilesArrived),
 	    NULL, this);
 }
 
@@ -126,6 +147,57 @@ PlaygroundCtrl::OnPlaygroundListArrived(TaskEvent & event)
 	delete task;
 }
 
+void
+PlaygroundCtrl::OnPlaygroundFilesArrived(TaskEvent & event)
+{
+	/* Note: this looks like OnPlaygroundListArrived but there
+	 * is simply no way to remove redundancies here */
+	PlaygroundFilesTask *task = NULL;
+
+	task = dynamic_cast<PlaygroundFilesTask *>(event.getTask());
+	if (task == NULL) {
+		/* No PlaygroundFileTask -> stop propagating */
+		event.Skip(false);
+		return;
+	}
+
+	if (taskList_.find(task) == taskList_.end()) {
+		/* Belongs to someone other, ignore it */
+		event.Skip();
+		return;
+	}
+
+	event.Skip(false); /* "My" task -> stop propagating */
+
+	/* Progress for the finished task. */
+	switch (task->getComTaskResult()) {
+	case ComTask::RESULT_COM_ERROR:
+		errorList_.Add(wxString::Format(_("Communication error while "
+		    "fetching files for playground.")));
+		sendErrorEvent();
+		break;
+	case ComTask::RESULT_REMOTE_ERROR:
+		errorList_.Add(wxString::Format(_("Got error from daemon "
+		    "while fetching files for playgrounds: %hs"),
+		    anoubis_strerror(task->getResultDetails())));
+		sendErrorEvent();
+		break;
+	case ComTask::RESULT_SUCCESS:
+		errorList_.Clear();
+		extractFilesTask(task);
+		break;
+	default:
+		errorList_.Add(wxString::Format(_("Got unexpected result (%d) "
+		    "while fetching files for playground."),
+		    task->getComTaskResult()));
+		sendErrorEvent();
+		break;
+	}
+
+	taskList_.erase(task);
+	delete task;
+}
+
 bool
 PlaygroundCtrl::createListTask(void)
 {
@@ -142,27 +214,89 @@ PlaygroundCtrl::createListTask(void)
 	return (true);
 }
 
+bool
+PlaygroundCtrl::createFileTask(uint64_t pgid)
+{
+	PlaygroundFilesTask *task = NULL;
+	task = new PlaygroundFilesTask(pgid);
+	if (task == NULL) {
+		return (false);
+	}
+
+	taskList_.insert(task);
+	JobCtrl::instance()->addTask(task);
+
+	return (true);
+}
+
 void
 PlaygroundCtrl::extractListTask(PlaygroundListTask *task)
 {
 	PlaygroundInfoEntry *entry = NULL;
 
-	clearPlaygroundList();
+	clearPlaygroundInfo();
 	while (task->setNextRecord()) {
 		entry = new PlaygroundInfoEntry(task->getPGID(),
 		    task->getUID(), task->getTime(), task->isActive(),
 		    task->getNumFiles(), task->getCommand());
-		playgroundList_.addRow(entry);
+		playgroundInfo_.addRow(entry);
 	}
 }
 
 void
-PlaygroundCtrl::clearPlaygroundList(void)
+PlaygroundCtrl::extractFilesTask(PlaygroundFilesTask *task)
 {
-	while (playgroundList_.getSize() > 0) {
-		int idx = playgroundList_.getSize() - 1;
-		AnListClass *obj = playgroundList_.getRow(idx);
-		playgroundList_.removeRow(idx);
+	/* declare list variable "files" */
+	std::set<PlaygroundFileEntry*,
+	    bool(*)(const PlaygroundFileEntry*, const PlaygroundFileEntry*)>
+		files(&PlaygroundFileEntry::cmpSet);
+
+	/* insert data from task into temporary set 'files' */
+	while (task->setNextRecord()) {
+		/* assume that we have to create one */
+		PlaygroundFileEntry* e = new PlaygroundFileEntry(
+		    task->getPGID(), task->getDevice(), task->getInode());
+
+		std::pair<std::set<PlaygroundFileEntry*>::iterator,bool> ret;
+		ret = files.insert(e);
+
+		if (!ret.second) {
+			delete(e);  /* element already exists */
+		}
+
+		PlaygroundFileEntry *cur = *ret.first;
+		cur->addPath(task->getPath());
+	}
+
+	/* create the actual provider */
+	clearPlaygroundFiles();
+	std::set<PlaygroundFileEntry*>::iterator cur = files.begin();
+	while (cur != files.end()) {
+		PlaygroundFileEntry *e = *cur;
+		playgroundFiles_.addRow(e);
+		cur++;
+	}
+}
+
+void
+PlaygroundCtrl::clearPlaygroundInfo(void)
+{
+	while (playgroundInfo_.getSize() > 0) {
+		int idx = playgroundInfo_.getSize() - 1;
+		AnListClass *obj = playgroundInfo_.getRow(idx);
+		playgroundInfo_.removeRow(idx);
+
+		delete obj;
+	}
+}
+
+void
+PlaygroundCtrl::clearPlaygroundFiles(void)
+{
+	while (playgroundFiles_.getSize() > 0) {
+		int idx = playgroundFiles_.getSize() - 1;
+		AnListClass *obj = playgroundFiles_.getRow(idx);
+		playgroundFiles_.removeRow(idx);
 
 		delete obj;
 	}
@@ -176,4 +310,3 @@ PlaygroundCtrl::sendErrorEvent(void)
 
 	ProcessEvent(event);
 }
-

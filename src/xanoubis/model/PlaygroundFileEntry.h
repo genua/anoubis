@@ -54,6 +54,15 @@ class PlaygroundFileEntry : public AnListClass
 		    uint64_t device, uint64_t inode);
 
 		/**
+		 * Compare function for sets
+		 * @param lhs  left hand side of comparison
+		 * @param rhs  right hand side of comparison
+		 * @return bool if a<b
+		 */
+		static bool cmpSet(const PlaygroundFileEntry * lhs,
+		    const PlaygroundFileEntry * rhs);
+
+		/**
 		 * Add a path to this entry.
 		 * @param 1st  the (absolute) filename to add
 		 */
@@ -79,7 +88,7 @@ class PlaygroundFileEntry : public AnListClass
 		 * Returns the absolute path(s) of the file.
 		 * @return vector of filenames
 		 */
-		const std::vector<wxString> getPaths(void) const;
+		const std::vector<wxString> &getPaths(void) const;
 
 	private:
 		uint64_t  pgid_;    /**< playground ID */

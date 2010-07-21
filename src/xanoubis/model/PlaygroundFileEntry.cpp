@@ -35,6 +35,15 @@ PlaygroundFileEntry::PlaygroundFileEntry(
 	this->inode_ = inode;
 }
 
+bool
+PlaygroundFileEntry::cmpSet(const PlaygroundFileEntry * lhs,
+    const PlaygroundFileEntry * rhs)
+{
+	return
+	    (lhs->device_ < rhs->device_) ||
+	    ((lhs->device_ == rhs->device_) && (lhs->inode_ < rhs->inode_));
+}
+
 void
 PlaygroundFileEntry::addPath(wxString path)
 {
@@ -59,7 +68,7 @@ PlaygroundFileEntry::getInode() const
 	return this->inode_;
 }
 
-const std::vector<wxString>
+const std::vector<wxString>&
 PlaygroundFileEntry::getPaths() const
 {
 	return this->paths_;

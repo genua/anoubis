@@ -33,8 +33,10 @@
 
 #include "AnGenericRowProvider.h"
 #include "PlaygroundListTask.h"
+#include "PlaygroundFilesTask.h"
 #include "Singleton.h"
 #include "Task.h"
+#include "TaskEvent.h"
 
 /**
  * Controller class to do all aspects about playgrounds.
@@ -50,27 +52,47 @@ class PlaygroundCtrl : public Singleton<PlaygroundCtrl> , private wxEvtHandler
 		/**
 		 * Get info provider.
 		 * This method will return the RowProvider of the list of
-		 * playgrounds. The caller may not delete this object.
+		 * playgrounds. The caller must not delete this object.
 		 * @param None.
 		 * @return Playground list row provider.
 		 */
 		const AnRowProvider * getInfoProvider(void) const;
 
 		/**
-		 * Command: updatePlaygroundList
+		 * Command: Update the list of playground infos.
 		 * This method will trigger all steps to update the list of
 		 * playgrounds. The caller may also want to register to
 		 * anEVT_PLAYGROUND_ERROR events to know about errors.
 		 * @param None.
 		 * @return True on success.
 		 */
-		bool updatePlaygroundList(void);
+		bool updatePlaygroundInfo(void);
+
+		/**
+		 * Get file provider.
+		 * This method will return the RowProvider of the list of
+		 * files within one playground. The caller must not delete
+		 * this object.
+		 * @param None.
+		 * @return row provider for playground files
+		 */
+		const AnRowProvider * getFileProvider(void) const;
+
+		/**
+		 * Command: Update the list of playground files.
+		 * This method will request an update of the playground
+		 * filelist with the files from the specified playground.
+		 * Errors are reported through anEVT_PLAYGROUND_ERROR events.
+		 * @param 1st  the ID of the playground to read.
+		 * @return True on success.
+		 */
+		bool updatePlaygroundFiles(uint64_t pgid);
 
 		/**
 		 * Returns a list of errors, which occured during the execution
-		 * of the last command.
-		 * Please not, that the error-list is resetted, if you start
-		 * another command!
+		 * of the last command. The errors are valid until the next
+		 * command is started.
+		 * @param None
 		 * @return Errors collected during execution of the last
 		 *         command.
 		 */
@@ -85,9 +107,14 @@ class PlaygroundCtrl : public Singleton<PlaygroundCtrl> , private wxEvtHandler
 
 	private:
 		/**
-		 * List of playgrounds.
+		 * List of playground infos.
 		 */
-		AnGenericRowProvider playgroundList_;
+		AnGenericRowProvider playgroundInfo_;
+
+		/**
+		 * List of files in the previously requested playground.
+		 */
+		AnGenericRowProvider playgroundFiles_;
 
 		/**
 		 * List of tasks.
@@ -107,6 +134,13 @@ class PlaygroundCtrl : public Singleton<PlaygroundCtrl> , private wxEvtHandler
 		void OnPlaygroundListArrived(TaskEvent &);
 
 		/**
+		 * Event handler for completed PlaygroundFileTasks.
+		 * @param[in] 1st The event for PlaygroundFileTask in question.
+		 * @return Nothing.
+		 */
+		void OnPlaygroundFilesArrived(TaskEvent &);
+
+		/**
 		 * Create Playground list task.
 		 * This method creates and starts the task to fetch the
 		 * playground list.
@@ -116,10 +150,19 @@ class PlaygroundCtrl : public Singleton<PlaygroundCtrl> , private wxEvtHandler
 		bool createListTask(void);
 
 		/**
+		 * Create Playground files task.
+		 * This method creates and starts the task ot fetch the
+		 * playground filelist.
+		 * @param 1st Playground ID for which to get files.
+		 * @return True on success.
+		 */
+		bool createFileTask(uint64_t pgid);
+
+		/**
 		 * Extract list task.
-		 * This method clears the playground list and extracts the data
-		 * of a given PlaygroudnListTask. Those data are stored in a
-		 * corresponding entry object which is stored in the list of
+		 * This method clears the playground info list and extracts the
+		 * data of a given PlaygroundListTask. Those data are stored in
+		 * a corresponding entry object which is stored in the list of
 		 * playgrounds.
 		 * @param[in] 1st The completed PlaygroundListTask.
 		 * @return Nothing.
@@ -127,10 +170,26 @@ class PlaygroundCtrl : public Singleton<PlaygroundCtrl> , private wxEvtHandler
 		void extractListTask(PlaygroundListTask *);
 
 		/**
-		 * Removes all entries from playgrundList_ and destroys the
+		 * Extract file task.
+		 * This method clears the playground file list and extracts the
+		 * data of the given PlaygroundFileTask. The data is processed
+		 * and stored in the list of playground files.
+		 * @param[in] 1st The completed PlaygroundFiletask.
+		 * @return Nothing.
+		 */
+		void extractFilesTask(PlaygroundFilesTask *);
+
+		/**
+		 * Removes all entries from playgroundInfo_ and destroys the
 		 * instances.
 		 */
-		void clearPlaygroundList(void);
+		void clearPlaygroundInfo(void);
+
+		/**
+		 * Removes all entries from playgrundFiles_ and destroys the
+		 * instances.
+		 */
+		void clearPlaygroundFiles(void);
 
 		/**
 		 * Send error event.
