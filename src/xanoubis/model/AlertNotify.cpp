@@ -52,5 +52,7 @@ AlertNotify::~AlertNotify(void)
 int
 AlertNotify::getSubsystem(void) const
 {
+	if (notify_ == NULL)
+		return 0;
 	return get_value(notify_->u.notify->subsystem);
 }
