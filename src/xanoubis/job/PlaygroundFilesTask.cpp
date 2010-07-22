@@ -68,6 +68,12 @@ PlaygroundFilesTask::setNextRecord(void)
 	return (it_.next());
 }
 
+bool
+PlaygroundFilesTask::recordIsValid(void) const
+{
+	return (it_.current());
+}
+
 uint64_t
 PlaygroundFilesTask::getPGID(void) const
 {

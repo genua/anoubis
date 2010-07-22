@@ -63,17 +63,26 @@ class PlaygroundListTask : public PlaygroundTask
 		wxEventType getEventType(void) const;
 
 		/**
-		 * Resets the iterator.
+		 * Initializes the iterator. The iterator is set to the first
+		 * element. Use recordIsValid() to check if this it is valid.
 		 */
 		void setFirstRecord(void);
 
 		/**
-		 * Switches the iterator to the next record.
+		 * Switches the iterator to the next record. setFirstRecord()
+		 * must be called before calling this method().
 		 *
 		 * @return true, if a record is available, false if the end of
 		 *         the list is reached.
 		 */
 		bool setNextRecord(void);
+
+		/**
+		 * Returns true if the current record is valid.
+		 * @return true if the current record is valid,
+		 *         false if the end of the list is reached
+		 */
+		bool recordIsValid(void) const;
 
 		/**
 		 * Returns the playground-id of the current playground-record.

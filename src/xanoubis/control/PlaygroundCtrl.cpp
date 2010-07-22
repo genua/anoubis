@@ -236,11 +236,12 @@ PlaygroundCtrl::extractListTask(PlaygroundListTask *task)
 
 	clearPlaygroundInfo();
 	task->setFirstRecord();
-	while (task->setNextRecord()) {
+	while (task->recordIsValid()) {
 		entry = new PlaygroundInfoEntry(task->getPGID(),
 		    task->getUID(), task->getTime(), task->isActive(),
 		    task->getNumFiles(), task->getCommand());
 		playgroundInfo_.addRow(entry);
+		task->setNextRecord();
 	}
 }
 
@@ -253,20 +254,24 @@ PlaygroundCtrl::extractFilesTask(PlaygroundFilesTask *task)
 		files(&PlaygroundFileEntry::cmpSet);
 
 	/* insert data from task into temporary set 'files' */
-	while (task->setNextRecord()) {
+	task->setFirstRecord();
+	while (task->recordIsValid()) {
 		/* assume that we have to create one */
-		PlaygroundFileEntry* e = new PlaygroundFileEntry(
+		PlaygroundFileEntry* entry = new PlaygroundFileEntry(
 		    task->getPGID(), task->getDevice(), task->getInode());
 
 		std::pair<std::set<PlaygroundFileEntry*>::iterator,bool> ret;
-		ret = files.insert(e);
+		ret = files.insert(entry);
 
 		if (!ret.second) {
-			delete(e);  /* element already exists */
+			delete(entry);  /* element already exists */
 		}
 
+		/* ret.first contains the element from the list */
 		PlaygroundFileEntry *cur = *ret.first;
 		cur->addPath(task->getPath());
+
+		task->setNextRecord();
 	}
 
 	/* create the actual provider */

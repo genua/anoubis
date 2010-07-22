@@ -51,6 +51,12 @@ PlaygroundListTask::setNextRecord(void)
 	return (it_.next());
 }
 
+bool
+PlaygroundListTask::recordIsValid(void) const
+{
+	return (it_.current());
+}
+
 uint64_t
 PlaygroundListTask::getPGID(void) const
 {
