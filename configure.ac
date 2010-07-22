@@ -107,6 +107,7 @@ AC_CHECK_HEADERS([sys/inotify.h])
 
 dnl checks for libraries
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
+AC_CHECK_LIB(check_pic, suite_create, check_pic=yes, check_pic=no)
 AC_CHECK_LIB(event, event_init)
 AX_CHECK_SSL
 AS_IF(test -e /usr/lib/libwxGuiTestingd.a,
@@ -379,7 +380,8 @@ AX_CHECK_COMPILER_FLAGS(-fPIE,
 dnl If we use -fPIE, we need to link our tests with a PIC version of libcheck
 dnl (unless we are on i386).
 AM_CONDITIONAL(NEED_LIBCHECK_PIC,
-	[test "x$fpic_hack" != xyes && test "x$use_pie" = xyes])
+	[test "x$fpic_hack" != xyes && test "x$use_pie" = xyes && \
+	 test "x$check_pic" = xyes])
 
 dnl save copy of standard compiler flags, needed for automake in some
 dnl cases to avoid recursion

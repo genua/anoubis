@@ -84,6 +84,7 @@ export CFLAGS="$RPM_OPT_FLAGS"
  --infodir=%{_infodir} \
  --mandir=%{_mandir} \
  --sbindir=%{sbindir} \
+ --libdir=%{_libdir} \
  --sysconfdir=%{_sysconfdir} \
  --disable-tests
 
