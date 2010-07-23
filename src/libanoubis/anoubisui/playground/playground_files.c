@@ -243,6 +243,49 @@ pgmounts_find(uint64_t dev)
 }
 
 /**
+ * Convert a whiteout file name to the corresponding file name
+ * that is affected by the whiteout. Both file names include the
+ * ".plgr.<ID>." prefix.
+ *
+ * @param The whiteout file name.
+ * @return The file name that is affected by the whiteout. The name
+ *     is malloced. If the input file is not a whiteout, NULL is
+ *     returned.
+ */
+static char *
+pgfile_whiteout_to_file(const char *whiteout)
+{
+	int	 off;
+	char	*ret, ch;
+
+	if (whiteout == NULL || *whiteout == 0)
+		return NULL;
+	off = strlen(whiteout)-1;
+	/* Find the first non-slash starting at the end of the string. */
+	while (off > 0 && whiteout[off] == '/')
+		off--;
+	/* Find the next slash starting at the current offset. */
+	while (off > 0 && whiteout[off] != '/')
+		off--;
+	/*
+	 * Verify that we have a real path component and skip the leading
+	 * slash if present.
+	 */
+	if (whiteout[off] == '/')
+		off++;
+	if (whiteout[off] == '/' || whiteout[off] == 0)
+		return NULL;
+	/* Check if the file name really is a whiteout. */
+	if (sscanf(whiteout+off, ".plgrD%*x%c", &ch) != 1 || ch != '.')
+		return NULL;
+	/* Copy the whiteout string and replace the 'D' with a dot ('.') */
+	ret = strdup(whiteout);
+	if (ret)
+		ret[off + 5] = '.';
+	return ret;
+}
+
+/**
  * Validate a single name in a name list. The name must start with
  * a slash (followed by something that is not a slash) and it must
  * reference the given inode on the given device.
@@ -261,7 +304,9 @@ pgfile_validate_one_name(uint64_t dev, uint64_t ino, int dirfd,
     const char *name)
 {
 	const char		*p = name;
+	char			*q;
 	struct stat		 statbuf;
+	int			 ret;
 
 	if (*name != '/')
 		return 0;
@@ -273,7 +318,19 @@ pgfile_validate_one_name(uint64_t dev, uint64_t ino, int dirfd,
 		return 0;
 	if (expand_dev(statbuf.st_dev) != dev || statbuf.st_ino != ino)
 		return 0;
-	return statbuf.st_nlink;
+	ret = statbuf.st_nlink;
+
+	/*
+	 * Now check if this is a whiteout marker and suppress it, if
+	 * the corresponding file exists.
+	 */
+	q = pgfile_whiteout_to_file(p);
+	if (q) {
+		if (fstatat(dirfd, q, &statbuf, AT_SYMLINK_NOFOLLOW) == 0)
+			ret = 0;
+		free(q);
+	}
+	return ret;
 }
 
 /**
@@ -291,7 +348,7 @@ pgfile_validate_one_name(uint64_t dev, uint64_t ino, int dirfd,
  * @return Zero if all links to the file could be found. A negative
  *     error code if something went wrong. In particular:
  *     EXDEV: The given device is not mounted.
- *     ENOENT: Non of the file names references the given inode.
+ *     ENOENT: None of the file names references the given inode.
  *     EBUSY: Some but not all links to the file were found in the
  *         list of file names.
  */
@@ -397,7 +454,7 @@ pgfile_process(uint64_t dev, uint64_t ino, const char *names[])
 		 * instances of the file.
 		 */
 		renamedok++;
-		if (sscanf(oldname, ".plgr%c%*x%c%n", &ch1, &ch2, &off))
+		if (sscanf(oldname, ".plgr%c%*x%c%n", &ch1, &ch2, &off) < 2)
 			goto next;
 		if (ch2 != '.' || (ch1 != '.' && ch1 != 'D'))
 			goto next;
