@@ -1108,8 +1108,7 @@ pe_playground_dispatch_request(struct anoubisd_msg *inmsg, Queue *queue)
 	if (err == 0)
 		return;
 	/* Send an error message */
-	err = pe_playground_init_reply(&ctx, token, ANOUBIS_PGREC_NOTYPE);
-	if (err < 0)  {
+	if (pe_playground_init_reply(&ctx, token, ANOUBIS_PGREC_NOTYPE) < 0) {
 		master_terminate(ENOMEM);
 		return;
 	}

@@ -166,9 +166,10 @@ int main(int, char **);
 
 /**
  * Initialize ui.
- * This function reads the persisten user data from his home.
+ * This function reads the persistent user data from his home.
  * @paran None.
- * @return 0 on success, 1 in case of error.
+ * @return 0 on success, 1 in case of error. The reason for the error
+ *     is reported by the function itself.
  */
 static int pgcli_ui_init(void);
 
@@ -207,7 +208,10 @@ static void pgcli_msglist_free(struct anoubis_msg *);
  * received messages is printed by pgcli_list_print() and the communication
  * is closed.
  * @param None.
- * @return 0 on success an error else.
+ * @return 0 on success, a negative error code if an error occured,
+ *     that must be reported by the caller and a positiv value if an error
+ *     occured that must lead to a non-zero exist status but was already
+ *     reported by this function.
  * @see pgcli_list_print()
  */
 static int pgcli_list(void);
@@ -253,7 +257,10 @@ static void pgcli_list_print_record(Anoubis_PgInfoRecord *);
  * The  received messages is printed by pgcli_files_print() and the
  * communication is closed.
  * @param[in] 1st The id of playground in question.
- * @return 0 on success an error else.
+ * @return 0 on success, a negative error code if an error occured,
+ *     that must be reported by the caller and a positiv value if an error
+ *     occured that must lead to a non-zero exist status but was already
+ *     reported by this function.
  * @see pgcli_files_print()
  */
 static int pgcli_files(anoubis_cookie_t);
@@ -412,14 +419,14 @@ main(int argc, char *argv[])
 		usage();
 	}
 
-	if (error != 0) {
-		errno = -error;
-		perror(command);
+	if (error < 0) {
+		fprintf(stderr, "%s: %s\n", command, anoubis_strerror(-error));
 	}
 
 #endif /* OPENBSD */
-
-	return (error);
+	if (error)
+		return 1;
+	return 0;
 }
 
 #ifdef LINUX
@@ -573,9 +580,8 @@ pgcli_list(void)
 	struct anoubis_transaction	*transaction = NULL;
 
 	rc = pgcli_ui_init();
-	if (rc != 0) {
-		return (-1);
-	}
+	if (rc != 0)
+		return 1;
 
 	channel = pgcli_create_channel();
 	if (channel == NULL) {
@@ -593,13 +599,15 @@ pgcli_list(void)
 	    ANOUBIS_PGREC_PGLIST, 0);
 	if (transaction == NULL) {
 		PGCLI_CONNECTION_WIPE(channel, client);
-		return (-EFAULT);
+		return (-ENOMEM);
 	}
 	while (1) {
 		rc = anoubis_client_wait(client);
 		if (rc <= 0) {
 			anoubis_transaction_destroy(transaction);
 			PGCLI_CONNECTION_WIPE(channel, client);
+			if (rc == 0)
+				rc = -EPROTO;
 			return (rc);
 		}
 		if (transaction->flags & ANOUBIS_T_DONE) {
@@ -610,19 +618,16 @@ pgcli_list(void)
 	transaction->msg = NULL;
 
 	/* Print received list. */
-	if (transaction->result == 0) {
+	rc = -transaction->result;
+	if (rc == 0)
 		pgcli_list_print_msg(message);
-	} else {
-		fprintf(stderr, "Playground list request failed: %d (%s)\n",
-		    transaction->result, anoubis_strerror(transaction->result));
-	}
 
 	/* Cleanup. */
 	pgcli_msglist_free(message);
 	anoubis_transaction_destroy(transaction);
 	PGCLI_CONNECTION_WIPE(channel, client);
 
-	return (0);
+	return rc;
 }
 
 void
@@ -703,9 +708,8 @@ pgcli_files(anoubis_cookie_t pgid)
 	struct anoubis_transaction	*transaction = NULL;
 
 	rc = pgcli_ui_init();
-	if (rc != 0) {
-		return (-1);
-	}
+	if (rc != 0)
+		return 1;
 
 	channel = pgcli_create_channel();
 	if (channel == NULL) {
@@ -723,13 +727,15 @@ pgcli_files(anoubis_cookie_t pgid)
 	    ANOUBIS_PGREC_FILELIST, pgid);
 	if (transaction == NULL) {
 		PGCLI_CONNECTION_WIPE(channel, client);
-		return (-EFAULT);
+		return (-ENOMEM);
 	}
 	while (1) {
 		rc = anoubis_client_wait(client);
 		if (rc <= 0) {
 			anoubis_transaction_destroy(transaction);
 			PGCLI_CONNECTION_WIPE(channel, client);
+			if (rc == 0)
+				rc = -EPROTO;
 			return (rc);
 		}
 		if (transaction->flags & ANOUBIS_T_DONE) {
@@ -740,20 +746,16 @@ pgcli_files(anoubis_cookie_t pgid)
 	transaction->msg = NULL;
 
 	/* Print received list. */
-	if (transaction->result == 0) {
+	rc = -transaction->result;
+	if (rc == 0)
 		pgcli_files_print_msg(message);
-	} else {
-		fprintf(stderr, "Playground file list request failed: "
-		    "%d (%s)\n", transaction->result,
-		    anoubis_strerror(transaction->result));
-	}
 
 	/* Cleanup. */
 	pgcli_msglist_free(message);
 	anoubis_transaction_destroy(transaction);
 	PGCLI_CONNECTION_WIPE(channel, client);
 
-	return (0);
+	return rc;
 }
 
 void
