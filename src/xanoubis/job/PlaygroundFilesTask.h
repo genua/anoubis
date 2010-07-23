@@ -31,23 +31,11 @@
 #include "PlaygroundTask.h"
 
 /**
- * Task fetches a list with playground-files from the daemon.
- *
- * The task implements an iterator, where you are able to iterate over all
- * files.
- *
- * setFirstRecords() resets the iterator. setNextRecords() returns true until
- * the end of the list is reached. So you can write something like this:
- *
- * <pre>
- * PlaygroundFilesTask task;
- *
- * while (task.setNextRecord()) {
- *     // Do something
- * }
- * </pre>
+ * Task fetches a list with playground-files from the daemon. The task
+ * inherits from PlaygroundIteratorTask, i.e. the iterator of the base
+ * class can be used to iterate over all records.
  */
-class PlaygroundFilesTask : public PlaygroundTask
+class PlaygroundFilesTask : public PlaygroundIteratorTask<Anoubis_PgFileRecord>
 {
 	public:
 		/**
@@ -88,24 +76,9 @@ class PlaygroundFilesTask : public PlaygroundTask
 		void setRequestedPGID(uint64_t);
 
 		/**
-		 * (Re)initialize the iterator. The next call to
-		 * readNextRecord() will return the first record of the task.
-		 * Must be called before iterating the task.
+		 * Returns the playground-id of the current file-record.
+		 * @return PGID of the current file
 		 */
-		void resetRecordIterator(void);
-
-		/**
-		 * Reads the next record from the message. The records values
-		 * can be retrieved with the property getter methods.
-		 * @return true, if a record is available, false if the end of
-		 *         the list is reached.
-		 */
-		bool readNextRecord(void);
-
-		/**
-		* Returns the playground-id of the current file-record.
-		* @return PGID of the current file
-		*/
 		uint64_t getPGID(void) const;
 
 		/**
@@ -126,13 +99,6 @@ class PlaygroundFilesTask : public PlaygroundTask
 		 * @return Relative path of the current file
 		 */
 		wxString getPath(void) const;
-
-	private:
-		/**
-		 * Iterator used for iterating through the list of files in the
-		 * reply-message.
-		 */
-		iterator<Anoubis_PgFileRecord> it_;
 };
 
 #endif /* _PLAYGROUNDFILESTASK_H_ */

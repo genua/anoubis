@@ -29,7 +29,7 @@
 #include "TaskEvent.h"
 
 PlaygroundListTask::PlaygroundListTask(void)
-    : PlaygroundTask(ANOUBIS_PGREC_PGLIST, 0)
+    : PlaygroundIteratorTask<Anoubis_PgInfoRecord>(ANOUBIS_PGREC_PGLIST, 0)
 {
 }
 
@@ -39,23 +39,11 @@ PlaygroundListTask::getEventType(void) const
 	return (anTASKEVT_PG_LIST);
 }
 
-void
-PlaygroundListTask::resetRecordIterator(void)
-{
-	it_ = iterator<Anoubis_PgInfoRecord>(result_);
-}
-
-bool
-PlaygroundListTask::readNextRecord(void)
-{
-	return (it_.next());
-}
-
 uint64_t
 PlaygroundListTask::getPGID(void) const
 {
-	if (it_.current())
-		return (get_value(it_.current()->pgid));
+	if (getRecord())
+		return (get_value(getRecord()->pgid));
 	else
 		return (0);
 }
@@ -63,8 +51,8 @@ PlaygroundListTask::getPGID(void) const
 int
 PlaygroundListTask::getUID(void) const
 {
-	if (it_.current())
-		return (get_value(it_.current()->uid));
+	if (getRecord())
+		return (get_value(getRecord()->uid));
 	else
 		return (0);
 }
@@ -72,8 +60,8 @@ PlaygroundListTask::getUID(void) const
 bool
 PlaygroundListTask::isActive(void) const
 {
-	if (it_.current())
-		return (get_value(it_.current()->nrprocs) > 0);
+	if (getRecord())
+		return (get_value(getRecord()->nrprocs) > 0);
 	else
 		return (false);
 }
@@ -81,8 +69,8 @@ PlaygroundListTask::isActive(void) const
 int
 PlaygroundListTask::getNumFiles(void) const
 {
-	if (it_.current())
-		return (get_value(it_.current()->nrfiles));
+	if (getRecord())
+		return (get_value(getRecord()->nrfiles));
 	else
 		return (0);
 }
@@ -92,8 +80,8 @@ PlaygroundListTask::getTime(void) const
 {
 	wxDateTime dt;
 
-	if (it_.current()) {
-		time_t t = get_value(it_.current()->starttime);
+	if (getRecord()) {
+		time_t t = get_value(getRecord()->starttime);
 		dt.Set(t);
 	}
 
@@ -103,8 +91,8 @@ PlaygroundListTask::getTime(void) const
 wxString
 PlaygroundListTask::getCommand(void) const
 {
-	if (it_.current())
-		return (wxString::FromAscii(it_.current()->path));
+	if (getRecord())
+		return (wxString::FromAscii(getRecord()->path));
 	else
 		return (wxEmptyString);
 }

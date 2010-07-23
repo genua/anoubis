@@ -29,12 +29,12 @@
 #include "TaskEvent.h"
 
 PlaygroundFilesTask::PlaygroundFilesTask(void)
-    : PlaygroundTask(ANOUBIS_PGREC_FILELIST, 0)
+    : PlaygroundIteratorTask<Anoubis_PgFileRecord>(ANOUBIS_PGREC_FILELIST, 0)
 {
 }
 
 PlaygroundFilesTask::PlaygroundFilesTask(uint64_t pgid)
-    : PlaygroundTask(ANOUBIS_PGREC_FILELIST, pgid)
+    : PlaygroundIteratorTask<Anoubis_PgFileRecord>(ANOUBIS_PGREC_FILELIST, pgid)
 {
 }
 
@@ -56,32 +56,20 @@ PlaygroundFilesTask::setRequestedPGID(uint64_t pgid)
 	pgid_ = pgid;
 }
 
-void
-PlaygroundFilesTask::resetRecordIterator(void)
-{
-	it_ = iterator<Anoubis_PgFileRecord>(result_);
-}
-
-bool
-PlaygroundFilesTask::readNextRecord(void)
-{
-	return (it_.next());
-}
-
 uint64_t
 PlaygroundFilesTask::getPGID(void) const
 {
-	if (it_.current())
-		return (get_value(it_.current()->pgid));
+	if (getRecord())
+		return get_value(getRecord()->pgid);
 	else
-		return (0);
+		return 0;
 }
 
 uint64_t
 PlaygroundFilesTask::getDevice(void) const
 {
-	if (it_.current())
-		return (get_value(it_.current()->dev));
+	if (getRecord())
+		return (get_value(getRecord()->dev));
 	else
 		return (0);
 }
@@ -89,8 +77,8 @@ PlaygroundFilesTask::getDevice(void) const
 uint64_t
 PlaygroundFilesTask::getInode(void) const
 {
-	if (it_.current())
-		return (get_value(it_.current()->ino));
+	if (getRecord())
+		return (get_value(getRecord()->ino));
 	else
 		return (0);
 }
@@ -98,8 +86,8 @@ PlaygroundFilesTask::getInode(void) const
 wxString
 PlaygroundFilesTask::getPath(void) const
 {
-	if (it_.current() && it_.current()->path != 0)
-		return (wxString::FromAscii(it_.current()->path));
+	if (getRecord() && getRecord()->path != 0)
+		return (wxString::FromAscii(getRecord()->path));
 	else
 		return (wxEmptyString);
 }

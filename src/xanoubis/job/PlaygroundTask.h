@@ -60,7 +60,7 @@ class PlaygroundTask : public ComTask
 		 * @param pgid The requested playground-id
 		 *             (if used by the operation).
 		 */
-		PlaygroundTask(uint32_t, uint64_t);
+		PlaygroundTask(uint32_t listtype, uint64_t pgid);
 
 		/**
 		 * D'tor.
@@ -79,133 +79,6 @@ class PlaygroundTask : public ComTask
 		 */
 		struct anoubis_msg *result_;
 
-		/**
-		 * Iterator can be used to iterate over the content of a
-		 * anoubis_msg.
-		 * The iterator extracts records of type T.
-		 */
-		template <class T>
-		class iterator
-		{
-		public:
-			/**
-			 * Creates an empty iterator.
-			 * The next() operation will always return false.
-			 */
-			iterator(void)
-			{
-				message_ = 0;
-				record_ = 0;
-				number_ = 0;
-				offset_ = 0;
-			}
-
-			/**
-			 * Iterator walks through the given anoubis_msg.
-			 * @param msg The source message
-			 */
-			iterator(struct anoubis_msg *msg)
-			{
-				message_ = msg;
-				record_ = 0;
-				number_ = 0;
-				offset_ = 0;
-			}
-
-			/**
-			 * Copy-c'tor.
-			 */
-			iterator(const iterator<T> &other)
-			{
-				message_ = other.message_;
-				record_ = other.record_;
-				number_ = other.number_;
-				offset_ = other.offset_;
-			}
-
-			/**
-			 * Assignment-operator.
-			 */
-			iterator<T> &operator = (const iterator<T> &other)
-			{
-				message_ = other.message_;
-				record_ = other.record_;
-				number_ = other.number_;
-				offset_ = other.offset_;
-
-				return (*this);
-			}
-
-			/**
-			 * Switches the iterator to the next record.
-			 * @return Returns true, if the operation succeeded. If
-			 *         the end of the list was reached, false is
-			 *         returned.
-			 */
-			bool
-			next(void)
-			{
-				if (!message_) {
-					/* No more messages available */
-					return (false);
-				}
-
-				if (number_ >=
-				    get_value(message_->u.pgreply->nrec)) {
-					/* Number of records reached,
-					 * try next message-fragment
-					 */
-					message_ = message_->next;
-					number_ = 0;
-					offset_ = 0;
-
-					return next();
-				}
-
-				/* Extract next record */
-				record_ = (T *)
-				    (message_->u.pgreply->payload + offset_);
-				number_++;
-				offset_ += get_value(record_->reclen);
-
-				return (true);
-			}
-
-			/**
-			 * Returns the current record, where the iterator
-			 * points to.
-			 * @return The current records. Returns NULL, if no
-			 *         current element is available.
-			 */
-			T *
-			current(void) const
-			{
-				return (record_);
-			}
-
-		private:
-			/**
-			 * Current message used for iterating through all
-			 * playgrounds.
-			 */
-			struct anoubis_msg *message_;
-
-			/**
-			* Current record-number.
-			*/
-			int number_;
-
-			/**
-			* Current offset within message_ payload.
-			*/
-			int offset_;
-
-			/**
-			 * Current record.
-			 */
-			T *record_;
-		};
-
 	private:
 		/**
 		 * List-type of request-message
@@ -221,6 +94,104 @@ class PlaygroundTask : public ComTask
 		 * Resets the internal state of the task, so it can be reused.
 		 */
 		void reset(void);
+};
+
+/**
+ * This template class adds a type independent record iterator to the
+ * PlaygroudTask. The iterator support two functions: resetRecordIterator
+ * and readNextRecord. After a successful call to readNextRecord a derived
+ * class can access the raw record with getRecord. The derived class must
+ * provide accessor functions for the current record.
+ *
+ * Use the iterator like this:
+ *     task.resetRecordIterator();
+ *     while(task.readNextRecord()) {
+ *          [ Process current record. ]
+ *     }
+ */
+template<typename T>
+class PlaygroundIteratorTask : public PlaygroundTask
+{
+	private:
+		/**
+		 * Points to the current record while iterating.
+		 */
+		T			*record_;
+		/**
+		 * Points to the message that contains the current record.
+		 */
+		struct anoubis_msg	*message_;
+
+		/**
+		 * The index of next record in the current message.
+		 */
+		int			 number_;
+
+		/**
+		 * Offset of the next record in the current message's
+		 * payload.
+		 */
+		int			 offset_;
+	public:
+		/**
+		 * Constructor. Note that this does not reset the
+		 * iterator.
+		 */
+		PlaygroundIteratorTask(uint32_t listtype, uint64_t pgid)
+		    : PlaygroundTask(listtype, pgid) {
+			message_ = NULL;
+			record_ = NULL;
+			number_ = 0;
+			offset_ = 0;
+		};
+		/**
+		 * Reset the itertor. This positions the iterator
+		 * before the first record. The next call to readNextRecord
+		 * will position the iterator at the first record.
+		 *
+		 * @param None.
+		 * @return None.
+		 */
+		void resetRecordIterator(void) {
+			message_ = result_;
+			record_ = NULL;
+			number_ = 0;
+			offset_ = 0;
+		};
+		/**
+		 * Load the next record and make it available via getRecord.
+		 * This function returns false if there is no next record.
+		 *
+		 * @param None.
+		 * @return True iff a valid record was loaded.
+		 */
+		bool readNextRecord(void) {
+			if (message_ == NULL) {
+				record_ = NULL;
+				return false;
+			}
+			if (number_ >= get_value(message_->u.pgreply->nrec)) {
+				message_ = message_->next;
+				number_ = 0;
+				offset_ = 0;
+				return readNextRecord();
+			}
+			record_ = (T*)(message_->u.pgreply->payload + offset_);
+			number_++;
+			offset_ += get_value(record_->reclen);
+			return true;
+		};
+	protected:
+		/**
+		 * Return a pointer to the current record.
+		 *
+		 * @param None.
+		 * @return A pointer to the current record or NULL if
+		 *     there is no current record.
+		 */
+		T *getRecord(void) const {
+			return record_;
+		};
 };
 
 #endif /* _PLAYGROUNDTASK_H_ */

@@ -34,22 +34,10 @@
 
 /**
  * Task fetches a list with all available playgrounds from the daemon.
- *
- * The task implements an iterator, where you are able to iterate over all
- * playgrounds.
- *
- * setFirstRecords() resets the iterator. setNextRecords() returns true until
- * the end of the list is reached. So you can write something like this:
- *
- * <pre>
- * PlaygroundListTask task;
- *
- * while (task.setNextRecord()) {
- *     // Do something
- * }
- * </pre>
+ * It inherits from PlaygroundIteratorTask, i.e. you can use the
+ * iterator from the base class to iterator over all records in the reply.
  */
-class PlaygroundListTask : public PlaygroundTask
+class PlaygroundListTask : public PlaygroundIteratorTask<Anoubis_PgInfoRecord>
 {
 	public:
 		/**
@@ -61,21 +49,6 @@ class PlaygroundListTask : public PlaygroundTask
 		 * Implementation of Task::getEventType().
 		 */
 		wxEventType getEventType(void) const;
-
-		/**
-		 * (Re)initialize the iterator. The next call to
-		 * readNextRecord() will return the first record of the task.
-		 * Must be called before iterating the task.
-		 */
-		void resetRecordIterator(void);
-
-		/**
-		 * Reads the next record from the message. The records values
-		 * can be retrieved with the property getter methods.
-		 * @return true, if a record is available, false if the end of
-		 *         the list is reached.
-		 */
-		bool readNextRecord(void);
 
 		/**
 		 * Returns the playground-id of the current playground-record.
@@ -113,13 +86,6 @@ class PlaygroundListTask : public PlaygroundTask
 		 * @return Command executed by the current playground
 		 */
 		wxString getCommand(void) const;
-
-	private:
-		/**
-		 * Iterator used for iterating through the list of playgrounds
-		 * in the reply-message.
-		 */
-		iterator<Anoubis_PgInfoRecord> it_;
 };
 
 #endif /* _PLAYGROUNDLISTTASK_H_ */
