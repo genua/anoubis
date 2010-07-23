@@ -56,6 +56,15 @@ class ModPlaygroundMainPanelImpl : public ModPlaygroundMainPanelBase
 
 	private:
 		/**
+		 * Handle the event, if the status of the daemon-connection has
+		 * changed.
+		 * Used to know, if you are connected to the daemon. This
+		 * information is used to enable/disable buttons the view.
+		 * @param[in] 1st The event.
+		 */
+		virtual void onConnectionStateChange(wxCommandEvent &);
+
+		/**
 		 * Handle <Return> events of AppComboBox.
 		 * @param[in] 1st The event.
 		 * @return Nothing.
@@ -77,6 +86,20 @@ class ModPlaygroundMainPanelImpl : public ModPlaygroundMainPanelBase
 		virtual void onPlaygroundError(wxCommandEvent &);
 
 		/**
+		 * Handle onClick events to 'Refresh View' button.
+		 * @param[in] 1st The click event.
+		 * @return Nothing.
+		 */
+		void onPgListRefreshClicked(wxCommandEvent &);
+
+		/**
+		 * Handle onPgNotebookChanging events to 'Playground Overview'.
+		 * @param[in] 1st The focus event.
+		 * @return Nothing.
+		 */
+		void onPgNotebookChanging(wxCommandEvent &);
+
+		/**
 		 * Start application.
 		 * This method will take the input from combo box and tries
 		 * to start it. On succes the history (combo box) is updated.
@@ -85,6 +108,14 @@ class ModPlaygroundMainPanelImpl : public ModPlaygroundMainPanelBase
 		 * @return Nothing.
 		 */
 		void startApplication(void);
+
+		/**
+		 * Refreshes the grid of playgrounds and handles correspondig
+		 * errors.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void refreshPlaygroundList(void);
 
 		/**
 		 * Convert string to argv array.

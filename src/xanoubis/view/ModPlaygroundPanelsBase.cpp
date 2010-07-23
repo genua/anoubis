@@ -74,7 +74,7 @@ ModPlaygroundMainPanelBase::ModPlaygroundMainPanelBase( wxWindow* parent, wxWind
 	
 	// Grid
 	pgGrid->CreateGrid( 1, 2 );
-	pgGrid->EnableEditing( true );
+	pgGrid->EnableEditing( false );
 	pgGrid->EnableGridLines( true );
 	pgGrid->EnableDragGridSize( false );
 	pgGrid->SetMargins( 0, 0 );
@@ -102,13 +102,18 @@ ModPlaygroundMainPanelBase::ModPlaygroundMainPanelBase( wxWindow* parent, wxWind
 	wxBoxSizer* pgButtonSizer;
 	pgButtonSizer = new wxBoxSizer( wxHORIZONTAL );
 	
-	pgCommitButton = new wxButton( pgPage, wxID_ANY, _("Commit files..."), wxDefaultPosition, wxDefaultSize, 0 );
-	pgCommitButton->Enable( false );
+	pgRefreshButton = new wxButton( pgPage, wxID_ANY, _("Refresh view"), wxDefaultPosition, wxDefaultSize, 0 );
+	pgRefreshButton->Enable( false );
 	
-	pgButtonSizer->Add( pgCommitButton, 0, wxALIGN_RIGHT|wxALIGN_TOP|wxALL, 5 );
+	pgButtonSizer->Add( pgRefreshButton, 0, wxALIGN_LEFT|wxALIGN_TOP|wxALL, 5 );
 	
 	
 	pgButtonSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	pgCommitButton = new wxButton( pgPage, wxID_ANY, _("Commit files..."), wxDefaultPosition, wxDefaultSize, 0 );
+	pgCommitButton->Enable( false );
+	
+	pgButtonSizer->Add( pgCommitButton, 0, wxALL, 5 );
 	
 	pgDeleteButton = new wxButton( pgPage, wxID_ANY, _("Delete"), wxDefaultPosition, wxDefaultSize, 0 );
 	pgDeleteButton->Enable( false );
@@ -130,9 +135,11 @@ ModPlaygroundMainPanelBase::ModPlaygroundMainPanelBase( wxWindow* parent, wxWind
 	this->Layout();
 	
 	// Connect Events
+	pgNotebook->Connect( wxEVT_COMMAND_NOTEBOOK_PAGE_CHANGING, wxNotebookEventHandler( ModPlaygroundMainPanelBase::onPgNotebookChanging ), NULL, this );
 	applicationComboBox->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( ModPlaygroundMainPanelBase::onAppStartEnter ), NULL, this );
 	applicationStartButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModPlaygroundMainPanelBase::onAppStart ), NULL, this );
 	pgGrid->Connect( wxEVT_GRID_SELECT_CELL, wxGridEventHandler( ModPlaygroundMainPanelBase::OnCellSelect ), NULL, this );
+	pgRefreshButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModPlaygroundMainPanelBase::onPgListRefreshClicked ), NULL, this );
 }
 
 ModPlaygroundOverviewPanelBase::ModPlaygroundOverviewPanelBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )

@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: anoubis 0.9.3.25.453.839\n"
+"Project-Id-Version: anoubis 0.9.3.25.464.867\n"
 "Report-Msgid-Bugs-To: anoubis@lists.anoubis.org\n"
-"POT-Creation-Date: 2010-07-20 10:40+0200\n"
+"POT-Creation-Date: 2010-07-22 11:45+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -86,7 +86,6 @@ msgstr ""
 #: src/xanoubis/model/SbOverviewTable.cpp:74
 #: src/xanoubis/model/SfsOverviewTable.cpp:74
 #: src/xanoubis/view/DlgRuleEditorListProperty.cpp:59
-#: src/xanoubis/view/PlaygroundListProperty.cpp:55
 #: src/xanoubis/view/VersionListCtrl.cpp:56
 msgid "User"
 msgstr ""
@@ -112,8 +111,8 @@ msgstr ""
 #: src/xanoubis/view/ModSfsListProperty.cpp:105
 #: src/xanoubis/view/ModSfsListProperty.cpp:125
 #: src/xanoubis/view/ProfileListCtrl.cpp:68
-#: src/xanoubis/widgets/AnTable.cpp:262 src/xanoubis/widgets/AnTable.cpp:265
-#: src/xanoubis/widgets/AnTable.cpp:268
+#: src/xanoubis/widgets/AnTable.cpp:261 src/xanoubis/widgets/AnTable.cpp:264
+#: src/xanoubis/widgets/AnTable.cpp:267
 #: src/xanoubis/widgets/AnListProperty.h:210
 msgid "???"
 msgstr ""
@@ -959,7 +958,7 @@ msgid "Delete rule %ld?"
 msgstr ""
 
 #: src/xanoubis/view/DlgRuleEditor.cpp:658
-#: src/xanoubis/view/DlgRuleEditor.cpp:703 src/xanoubis/view/MainFrame.cpp:619
+#: src/xanoubis/view/DlgRuleEditor.cpp:703 src/xanoubis/view/MainFrame.cpp:624
 msgid "Confirm"
 msgstr ""
 
@@ -1000,12 +999,12 @@ msgstr ""
 msgid "Import policy file"
 msgstr ""
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:947 src/xanoubis/view/MainFrame.cpp:530
+#: src/xanoubis/view/DlgRuleEditor.cpp:947 src/xanoubis/view/MainFrame.cpp:535
 msgid "Couldn't import policy file: it has errors."
 msgstr ""
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:948 src/xanoubis/view/MainFrame.cpp:531
-#: src/xanoubis/view/MainFrame.cpp:797
+#: src/xanoubis/view/DlgRuleEditor.cpp:948 src/xanoubis/view/MainFrame.cpp:536
+#: src/xanoubis/view/MainFrame.cpp:802
 #: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1597
 #: src/xanoubis/view/ModSfsGenerateKeyDlg.cpp:192
 #: src/xanoubis/control/MainUtils.cpp:291
@@ -1018,12 +1017,12 @@ msgid "Export ruleset..."
 msgstr ""
 
 #: src/xanoubis/view/DlgRuleEditor.cpp:1025
-#: src/xanoubis/view/MainFrame.cpp:550
+#: src/xanoubis/view/MainFrame.cpp:555
 msgid "Failed to export the ruleset into a file."
 msgstr ""
 
 #: src/xanoubis/view/DlgRuleEditor.cpp:1026
-#: src/xanoubis/view/MainFrame.cpp:551
+#: src/xanoubis/view/MainFrame.cpp:556
 msgid "Export ruleset"
 msgstr ""
 
@@ -1108,7 +1107,6 @@ msgid "Binary:"
 msgstr ""
 
 #: src/xanoubis/view/DlgRuleEditorListProperty.cpp:57
-#: src/xanoubis/view/PlaygroundListProperty.cpp:54
 msgid "Id"
 msgstr ""
 
@@ -1245,7 +1243,6 @@ msgid "Help"
 msgstr ""
 
 #: src/xanoubis/view/MainFrameBase.cpp:85
-#: src/xanoubis/view/PlaygroundListProperty.cpp:56
 msgid "Status"
 msgstr ""
 
@@ -1261,7 +1258,7 @@ msgstr ""
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:156
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:164
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:172
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:164
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:181
 #: src/xanoubis/view/ModSfsPanelsBase.cpp:481
 #: src/xanoubis/view/ModSbPanelsBase.cpp:136
 msgid "0"
@@ -1271,7 +1268,7 @@ msgstr ""
 msgid "Connected:"
 msgstr ""
 
-#: src/xanoubis/view/MainFrameBase.cpp:112 src/xanoubis/view/MainFrame.cpp:283
+#: src/xanoubis/view/MainFrameBase.cpp:112 src/xanoubis/view/MainFrame.cpp:285
 msgid "no"
 msgstr ""
 
@@ -1280,18 +1277,18 @@ msgstr ""
 msgid "Anoubis"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:234
+#: src/xanoubis/view/MainFrame.cpp:236
 #, c-format
 msgid ""
 "Display size of %dx%d is too small for the wizard.\n"
 "Presentation may be broken!"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:242
+#: src/xanoubis/view/MainFrame.cpp:244
 msgid "Wizard warning"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:280
+#: src/xanoubis/view/MainFrame.cpp:282
 #: src/xanoubis/view/ModAlfOverviewPanelImpl.cpp:76
 #: src/xanoubis/view/ModPlaygroundOverviewPanelImpl.cpp:85
 #: src/xanoubis/view/ModSfsOverviewPanelImpl.cpp:74
@@ -1299,119 +1296,119 @@ msgstr ""
 msgid "ok"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:352
+#: src/xanoubis/view/MainFrame.cpp:357
 #, c-format
 msgid "Connection established with %ls"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:359
+#: src/xanoubis/view/MainFrame.cpp:364
 #, c-format
 msgid "Disconnected from %ls"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:365
+#: src/xanoubis/view/MainFrame.cpp:370
 #, c-format
 msgid "Connection to %ls failed!"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:372
+#: src/xanoubis/view/MainFrame.cpp:377
 #, c-format
 msgid ""
 "Because of an incompatible protocol version (xanoubis: %i, Anoubis daemon: %"
 "i) the connection was rejected. Please update the Anoubis daemon package!"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:379
+#: src/xanoubis/view/MainFrame.cpp:384
 #, c-format
 msgid ""
 "Because of an incompatible protocol version (xanoubis: %i, Anoubis daemon: %"
 "i) the connection was rejected. Please update the xanoubis package!"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:386
+#: src/xanoubis/view/MainFrame.cpp:391
 msgid "Protocol version mismatch"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:393
+#: src/xanoubis/view/MainFrame.cpp:398
 #, c-format
 msgid ""
 "The APN parser (v%i.%i) is newer than the parser of the Anoubis daemon (v%i.%"
 "i). Please update the Anoubis daemon package!"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:401
+#: src/xanoubis/view/MainFrame.cpp:406
 #, c-format
 msgid ""
 "The APN parser (v%i.%i) is older than the parser of the Anoubis daemon (v%i.%"
 "i). Please update the xanoubis package!"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:410
+#: src/xanoubis/view/MainFrame.cpp:415
 msgid "APN version mismatch"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:415
+#: src/xanoubis/view/MainFrame.cpp:420
 msgid ""
 "Because of missing keys the connection was rejected. Please check your key-"
 "configuration (certificate, private key)."
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:419
+#: src/xanoubis/view/MainFrame.cpp:424
 msgid "Missing key"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:425
+#: src/xanoubis/view/MainFrame.cpp:430
 msgid ""
 "Your configured certificate does not match with the certificate requested by "
 "the daemon. Please check your key-configuration or ask your system-"
 "administrator to configure your certificate at the daemon."
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:431
+#: src/xanoubis/view/MainFrame.cpp:436
 msgid "Certificate mismatch"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:438
+#: src/xanoubis/view/MainFrame.cpp:443
 msgid ""
 "Your configured certificate or private key is missconfigured or is not "
 "supported by Anoubis. Please check your certificate and private key."
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:442
+#: src/xanoubis/view/MainFrame.cpp:447
 msgid "Invalid Certificate / Private Key"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:446
+#: src/xanoubis/view/MainFrame.cpp:451
 msgid "An internal error occured while processing the authentication."
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:449
+#: src/xanoubis/view/MainFrame.cpp:454
 msgid "Internal Error"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:519
+#: src/xanoubis/view/MainFrame.cpp:524
 msgid "Choose a policy file:"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:539
+#: src/xanoubis/view/MainFrame.cpp:544
 #: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1318
 msgid "Choose a file to write the policies to:"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:619
+#: src/xanoubis/view/MainFrame.cpp:624
 msgid "xanoubis is going to be closed."
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:784
+#: src/xanoubis/view/MainFrame.cpp:789
 msgid "Communication error while fetching list of upgraded files."
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:788
+#: src/xanoubis/view/MainFrame.cpp:793
 #, c-format
 msgid "Got error (%hs) from daemon while fetching list of upgraded files."
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:793
+#: src/xanoubis/view/MainFrame.cpp:798
 #, c-format
 msgid ""
 "An unexpected error (%i) occured while while fetching list of upgraded files."
@@ -1456,7 +1453,7 @@ msgid "open requests (ALF):"
 msgstr ""
 
 #: src/xanoubis/view/ModAlfPanelsBase.cpp:136
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:160
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:177
 #: src/xanoubis/view/ModSfsPanelsBase.cpp:477
 #: src/xanoubis/view/ModSbPanelsBase.cpp:132
 msgid "everything OK"
@@ -1772,7 +1769,7 @@ msgid "Profile:"
 msgstr ""
 
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:442
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:108
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:118
 msgid "Delete"
 msgstr ""
 
@@ -1990,77 +1987,85 @@ msgstr ""
 msgid "Overview"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:93
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:131
+msgid "Multiple errors occured while processing the Playground request"
+msgstr ""
+
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:160
 #, c-format
 msgid "Sytem error: %hs"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:95
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:111
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:162
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:178
 msgid "Playground error"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:108
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:175
 #, c-format
 msgid "Could not start program \"%ls\" within playground: %ls"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:42
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:44
 msgid "PG - Playground"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:54
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:56
 msgid "New Playground"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:56
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:58
 msgid "Application:"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:63
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:65
 msgid "Start Playground"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:69
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:71
 msgid "Playground Overview:"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:102
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:105
+msgid "Refresh view"
+msgstr ""
+
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:113
 msgid "Commit files..."
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:116
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:130
 msgid "Playground"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:130
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:147
 msgid "Displays the status of the Playground (PG) while connected."
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:147
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:164
 msgid "status (PG):"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:151
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:168
 msgid "playgrounds (PG):"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:181
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:198
 msgid ""
 "This is a list of files that have been used or created within the current "
 "playground. All selected files will be committed to the file system. "
 "Existing files won't be replaced without further permission."
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:186
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:203
 msgid "Playground Files"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:217
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:234
 msgid "Scan files"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.h:127
+#: src/xanoubis/view/ModPlaygroundPanelsBase.h:133
 msgid "Commit Files"
 msgstr ""
 
@@ -2591,26 +2596,6 @@ msgstr ""
 
 #: src/xanoubis/view/ModSbPanelsBase.cpp:123
 msgid "open requests (SB): "
-msgstr ""
-
-#: src/xanoubis/view/PlaygroundListProperty.cpp:57
-msgid "Files"
-msgstr ""
-
-#: src/xanoubis/view/PlaygroundListProperty.cpp:58
-msgid "Start Time"
-msgstr ""
-
-#: src/xanoubis/view/PlaygroundListProperty.cpp:59
-msgid "Command"
-msgstr ""
-
-#: src/xanoubis/view/PlaygroundListProperty.cpp:86
-msgid "active"
-msgstr ""
-
-#: src/xanoubis/view/PlaygroundListProperty.cpp:88
-msgid "inactive"
 msgstr ""
 
 #: src/xanoubis/view/ProfileListCtrl.cpp:57
@@ -3402,6 +3387,34 @@ msgstr ""
 #: src/xanoubis/control/MainUtils.cpp:297
 #, c-format
 msgid "Couldn't remove Autostart file: %ls"
+msgstr ""
+
+#: src/xanoubis/control/PlaygroundCtrl.cpp:124
+msgid "Communication error while fetching list of playgrounds."
+msgstr ""
+
+#: src/xanoubis/control/PlaygroundCtrl.cpp:129
+#, c-format
+msgid "Got error from daemon while fetching list of playgrounds: %hs"
+msgstr ""
+
+#: src/xanoubis/control/PlaygroundCtrl.cpp:139
+#, c-format
+msgid "Got unexpected result (%d) fetching list of playgrounds."
+msgstr ""
+
+#: src/xanoubis/control/PlaygroundCtrl.cpp:175
+msgid "Communication error while fetching files for playground."
+msgstr ""
+
+#: src/xanoubis/control/PlaygroundCtrl.cpp:180
+#, c-format
+msgid "Got error from daemon while fetching files for playgrounds: %hs"
+msgstr ""
+
+#: src/xanoubis/control/PlaygroundCtrl.cpp:190
+#, c-format
+msgid "Got unexpected result (%d) while fetching files for playground."
 msgstr ""
 
 #: src/xanoubis/control/SfsCtrl.cpp:446

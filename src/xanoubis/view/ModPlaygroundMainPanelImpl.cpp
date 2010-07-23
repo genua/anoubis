@@ -37,12 +37,14 @@
 #include <wx/log.h>
 #include <wx/tokenzr.h>
 
+#include "AnEvents.h"
 #include "AnGrid.h"
 #include "AnMessageDialog.h"
 #include "AnPickFromFs.h"
 #include "AnTable.h"
 #include "Debug.h"
 #include "ModPlaygroundMainPanelImpl.h"
+#include "JobCtrl.h"
 #include "PlaygroundCtrl.h"
 #include "PlaygroundListProperty.h"
 
@@ -89,6 +91,10 @@ ModPlaygroundMainPanelImpl::ModPlaygroundMainPanelImpl(wxWindow* parent,
 
 	playgroundCtrl->Connect(anEVT_PLAYGROUND_ERROR, wxCommandEventHandler(
 	    ModPlaygroundMainPanelImpl::onPlaygroundError), NULL, this);
+	JobCtrl::getInstance()->Connect(anEVT_COM_CONNECTION,
+	    wxCommandEventHandler(
+	      ModPlaygroundMainPanelImpl::onConnectionStateChange),
+	    NULL, this);
 }
 
 ModPlaygroundMainPanelImpl::~ModPlaygroundMainPanelImpl(void)
@@ -96,12 +102,27 @@ ModPlaygroundMainPanelImpl::~ModPlaygroundMainPanelImpl(void)
 	PlaygroundCtrl::instance()->Disconnect(anEVT_PLAYGROUND_ERROR,
 	    wxCommandEventHandler(
 	    ModPlaygroundMainPanelImpl::onPlaygroundError), NULL, this);
+	JobCtrl::getInstance()->Disconnect(anEVT_COM_CONNECTION,
+	    wxCommandEventHandler(
+	      ModPlaygroundMainPanelImpl::onConnectionStateChange),
+	    NULL, this);
+
 }
 
 void
 ModPlaygroundMainPanelImpl::update(void)
 {
-	PlaygroundCtrl::instance()->updatePlaygroundInfo();
+	refreshPlaygroundList();
+}
+
+void
+ModPlaygroundMainPanelImpl::onConnectionStateChange(wxCommandEvent &event)
+{
+        JobCtrl::ConnectionState state =
+	    (JobCtrl::ConnectionState)event.GetInt();
+	pgRefreshButton->Enable(state == JobCtrl::CONNECTED);
+
+	event.Skip();
 }
 
 void
@@ -128,6 +149,21 @@ ModPlaygroundMainPanelImpl::onPlaygroundError(wxCommandEvent &)
 	if (errors.Count() > 1) {
 		wxLogError(_("Multiple errors occured while processing the "
 		    "Playground request"));
+	}
+}
+
+void
+ModPlaygroundMainPanelImpl::onPgListRefreshClicked(wxCommandEvent &)
+{
+	refreshPlaygroundList();
+}
+
+void
+ModPlaygroundMainPanelImpl::onPgNotebookChanging(wxCommandEvent& event)
+{
+	/* Check key config if the target is the playground overview tab */
+	if (pgNotebook->GetPage(event.GetSelection()) == pgPage) {
+		refreshPlaygroundList();
 	}
 }
 
@@ -190,6 +226,15 @@ ModPlaygroundMainPanelImpl::startApplication(void)
 		free(argv[idx++]);
 	}
 	free(argv);
+}
+
+void
+ModPlaygroundMainPanelImpl::refreshPlaygroundList(void)
+{
+	if (!PlaygroundCtrl::instance()->updatePlaygroundInfo()) {
+		anMessageBox(_("Could not refresh list of playgrounds."),
+		    _("Playground error"), wxOK | wxICON_ERROR, this);
+	}
 }
 
 char **

@@ -1116,7 +1116,7 @@ SfsCtrl::OnCsumDel(TaskEvent &event)
 	} else if (taskResult == ComTask::RESULT_REMOTE_ERROR) {
 		err = anoubis_strerror(task->getResultDetails());
 		message = wxString::Format(_("Communication error while "
-		    "removing checksums/signature."));
+		    "removing checksums/signatures."));
 		errorList_.Add(message);
 	} else if (taskResult == ComTask::RESULT_LOCAL_ERROR) {
 		err = anoubis_strerror(task->getResultDetails());
@@ -1126,7 +1126,7 @@ SfsCtrl::OnCsumDel(TaskEvent &event)
 	} else if (taskResult != ComTask::RESULT_SUCCESS) {
 		err = anoubis_strerror(task->getResultDetails());
 		message = wxString::Format(_("An unexpected error occured "
-		    "while removing checksums/signature: %hs"), err);
+		    "while removing checksums/signatures: %hs"), err);
 		errorList_.Add(message);
 	}
 	/*
