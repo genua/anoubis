@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2009 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,81 +25,35 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "PlaygroundFilesTask.h"
-#include "TaskEvent.h"
+#include <wx/event.h>
 
-PlaygroundFilesTask::PlaygroundFilesTask(void)
-    : PlaygroundTask(ANOUBIS_PGREC_FILELIST, 0)
+#include "CmdEventSpy.h"
+
+CmdEventSpy::CmdEventSpy(wxEvtHandler* eventProvider, int eventType)
 {
+	this->eventProvider_ = eventProvider;
+	this->eventType_ = eventType;
+	this->invocations_ = 0;
+
+	eventProvider->Connect(eventType,
+	    wxCommandEventHandler(CmdEventSpy::onEvent), NULL, this);
 }
 
-PlaygroundFilesTask::PlaygroundFilesTask(uint64_t pgid)
-    : PlaygroundTask(ANOUBIS_PGREC_FILELIST, pgid)
+CmdEventSpy::~CmdEventSpy(void)
 {
+	eventProvider_->Disconnect(eventType_,
+	    wxCommandEventHandler(CmdEventSpy::onEvent), NULL, this);
 }
 
-wxEventType
-PlaygroundFilesTask::getEventType(void) const
+int
+CmdEventSpy::getNumInvocations(void) const
 {
-	return (anTASKEVT_PG_FILES);
-}
-
-uint64_t
-PlaygroundFilesTask::getRequestedPGID(void) const
-{
-	return (pgid_);
-}
-
-void
-PlaygroundFilesTask::setRequestedPGID(uint64_t pgid)
-{
-	pgid_ = pgid;
+	return (invocations_);
 }
 
 void
-PlaygroundFilesTask::resetRecordIterator(void)
+CmdEventSpy::onEvent(wxCommandEvent &event)
 {
-	it_ = iterator<Anoubis_PgFileRecord>(result_);
-}
-
-bool
-PlaygroundFilesTask::readNextRecord(void)
-{
-	return (it_.next());
-}
-
-uint64_t
-PlaygroundFilesTask::getPGID(void) const
-{
-	if (it_.current())
-		return (get_value(it_.current()->pgid));
-	else
-		return (0);
-}
-
-uint64_t
-PlaygroundFilesTask::getDevice(void) const
-{
-	if (it_.current())
-		return (get_value(it_.current()->dev));
-	else
-		return (0);
-}
-
-uint64_t
-PlaygroundFilesTask::getInode(void) const
-{
-	if (it_.current())
-		return (get_value(it_.current()->ino));
-	else
-		return (0);
-}
-
-wxString
-PlaygroundFilesTask::getPath(void) const
-{
-	if (it_.current() && it_.current()->path != 0)
-		return (wxString::FromAscii(it_.current()->path));
-	else
-		return (wxEmptyString);
+	invocations_++;
+	event.Skip();
 }

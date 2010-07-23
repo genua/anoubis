@@ -42,6 +42,7 @@
 #include <PlaygroundListTask.h>
 #include <JobCtrl.h>
 
+#include "dummyDaemon.h"
 #include "JobCtrlEventSpy.h"
 #include "TaskEventSpy.h"
 #include "utils.h"
@@ -49,31 +50,10 @@
 #include <anoubis_errno.h>
 #include <anoubis_playground.h>
 
-static wxApp *app = 0;
-static JobCtrl *jobCtrl = 0;
-
 static void
 setup(void)
 {
-	/* wxWidgets-infrastructure */
-	app = new wxApp;
-	wxApp::SetInstance(app);
-	wxPendingEventsLocker = new wxCriticalSection;
-
-	wxModule::RegisterModules();
-	fail_unless(wxModule::InitializeModules(),
-	    "Failed to initialize wxModules");
-
-	/* Object to be tested */
-	jobCtrl = JobCtrl::getInstance();
-	fail_unless(jobCtrl->start(), "Failed to start JobCtrl");
-
-	JobCtrlEventSpy spy(jobCtrl);
-	fail_unless(jobCtrl->connect(), "Connection request failed");
-
-	spy.waitForInvocation(1);
-	fail_unless(spy.getLastState() == JobCtrl::CONNECTED,
-	    "Unexpected connection-state; is: %i", spy.getLastState());
+	setup_dummyDaemon();
 
 	for (int i = 0; i < 2; i++) {
 		const char *playground[] = {
@@ -91,31 +71,12 @@ setup(void)
 static void
 teardown(void)
 {
-	/* Destroy test-object */
-	JobCtrlEventSpy *spy = new JobCtrlEventSpy(jobCtrl);
-
-	jobCtrl->disconnect();
-	spy->waitForInvocation(1);
-	fail_unless(spy->getLastState() == JobCtrl::DISCONNECTED,
-	    "Unexpected connection-state; is: %i", spy->getLastState());
-
-	delete spy;
-
-	jobCtrl->stop();
-	delete jobCtrl;
-	jobCtrl = 0;
-
-	/* Destroy wxWidgets-infrastructure */
-	wxModule::CleanUpModules();
-	wxApp::SetInstance(0);
-
-	delete app;
-	delete wxPendingEventsLocker;
-	wxPendingEventsLocker = 0;
+	teardown_dummyDaemon();
 }
 
 START_TEST(fetch_list)
 {
+	JobCtrl *jobCtrl = JobCtrl::getInstance();
 	TaskEventSpy listSpy(jobCtrl, anTASKEVT_PG_LIST);
 	TaskEventSpy filesSpy(jobCtrl, anTASKEVT_PG_FILES);
 	PlaygroundListTask listTask;
@@ -127,9 +88,9 @@ START_TEST(fetch_list)
 	fail_unless(listTask.getComTaskResult() == ComTask::RESULT_SUCCESS,
 	    "Failed to fetch playground-list");
 
-	listTask.setFirstRecord();
+	listTask.resetRecordIterator();
 	int numRecords = 0;
-	while (listTask.setNextRecord()) {
+	while (listTask.readNextRecord()) {
 		fail_unless(listTask.getCommand() == wxT("/bin/bash"),
 		    "Wrong command: %hs", listTask.getCommand().c_str());
 		fail_unless(listTask.getUID() == (int)getuid(),
@@ -144,9 +105,9 @@ START_TEST(fetch_list)
 		jobCtrl->addTask(&filesTask);
 		filesSpy.waitForInvocation(numRecords);
 
-		filesTask.setFirstRecord();
+		filesTask.resetRecordIterator();
 		int numFiles = 0;
-		while (filesTask.setNextRecord()) {
+		while (filesTask.readNextRecord()) {
 			fail_unless(filesTask.getPath().EndsWith(wxT("xxx")));
 			numFiles++;
 		}

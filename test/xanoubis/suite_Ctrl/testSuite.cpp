@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2008 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,81 +25,23 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "PlaygroundFilesTask.h"
-#include "TaskEvent.h"
+#include <config.h>
+#include <check.h>
 
-PlaygroundFilesTask::PlaygroundFilesTask(void)
-    : PlaygroundTask(ANOUBIS_PGREC_FILELIST, 0)
-{
-}
+#include <wx/app.h>
+#include <wx/module.h>
+#include <JobCtrl.h>
 
-PlaygroundFilesTask::PlaygroundFilesTask(uint64_t pgid)
-    : PlaygroundTask(ANOUBIS_PGREC_FILELIST, pgid)
-{
-}
+extern TCase *getTc_CtrlPlayground(void);
 
-wxEventType
-PlaygroundFilesTask::getEventType(void) const
+Suite *
+getTestSuite(void)
 {
-	return (anTASKEVT_PG_FILES);
-}
+	Suite *testSuite = suite_create("Ctrl");
 
-uint64_t
-PlaygroundFilesTask::getRequestedPGID(void) const
-{
-	return (pgid_);
-}
+	#ifdef LINUX
+	suite_add_tcase(testSuite, getTc_CtrlPlayground());
+	#endif
 
-void
-PlaygroundFilesTask::setRequestedPGID(uint64_t pgid)
-{
-	pgid_ = pgid;
-}
-
-void
-PlaygroundFilesTask::resetRecordIterator(void)
-{
-	it_ = iterator<Anoubis_PgFileRecord>(result_);
-}
-
-bool
-PlaygroundFilesTask::readNextRecord(void)
-{
-	return (it_.next());
-}
-
-uint64_t
-PlaygroundFilesTask::getPGID(void) const
-{
-	if (it_.current())
-		return (get_value(it_.current()->pgid));
-	else
-		return (0);
-}
-
-uint64_t
-PlaygroundFilesTask::getDevice(void) const
-{
-	if (it_.current())
-		return (get_value(it_.current()->dev));
-	else
-		return (0);
-}
-
-uint64_t
-PlaygroundFilesTask::getInode(void) const
-{
-	if (it_.current())
-		return (get_value(it_.current()->ino));
-	else
-		return (0);
-}
-
-wxString
-PlaygroundFilesTask::getPath(void) const
-{
-	if (it_.current() && it_.current()->path != 0)
-		return (wxString::FromAscii(it_.current()->path));
-	else
-		return (wxEmptyString);
+	return (testSuite);
 }

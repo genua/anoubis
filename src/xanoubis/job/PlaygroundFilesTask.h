@@ -88,26 +88,19 @@ class PlaygroundFilesTask : public PlaygroundTask
 		void setRequestedPGID(uint64_t);
 
 		/**
-		 * Initializes the iterator. The iterator is set to the first
-		 * element. Use recordIsValid() to check if this it is valid.
+		 * (Re)initialize the iterator. The next call to
+		 * readNextRecord() will return the first record of the task.
+		 * Must be called before iterating the task.
 		 */
-		void setFirstRecord(void);
+		void resetRecordIterator(void);
 
 		/**
-		 * Switches the iterator to the next record. setFirstRecord()
-		 * must be called before calling this method().
-		 *
+		 * Reads the next record from the message. The records values
+		 * can be retrieved with the property getter methods.
 		 * @return true, if a record is available, false if the end of
 		 *         the list is reached.
 		 */
-		bool setNextRecord(void);
-
-		/**
-		 * Returns true if the current record is valid.
-		 * @return true if the current record is valid,
-		 *         false if the end of the list is reached
-		 */
-		bool recordIsValid(void) const;
+		bool readNextRecord(void);
 
 		/**
 		* Returns the playground-id of the current file-record.

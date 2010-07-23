@@ -51,12 +51,14 @@ TESTS = \
 	testSuite_Playground \
 	pidtest \
 	wxStringTest
-noinst_PROGRAMS = test_xanoubis_server testSuite_JobCtrl $(TESTS)
+noinst_PROGRAMS = \
+	test_xanoubis_server testSuite_JobCtrl testSuite_Ctrl $(TESTS)
 endif
 
 if HAVE_LIBWXGUITESTING
 TESTS += wxGuiTest_Playground
-noinst_PROGRAMS = test_xanoubis_server testSuite_JobCtrl $(TESTS)
+noinst_PROGRAMS = \
+	test_xanoubis_server testSuite_JobCtrl testSuite_Ctrl $(TESTS)
 endif
 
 xanoubisdir       = src/xanoubis
@@ -247,6 +249,8 @@ testSuite_JobCtrl_LDADD = $(GUITEST_LDADD)
 
 testSuite_JobCtrl_SOURCES = \
 	testrunner.cpp \
+	suite_JobCtrl/dummyDaemon.cpp \
+	suite_JobCtrl/dummyDaemon.h \
 	suite_JobCtrl/JobCtrlEventSpy.cpp \
 	suite_JobCtrl/JobCtrlEventSpy.h \
 	suite_JobCtrl/TaskEventSpy.cpp \
@@ -258,6 +262,27 @@ testSuite_JobCtrl_SOURCES = \
 	suite_JobCtrl/testSuite.cpp \
 	suite_JobCtrl/utils.cpp \
 	suite_JobCtrl/utils.h
+
+#
+# Testsuite: Ctrl
+#
+testSuite_Ctrl_CPPFLAGS = \
+	$(AM_CPPFLAGS) -I$(top_srcdir)/test/xanoubis/suite_JobCtrl/
+testSuite_Ctrl_DEPENDENCIES = $(dependencies)
+testSuite_Ctrl_LDADD = $(GUITEST_LDADD)
+
+testSuite_Ctrl_SOURCES = \
+	testrunner.cpp \
+	suite_JobCtrl/dummyDaemon.cpp \
+	suite_JobCtrl/dummyDaemon.h \
+	suite_JobCtrl/JobCtrlEventSpy.cpp \
+	suite_JobCtrl/JobCtrlEventSpy.h \
+	suite_JobCtrl/TaskEventSpy.cpp \
+	suite_JobCtrl/TaskEventSpy.h \
+	suite_Ctrl/CmdEventSpy.cpp \
+	suite_Ctrl/CmdEventSpy.h \
+	suite_Ctrl/tc_Playground.cpp \
+	suite_Ctrl/testSuite.cpp
 
 #
 # Testsuite: Notification

@@ -40,21 +40,15 @@ PlaygroundListTask::getEventType(void) const
 }
 
 void
-PlaygroundListTask::setFirstRecord(void)
+PlaygroundListTask::resetRecordIterator(void)
 {
 	it_ = iterator<Anoubis_PgInfoRecord>(result_);
 }
 
 bool
-PlaygroundListTask::setNextRecord(void)
+PlaygroundListTask::readNextRecord(void)
 {
 	return (it_.next());
-}
-
-bool
-PlaygroundListTask::recordIsValid(void) const
-{
-	return (it_.current());
 }
 
 uint64_t

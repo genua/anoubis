@@ -235,13 +235,12 @@ PlaygroundCtrl::extractListTask(PlaygroundListTask *task)
 	PlaygroundInfoEntry *entry = NULL;
 
 	clearPlaygroundInfo();
-	task->setFirstRecord();
-	while (task->recordIsValid()) {
+	task->resetRecordIterator();
+	while (task->readNextRecord()) {
 		entry = new PlaygroundInfoEntry(task->getPGID(),
 		    task->getUID(), task->getTime(), task->isActive(),
 		    task->getNumFiles(), task->getCommand());
 		playgroundInfo_.addRow(entry);
-		task->setNextRecord();
 	}
 }
 
@@ -254,10 +253,10 @@ PlaygroundCtrl::extractFilesTask(PlaygroundFilesTask *task)
 		files(&PlaygroundFileEntry::cmpSet);
 
 	/* insert data from task into temporary set 'files' */
-	task->setFirstRecord();
-	while (task->recordIsValid()) {
+	task->resetRecordIterator();
+	while (task->readNextRecord()) {
 		/* assume that we have to create one */
-		PlaygroundFileEntry* entry = new PlaygroundFileEntry(
+		PlaygroundFileEntry *entry = new PlaygroundFileEntry(
 		    task->getPGID(), task->getDevice(), task->getInode());
 
 		std::pair<std::set<PlaygroundFileEntry*>::iterator,bool> ret;
@@ -270,8 +269,6 @@ PlaygroundCtrl::extractFilesTask(PlaygroundFilesTask *task)
 		/* ret.first contains the element from the list */
 		PlaygroundFileEntry *cur = *ret.first;
 		cur->addPath(task->getPath());
-
-		task->setNextRecord();
 	}
 
 	/* create the actual provider */
@@ -294,6 +291,7 @@ PlaygroundCtrl::clearPlaygroundInfo(void)
 
 		delete obj;
 	}
+	playgroundInfo_.clearRows();
 }
 
 void
@@ -306,6 +304,9 @@ PlaygroundCtrl::clearPlaygroundFiles(void)
 
 		delete obj;
 	}
+	/* Note: clearRows is not necessary but it triggers an event even if
+	 * the list was empty before (and at least the test needs this). */
+	playgroundFiles_.clearRows();
 }
 
 void
@@ -314,5 +315,7 @@ PlaygroundCtrl::sendErrorEvent(void)
 	wxCommandEvent event(anEVT_PLAYGROUND_ERROR);
 	event.SetEventObject(this);
 
+	/* Note: clearRows is not necessary but it triggers an event even if
+	 * the list was empty before (and at least the test needs this). */
 	ProcessEvent(event);
 }
