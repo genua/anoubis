@@ -34,8 +34,10 @@
 #include "AnEvents.h"
 #include "JobCtrl.h"
 #include "PlaygroundCtrl.h"
-#include "PlaygroundInfoEntry.h"
 #include "PlaygroundFileEntry.h"
+#include "PlaygroundInfoEntry.h"
+#include "anoubis_errno.h"
+
 #include "Singleton.cpp"
 
 template class Singleton<PlaygroundCtrl>;
@@ -74,8 +76,8 @@ PlaygroundCtrl::updatePlaygroundInfo(void)
 	return (createListTask());
 }
 
-const AnRowProvider *
-PlaygroundCtrl::getFileProvider(void) const
+AnRowProvider *
+PlaygroundCtrl::getFileProvider(void)
 {
 	return (&playgroundFiles_);
 }
@@ -90,6 +92,12 @@ const wxArrayString &
 PlaygroundCtrl::getErrors(void) const
 {
 	return (errorList_);
+}
+
+void
+PlaygroundCtrl::clearErrors(void)
+{
+	errorList_.Clear();
 }
 
 PlaygroundCtrl::PlaygroundCtrl(void) : Singleton<PlaygroundCtrl>()
@@ -123,6 +131,7 @@ PlaygroundCtrl::OnPlaygroundListArrived(TaskEvent & event)
 	event.Skip(false); /* "My" task -> stop propagating */
 
 	/* Progress for the finished task. */
+	clearPlaygroundInfo();
 	switch (task->getComTaskResult()) {
 	case ComTask::RESULT_COM_ERROR:
 		errorList_.Add(wxString::Format(_("Communication error while "
@@ -174,6 +183,7 @@ PlaygroundCtrl::OnPlaygroundFilesArrived(TaskEvent & event)
 	event.Skip(false); /* "My" task -> stop propagating */
 
 	/* Progress for the finished task. */
+	clearPlaygroundFiles();
 	switch (task->getComTaskResult()) {
 	case ComTask::RESULT_COM_ERROR:
 		errorList_.Add(wxString::Format(_("Communication error while "
@@ -238,7 +248,6 @@ PlaygroundCtrl::extractListTask(PlaygroundListTask *task)
 {
 	PlaygroundInfoEntry *entry = NULL;
 
-	clearPlaygroundInfo();
 	task->resetRecordIterator();
 	while (task->readNextRecord()) {
 		entry = new PlaygroundInfoEntry(task->getPGID(),
@@ -312,7 +321,6 @@ PlaygroundCtrl::extractFilesTask(PlaygroundFilesTask *task)
 	}
 
 	/* create the actual provider */
-	clearPlaygroundFiles();
 	std::set<PlaygroundFileEntry*>::iterator cur = files.begin();
 	while (cur != files.end()) {
 		PlaygroundFileEntry *e = *cur;

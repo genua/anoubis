@@ -28,6 +28,7 @@
 #ifndef _DEFAULTCONVERSIONS_H
 #define _DEFAULTCONVERSIONS_H
 
+#include <vector>
 #include <wx/string.h>
 #include <wx/datetime.h>
 
@@ -71,7 +72,24 @@ public:
 	 * zone as a string.
 	 */
 	static wxString toString(const wxDateTime dt) {
-		return dt.Format();
+		return dt.Format(wxT("%x %X"));
+	}
+	/**
+	 * Returns the vector elements as singl line string.
+	 */
+	static wxString toString(const std::vector<wxString> & list) {
+		wxString line;
+		std::vector<wxString>::const_iterator it;
+		if (list.size() == 0) {
+			return wxEmptyString;
+		}
+		for (it=list.begin(); it!=list.end(); it++) {
+			if (!line.IsEmpty()) {
+				line.Append(wxT(", "));
+			}
+			line.Append(*it);
+		}
+		return line;
 	}
 	/**
 	 * Returns the date of the argument in the default time zone as

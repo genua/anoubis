@@ -76,7 +76,7 @@ class PlaygroundCtrl : public Singleton<PlaygroundCtrl> , public wxEvtHandler
 		 * @param None.
 		 * @return row provider for playground files
 		 */
-		const AnRowProvider * getFileProvider(void) const;
+		AnRowProvider * getFileProvider(void);
 
 		/**
 		 * Command: Update the list of playground files.
@@ -97,6 +97,13 @@ class PlaygroundCtrl : public Singleton<PlaygroundCtrl> , public wxEvtHandler
 		 *         command.
 		 */
 		const wxArrayString &getErrors(void) const;
+
+		/**
+		 * Cleaer list of errors.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void clearErrors(void);
 
 	protected:
 		/**

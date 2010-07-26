@@ -32,6 +32,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 #include "AnGrid.h"
+#include "AnListCtrl.h"
 
 #include "ModPlaygroundPanelsBase.h"
 
@@ -70,34 +71,8 @@ ModPlaygroundMainPanelBase::ModPlaygroundMainPanelBase( wxWindow* parent, wxWind
 	wxStaticBoxSizer* pgOverviewListSizer;
 	pgOverviewListSizer = new wxStaticBoxSizer( new wxStaticBox( pgPage, -1, _("Playground Overview:") ), wxVERTICAL );
 	
-	pgGrid = new AnGrid( pgPage, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
-	
-	// Grid
-	pgGrid->CreateGrid( 1, 2 );
-	pgGrid->EnableEditing( false );
-	pgGrid->EnableGridLines( true );
-	pgGrid->EnableDragGridSize( false );
-	pgGrid->SetMargins( 0, 0 );
-	
-	// Columns
-	pgGrid->SetColSize( 0, 80 );
-	pgGrid->SetColSize( 1, 80 );
-	pgGrid->EnableDragColMove( false );
-	pgGrid->EnableDragColSize( true );
-	pgGrid->SetColLabelSize( 30 );
-	pgGrid->SetColLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
-	
-	// Rows
-	pgGrid->EnableDragRowSize( true );
-	pgGrid->SetRowLabelSize( 0 );
-	pgGrid->SetRowLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
-	
-	// Label Appearance
-	pgGrid->SetLabelFont( wxFont( wxNORMAL_FONT->GetPointSize(), 70, 90, 90, false, wxEmptyString ) );
-	
-	// Cell Defaults
-	pgGrid->SetDefaultCellAlignment( wxALIGN_LEFT, wxALIGN_TOP );
-	pgOverviewListSizer->Add( pgGrid, 1, wxALL|wxEXPAND, 5 );
+	pgList = new AnListCtrl( pgPage, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_SINGLE_SEL|wxLC_VIRTUAL );
+	pgOverviewListSizer->Add( pgList, 1, wxALL|wxEXPAND, 5 );
 	
 	wxBoxSizer* pgButtonSizer;
 	pgButtonSizer = new wxBoxSizer( wxHORIZONTAL );
@@ -138,8 +113,11 @@ ModPlaygroundMainPanelBase::ModPlaygroundMainPanelBase( wxWindow* parent, wxWind
 	pgNotebook->Connect( wxEVT_COMMAND_NOTEBOOK_PAGE_CHANGING, wxNotebookEventHandler( ModPlaygroundMainPanelBase::onPgNotebookChanging ), NULL, this );
 	applicationComboBox->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( ModPlaygroundMainPanelBase::onAppStartEnter ), NULL, this );
 	applicationStartButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModPlaygroundMainPanelBase::onAppStart ), NULL, this );
-	pgGrid->Connect( wxEVT_GRID_SELECT_CELL, wxGridEventHandler( ModPlaygroundMainPanelBase::OnCellSelect ), NULL, this );
+	pgList->Connect( wxEVT_COMMAND_LIST_ITEM_ACTIVATED, wxListEventHandler( ModPlaygroundMainPanelBase::onPgListItemActivate ), NULL, this );
+	pgList->Connect( wxEVT_COMMAND_LIST_ITEM_DESELECTED, wxListEventHandler( ModPlaygroundMainPanelBase::onPgListItemDeselect ), NULL, this );
+	pgList->Connect( wxEVT_COMMAND_LIST_ITEM_SELECTED, wxListEventHandler( ModPlaygroundMainPanelBase::onPgListItemSelect ), NULL, this );
 	pgRefreshButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModPlaygroundMainPanelBase::onPgListRefreshClicked ), NULL, this );
+	pgCommitButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModPlaygroundMainPanelBase::onCommitFiles ), NULL, this );
 }
 
 ModPlaygroundOverviewPanelBase::ModPlaygroundOverviewPanelBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )
@@ -188,50 +166,69 @@ ModPlaygroundOverviewPanelBase::ModPlaygroundOverviewPanelBase( wxWindow* parent
 	this->Layout();
 }
 
-modPlaygroundCommitDialog::modPlaygroundCommitDialog( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+DlgPlaygroundCommitFileListBase::DlgPlaygroundCommitFileListBase( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
 {
 	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
 	
-	wxBoxSizer* textSizer;
-	textSizer = new wxBoxSizer( wxVERTICAL );
+	wxBoxSizer* mainSizer;
+	mainSizer = new wxBoxSizer( wxVERTICAL );
 	
 	descriptionText = new wxStaticText( this, wxID_ANY, _("This is a list of files that have been used or created within the current playground. All selected files will be committed to the file system. Existing files won't be replaced without further permission."), wxDefaultPosition, wxDefaultSize, 0 );
-	descriptionText->Wrap( 522 );
-	textSizer->Add( descriptionText, 0, wxALL|wxEXPAND, 10 );
+	descriptionText->Wrap( 600 );
+	mainSizer->Add( descriptionText, 0, wxALL|wxEXPAND, 10 );
 	
-	wxStaticBoxSizer* mainSizer;
-	mainSizer = new wxStaticBoxSizer( new wxStaticBox( this, -1, _("Playground Files") ), wxVERTICAL );
+	wxBoxSizer* listSizer;
+	listSizer = new wxBoxSizer( wxVERTICAL );
 	
-	commitFilelistGrid = new wxGrid( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxRAISED_BORDER|wxVSCROLL );
+	wxBoxSizer* listHeaderSizer;
+	listHeaderSizer = new wxBoxSizer( wxHORIZONTAL );
+	
+	listTitleText = new wxStaticText( this, wxID_ANY, _("Playground files:"), wxDefaultPosition, wxDefaultSize, 0 );
+	listTitleText->Wrap( -1 );
+	listHeaderSizer->Add( listTitleText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	
+	listHeaderSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	columnButton = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	listHeaderSizer->Add( columnButton, 0, wxALL|wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL, 5 );
+	
+	listSizer->Add( listHeaderSizer, 0, wxEXPAND, 5 );
+	
+	fileGrid = new AnGrid( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL );
 	
 	// Grid
-	commitFilelistGrid->CreateGrid( 1, 1 );
-	commitFilelistGrid->EnableEditing( true );
-	commitFilelistGrid->EnableGridLines( true );
-	commitFilelistGrid->EnableDragGridSize( false );
-	commitFilelistGrid->SetMargins( 0, 0 );
+	fileGrid->CreateGrid( 1, 1 );
+	fileGrid->EnableEditing( false );
+	fileGrid->EnableGridLines( true );
+	fileGrid->EnableDragGridSize( false );
+	fileGrid->SetMargins( 0, 0 );
 	
 	// Columns
-	commitFilelistGrid->EnableDragColMove( false );
-	commitFilelistGrid->EnableDragColSize( true );
-	commitFilelistGrid->SetColLabelSize( 30 );
-	commitFilelistGrid->SetColLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	fileGrid->EnableDragColMove( false );
+	fileGrid->EnableDragColSize( true );
+	fileGrid->SetColLabelSize( 30 );
+	fileGrid->SetColLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
 	
 	// Rows
-	commitFilelistGrid->EnableDragRowSize( true );
-	commitFilelistGrid->SetRowLabelSize( 0 );
-	commitFilelistGrid->SetRowLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	fileGrid->EnableDragRowSize( true );
+	fileGrid->SetRowLabelSize( 0 );
+	fileGrid->SetRowLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
 	
 	// Label Appearance
+	fileGrid->SetLabelFont( wxFont( wxNORMAL_FONT->GetPointSize(), 70, 90, 90, false, wxEmptyString ) );
 	
 	// Cell Defaults
-	commitFilelistGrid->SetDefaultCellAlignment( wxALIGN_LEFT, wxALIGN_TOP );
-	mainSizer->Add( commitFilelistGrid, 0, wxALL|wxEXPAND, 0 );
+	fileGrid->SetDefaultCellAlignment( wxALIGN_LEFT, wxALIGN_TOP );
+	listSizer->Add( fileGrid, 1, wxALL|wxEXPAND, 0 );
 	
-	wxGridSizer* footerSizer;
-	footerSizer = new wxGridSizer( 1, 2, 0, 0 );
+	wxBoxSizer* footerSizer;
+	footerSizer = new wxBoxSizer( wxHORIZONTAL );
 	
 	commitScanFilesCheckbox = new wxCheckBox( this, wxID_ANY, _("Scan files"), wxDefaultPosition, wxDefaultSize, 0 );
+	commitScanFilesCheckbox->SetValue(true);
+	
+	commitScanFilesCheckbox->Enable( false );
 	
 	footerSizer->Add( commitScanFilesCheckbox, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 	
@@ -241,12 +238,16 @@ modPlaygroundCommitDialog::modPlaygroundCommitDialog( wxWindow* parent, wxWindow
 	comittButtonSizerCancel = new wxButton( this, wxID_CANCEL );
 	comittButtonSizer->AddButton( comittButtonSizerCancel );
 	comittButtonSizer->Realize();
-	footerSizer->Add( comittButtonSizer, 1, wxEXPAND, 5 );
+	footerSizer->Add( comittButtonSizer, 1, wxEXPAND|wxALL, 5 );
 	
-	mainSizer->Add( footerSizer, 1, wxEXPAND, 5 );
+	listSizer->Add( footerSizer, 0, wxEXPAND, 5 );
 	
-	textSizer->Add( mainSizer, 1, wxEXPAND, 5 );
+	mainSizer->Add( listSizer, 1, wxEXPAND|wxALL, 5 );
 	
-	this->SetSizer( textSizer );
+	this->SetSizer( mainSizer );
 	this->Layout();
+	
+	// Connect Events
+	columnButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgPlaygroundCommitFileListBase::onColumnButtonClick ), NULL, this );
+	comittButtonSizerOK->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgPlaygroundCommitFileListBase::onOkButton ), NULL, this );
 }

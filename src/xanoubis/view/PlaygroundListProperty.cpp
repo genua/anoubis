@@ -37,6 +37,7 @@
 
 #include "DefaultConversions.h"
 #include "MainUtils.h"
+#include "PlaygroundFileEntry.h"
 #include "PlaygroundInfoEntry.h"
 #include "PlaygroundListProperty.h"
 
@@ -52,12 +53,16 @@ PlaygroundListProperty::getHeader(void) const
 	wxString header;
 
 	switch (type_) {
-	case PROPERTY_ID:	header = _("Id");		break;
-	case PROPERTY_USER:	header = _("User");		break;
-	case PROPERTY_STAT:	header = _("Status");		break;
-	case PROPERTY_FILES:	header = _("Files");		break;
-	case PROPERTY_TIME:	header = _("Start Time");	break;
-	case PROPERTY_COMMAND:	header = _("Command");		break;
+	case PROPERTY_ID:		header = _("Id");		break;
+	case PROPERTY_USER:		header = _("User");		break;
+	case PROPERTY_STAT:		header = _("Status");		break;
+	case PROPERTY_FILES:		header = _("Files");		break;
+	case PROPERTY_TIME:		header = _("Start Time");	break;
+	case PROPERTY_COMMAND:		header = _("Command");		break;
+	case PROPERTY_ATTENTION:	header = wxEmptyString;		break;
+	case PROPERTY_DEV:		header = _("Device");		break;
+	case PROPERTY_INODE:		header = _("Inode");		break;
+	case PROPERTY_FILENAME:		header = _("File name");	break;
 	}
 	return (header);
 }
@@ -68,43 +73,84 @@ PlaygroundListProperty::getText(AnListClass *item) const
 	wxString text;
 	wxDateTime startDate;
 	PlaygroundInfoEntry* pgInfo;
+	PlaygroundFileEntry* pgFile;
 
+	text   = wxEmptyString;
 	pgInfo = dynamic_cast<PlaygroundInfoEntry*>(item);
+	pgFile = dynamic_cast<PlaygroundFileEntry*>(item);
 
-	if (pgInfo == NULL) {
-		return wxEmptyString;
-	}
-
-	switch (type_) {
-	case PROPERTY_ID:
-		text = wxString::Format(wxT("%"PRIx64), pgInfo->getPgid());
-		break;
-	case PROPERTY_USER:
-		text = MainUtils::instance()->getUserNameById(pgInfo->getUid());
-		break;
-	case PROPERTY_STAT:
-		if (pgInfo->isActive()) {
-			text = _("active");
-		} else {
-			text = _("inactive");
+	if (pgInfo != NULL) {
+		switch (type_) {
+		case PROPERTY_ID:
+			text = wxString::Format(wxT("%"PRIx64),
+			    pgInfo->getPgid());
+			break;
+		case PROPERTY_USER:
+			text = MainUtils::instance()->getUserNameById(
+			    pgInfo->getUid());
+			break;
+		case PROPERTY_STAT:
+			if (pgInfo->isActive()) {
+				text = _("active");
+			} else {
+				text = _("inactive");
+			}
+			break;
+		case PROPERTY_FILES:
+			text = wxString::Format(wxT("%d"),
+			    pgInfo->getNumFiles());
+			break;
+		case PROPERTY_TIME:
+			text = DefaultConversions::toString(
+			    pgInfo->getStarttime());
+			break;
+		case PROPERTY_COMMAND:
+			text = pgInfo->getPath();
+			break;
+		case PROPERTY_ATTENTION:
+			text = wxEmptyString;
+			break;
+		default:
+			text = wxEmptyString;
+			break;
 		}
-		break;
-	case PROPERTY_FILES:
-		text = (wxString::Format(wxT("%d"), pgInfo->getNumFiles()));
-		break;
-	case PROPERTY_TIME:
-		text = DefaultConversions::toString(pgInfo->getStarttime());
-		break;
-	case PROPERTY_COMMAND:
-		text = pgInfo->getPath();
-		break;
+	} else if (pgFile != NULL) {
+		switch (type_) {
+		case PROPERTY_ID:
+			text = wxString::Format(wxT("%"PRIx64),
+			    pgFile->getPgid());
+			break;
+		case PROPERTY_DEV:
+			text = wxString::Format(wxT("%"PRIx64),
+			    pgFile->getDevice());
+			break;
+		case PROPERTY_INODE:
+			text = wxString::Format(wxT("%"PRIx64),
+			    pgFile->getInode());
+			break;
+		case PROPERTY_FILENAME:
+			text = DefaultConversions::toString(
+			    pgFile->getPaths());
+			break;
+		default:
+			text = wxEmptyString;
+			break;
+		}
 	}
 
 	return (text);
 }
 
 AnIconList::IconId
-PlaygroundListProperty::getIcon(AnListClass *) const
+PlaygroundListProperty::getIcon(AnListClass *item) const
 {
-	return AnIconList::ICON_NONE;
+	PlaygroundInfoEntry* pgInfo;
+
+	pgInfo = dynamic_cast<PlaygroundInfoEntry*>(item);
+	if ((type_ == PROPERTY_ATTENTION) && (pgInfo != NULL) &&
+	    !pgInfo->isActive() && (pgInfo->getUid() == geteuid())) {
+		return AnIconList::ICON_WARNING;
+	} else {
+		return AnIconList::ICON_NONE;
+	}
 }

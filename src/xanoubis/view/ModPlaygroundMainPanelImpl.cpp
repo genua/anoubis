@@ -31,26 +31,35 @@
 
 #include <sys/wait.h>
 
+#define __STDC_FORMAT_MACROS
 #include <anoubis_errno.h>
 #include <anoubis_playground.h>
+#include <inttypes.h>
 #include <signal.h>
 #include <wx/log.h>
 #include <wx/tokenzr.h>
 
 #include "AnEvents.h"
-#include "AnGrid.h"
+#include "AnListColumn.h"
+#include "AnListCtrl.h"
 #include "AnMessageDialog.h"
 #include "AnPickFromFs.h"
-#include "AnTable.h"
 #include "Debug.h"
-#include "ModPlaygroundMainPanelImpl.h"
+#include "DlgPlaygroundCommitFileListImpl.h"
 #include "JobCtrl.h"
+#include "ModPlaygroundMainPanelImpl.h"
+#include "ModPlaygroundRowProperty.h"
 #include "PlaygroundCtrl.h"
+#include "PlaygroundInfoEntry.h"
 #include "PlaygroundListProperty.h"
 
-#define ADD_PROPERTY(table, type, width) \
-	table->addProperty(new PlaygroundListProperty( \
-	    PlaygroundListProperty::type), width)
+#define ADD_PROPERTY(list, type, width) \
+	do { \
+		AnListColumn *_col; \
+		_col = list->addColumn(new PlaygroundListProperty( \
+		    PlaygroundListProperty::type)); \
+		_col->setWidth(width); \
+	} while (0)
 
 #ifdef LINUX
 static void
@@ -71,23 +80,21 @@ chldhandler(int)
 ModPlaygroundMainPanelImpl::ModPlaygroundMainPanelImpl(wxWindow* parent,
     wxWindowID id) : ModPlaygroundMainPanelBase(parent, id)
 {
-	AnTable *table = NULL;
 	PlaygroundCtrl *playgroundCtrl = NULL;
 
-	table = new AnTable(wxT("/State/ModPlayground/Columns/Playgrounds/"));
 	playgroundCtrl = PlaygroundCtrl::instance();
 
-	ADD_PROPERTY(table, PROPERTY_ID, 45);
-	ADD_PROPERTY(table, PROPERTY_USER, 55);
-	ADD_PROPERTY(table, PROPERTY_STAT, 70);
-	ADD_PROPERTY(table, PROPERTY_FILES, 80);
-	ADD_PROPERTY(table, PROPERTY_TIME, 200);
-	ADD_PROPERTY(table, PROPERTY_COMMAND, 270);
+	ADD_PROPERTY(pgList, PROPERTY_ATTENTION, 20);
+	ADD_PROPERTY(pgList, PROPERTY_ID, 55);
+	ADD_PROPERTY(pgList, PROPERTY_COMMAND, 260);
+	ADD_PROPERTY(pgList, PROPERTY_STAT, 60);
+	ADD_PROPERTY(pgList, PROPERTY_FILES, 65);
+	ADD_PROPERTY(pgList, PROPERTY_USER, 70);
+	ADD_PROPERTY(pgList, PROPERTY_TIME, 200);
 
-	pgGrid->SetTable(table, true, wxGrid::wxGridSelectRows);
-	pgGrid->setCursorVisibility(false);
-	table->setRowProvider(playgroundCtrl->getInfoProvider());
-	table->assignColumnWidth();
+	pgList->setStateKey(wxT("/State/ModPlaygroundMainPanelImpl"));
+	pgList->setRowProvider(playgroundCtrl->getInfoProvider());
+	pgList->setRowProperty(new ModPlaygroundRowProperty);
 
 	playgroundCtrl->Connect(anEVT_PLAYGROUND_ERROR, wxCommandEventHandler(
 	    ModPlaygroundMainPanelImpl::onPlaygroundError), NULL, this);
@@ -118,7 +125,7 @@ ModPlaygroundMainPanelImpl::update(void)
 void
 ModPlaygroundMainPanelImpl::onConnectionStateChange(wxCommandEvent &event)
 {
-        JobCtrl::ConnectionState state =
+	JobCtrl::ConnectionState state =
 	    (JobCtrl::ConnectionState)event.GetInt();
 	pgRefreshButton->Enable(state == JobCtrl::CONNECTED);
 
@@ -150,6 +157,7 @@ ModPlaygroundMainPanelImpl::onPlaygroundError(wxCommandEvent &)
 		wxLogError(_("Multiple errors occured while processing the "
 		    "Playground request"));
 	}
+	PlaygroundCtrl::instance()->clearErrors();
 }
 
 void
@@ -164,6 +172,64 @@ ModPlaygroundMainPanelImpl::onPgNotebookChanging(wxCommandEvent& event)
 	/* Check key config if the target is the playground overview tab */
 	if (pgNotebook->GetPage(event.GetSelection()) == pgPage) {
 		refreshPlaygroundList();
+	}
+}
+
+void
+ModPlaygroundMainPanelImpl::onCommitFiles(wxCommandEvent &)
+{
+	openCommitDialog();
+}
+
+void
+ModPlaygroundMainPanelImpl::onPgListItemSelect(wxListEvent &event)
+{
+	AnListClass		*item = NULL;
+	AnRowProvider		*rowProvider = NULL;
+	PlaygroundCtrl		*playgroundCtrl = NULL;
+	PlaygroundInfoEntry	*entry = NULL;
+
+	playgroundCtrl = PlaygroundCtrl::instance();
+	rowProvider = playgroundCtrl->getInfoProvider();
+	item = rowProvider->getRow(event.GetIndex());
+	entry = dynamic_cast<PlaygroundInfoEntry *>(item);
+
+	if ((entry != NULL) && (entry->getNumFiles() > 0) &&
+	    (entry->getUid() == geteuid())) {
+		pgCommitButton->Enable();
+	}
+}
+
+void
+ModPlaygroundMainPanelImpl::onPgListItemDeselect(wxListEvent &)
+{
+	pgCommitButton->Disable();
+	pgDeleteButton->Disable();
+}
+
+void
+ModPlaygroundMainPanelImpl::onPgListItemActivate(wxListEvent &event)
+{
+	AnListClass		*item = NULL;
+	AnRowProvider		*rowProvider = NULL;
+	PlaygroundCtrl		*playgroundCtrl = NULL;
+	PlaygroundInfoEntry	*entry = NULL;
+	AnMessageDialog		*dlg = NULL;
+
+	playgroundCtrl = PlaygroundCtrl::instance();
+	rowProvider = playgroundCtrl->getInfoProvider();
+	item = rowProvider->getRow(event.GetIndex());
+	entry = dynamic_cast<PlaygroundInfoEntry *>(item);
+
+	if ((entry != NULL) && (entry->getNumFiles() > 0)) {
+		if (entry->getUid() == geteuid()) {
+			openCommitDialog();
+		}
+	} else {
+		dlg = new AnMessageDialog(this, _("There are no files to "
+		    "commit!"), _("Playground error"), wxOK | wxICON_ERROR);
+		dlg->ShowModal();
+		dlg->Destroy();
 	}
 }
 
@@ -218,6 +284,11 @@ ModPlaygroundMainPanelImpl::startApplication(void)
 			applicationComboBox->Delete(idx);
 		}
 		applicationComboBox->Insert(command, 0);
+
+		/* Update list of playgrounds. */
+		if (JobCtrl::instance()->isConnected()) {
+			refreshPlaygroundList();
+		}
 	}
 
 	/* Cleanup argv. */
@@ -235,6 +306,40 @@ ModPlaygroundMainPanelImpl::refreshPlaygroundList(void)
 		anMessageBox(_("Could not refresh list of playgrounds."),
 		    _("Playground error"), wxOK | wxICON_ERROR, this);
 	}
+}
+
+void
+ModPlaygroundMainPanelImpl::openCommitDialog(void)
+{
+	DlgPlaygroundCommitFileListImpl dlg;
+
+	uint64_t		 pgId = 0;
+	AnListClass		*item = NULL;
+	AnRowProvider		*rowProvider = NULL;
+	PlaygroundCtrl		*playgroundCtrl = NULL;
+	PlaygroundInfoEntry	*entry = NULL;
+
+	if (!pgList->hasSelection()) {
+		/* How did we get here if nothing is selected? */
+		pgCommitButton->Disable();
+		pgDeleteButton->Disable();
+		return;
+	}
+
+	playgroundCtrl = PlaygroundCtrl::instance();
+	rowProvider = playgroundCtrl->getInfoProvider();
+	item = rowProvider->getRow(pgList->getFirstSelection());
+	entry = dynamic_cast<PlaygroundInfoEntry *>(item);
+	if (entry != NULL) {
+		pgId = entry->getPgid();
+	} else {
+		pgId = 0;
+	}
+
+	playgroundCtrl->updatePlaygroundFiles(pgId);
+	dlg.SetTitle(wxString::Format(_("Commit files for playground %"PRIx64),
+	    pgId));
+	dlg.ShowModal();
 }
 
 char **

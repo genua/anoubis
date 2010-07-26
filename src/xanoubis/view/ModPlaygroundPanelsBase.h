@@ -35,6 +35,7 @@
 #define __ModPlaygroundPanelsBase__
 
 class AnGrid;
+class AnListCtrl;
 
 #include <wx/string.h>
 #include <wx/stattext.h>
@@ -46,12 +47,13 @@ class AnGrid;
 #include <wx/button.h>
 #include <wx/sizer.h>
 #include <wx/statbox.h>
-#include <wx/grid.h>
+#include <wx/listctrl.h>
 #include <wx/panel.h>
 #include <wx/bitmap.h>
 #include <wx/image.h>
 #include <wx/notebook.h>
 #include <wx/statbmp.h>
+#include <wx/grid.h>
 #include <wx/checkbox.h>
 #include <wx/dialog.h>
 
@@ -75,7 +77,7 @@ class ModPlaygroundMainPanelBase : public wxPanel
 		wxStaticText* applicationLabel;
 		wxComboBox* applicationComboBox;
 		wxButton* applicationStartButton;
-		AnGrid* pgGrid;
+		AnListCtrl* pgList;
 		wxButton* pgRefreshButton;
 		
 		wxButton* pgCommitButton;
@@ -85,8 +87,11 @@ class ModPlaygroundMainPanelBase : public wxPanel
 		virtual void onPgNotebookChanging( wxNotebookEvent& event ){ event.Skip(); }
 		virtual void onAppStartEnter( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAppStart( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnCellSelect( wxGridEvent& event ){ event.Skip(); }
+		virtual void onPgListItemActivate( wxListEvent& event ){ event.Skip(); }
+		virtual void onPgListItemDeselect( wxListEvent& event ){ event.Skip(); }
+		virtual void onPgListItemSelect( wxListEvent& event ){ event.Skip(); }
 		virtual void onPgListRefreshClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onCommitFiles( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:
@@ -115,22 +120,30 @@ class ModPlaygroundOverviewPanelBase : public wxPanel
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-/// Class modPlaygroundCommitDialog
+/// Class DlgPlaygroundCommitFileListBase
 ///////////////////////////////////////////////////////////////////////////////
-class modPlaygroundCommitDialog : public wxDialog 
+class DlgPlaygroundCommitFileListBase : public wxDialog 
 {
 	private:
 	
 	protected:
 		wxStaticText* descriptionText;
-		wxGrid* commitFilelistGrid;
+		wxStaticText* listTitleText;
+		
+		wxButton* columnButton;
+		AnGrid* fileGrid;
 		wxCheckBox* commitScanFilesCheckbox;
 		wxStdDialogButtonSizer* comittButtonSizer;
 		wxButton* comittButtonSizerOK;
 		wxButton* comittButtonSizerCancel;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void onColumnButtonClick( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onOkButton( wxCommandEvent& event ){ event.Skip(); }
+		
 	
 	public:
-		modPlaygroundCommitDialog( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Commit Files"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 576,232 ), long style = wxCAPTION|wxCLOSE_BOX|wxMAXIMIZE_BOX|wxMINIMIZE_BOX );
+		DlgPlaygroundCommitFileListBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Commit Files"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 640,480 ), long style = wxCAPTION|wxCLOSE_BOX|wxMAXIMIZE_BOX|wxMINIMIZE_BOX|wxRESIZE_BORDER );
 	
 };
 

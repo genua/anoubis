@@ -75,7 +75,27 @@ class PlaygroundListProperty : public AnListProperty
 			/**
 			 * command.
 			 */
-			PROPERTY_COMMAND
+			PROPERTY_COMMAND,
+
+			/**
+			 * Attention icon
+			 */
+			PROPERTY_ATTENTION,
+
+			/**
+			 * Device number.
+			 */
+			PROPERTY_DEV,
+
+			/**
+			 * Inode number.
+			 */
+			PROPERTY_INODE,
+
+			/**
+			 * Filename.
+			 */
+			PROPERTY_FILENAME,
 		};
 
 		/**

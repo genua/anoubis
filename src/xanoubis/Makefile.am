@@ -205,12 +205,31 @@ install-data-local:
 xanoubis_SOURCES= \
 	model/AlertNotify.cpp \
 	model/AlertNotify.h \
+	model/AlfAppPolicy.cpp \
+	model/AlfAppPolicy.h \
+	model/AlfCapabilityFilterPolicy.cpp \
+	model/AlfCapabilityFilterPolicy.h \
+	model/AlfFilterPolicy.cpp \
+	model/AlfFilterPolicy.h \
 	model/AlfOverviewTable.cpp \
 	model/AlfOverviewTable.h \
 	model/ApnVersion.cpp \
 	model/ApnVersion.h \
+	model/AppPolicy.cpp \
+	model/AppPolicy.h \
+	model/ContextAppPolicy.cpp \
+	model/ContextAppPolicy.h \
+	model/ContextFilterPolicy.cpp \
+	model/ContextFilterPolicy.h \
+	model/DaemonAnswerNotify.cpp \
+	model/DaemonAnswerNotify.h \
+	model/DefaultConversions.h \
+	model/DefaultFilterPolicy.cpp \
+	model/DefaultFilterPolicy.h \
 	model/EscalationNotify.cpp \
 	model/EscalationNotify.h \
+	model/FilterPolicy.cpp \
+	model/FilterPolicy.h \
 	model/LocalCertificate.cpp \
 	model/LocalCertificate.h \
 	model/LogNotify.cpp \
@@ -221,12 +240,12 @@ xanoubis_SOURCES= \
 	model/ModAnoubis.h \
 	model/ModOverview.cpp \
 	model/ModOverview.h \
+	model/ModPlayground.cpp \
+	model/ModPlayground.h \
 	model/ModSb.cpp \
 	model/ModSb.h \
 	model/ModSfs.cpp \
 	model/ModSfs.h \
-	model/ModPlayground.cpp \
-	model/ModPlayground.h \
 	model/Module.cpp \
 	model/Module.h \
 	model/Notification.cpp \
@@ -235,97 +254,80 @@ xanoubis_SOURCES= \
 	model/NotificationPerspective.h \
 	model/NotifyAnswer.cpp \
 	model/NotifyAnswer.h \
-	model/PrivKey.cpp \
-	model/PrivKey.h \
-	model/StatusNotify.cpp \
-	model/StatusNotify.h \
-	model/DaemonAnswerNotify.cpp \
-	model/DaemonAnswerNotify.h \
-	model/SbOverviewTable.cpp \
-	model/SbOverviewTable.h \
-	model/SfsDirectory.cpp \
-	model/SfsDirectory.h \
-	model/SfsEntry.cpp \
-	model/SfsEntry.h \
-	model/PolicyRuleSet.cpp \
-	model/PolicyRuleSet.h \
-	model/AlfAppPolicy.cpp \
-	model/AlfAppPolicy.h \
-	model/AlfCapabilityFilterPolicy.cpp \
-	model/AlfCapabilityFilterPolicy.h \
-	model/AlfFilterPolicy.cpp \
-	model/AlfFilterPolicy.h \
-	model/AppPolicy.cpp \
-	model/AppPolicy.h \
-	model/ContextAppPolicy.cpp \
-	model/ContextAppPolicy.h \
-	model/ContextFilterPolicy.cpp \
-	model/ContextFilterPolicy.h \
-	model/DefaultConversions.h \
-	model/DefaultFilterPolicy.cpp \
-	model/DefaultFilterPolicy.h \
-	model/FilterPolicy.cpp \
-	model/FilterPolicy.h \
-	model/PolicyRowProvider.cpp \
-	model/PolicyRowProvider.h \
+	model/PlaygroundFileEntry.cpp \
+	model/PlaygroundFileEntry.h \
+	model/PlaygroundInfoEntry.cpp \
+	model/PlaygroundInfoEntry.h \
 	model/Policy.cpp \
 	model/Policy.h \
+	model/PolicyChecks.cpp \
+	model/PolicyChecks.h \
+	model/PolicyRowProvider.cpp \
+	model/PolicyRowProvider.h \
+	model/PolicyRuleSet.cpp \
+	model/PolicyRuleSet.h \
+	model/PolicyUtils.cpp \
+	model/PolicyUtils.h \
+	model/PrivKey.cpp \
+	model/PrivKey.h \
 	model/Profile.cpp \
 	model/Profile.h \
 	model/SbAccessFilterPolicy.cpp \
 	model/SbAccessFilterPolicy.h \
 	model/SbAppPolicy.cpp \
 	model/SbAppPolicy.h \
-	model/Service.cpp \
-	model/Service.h \
-	model/ServiceList.cpp \
-	model/ServiceList.h \
 	model/SbEntry.cpp \
 	model/SbEntry.h \
 	model/SbModel.cpp \
 	model/SbModel.h \
 	model/SbModelRowProvider.cpp \
 	model/SbModelRowProvider.h \
+	model/SbOverviewTable.cpp \
+	model/SbOverviewTable.h \
+	model/Service.cpp \
+	model/Service.h \
+	model/ServiceList.cpp \
+	model/ServiceList.h \
 	model/SfsAppPolicy.cpp \
 	model/SfsAppPolicy.h \
-	model/SfsFilterPolicy.cpp \
-	model/SfsFilterPolicy.h \
 	model/SfsDefaultFilterPolicy.cpp \
 	model/SfsDefaultFilterPolicy.h \
-	model/StringListModel.cpp \
-	model/StringListModel.h \
-	model/PolicyChecks.cpp \
-	model/PolicyChecks.h \
-	model/PolicyUtils.cpp \
-	model/PolicyUtils.h \
+	model/SfsDirectory.cpp \
+	model/SfsDirectory.h \
+	model/SfsEntry.cpp \
+	model/SfsEntry.h \
+	model/SfsFilterPolicy.cpp \
+	model/SfsFilterPolicy.h \
 	model/SfsOverviewTable.cpp \
 	model/SfsOverviewTable.h \
 	model/SimpleOverviewRow.cpp \
 	model/SimpleOverviewRow.h \
 	model/SimpleOverviewTable.cpp \
 	model/SimpleOverviewTable.h \
-	model/PlaygroundInfoEntry.cpp \
-	model/PlaygroundInfoEntry.h \
-	model/PlaygroundFileEntry.cpp \
-	model/PlaygroundFileEntry.h \
-	view/DlgBackupPolicyBase.h \
+	model/StatusNotify.cpp \
+	model/StatusNotify.h \
+	model/StringListModel.cpp \
+	model/StringListModel.h \
 	view/DlgBackupPolicyBase.cpp \
-	view/DlgBackupPolicyImpl.h \
+	view/DlgBackupPolicyBase.h \
 	view/DlgBackupPolicyImpl.cpp \
-	view/DlgLogViewerBase.cpp \
-	view/DlgLogViewerBase.h \
+	view/DlgBackupPolicyImpl.h \
 	view/DlgLogViewer.cpp \
 	view/DlgLogViewer.h \
+	view/DlgLogViewerBase.cpp \
+	view/DlgLogViewerBase.h \
+	view/DlgPlaygroundCommitFileListImpl.cpp \
+	view/DlgPlaygroundCommitFileListImpl.h \
 	view/DlgProfileSelection.cpp \
 	view/DlgProfileSelection.h \
-	view/DlgRuleEditorBase.cpp \
-	view/DlgRuleEditorBase.h \
 	view/DlgRuleEditor.cpp \
 	view/DlgRuleEditor.h \
 	view/DlgRuleEditorAppPage.cpp \
 	view/DlgRuleEditorAppPage.h \
 	view/DlgRuleEditorAttrProvider.cpp \
 	view/DlgRuleEditorAttrProvider.h \
+	view/DlgRuleEditorBase.cpp \
+	view/DlgRuleEditorBase.h \
 	view/DlgRuleEditorFilterActionPage.cpp \
 	view/DlgRuleEditorFilterActionPage.h \
 	view/DlgRuleEditorFilterAddressPage.cpp \
@@ -348,10 +350,10 @@ xanoubis_SOURCES= \
 	view/DlgRuleEditorPage.h \
 	view/DlgUpgradeAsk.cpp \
 	view/DlgUpgradeAsk.h \
-	view/MainFrameBase.cpp \
-	view/MainFrameBase.h \
 	view/MainFrame.cpp \
 	view/MainFrame.h \
+	view/MainFrameBase.cpp \
+	view/MainFrameBase.h \
 	view/ModAlfMainPanelImpl.cpp \
 	view/ModAlfMainPanelImpl.h \
 	view/ModAlfOverviewPanelImpl.cpp \
@@ -374,6 +376,14 @@ xanoubis_SOURCES= \
 	view/ModPlaygroundOverviewPanelImpl.h \
 	view/ModPlaygroundPanelsBase.cpp \
 	view/ModPlaygroundPanelsBase.h \
+	view/ModPlaygroundRowProperty.cpp \
+	view/ModPlaygroundRowProperty.h \
+	view/ModSbMainPanelImpl.cpp \
+	view/ModSbMainPanelImpl.h \
+	view/ModSbOverviewPanelImpl.cpp \
+	view/ModSbOverviewPanelImpl.h \
+	view/ModSbPanelsBase.cpp \
+	view/ModSbPanelsBase.h \
 	view/ModSfsDetailsDlg.cpp \
 	view/ModSfsDetailsDlg.h \
 	view/ModSfsGenerateKeyDlg.cpp \
@@ -388,12 +398,6 @@ xanoubis_SOURCES= \
 	view/ModSfsOverviewPanelImpl.h \
 	view/ModSfsPanelsBase.cpp \
 	view/ModSfsPanelsBase.h \
-	view/ModSbMainPanelImpl.cpp \
-	view/ModSbMainPanelImpl.h \
-	view/ModSbOverviewPanelImpl.cpp \
-	view/ModSbOverviewPanelImpl.h \
-	view/ModSbPanelsBase.cpp \
-	view/ModSbPanelsBase.h \
 	view/OverviewAttrProvider.cpp \
 	view/OverviewAttrProvider.h \
 	view/PlaygroundListProperty.cpp \
@@ -402,64 +406,70 @@ xanoubis_SOURCES= \
 	view/ProfileListCtrl.h \
 	view/RuleWizard.cpp \
 	view/RuleWizard.h \
-	view/RuleWizardPage.cpp \
-	view/RuleWizardPage.h \
-	view/RuleWizardProgramPage.cpp \
-	view/RuleWizardProgramPage.h \
-	view/RuleWizardContextPage.cpp \
-	view/RuleWizardContextPage.h \
-	view/RuleWizardContextExceptionPage.cpp \
-	view/RuleWizardContextExceptionPage.h \
-	view/RuleWizardAlfOverwritePage.cpp \
-	view/RuleWizardAlfOverwritePage.h \
 	view/RuleWizardAlfClientPage.cpp \
 	view/RuleWizardAlfClientPage.h \
 	view/RuleWizardAlfClientPortsPage.cpp \
 	view/RuleWizardAlfClientPortsPage.h \
 	view/RuleWizardAlfDlgAddService.cpp \
 	view/RuleWizardAlfDlgAddService.h \
-	view/RuleWizardSandboxPage.cpp \
-	view/RuleWizardSandboxPage.h \
-	view/RuleWizardSandboxOverwritePage.cpp \
-	view/RuleWizardSandboxOverwritePage.h \
-	view/RuleWizardSandboxExecutePage.cpp \
-	view/RuleWizardSandboxExecutePage.h \
-	view/RuleWizardSandboxExecuteFilesPage.cpp \
-	view/RuleWizardSandboxExecuteFilesPage.h \
-	view/RuleWizardSandboxProperty.cpp \
-	view/RuleWizardSandboxProperty.h \
-	view/RuleWizardSandboxReadPage.cpp \
-	view/RuleWizardSandboxReadPage.h \
-	view/RuleWizardSandboxReadFilesPage.cpp \
-	view/RuleWizardSandboxReadFilesPage.h \
-	view/RuleWizardSandboxWritePage.cpp \
-	view/RuleWizardSandboxWritePage.h \
-	view/RuleWizardSandboxWriteFilesPage.cpp \
-	view/RuleWizardSandboxWriteFilesPage.h \
+	view/RuleWizardAlfOverwritePage.cpp \
+	view/RuleWizardAlfOverwritePage.h \
+	view/RuleWizardContextExceptionPage.cpp \
+	view/RuleWizardContextExceptionPage.h \
+	view/RuleWizardContextPage.cpp \
+	view/RuleWizardContextPage.h \
 	view/RuleWizardFinalPage.cpp \
 	view/RuleWizardFinalPage.h \
 	view/RuleWizardHistory.cpp \
 	view/RuleWizardHistory.h \
+	view/RuleWizardPage.cpp \
+	view/RuleWizardPage.h \
 	view/RuleWizardPanelsBase.cpp \
 	view/RuleWizardPanelsBase.h \
+	view/RuleWizardProgramPage.cpp \
+	view/RuleWizardProgramPage.h \
+	view/RuleWizardSandboxExecuteFilesPage.cpp \
+	view/RuleWizardSandboxExecuteFilesPage.h \
+	view/RuleWizardSandboxExecutePage.cpp \
+	view/RuleWizardSandboxExecutePage.h \
+	view/RuleWizardSandboxOverwritePage.cpp \
+	view/RuleWizardSandboxOverwritePage.h \
+	view/RuleWizardSandboxPage.cpp \
+	view/RuleWizardSandboxPage.h \
+	view/RuleWizardSandboxProperty.cpp \
+	view/RuleWizardSandboxProperty.h \
+	view/RuleWizardSandboxReadFilesPage.cpp \
+	view/RuleWizardSandboxReadFilesPage.h \
+	view/RuleWizardSandboxReadPage.cpp \
+	view/RuleWizardSandboxReadPage.h \
+	view/RuleWizardSandboxWriteFilesPage.cpp \
+	view/RuleWizardSandboxWriteFilesPage.h \
+	view/RuleWizardSandboxWritePage.cpp \
+	view/RuleWizardSandboxWritePage.h \
 	view/SfsOverviewAttrProvider.cpp \
 	view/SfsOverviewAttrProvider.h \
 	view/TrayIcon.cpp \
 	view/TrayIcon.h \
-	view/VersionListCtrl.h \
 	view/VersionListCtrl.cpp \
+	view/VersionListCtrl.h \
 	control/AnConfig.cpp \
 	control/AnConfig.h \
 	control/AnEvents.cpp \
 	control/AnEvents.h \
-	control/Debug.h \
 	control/Debug.cpp \
+	control/Debug.h \
 	control/KeyCtrl.cpp \
 	control/KeyCtrl.h \
-	control/NotificationCtrl.cpp \
-	control/NotificationCtrl.h \
 	control/MainUtils.cpp \
 	control/MainUtils.h \
+	control/NotificationCtrl.cpp \
+	control/NotificationCtrl.h \
+	control/PlaygroundCtrl.cpp \
+	control/PlaygroundCtrl.h \
+	control/PolicyCtrl.cpp \
+	control/PolicyCtrl.h \
+	control/ProcCtrl.cpp \
+	control/ProcCtrl.h \
 	control/RuleSetClearModifiedVisitor.cpp \
 	control/RuleSetClearModifiedVisitor.h \
 	control/RuleSetSearchPolicyVisitor.cpp \
@@ -470,56 +480,50 @@ xanoubis_SOURCES= \
 	control/SimpleOverviewVisitor.h \
 	control/VersionCtrl.cpp \
 	control/VersionCtrl.h \
-	control/PlaygroundCtrl.h \
-	control/PlaygroundCtrl.cpp \
-	control/PolicyCtrl.cpp \
-	control/PolicyCtrl.h \
-	control/ProcCtrl.cpp \
-	control/ProcCtrl.h \
+	pattern/IndexTree.h \
+	pattern/IndexTree_Impl.h \
+	pattern/Observer.cpp \
+	pattern/Observer.h \
 	pattern/PolicyVisitor.cpp \
 	pattern/PolicyVisitor.h \
 	pattern/Singleton.cpp \
 	pattern/Singleton.h \
-	pattern/SynchronizedQueue.h \
 	pattern/Subject.cpp \
 	pattern/Subject.h \
-	pattern/Observer.cpp \
-	pattern/Observer.h \
-	pattern/IndexTree.h \
-	pattern/IndexTree_Impl.h \
+	pattern/SynchronizedQueue.h \
 	widgets/AnDetails.cpp \
 	widgets/AnDetails.h \
+	widgets/AnGenericRowProvider.cpp \
+	widgets/AnGenericRowProvider.h \
 	widgets/AnGrid.cpp \
 	widgets/AnGrid.h \
 	widgets/AnGridColumn.cpp \
 	widgets/AnGridColumn.h \
-	widgets/AnTable.cpp \
-	widgets/AnTable.h \
 	widgets/AnIconList.cpp \
 	widgets/AnIconList.h \
 	widgets/AnListClass.h \
-	widgets/AnRowProvider.h \
 	widgets/AnListClassProperty.cpp \
 	widgets/AnListClassProperty.h \
 	widgets/AnListColumn.cpp \
 	widgets/AnListColumn.h \
 	widgets/AnListCtrl.cpp \
 	widgets/AnListCtrl.h \
-	widgets/AnGenericRowProvider.h \
-	widgets/AnGenericRowProvider.cpp \
 	widgets/AnListProperty.h \
 	widgets/AnMessageDialog.cpp \
 	widgets/AnMessageDialog.h \
 	widgets/AnMultiRowProvider.cpp \
 	widgets/AnMultiRowProvider.h \
-	widgets/AnPolicyNotebook.cpp \
-	widgets/AnPolicyNotebook.h \
 	widgets/AnPickFromFs.cpp \
 	widgets/AnPickFromFs.h \
+	widgets/AnPolicyNotebook.cpp \
+	widgets/AnPolicyNotebook.h \
+	widgets/AnRowProvider.h \
 	widgets/AnStatusBar.cpp \
 	widgets/AnStatusBar.h \
-	job/ComCSMultiTask.h \
+	widgets/AnTable.cpp \
+	widgets/AnTable.h \
 	job/ComCSMultiTask.cpp \
+	job/ComCSMultiTask.h \
 	job/ComCsumAddTask.cpp \
 	job/ComCsumAddTask.h \
 	job/ComCsumDelTask.cpp \
@@ -534,8 +538,6 @@ xanoubis_SOURCES= \
 	job/ComRegistrationTask.h \
 	job/ComSfsListTask.cpp \
 	job/ComSfsListTask.h \
-	job/DummyTask.h \
-	job/DummyTask.cpp \
 	job/ComTask.cpp \
 	job/ComTask.h \
 	job/ComThread.cpp \
@@ -546,16 +548,18 @@ xanoubis_SOURCES= \
 	job/CsumCalcTask.h \
 	job/CsumCalcThread.cpp \
 	job/CsumCalcThread.h \
+	job/DummyTask.cpp \
+	job/DummyTask.h \
 	job/JobCtrl.cpp \
 	job/JobCtrl.h \
 	job/JobThread.cpp \
 	job/JobThread.h \
-	job/PlaygroundTask.cpp \
-	job/PlaygroundTask.h \
 	job/PlaygroundFilesTask.cpp \
 	job/PlaygroundFilesTask.h \
 	job/PlaygroundListTask.cpp \
 	job/PlaygroundListTask.h \
+	job/PlaygroundTask.cpp \
+	job/PlaygroundTask.h \
 	job/Task.cpp \
 	job/Task.h \
 	job/TaskEvent.cpp \

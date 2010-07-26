@@ -100,6 +100,35 @@ class ModPlaygroundMainPanelImpl : public ModPlaygroundMainPanelBase
 		void onPgNotebookChanging(wxCommandEvent &);
 
 		/**
+		 * Handle onClick events to 'Commit files...' button.
+		 * @param[in] 1st The click event.
+		 * @return Nothing.
+		 */
+		virtual void onCommitFiles(wxCommandEvent &);
+
+		/**
+		 * Handle deselection of a playground.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onPgListItemSelect(wxListEvent &);
+
+		/**
+		 * Handle deselection of a playground.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onPgListItemDeselect(wxListEvent &);
+
+		/**
+		 * Handle onActivate events (aka double-click or Enter)
+		 * on list item.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onPgListItemActivate(wxListEvent &);
+
+		/**
 		 * Start application.
 		 * This method will take the input from combo box and tries
 		 * to start it. On succes the history (combo box) is updated.
@@ -116,6 +145,13 @@ class ModPlaygroundMainPanelImpl : public ModPlaygroundMainPanelBase
 		 * @return Nothing.
 		 */
 		void refreshPlaygroundList(void);
+
+		/**
+		 * Open file commit dialog.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void openCommitDialog(void);
 
 		/**
 		 * Convert string to argv array.
