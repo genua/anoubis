@@ -99,6 +99,14 @@ class PlaygroundFilesTask : public PlaygroundIteratorTask<Anoubis_PgFileRecord>
 		 * @return Relative path of the current file
 		 */
 		wxString getPath(void) const;
+
+		/**
+		 * Returns the relative path of the current file-record
+		 * as character pointer to the raw data. It is not allocated
+		 * and must be copied by the caller for longterm use.
+		 * @return Relative path of the current file
+		 */
+		const char* getPathData(void) const;
 };
 
 #endif /* _PLAYGROUNDFILESTASK_H_ */

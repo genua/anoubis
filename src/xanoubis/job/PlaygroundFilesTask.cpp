@@ -91,3 +91,12 @@ PlaygroundFilesTask::getPath(void) const
 	else
 		return (wxEmptyString);
 }
+
+const char*
+PlaygroundFilesTask::getPathData(void) const
+{
+	if (getRecord() && getRecord()->path != 0)
+		return (getRecord()->path);
+	else
+		return "";
+}

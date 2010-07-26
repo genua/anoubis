@@ -25,15 +25,19 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <config.h>
+
 #include <set>
 
 #include "anoubis_errno.h"
+#include "anoubis_playground.h"
 #include "AnEvents.h"
 #include "JobCtrl.h"
 #include "PlaygroundCtrl.h"
 #include "PlaygroundInfoEntry.h"
 #include "PlaygroundFileEntry.h"
 #include "Singleton.cpp"
+
 template class Singleton<PlaygroundCtrl>;
 
 PlaygroundCtrl::~PlaygroundCtrl(void)
@@ -266,9 +270,45 @@ PlaygroundCtrl::extractFilesTask(PlaygroundFilesTask *task)
 			delete(entry);  /* element already exists */
 		}
 
-		/* ret.first contains the element from the list */
-		PlaygroundFileEntry *cur = *ret.first;
-		cur->addPath(task->getPath());
+		/* compose the absolute, validated path */
+		char *path_abs = NULL;
+#ifdef LINUX
+		int res = pgfile_composename(&path_abs,
+		    task->getDevice(), task->getInode(), task->getPathData());
+#else
+		int res = -ENOSYS;
+#endif
+
+		switch (res) {
+		case 0: {
+			/* add absolute path to entry */
+			/* ret.first contains the element from the list */
+			PlaygroundFileEntry *cur = *ret.first;
+			cur->addPath(wxString::FromAscii(path_abs));
+			break;
+		}
+		case -EBUSY:
+			/* filename invalid, ignore */
+			break;
+		case -EXDEV:
+			/* device busy, ignore */
+			break;
+		case -ENOMEM:
+			/* we should log an error here but there is no memory
+			 * memory to add strings. simply do not add the file */
+			break;
+		default: {
+			errorList_.Add(wxString::Format(_(
+			    "Could not determine filename for playground-file: "
+			    "%hs"), anoubis_strerror(res)));
+			sendErrorEvent();
+			break;
+		} // end default:
+		} // end switch
+
+		if (path_abs != 0) {
+			free(path_abs);
+		}
 	}
 
 	/* create the actual provider */
@@ -291,6 +331,8 @@ PlaygroundCtrl::clearPlaygroundInfo(void)
 
 		delete obj;
 	}
+	/* Note: clearRows is not necessary but it triggers an event even if
+	 * the list was empty before (and at least the test needs this). */
 	playgroundInfo_.clearRows();
 }
 
@@ -315,7 +357,5 @@ PlaygroundCtrl::sendErrorEvent(void)
 	wxCommandEvent event(anEVT_PLAYGROUND_ERROR);
 	event.SetEventObject(this);
 
-	/* Note: clearRows is not necessary but it triggers an event even if
-	 * the list was empty before (and at least the test needs this). */
 	ProcessEvent(event);
 }

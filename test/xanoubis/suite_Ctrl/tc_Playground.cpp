@@ -231,12 +231,10 @@ START_TEST(fetch_file_list)
 
 	file_entry = dynamic_cast<PlaygroundFileEntry *>(pg_files->getRow(0));
 	fail_unless(file_entry != 0);
-	fail_unless(file_entry->getPaths().size() == 3);
+	fail_unless(file_entry->getPaths().size() == 2);
 	fail_unless(file_entry->getPaths()[0].Cmp(
-	    wxT("/home/u2000/.plgr.3.foo")) == 0);
-	fail_unless(file_entry->getPaths()[1].Cmp(
 	    wxT("/home/u2000/.plgr.3.foo1")) == 0);
-	fail_unless(file_entry->getPaths()[2].Cmp(
+	fail_unless(file_entry->getPaths()[1].Cmp(
 	    wxT("/home/u2000/.plgr.3.foo2")) == 0);
 
 	/* we did it ! */
