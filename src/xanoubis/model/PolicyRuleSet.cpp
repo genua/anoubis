@@ -853,19 +853,19 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 	/* this PolicyRuleSet has changed, update myself */
 	refresh();
 
-	PolicyCtrl::getInstance()->sendToDaemon(getRuleSetId());
+	PolicyCtrl::instance()->sendToDaemon(getRuleSetId());
 	event.SetInt(getRuleSetId());
 	event.SetExtraLong(getRuleSetId());
-	wxPostEvent(AnEvents::getInstance(), event);
+	wxPostEvent(AnEvents::instance(), event);
 	if (tmp && answer->getEditor()) {
 		editevent.SetInt(false);
 		editevent.SetExtraLong(tmp->apn_id);
-		wxPostEvent(AnEvents::getInstance(), editevent);
+		wxPostEvent(AnEvents::instance(), editevent);
 	}
 	return;
 err:
 	wxCommandEvent	errevent(anEVT_ESCALATION_RULE_ERROR);
-	wxPostEvent(AnEvents::getInstance(), errevent);
+	wxPostEvent(AnEvents::instance(), errevent);
 	while(!TAILQ_EMPTY(&tmpchain)) {
 		struct apn_rule		*tmp = TAILQ_FIRST(&tmpchain);
 		TAILQ_REMOVE(&tmpchain, tmp, entry);

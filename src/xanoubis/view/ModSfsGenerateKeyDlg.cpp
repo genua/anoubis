@@ -115,7 +115,7 @@ ModSfsGenerateKeyDlg::ModSfsGenerateKeyDlg(wxWindow *parent)
 	indent.DecBy(spacer->GetSize().GetWidth(), 0);
 	certValidityLabel->SetMinSize(indent);
 
-	icon = AnIconList::getInstance()->GetIcon(AnIconList::ICON_ERROR);
+	icon = AnIconList::instance()->GetIcon(AnIconList::ICON_ERROR);
 	passphraseMismatchIcon->SetIcon(icon);
 	passphraseMismatchIcon->Hide();
 	passphraseMismatchText->Hide();

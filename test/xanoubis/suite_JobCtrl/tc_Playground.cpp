@@ -76,7 +76,7 @@ teardown(void)
 
 START_TEST(fetch_list)
 {
-	JobCtrl *jobCtrl = JobCtrl::getInstance();
+	JobCtrl *jobCtrl = JobCtrl::instance();
 	TaskEventSpy listSpy(jobCtrl, anTASKEVT_PG_LIST);
 	TaskEventSpy filesSpy(jobCtrl, anTASKEVT_PG_FILES);
 	PlaygroundListTask listTask;

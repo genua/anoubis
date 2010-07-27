@@ -235,7 +235,7 @@ ComPolicySendTask::done(void)
 	} else {
 		setComTaskResult(RESULT_SUCCESS);
 		if (ruleSetId_ != 0) {
-			policyCtrl = PolicyCtrl::getInstance();
+			policyCtrl = PolicyCtrl::instance();
 			ruleSet = policyCtrl->getRuleSet(ruleSetId_);
 			if (ruleSet != NULL) {
 				ruleSet->clearModified();

@@ -119,7 +119,7 @@ RuleWizardAlfOverwritePage::fillPolicy(void)
 	policyLabel->SetLabel(text);
 	text = wxEmptyString;
 
-	policyCtrl = PolicyCtrl::getInstance();
+	policyCtrl = PolicyCtrl::instance();
 	ruleSet = policyCtrl->getRuleSet(policyCtrl->getUserId());
 	if (ruleSet != NULL) {
 		app = ruleSet->searchAlfAppPolicy(history_->getProgram());

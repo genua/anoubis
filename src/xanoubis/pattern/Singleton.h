@@ -39,7 +39,8 @@
  *
  *   o You have to set the singleton class as friend of the derived class.
  *
- *   o You have to include the source file Singleton.cpp in your source file.
+ *   o You have to include the source file Singleton.cpp and place the\n
+ *	"template class ..." directive in your source file.
  *
  *   o Please see the following examples:
  * @code
@@ -51,7 +52,6 @@
  *	{
  *		public:
  *			~Test(void);
- *			static Test* instance(void);
  *			void xyz(void);
  *
  *		protected:
@@ -63,12 +63,8 @@
  * @code
  *	Test.cpp:
  *
- *	#include "Singeton.cpp"
- *
- *	Test *
- *	Test::instance(void) {
- *		return Singleton<Test>::instance();
- *	}
+ *	#include "Singleton.cpp"
+ *	template class Singleton<Test>;
  *
  *	Test::Test(void) : Singleton<Test>() {
  *		...
@@ -77,6 +73,9 @@
  *
  *   o For usage of such a derived class just type:
  *	Test::instance()->xyz();
+ *
+ * @see http://www.parashift.com/c++-faq-lite/templates.html\n
+ *	FAQs section [35], parts 12, 13, 14
  */
 template <typename T>
 class Singleton
@@ -105,6 +104,13 @@ class Singleton
 		 * it if it is not already there.
 		 */
 		static T* existingInstance(void);
+
+		/**
+		 * Does an instance exist?
+		 * @param None.
+		 * @return True if an instance exists.
+		 */
+		static bool hasInstance(void);
 
 	protected:
 		/**

@@ -58,13 +58,6 @@ class VersionCtrl : public Singleton<VersionCtrl>, public AnRowProvider
 		~VersionCtrl(void);
 
 		/**
-		 * Returns the singleton instance of this class.
-		 *
-		 * @return The one and only instance of the class.
-		 */
-		static VersionCtrl *getInstance(void);
-
-		/**
 		 * Tests weather the version management library is initialized.
 		 *
 		 * Normally the initialization is performed during the

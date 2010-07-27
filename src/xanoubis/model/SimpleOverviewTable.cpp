@@ -40,7 +40,7 @@ SimpleOverviewTable::SimpleOverviewTable(const std::type_info &typeInfo)
 	visitor_ = new SimpleOverviewVisitor(
 	    (const std::type_info *) &typeInfo);
 
-	AnEvents::getInstance()->Connect(anEVT_LOAD_RULESET,
+	AnEvents::instance()->Connect(anEVT_LOAD_RULESET,
 	    wxCommandEventHandler(SimpleOverviewTable::onLoadRuleSet),
 	    NULL, this);
 }
@@ -48,7 +48,7 @@ SimpleOverviewTable::SimpleOverviewTable(const std::type_info &typeInfo)
 SimpleOverviewTable::~SimpleOverviewTable(void)
 {
 	delete visitor_;
-	AnEvents::getInstance()->Disconnect(anEVT_LOAD_RULESET,
+	AnEvents::instance()->Disconnect(anEVT_LOAD_RULESET,
 	    wxCommandEventHandler(SimpleOverviewTable::onLoadRuleSet),
 	    NULL, this);
 }
@@ -56,7 +56,7 @@ SimpleOverviewTable::~SimpleOverviewTable(void)
 void
 SimpleOverviewTable::reload(void)
 {
-	PolicyCtrl *policyCtrl = PolicyCtrl::getInstance();
+	PolicyCtrl *policyCtrl = PolicyCtrl::instance();
 	PolicyRuleSet *ruleSet;
 
 	/* clear the whole list */

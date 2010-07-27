@@ -49,7 +49,7 @@ RuleWizardFinalPage::onPageChanged(wxWizardEvent &)
 {
 	bool connected;
 
-	connected = JobCtrl::getInstance()->isConnected();
+	connected = JobCtrl::instance()->isConnected();
 
 	history_->setActivatePolicy(connected);
 	activatePolicyCheckbox->SetValue(connected);

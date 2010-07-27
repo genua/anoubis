@@ -76,13 +76,6 @@ class AnIconList : public wxImageList, public Singleton<AnIconList>
 			ICON_ANOUBIS_QUESTION_48,/*!< Anoubis question-icon */
 		};
 
-		/**
-		 * Returns the singleton-instance of the class.
-		 *
-		 * @return Singleton instanceof the image-list.
-		 */
-		static AnIconList *getInstance(void);
-
 	protected:
 		/**
 		 * Std-c'tor.

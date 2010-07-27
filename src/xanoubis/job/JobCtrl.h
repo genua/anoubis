@@ -112,11 +112,6 @@ class JobCtrl : public wxEvtHandler, public Singleton<JobCtrl>
 		~JobCtrl(void);
 
 		/**
-		 * Returns the singleton instance of the class.
-		 */
-		static JobCtrl *getInstance(void);
-
-		/**
 		 * Returns the path to socket used for communication with
 		 * anoubisd.
 		 *

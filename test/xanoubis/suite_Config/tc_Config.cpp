@@ -209,7 +209,7 @@ START_TEST(tc_Config_Read)
 
 	/* General checks */
 
-	AnEvents::getInstance()->ProcessPendingEvents();
+	AnEvents::instance()->ProcessPendingEvents();
 	fail_unless(spy.getNumInvocations() == 0,
 	    "Unexpected number of events");
 	fail_unless(getConfFileContent() == defaultConf,
@@ -279,7 +279,7 @@ START_TEST(tc_Config_Read_NoOptions)
 
 	/* General checks */
 
-	AnEvents::getInstance()->ProcessPendingEvents();
+	AnEvents::instance()->ProcessPendingEvents();
 	fail_unless(spy.getNumInvocations() == 0,
 	    "Unexpected number of events");
 	fail_unless(getConfFileContent() == defaultConf,
@@ -302,7 +302,7 @@ START_TEST(tc_Config_Write)
 	fail_unless(getConfFileContent() == conf,
 	    "Unexpected content of conf-file");
 
-	AnEvents::getInstance()->ProcessPendingEvents();
+	AnEvents::instance()->ProcessPendingEvents();
 	fail_unless(spy.getNumInvocations() == 1,
 	    "Unexpected number of events");
 
@@ -315,7 +315,7 @@ START_TEST(tc_Config_Write)
 	fail_unless(getConfFileContent() == conf,
 	    "Unexpected content of configuration file");
 
-	AnEvents::getInstance()->ProcessPendingEvents();
+	AnEvents::instance()->ProcessPendingEvents();
 	fail_unless(spy.getNumInvocations() == 2,
 	    "Unexpected number of events");
 
@@ -328,7 +328,7 @@ START_TEST(tc_Config_Write)
 	fail_unless(getConfFileContent() == conf,
 	    "Unexpected content of configuration file");
 
-	AnEvents::getInstance()->ProcessPendingEvents();
+	AnEvents::instance()->ProcessPendingEvents();
 	fail_unless(spy.getNumInvocations() == 3,
 	    "Unexpected number of events");
 
@@ -341,7 +341,7 @@ START_TEST(tc_Config_Write)
 	fail_unless(getConfFileContent() == conf,
 	    "Unexpected content of configuration file");
 
-	AnEvents::getInstance()->ProcessPendingEvents();
+	AnEvents::instance()->ProcessPendingEvents();
 	fail_unless(spy.getNumInvocations() == 4,
 	    "Unexpected number of events");
 
@@ -353,7 +353,7 @@ START_TEST(tc_Config_Write)
 	fail_unless(getConfFileContent() == conf,
 	    "Unexpected content of configuration file");
 
-	AnEvents::getInstance()->ProcessPendingEvents();
+	AnEvents::instance()->ProcessPendingEvents();
 	fail_unless(spy.getNumInvocations() == 4,
 	    "Unexpected number of events");
 }
@@ -375,7 +375,7 @@ START_TEST(tc_Config_Overwrite)
 	fail_unless(getConfFileContent() == conf,
 	    "Unexpected content of configuration file");
 
-	AnEvents::getInstance()->ProcessPendingEvents();
+	AnEvents::instance()->ProcessPendingEvents();
 	fail_unless(spy.getNumInvocations() == 1,
 	    "Unexpected number of events");
 
@@ -389,7 +389,7 @@ START_TEST(tc_Config_Overwrite)
 	fail_unless(getConfFileContent() == conf,
 	    "Unexpected content of configuration file");
 
-	AnEvents::getInstance()->ProcessPendingEvents();
+	AnEvents::instance()->ProcessPendingEvents();
 	fail_unless(spy.getNumInvocations() == 2,
 	    "Unexpected number of events");
 
@@ -403,7 +403,7 @@ START_TEST(tc_Config_Overwrite)
 	fail_unless(getConfFileContent() == conf,
 	    "Unexpected content of configuration file");
 
-	AnEvents::getInstance()->ProcessPendingEvents();
+	AnEvents::instance()->ProcessPendingEvents();
 	fail_unless(spy.getNumInvocations() == 3,
 	    "Unexpected number of events");
 
@@ -417,7 +417,7 @@ START_TEST(tc_Config_Overwrite)
 	fail_unless(getConfFileContent() == conf,
 	    "Unexpected content of configuration file");
 
-	AnEvents::getInstance()->ProcessPendingEvents();
+	AnEvents::instance()->ProcessPendingEvents();
 	fail_unless(spy.getNumInvocations() == 4,
 	    "Unexpected number of events");
 
@@ -429,7 +429,7 @@ START_TEST(tc_Config_Overwrite)
 	fail_unless(getConfFileContent() == conf,
 	    "Unexpected content of configuration file");
 
-	AnEvents::getInstance()->ProcessPendingEvents();
+	AnEvents::instance()->ProcessPendingEvents();
 	fail_unless(spy.getNumInvocations() == 4,
 	    "Unexpected number of events");
 }
@@ -449,7 +449,7 @@ START_TEST(tc_Config_Overwrite_Same)
 	fail_unless(getConfFileContent() == defaultConf,
 	    "Unexpected content of configuration file");
 
-	AnEvents::getInstance()->ProcessPendingEvents();
+	AnEvents::instance()->ProcessPendingEvents();
 	fail_unless(spy.getNumInvocations() == 0,
 	    "Unexpected number of events");
 
@@ -461,7 +461,7 @@ START_TEST(tc_Config_Overwrite_Same)
 	fail_unless(getConfFileContent() == defaultConf,
 	    "Unexpected content of configuration file");
 
-	AnEvents::getInstance()->ProcessPendingEvents();
+	AnEvents::instance()->ProcessPendingEvents();
 	fail_unless(spy.getNumInvocations() == 0,
 	    "Unexpected number of events");
 
@@ -473,7 +473,7 @@ START_TEST(tc_Config_Overwrite_Same)
 	fail_unless(getConfFileContent() == defaultConf,
 	    "Unexpected content of configuration file");
 
-	AnEvents::getInstance()->ProcessPendingEvents();
+	AnEvents::instance()->ProcessPendingEvents();
 	fail_unless(spy.getNumInvocations() == 0,
 	    "Unexpected number of events");
 
@@ -485,7 +485,7 @@ START_TEST(tc_Config_Overwrite_Same)
 	fail_unless(getConfFileContent() == defaultConf,
 	    "Unexpected content of configuration file");
 
-	AnEvents::getInstance()->ProcessPendingEvents();
+	AnEvents::instance()->ProcessPendingEvents();
 	fail_unless(spy.getNumInvocations() == 0,
 	    "Unexpected number of events");
 
@@ -497,7 +497,7 @@ START_TEST(tc_Config_Overwrite_Same)
 	fail_unless(getConfFileContent() == defaultConf,
 	    "Unexpected content of configuration file");
 
-	AnEvents::getInstance()->ProcessPendingEvents();
+	AnEvents::instance()->ProcessPendingEvents();
 	fail_unless(spy.getNumInvocations() == 0,
 	    "Unexpected number of events");
 }

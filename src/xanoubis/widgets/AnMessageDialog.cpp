@@ -132,7 +132,7 @@ AnMessageDialog::createIcon(long style)
 	    wxDefaultPosition, wxSize(48, 48), 0);
 
 	/* handle Icon settings */
-	AnIconList* iconList = AnIconList::getInstance();
+	AnIconList* iconList = AnIconList::instance();
 
 	if (style & wxICON_HAND || style & wxICON_ERROR) {
 		icon->SetIcon(iconList->GetIcon(AnIconList::ICON_ERROR_48));

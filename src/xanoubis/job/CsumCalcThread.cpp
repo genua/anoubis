@@ -49,7 +49,7 @@ CsumCalcThread::Entry(void)
 		} else {
 			task->exec();
 			if (task->getType() != Task::TYPE_CSUMCALC) {
-				JobCtrl::getInstance()->addTask(task);
+				JobCtrl::instance()->addTask(task);
 				continue;
 			}
 		}
@@ -66,6 +66,6 @@ CsumCalcThread::wakeup(bool isexit)
 {
 	if (isexit) {
 		DummyTask	*task = new DummyTask(Task::TYPE_CSUMCALC);
-		JobCtrl::getInstance()->addTask(task);
+		JobCtrl::instance()->addTask(task);
 	}
 }

@@ -85,15 +85,6 @@ class PolicyCtrl : public Singleton<PolicyCtrl>, public AnRowProvider
 		~PolicyCtrl(void);
 
 		/**
-		 * Get object.
-		 * This returns the (only) object of this class
-		 * (see singleton pattern).
-		 * @param None.
-		 * @return It self.
-		 */
-		static PolicyCtrl *getInstance(void);
-
-		/**
 		 * Get user rule set id.
 		 * Get the id of the current user rule. Use the id to fetch the
 		 * policy with getRuleSet().

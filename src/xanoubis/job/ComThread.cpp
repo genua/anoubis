@@ -182,7 +182,7 @@ ComThread::connect(void)
 	result = anoubis_client_connect(client_, ANOUBIS_PROTO_BOTH);
 
 	/* Pass protocol version back to the JobCtrl */
-	JobCtrl::getInstance()->protocolVersion_ =
+	JobCtrl::instance()->protocolVersion_ =
 	    anoubis_client_serverversion(client_);
 
 	/* Convert result to a enum */
@@ -458,7 +458,7 @@ ComThread::checkNotify(struct anoubis_msg *notifyMsg)
 
 	if (type == ANOUBIS_N_ASK) {
 		pid = get_value((notifyMsg->u.notify)->pid);
-		if (ProcCtrl::getInstance()->findPid(pid)) {
+		if (ProcCtrl::instance()->findPid(pid)) {
 			answer = new NotifyAnswer(NOTIFY_ANSWER_ONCE, true);
 			notify->setAnswer(answer);
 			pushNotification(notify);
@@ -491,7 +491,7 @@ ComThread::sendNotify(struct anoubis_msg *notifyMsg)
 		pce.SetInt(get_value(notifyMsg->u.policychange->prio));
 		pce.SetExtraLong(get_value(notifyMsg->u.policychange->uid));
 		if (dynamic_cast<AnoubisGuiApp*>(wxTheApp)) {
-			wxPostEvent(AnEvents::getInstance(), pce);
+			wxPostEvent(AnEvents::instance(), pce);
 		}
 	} else if (type == ANOUBIS_N_STATUSNOTIFY) {
 		unsigned int		key, value;
@@ -507,7 +507,7 @@ ComThread::sendNotify(struct anoubis_msg *notifyMsg)
 		case ANOUBIS_STATUS_UPGRADE: {
 			if (dynamic_cast<AnoubisGuiApp*>(wxTheApp)) {
 				wxCommandEvent	upg(anEVT_UPGRADENOTIFY);
-				wxPostEvent(AnEvents::getInstance(), upg);
+				wxPostEvent(AnEvents::instance(), upg);
 			}
 			break;
 		}
@@ -545,7 +545,7 @@ ComThread::sendComEvent(JobCtrl::ConnectionState state)
 	event.SetInt(state);
 	event.SetString(wxT("localhost"));
 
-	wxPostEvent(JobCtrl::getInstance(), event);
+	wxPostEvent(JobCtrl::instance(), event);
 }
 
 void

@@ -127,7 +127,7 @@ TrayIcon::TrayIcon(void)
 	 * this case the connection is already up and running before the
 	 * TrayIcon is constructed.
 	 */
-	if (JobCtrl::getInstance()->isConnected())
+	if (JobCtrl::instance()->isConnected())
 		daemon_ = wxT("localhost");
 
 	/* these defaults comply with the wxforrmbuilder settings */
@@ -158,8 +158,8 @@ TrayIcon::TrayIcon(void)
 	notification = notify_notification_new("Anoubis", "", NULL, NULL);
 	g_signal_connect(notification, "closed",
 	    G_CALLBACK(close_callback), this);
-	anEvents = AnEvents::getInstance();
-	jobCtrl = JobCtrl::getInstance();
+	anEvents = AnEvents::instance();
+	jobCtrl = JobCtrl::instance();
 
 	update(true);
 
@@ -184,7 +184,7 @@ TrayIcon::~TrayIcon(void)
 {
 	AnEvents *anEvents;
 
-	anEvents = AnEvents::getInstance();
+	anEvents = AnEvents::instance();
 
 	/* free notification object */
 	g_object_unref(G_OBJECT(notification));
@@ -385,11 +385,11 @@ TrayIcon::systemNotifyCallback(void)
 	if (messageEscalationCount_ > 0) {
 		showEvent.SetInt(true);
 		showEvent.SetString(wxT("ESCALATIONS"));
-		wxPostEvent(AnEvents::getInstance(), showEvent);
+		wxPostEvent(AnEvents::instance(), showEvent);
 	} else if (messageAlertCount_ > 0) {
 		showEvent.SetInt(true);
 		showEvent.SetString(wxT("ALERTS"));
-		wxPostEvent(AnEvents::getInstance(), showEvent);
+		wxPostEvent(AnEvents::instance(), showEvent);
 	}
 }
 
@@ -529,7 +529,7 @@ TrayIcon::initIcon(void)
 	orientation_ = TRAY_ORIENTATION_NONE;
 
 	/* Set icon to initialize window within taskbar. */
-	initIcon = AnIconList::getInstance()->GetIcon(
+	initIcon = AnIconList::instance()->GetIcon(
 	    AnIconList::ICON_ANOUBIS_BLACK);
 	wxTaskBarIcon::SetIcon(initIcon);
 
@@ -637,7 +637,7 @@ TrayIcon::getIcon(IconType type) const
 		break;
 	}
 
-	return (AnIconList::getInstance()->GetIcon(iconId));
+	return (AnIconList::instance()->GetIcon(iconId));
 }
 
 bool

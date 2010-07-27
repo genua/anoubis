@@ -38,8 +38,10 @@
 #include "ModAnoubis.h"
 #include "PolicyRuleSet.h"
 #include "ProcCtrl.h"
-#include "Singleton.cpp"
 #include "VersionCtrl.h"
+
+#include "Singleton.cpp"
+template class Singleton<VersionCtrl>;
 
 VersionCtrl::VersionCtrl(void)
 {
@@ -75,12 +77,6 @@ VersionCtrl::~VersionCtrl(void)
 
 	if (vm_ != 0)
 		apnvm_destroy(vm_);
-}
-
-VersionCtrl *
-VersionCtrl::getInstance(void)
-{
-	return (instance());
 }
 
 bool

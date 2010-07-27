@@ -92,7 +92,7 @@ teardown(void)
 static AnRowProvider*
 getPlaygroundInfos(void)
 {
-	JobCtrl *jobctl = JobCtrl::getInstance();
+	JobCtrl *jobctl = JobCtrl::instance();
 	PlaygroundCtrl *pgctl = PlaygroundCtrl::instance();
 
 	/* get all playgrounds */
@@ -111,7 +111,7 @@ getPlaygroundInfos(void)
 
 static AnRowProvider*
 getPlaygroundFiles(uint64_t pgid) {
-	JobCtrl *jobctl = JobCtrl::getInstance();
+	JobCtrl *jobctl = JobCtrl::instance();
 	PlaygroundCtrl *pgctl = PlaygroundCtrl::instance();
 
 	/* get this playgrounds files */

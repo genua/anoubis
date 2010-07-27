@@ -50,7 +50,7 @@ setup(void)
 	    "Failed to initialize wxModules");
 
 	/* Object to be tested */
-	jobCtrl = JobCtrl::getInstance();
+	jobCtrl = JobCtrl::instance();
 	fail_unless(jobCtrl->start(), "Failed to start JobCtrl");
 }
 

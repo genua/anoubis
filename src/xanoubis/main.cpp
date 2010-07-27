@@ -56,6 +56,7 @@
 #include "ModSfs.h"
 #include "Module.h"
 #include "NotificationCtrl.h"
+#include "PlaygroundCtrl.h"
 #include "PolicyRuleSet.h"
 #include "ProcCtrl.h"
 #include "TrayIcon.h"
@@ -86,24 +87,7 @@ AnoubisGuiApp::AnoubisGuiApp(void)
 
 AnoubisGuiApp::~AnoubisGuiApp(void)
 {
-	/* Destroy versionmanagement */
-	/*
-	 * XXX CH: When gui called /w option OnInit() is not called. Thus
-	 * XXX CH: this delete will fristly create an instance which causes
-	 * XXX CH: other c-tors and using wx classes not initialized. For
-	 * XXX CH: now we just deactivate this, but need better solution.
-	 * XXX CH: This may be realated to bug #1333.
-	 *
-	 * delete VersionCtrl::getInstance();
-	 */
 	Debug::uninitialize();
-
-	/* XXX KM: if we delete this instance a
-	 * segfault occured described in:
-	 * BUG 1333
-	 * for now we just don't clean up!
-	 * delete NotificationCtrl::instance();
-	 */
 }
 
 bool AnoubisGuiApp::OnInit()
@@ -119,7 +103,7 @@ bool AnoubisGuiApp::OnInit()
 	 * Make sure that a ProcCtrl Instance exists before we start any
 	 * helper threads.
 	 */
-	(void)ProcCtrl::getInstance();
+	(void)ProcCtrl::instance();
 
 	/* Initialize helper class. */
 	(void)MainUtils::instance();
@@ -149,19 +133,19 @@ bool AnoubisGuiApp::OnInit()
 	}
 
 	/* Initialization of versionmanagement */
-	VersionCtrl::getInstance(); /* Make sure c'tor is invoked */
+	VersionCtrl::instance(); /* Make sure c'tor is invoked */
 
 	/* Initialize policy-controller */
-	PolicyCtrl::getInstance();
+	PolicyCtrl::instance();
 
 	/* Assign the passphrase-callback */
 	KeyCtrl::instance()->setPassphraseReader(this);
 
 	/* Initialization of central event management */
-	AnEvents *anEvents = AnEvents::getInstance();
+	AnEvents *anEvents = AnEvents::instance();
 
 	/* Initialization of job-controller */
-	JobCtrl *jobCtrl = JobCtrl::getInstance();
+	JobCtrl *jobCtrl = JobCtrl::instance();
 
 	anEvents->Connect(anEVT_ANSWER_ESCALATION,
 	    wxCommandEventHandler(AnoubisGuiApp::OnAnswerEscalation),
@@ -194,20 +178,10 @@ bool AnoubisGuiApp::OnInit()
 int
 AnoubisGuiApp::OnExit(void)
 {
-	int result = wxApp::OnExit();
+	JobCtrl::instance()->stop();
+	/* No need to delete singletons. */
 
-	delete AnIconList::getInstance();
-	delete MainUtils::instance();
-
-	/* Destroy policy-controller */
-	delete PolicyCtrl::getInstance();
-
-	/* Destroy job-controller */
-	JobCtrl *jobCtrl = JobCtrl::getInstance();
-	jobCtrl->stop();
-	delete jobCtrl;
-
-	return (result);
+	return wxApp::OnExit();
 }
 
 void
@@ -270,7 +244,7 @@ AnoubisGuiApp::OnCmdLineParsed(wxCmdLineParser& parser)
 	wxString	socketPath;
 
 	if (parser.Found(wxT("s"), &socketPath))
-		JobCtrl::getInstance()->setSocketPath(socketPath);
+		JobCtrl::instance()->setSocketPath(socketPath);
 
 	if (parser.Found(wxT("d"), &debug_level)) {
 		Debug::setLevel(debug_level);
@@ -290,7 +264,7 @@ void
 AnoubisGuiApp::OnAnswerEscalation(wxCommandEvent &event)
 {
 	Notification *notify = (Notification*)event.GetClientObject();
-	JobCtrl::getInstance()->answerNotification(notify);
+	JobCtrl::instance()->answerNotification(notify);
 	event.Skip();
 }
 

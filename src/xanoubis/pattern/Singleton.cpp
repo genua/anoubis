@@ -65,4 +65,10 @@ Singleton<T>::existingInstance(void)
 	return instance_;
 }
 
+template <typename T> bool
+Singleton<T>::hasInstance(void)
+{
+	return (instance_ == 0 ? false : true);
+}
+
 #endif /* _SINGLETON_CPP_ */

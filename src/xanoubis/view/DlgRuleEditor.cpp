@@ -67,7 +67,7 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
 {
 	AnEvents *anEvents;
 
-	anEvents = AnEvents::getInstance();
+	anEvents = AnEvents::instance();
 
 	anEvents->Connect(anEVT_RULEEDITOR_SHOW,
 	    wxCommandEventHandler(DlgRuleEditor::onShow), NULL, this);
@@ -82,7 +82,7 @@ DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
 	userRuleSetId_ = -1;
 
 	/* We want to know connect-status for save/reload button */
-	JobCtrl::getInstance()->Connect(anEVT_COM_CONNECTION,
+	JobCtrl::instance()->Connect(anEVT_COM_CONNECTION,
 	    wxCommandEventHandler(DlgRuleEditor::onConnectionStateChange),
 	    NULL, this);
 
@@ -163,7 +163,7 @@ DlgRuleEditor::~DlgRuleEditor(void)
 {
 	AnEvents *anEvents;
 
-	anEvents = AnEvents::getInstance();
+	anEvents = AnEvents::instance();
 
 	anEvents->Disconnect(anEVT_RULEEDITOR_SHOW,
 	    wxCommandEventHandler(DlgRuleEditor::onShow), NULL, this);
@@ -174,7 +174,7 @@ DlgRuleEditor::~DlgRuleEditor(void)
 	anEvents->Disconnect(anEVT_SHOW_RULE,
 	    wxCommandEventHandler(DlgRuleEditor::onShowRule), NULL, this);
 
-	JobCtrl::getInstance()->Disconnect(anEVT_COM_CONNECTION,
+	JobCtrl::instance()->Disconnect(anEVT_COM_CONNECTION,
 	    wxCommandEventHandler(DlgRuleEditor::onConnectionStateChange),
 	    NULL, this);
 
@@ -242,7 +242,7 @@ DlgRuleEditor::onClose(wxCloseEvent & WXUNUSED(event))
 
 	showEvent.SetInt(false);
 
-	wxPostEvent(AnEvents::getInstance(), showEvent);
+	wxPostEvent(AnEvents::instance(), showEvent);
 }
 
 void
@@ -255,7 +255,7 @@ DlgRuleEditor::onConnectionStateChange(wxCommandEvent& event)
 	isConnected_ = (newState == JobCtrl::CONNECTED);
 
 	if (isConnected_) {
-		policyCtrl = PolicyCtrl::getInstance();
+		policyCtrl = PolicyCtrl::instance();
 		policyCtrl->receiveOneFromDaemon(0, geteuid());
 		policyCtrl->receiveOneFromDaemon(1, geteuid());
 	}
@@ -268,7 +268,7 @@ void
 DlgRuleEditor::onLoadNewRuleSet(wxCommandEvent &event)
 {
 	int		 admin, user;
-	PolicyCtrl	*policyCtrl = PolicyCtrl::getInstance();
+	PolicyCtrl	*policyCtrl = PolicyCtrl::instance();
 
 	/*
 	 * Switch to the the user rule set if no ruleset was loaded
@@ -314,7 +314,7 @@ DlgRuleEditor::onShowRule(wxCommandEvent& event)
 	PolicyRuleSet	*rs;
 	int		 idx;
 
-	policyCtrl = PolicyCtrl::getInstance();
+	policyCtrl = PolicyCtrl::instance();
 	event.Skip();
 
 	switchRuleSet(policyCtrl->getAdminId(geteuid()),
@@ -350,7 +350,7 @@ DlgRuleEditor::onShowRule(wxCommandEvent& event)
 	if (!IsShown()) {
 		wxCommandEvent	ev(anEVT_RULEEDITOR_SHOW);
 		ev.SetInt(true);
-		wxPostEvent(AnEvents::getInstance(), ev);
+		wxPostEvent(AnEvents::instance(), ev);
 	}
 	this->Raise();
 
@@ -754,7 +754,7 @@ DlgRuleEditor::onAppListCreateButton(wxCommandEvent &)
 
 	index = appGrid->GetGridCursorRow();
 	typeSelection = appListTypeChoice->GetStringSelection();
-	policyCtrl = PolicyCtrl::getInstance();
+	policyCtrl = PolicyCtrl::instance();
 	policy = getSelectedPolicy(appGrid);
 	ruleSet_id = -1;
 
@@ -860,7 +860,7 @@ DlgRuleEditor::onFilterListCreateButton(wxCommandEvent &)
 
 	appIndex    = appGrid->GetGridCursorRow();
 	filterIndex = filterGrid->GetGridCursorRow();
-	policyCtrl  = PolicyCtrl::getInstance();
+	policyCtrl  = PolicyCtrl::instance();
 
 	policy = getSelectedPolicy(appGrid);
 	parent = dynamic_cast<AppPolicy*>(policy);
@@ -934,7 +934,7 @@ DlgRuleEditor::onFooterImportButton(wxCommandEvent &)
 
 	wxBeginBusyCursor();
 
-	policyCtrl = PolicyCtrl::getInstance();
+	policyCtrl = PolicyCtrl::instance();
 
 	fileDlg.SetMessage(_("Import policy file"));
 	fileDlg.SetWildcard(wxT("*"));
@@ -959,7 +959,7 @@ DlgRuleEditor::reloadRuleSet(long id)
 	int		 prio;
 
 	if (id >= 0) {
-		policyCtrl = PolicyCtrl::getInstance();
+		policyCtrl = PolicyCtrl::instance();
 		rs = policyCtrl->getRuleSet(id);
 		if (rs) {
 			if (rs->isAdmin()) {
@@ -996,7 +996,7 @@ DlgRuleEditor::onFooterExportButton(wxCommandEvent &)
 	PolicyCtrl	*policyCtrl;
 	PolicyRuleSet	*ruleSet = NULL;
 
-	policyCtrl = PolicyCtrl::getInstance();
+	policyCtrl = PolicyCtrl::instance();
 	if (userRuleSetId_ != -1) {
 		ruleSet = policyCtrl->getRuleSet(userRuleSetId_);
 	} else if (adminRuleSetId_ != -1) {
@@ -1039,7 +1039,7 @@ DlgRuleEditor::onFooterActivateButton(wxCommandEvent &)
 	PolicyCtrl::PolicyResult	 polRes;
 	PolicyRuleSet	*admin = NULL, *user = NULL;
 
-	policyCtrl = PolicyCtrl::getInstance();
+	policyCtrl = PolicyCtrl::instance();
 
 	if (adminRuleSetId_ != -1) {
 		admin = policyCtrl->getRuleSet(adminRuleSetId_);
@@ -1134,7 +1134,7 @@ DlgRuleEditor::selectRow(wxGrid *grid, int index) const
 void
 DlgRuleEditor::switchRuleSet(long admin,  long user)
 {
-	PolicyCtrl	*policyCtrl = PolicyCtrl::getInstance();
+	PolicyCtrl	*policyCtrl = PolicyCtrl::instance();
 	PolicyRuleSet	*oldrs, *newrs;
 	int		 reload = 0;
 
@@ -1192,7 +1192,7 @@ DlgRuleEditor::loadRuleSet(void)
 	PolicyRuleSet	*ruleSet;
 	PolicyCtrl	*policyCtrl;
 
-	policyCtrl = PolicyCtrl::getInstance();
+	policyCtrl = PolicyCtrl::instance();
 	multiRowProvider_.clear();
 
 	/* Load ruleset with user-policies. */
@@ -1236,7 +1236,7 @@ DlgRuleEditor::createEmptyPolicyRuleSet(void)
 		 * XXX When editing admin rules we should import this as an
 		 * XXX admin rule set.
 		 */
-		PolicyCtrl::getInstance()->importPolicy(ruleSet);
+		PolicyCtrl::instance()->importPolicy(ruleSet);
 		switchRuleSet(adminRuleSetId_, ruleSet->getRuleSetId());
 	}
 
@@ -1248,8 +1248,8 @@ DlgRuleEditor::updateFooter(void)
 {
 	PolicyRuleSet	*admin = NULL, *user = NULL;
 
-	admin = PolicyCtrl::getInstance()->getRuleSet(adminRuleSetId_);
-	user = PolicyCtrl::getInstance()->getRuleSet(userRuleSetId_);
+	admin = PolicyCtrl::instance()->getRuleSet(adminRuleSetId_);
+	user = PolicyCtrl::instance()->getRuleSet(userRuleSetId_);
 
 	if (admin == NULL && user == NULL) {
 		return;
@@ -1294,7 +1294,7 @@ DlgRuleEditor::setAppPolicyLabel(AppPolicy *appPolicy)
 void
 DlgRuleEditor::setUser(long uid)
 {
-	PolicyCtrl	*policyCtrl = PolicyCtrl::getInstance();
+	PolicyCtrl	*policyCtrl = PolicyCtrl::instance();
 	long		 user = -1, admin = -1;
 
 	editorUid_ = uid;

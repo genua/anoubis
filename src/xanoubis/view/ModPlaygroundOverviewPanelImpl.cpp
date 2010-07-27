@@ -44,15 +44,17 @@ ModPlaygroundOverviewPanelImpl::ModPlaygroundOverviewPanelImpl(wxWindow* parent,
 	    wxT("ModPlayground_black_48.png"));
 	runningPgs_.Printf(wxT("%d"), 0);
 
-	AnEvents::getInstance()->Connect(anEVT_OPEN_PLAYGROUND_ESCALATIONS,
-	    wxCommandEventHandler(ModPlaygroundOverviewPanelImpl::onPlaygroundEscalation),
+	AnEvents::instance()->Connect(anEVT_OPEN_PLAYGROUND_ESCALATIONS,
+	    wxCommandEventHandler(
+		ModPlaygroundOverviewPanelImpl::onPlaygroundEscalation),
 	    NULL, this);
 }
 
 ModPlaygroundOverviewPanelImpl::~ModPlaygroundOverviewPanelImpl(void)
 {
-	AnEvents::getInstance()->Disconnect(anEVT_OPEN_PLAYGROUND_ESCALATIONS,
-	    wxCommandEventHandler(ModPlaygroundOverviewPanelImpl::onPlaygroundEscalation),
+	AnEvents::instance()->Disconnect(anEVT_OPEN_PLAYGROUND_ESCALATIONS,
+	    wxCommandEventHandler(
+		ModPlaygroundOverviewPanelImpl::onPlaygroundEscalation),
 	    NULL, this);
 
 	delete stateIconNormal_;
@@ -77,7 +79,7 @@ ModPlaygroundOverviewPanelImpl::update(void)
 
 	module = (ModPlayground *)(MainUtils::instance()->getModule(PG));
 
-	if (!JobCtrl::getInstance()->isConnected()) {
+	if (!JobCtrl::instance()->isConnected()) {
 		 stateText = _("not connected");
 		 stateIcon = stateIconNotConnected_;
 	} else {

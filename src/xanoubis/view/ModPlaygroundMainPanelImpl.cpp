@@ -98,7 +98,7 @@ ModPlaygroundMainPanelImpl::ModPlaygroundMainPanelImpl(wxWindow* parent,
 
 	playgroundCtrl->Connect(anEVT_PLAYGROUND_ERROR, wxCommandEventHandler(
 	    ModPlaygroundMainPanelImpl::onPlaygroundError), NULL, this);
-	JobCtrl::getInstance()->Connect(anEVT_COM_CONNECTION,
+	JobCtrl::instance()->Connect(anEVT_COM_CONNECTION,
 	    wxCommandEventHandler(
 	      ModPlaygroundMainPanelImpl::onConnectionStateChange),
 	    NULL, this);
@@ -109,7 +109,7 @@ ModPlaygroundMainPanelImpl::~ModPlaygroundMainPanelImpl(void)
 	PlaygroundCtrl::instance()->Disconnect(anEVT_PLAYGROUND_ERROR,
 	    wxCommandEventHandler(
 	    ModPlaygroundMainPanelImpl::onPlaygroundError), NULL, this);
-	JobCtrl::getInstance()->Disconnect(anEVT_COM_CONNECTION,
+	JobCtrl::instance()->Disconnect(anEVT_COM_CONNECTION,
 	    wxCommandEventHandler(
 	      ModPlaygroundMainPanelImpl::onConnectionStateChange),
 	    NULL, this);

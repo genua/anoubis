@@ -372,7 +372,7 @@ RuleWizard::onWizardFinished(wxWizardEvent &)
 
 	PolicyCtrl::PolicyResult	polRes;
 
-	policyCtrl = PolicyCtrl::getInstance();
+	policyCtrl = PolicyCtrl::instance();
 	/* XXX CEH: Might want to create Admin Policies as well. */
 	ruleSet = policyCtrl->getRuleSet(policyCtrl->getUserId());
 	if (ruleSet == NULL) {
@@ -433,7 +433,7 @@ RuleWizard::onWizardFinished(wxWizardEvent &)
 
 	}
 
-	wxPostEvent(AnEvents::getInstance(), newRuleSetEvent);
+	wxPostEvent(AnEvents::instance(), newRuleSetEvent);
 
 	return;
 }

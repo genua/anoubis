@@ -43,14 +43,14 @@ ModSbOverviewPanelImpl::ModSbOverviewPanelImpl(wxWindow* parent,
 	stateIconNotConnected_ = utils->loadIcon(wxT("ModSb_black_48.png"));
 	notAnswered_.Printf(wxT("%d"), 0);
 
-	AnEvents::getInstance()->Connect(anEVT_OPEN_SB_ESCALATIONS,
+	AnEvents::instance()->Connect(anEVT_OPEN_SB_ESCALATIONS,
 	    wxCommandEventHandler(ModSbOverviewPanelImpl::OnOpenSbEscalation),
 	    NULL, this);
 }
 
 ModSbOverviewPanelImpl::~ModSbOverviewPanelImpl(void)
 {
-	AnEvents::getInstance()->Disconnect(anEVT_OPEN_SB_ESCALATIONS,
+	AnEvents::instance()->Disconnect(anEVT_OPEN_SB_ESCALATIONS,
 	    wxCommandEventHandler(ModSbOverviewPanelImpl::OnOpenSbEscalation),
 	    NULL, this);
 
@@ -67,7 +67,7 @@ ModSbOverviewPanelImpl::update(void)
 	ModSb		*module;
 
 	module = (ModSb *)(MainUtils::instance()->getModule(SB));
-	if (!JobCtrl::getInstance()->isConnected()) {
+	if (!JobCtrl::instance()->isConnected()) {
 		stateText = _("not connected");
 		stateIcon = stateIconNotConnected_;
 	} else {

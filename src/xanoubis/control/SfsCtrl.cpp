@@ -60,7 +60,7 @@ SfsCtrl::SfsCtrl(void) : progressTimer_(this, SFSCTRL_PROGRESS_TIMER)
 	this->exportEnabled_ = false;
 	this->importList_ = 0;
 
-	JobCtrl::getInstance()->Connect(anTASKEVT_REGISTER,
+	JobCtrl::instance()->Connect(anTASKEVT_REGISTER,
 	    wxTaskEventHandler(SfsCtrl::OnRegistration), NULL, this);
 }
 
@@ -1187,15 +1187,15 @@ SfsCtrl::enableCommunication(void)
 {
 	comEnabled_ = true;
 
-	JobCtrl::getInstance()->Connect(anTASKEVT_SFS_LIST,
+	JobCtrl::instance()->Connect(anTASKEVT_SFS_LIST,
 	    wxTaskEventHandler(SfsCtrl::OnSfsListArrived), NULL, this);
-	JobCtrl::getInstance()->Connect(anTASKEVT_CSUMCALC,
+	JobCtrl::instance()->Connect(anTASKEVT_CSUMCALC,
 	    wxTaskEventHandler(SfsCtrl::OnCsumCalc), NULL, this);
-	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_GET,
+	JobCtrl::instance()->Connect(anTASKEVT_CSUM_GET,
 	    wxTaskEventHandler(SfsCtrl::OnCsumGet), NULL, this);
-	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_ADD,
+	JobCtrl::instance()->Connect(anTASKEVT_CSUM_ADD,
 	    wxTaskEventHandler(SfsCtrl::OnCsumAdd), NULL, this);
-	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_DEL,
+	JobCtrl::instance()->Connect(anTASKEVT_CSUM_DEL,
 	    wxTaskEventHandler(SfsCtrl::OnCsumDel), NULL, this);
 }
 
@@ -1204,15 +1204,15 @@ SfsCtrl::disableCommunication(void)
 {
 	comEnabled_ = false;
 
-	JobCtrl::getInstance()->Disconnect(anTASKEVT_SFS_LIST,
+	JobCtrl::instance()->Disconnect(anTASKEVT_SFS_LIST,
 	    wxTaskEventHandler(SfsCtrl::OnSfsListArrived), NULL, this);
-	JobCtrl::getInstance()->Disconnect(anTASKEVT_CSUMCALC,
+	JobCtrl::instance()->Disconnect(anTASKEVT_CSUMCALC,
 	    wxTaskEventHandler(SfsCtrl::OnCsumCalc), NULL, this);
-	JobCtrl::getInstance()->Disconnect(anTASKEVT_CSUM_GET,
+	JobCtrl::instance()->Disconnect(anTASKEVT_CSUM_GET,
 	    wxTaskEventHandler(SfsCtrl::OnCsumGet), NULL, this);
-	JobCtrl::getInstance()->Disconnect(anTASKEVT_CSUM_ADD,
+	JobCtrl::instance()->Disconnect(anTASKEVT_CSUM_ADD,
 	    wxTaskEventHandler(SfsCtrl::OnCsumAdd), NULL, this);
-	JobCtrl::getInstance()->Disconnect(anTASKEVT_CSUM_DEL,
+	JobCtrl::instance()->Disconnect(anTASKEVT_CSUM_DEL,
 	    wxTaskEventHandler(SfsCtrl::OnCsumDel), NULL, this);
 }
 
@@ -1463,7 +1463,7 @@ SfsCtrl::pushTask(Task *task, int work)
 {
 	startSfsOp(work);
 	taskList_[task] = true;
-	JobCtrl::getInstance()->addTask(task);
+	JobCtrl::instance()->addTask(task);
 	if (taskList_.size() > 20)
 		wxGetApp().ProcessPendingEvents();
 }

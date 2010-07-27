@@ -43,14 +43,14 @@ ModAlfOverviewPanelImpl::ModAlfOverviewPanelImpl(wxWindow* parent,
 	stateIconNotConnected_ = utils->loadIcon(wxT("ModAlf_black_48.png"));
 	notAnswered_.Printf(wxT("%d"), 0);
 
-	AnEvents::getInstance()->Connect(anEVT_OPEN_ALF_ESCALATIONS,
+	AnEvents::instance()->Connect(anEVT_OPEN_ALF_ESCALATIONS,
 	    wxCommandEventHandler(ModAlfOverviewPanelImpl::OnOpenAlfEscalation),
 		NULL, this);
 }
 
 ModAlfOverviewPanelImpl::~ModAlfOverviewPanelImpl(void)
 {
-	AnEvents::getInstance()->Disconnect(anEVT_OPEN_ALF_ESCALATIONS,
+	AnEvents::instance()->Disconnect(anEVT_OPEN_ALF_ESCALATIONS,
 	    wxCommandEventHandler(ModAlfOverviewPanelImpl::OnOpenAlfEscalation),
 		NULL, this);
 
@@ -68,7 +68,7 @@ ModAlfOverviewPanelImpl::update(void)
 
 	module = (ModAlf *)(MainUtils::instance()->getModule(ALF));
 
-	if (!JobCtrl::getInstance()->isConnected()) {
+	if (!JobCtrl::instance()->isConnected()) {
 		 stateText = _("not connected");
 		 stateIcon = stateIconNotConnected_;
 	} else {

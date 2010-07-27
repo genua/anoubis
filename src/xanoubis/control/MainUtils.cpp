@@ -38,13 +38,10 @@
 #include "JobCtrl.h"
 #include "MainFrame.h"
 #include "MainUtils.h"
-#include "Singleton.cpp"
 #include "main.h"
 
-MainUtils *
-MainUtils::instance(void) {
-	return Singleton<MainUtils>::instance();
-}
+#include "Singleton.cpp"
+template class Singleton<MainUtils>;
 
 MainUtils::MainUtils(void) : Singleton<MainUtils>() {
 	paths_.SetInstallPrefix(wxT(PACKAGE_PREFIX));
@@ -72,6 +69,9 @@ MainUtils::MainUtils(void) : Singleton<MainUtils>() {
 
 MainUtils::~MainUtils(void)
 {
+	for (int i=0; i<ANOUBIS_MODULESNO; ++i) {
+		delete modules_[i];
+	}
 }
 
 uid_t
@@ -202,15 +202,15 @@ MainUtils::getModule(enum moduleIdx idx)
 bool
 MainUtils::connectCommunicator(bool doConnect)
 {
-	if (doConnect == JobCtrl::getInstance()->isConnected()) {
+	if (doConnect == JobCtrl::instance()->isConnected()) {
 		/* No change of state */
 		return (false);
 	}
 
 	if (doConnect) {
-		return (JobCtrl::getInstance()->connect());
+		return (JobCtrl::instance()->connect());
 	} else {
-		JobCtrl::getInstance()->disconnect();
+		JobCtrl::instance()->disconnect();
 		return (true);
 	}
 }

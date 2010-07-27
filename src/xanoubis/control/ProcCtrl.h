@@ -53,11 +53,6 @@ class ProcCtrl : public Singleton<ProcCtrl>
 		 */
 		ProcCtrl(void);
 
-		/**
-		 * Implementation of GetInstance from Singleton.
-		 */
-		static ProcCtrl *getInstance(void);
-
 		/*
 		 * Add the given PID to the list of processes
 		 * @param[in] 1st The pid.

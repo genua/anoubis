@@ -29,19 +29,15 @@
 #include <unistd.h>
 
 #include "ProcCtrl.h"
+
 #include "Singleton.cpp"
+template class Singleton<ProcCtrl>;
 
 ProcCtrl::ProcCtrl(void) : mutex_(), pids_(0)
 {
 	mutex_.Lock();
 	pids_.push_back(getpid());
 	mutex_.Unlock();
-}
-
-ProcCtrl *
-ProcCtrl::getInstance(void)
-{
-	return Singleton<ProcCtrl>::instance();
 }
 
 void
@@ -83,8 +79,8 @@ void
 procctrl_pidcallback(pid_t pid, int add)
 {
 	if (add) {
-		ProcCtrl::getInstance()->addPid(pid);
+		ProcCtrl::instance()->addPid(pid);
 	} else {
-		ProcCtrl::getInstance()->removePid(pid);
+		ProcCtrl::instance()->removePid(pid);
 	}
 }

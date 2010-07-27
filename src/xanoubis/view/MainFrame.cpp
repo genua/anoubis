@@ -79,8 +79,8 @@ MainFrame::MainFrame(wxWindow *parent, bool trayVisible)
 	alertIcon_ = utils->loadIcon(wxT("General_alert_16.png"));
 	escalationIcon_ = utils->loadIcon(wxT("General_question_16.png"));
 
-	anEvents = AnEvents::getInstance();
-	jobCtrl = JobCtrl::getInstance();
+	anEvents = AnEvents::instance();
+	jobCtrl = JobCtrl::instance();
 
 	jobCtrl->Connect(anEVT_COM_CONNECTION,
 	    wxCommandEventHandler(MainFrame::OnConnectionStateChange),
@@ -124,8 +124,8 @@ MainFrame::~MainFrame()
 	AnEvents	*anEvents;
 	JobCtrl		*jobCtrl;
 
-	anEvents = AnEvents::getInstance();
-	jobCtrl = JobCtrl::getInstance();
+	anEvents = AnEvents::instance();
+	jobCtrl = JobCtrl::instance();
 
 	anEvents->Disconnect(anEVT_WIZARD_SHOW,
 	    wxCommandEventHandler(MainFrame::onWizardShow), NULL, this);
@@ -247,7 +247,7 @@ MainFrame::onWizardShow(wxCommandEvent& event)
 		wizard->RunWizard(wizard->getPage(RuleWizard::PAGE_PROGRAM));
 		/* After finishing wizard, we uncheck menu and statusbar. */
 		showEvent.SetInt(0);
-		wxPostEvent(AnEvents::getInstance(), showEvent);
+		wxPostEvent(AnEvents::instance(), showEvent);
 	}
 
 	wizard->Destroy();
@@ -344,7 +344,7 @@ MainFrame::OnTbModuleSelect(wxCommandEvent& event)
 void
 MainFrame::OnConnectionStateChange(wxCommandEvent& event)
 {
-	JobCtrl *instance = JobCtrl::getInstance();
+	JobCtrl *instance = JobCtrl::instance();
 	JobCtrl::ConnectionState newState =
 	    (JobCtrl::ConnectionState)event.GetInt();
 	bool connected = (newState == JobCtrl::CONNECTED);
@@ -527,7 +527,7 @@ MainFrame::OnMbFileImportSelect(wxCommandEvent&)
 	wxString	defaultFilename = wxEmptyString;
 	wxFileDialog	fileDlg(this, caption, defaultDir, defaultFilename,
 			    wildcard, wxOPEN);
-	PolicyCtrl	*policyCtrl = PolicyCtrl::getInstance();
+	PolicyCtrl	*policyCtrl = PolicyCtrl::instance();
 
 	if (fileDlg.ShowModal() == wxID_OK) {
 		if (!policyCtrl->importFromFile(fileDlg.GetPath())) {
@@ -549,7 +549,7 @@ MainFrame::OnMbFileExportSelect(wxCommandEvent&)
 			    wildcard, wxFD_SAVE);
 
 	if (fileDlg.ShowModal() == wxID_OK) {
-		PolicyCtrl *policyCtrl = PolicyCtrl::getInstance();
+		PolicyCtrl *policyCtrl = PolicyCtrl::instance();
 		if (!policyCtrl->exportToFile(fileDlg.GetPath()))
 			anMessageBox(
 			    _("Failed to export the ruleset into a file."),
@@ -570,7 +570,7 @@ MainFrame::OnMbToolsRuleEditorSelect(wxCommandEvent& event)
 
 	showEvent.SetInt(event.IsChecked());
 
-	wxPostEvent(AnEvents::getInstance(), showEvent);
+	wxPostEvent(AnEvents::instance(), showEvent);
 }
 
 void
@@ -580,7 +580,7 @@ MainFrame::OnMbToolsLogViewerSelect(wxCommandEvent& event)
 
 	showEvent.SetInt(event.IsChecked());
 
-	wxPostEvent(AnEvents::getInstance(), showEvent);
+	wxPostEvent(AnEvents::instance(), showEvent);
 }
 
 void
@@ -590,7 +590,7 @@ MainFrame::onMbToolsWizardSelect(wxCommandEvent& event)
 
 	showEvent.SetInt(event.IsChecked());
 
-	wxPostEvent(AnEvents::getInstance(), showEvent);
+	wxPostEvent(AnEvents::instance(), showEvent);
 }
 
 void
@@ -612,7 +612,7 @@ MainFrame::OnMbEditPreferencesSelect(wxCommandEvent&)
 
 	showEvent.SetInt(true);
 
-	wxPostEvent(AnEvents::getInstance(), showEvent);
+	wxPostEvent(AnEvents::instance(), showEvent);
 }
 
 void
@@ -688,7 +688,7 @@ MainFrame::OnAnoubisOptionShow(wxCommandEvent& event)
 void
 MainFrame::onBackupPolicy(wxCommandEvent &event)
 {
-	PolicyCtrl	*policyCtrl = PolicyCtrl::getInstance();
+	PolicyCtrl	*policyCtrl = PolicyCtrl::instance();
 	PolicyRuleSet	*rs;
 
 	rs = policyCtrl->getRuleSet(event.GetExtraLong());
@@ -705,7 +705,7 @@ MainFrame::onBackupPolicy(wxCommandEvent &event)
 void
 MainFrame::doUpgradeNotify(void)
 {
-	JobCtrl			*instance = JobCtrl::getInstance();
+	JobCtrl			*instance = JobCtrl::instance();
 	KeyCtrl			*keyCtrl = KeyCtrl::instance();
 	LocalCertificate	&cert = keyCtrl->getLocalCertificate();
 	struct anoubis_sig	*raw_cert;

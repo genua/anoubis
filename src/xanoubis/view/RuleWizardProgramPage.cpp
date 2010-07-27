@@ -65,21 +65,21 @@ RuleWizardProgramPage::RuleWizardProgramPage(wxWindow *parent,
 	csumAddTask_ = NULL;
 	csumCalcTask_ = NULL;
 
-	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_GET,
+	JobCtrl::instance()->Connect(anTASKEVT_CSUM_GET,
 	    wxTaskEventHandler(RuleWizardProgramPage::onCsumGet), NULL, this);
-	JobCtrl::getInstance()->Connect(anTASKEVT_CSUM_ADD,
+	JobCtrl::instance()->Connect(anTASKEVT_CSUM_ADD,
 	    wxTaskEventHandler(RuleWizardProgramPage::onCsumAdd), NULL, this);
-	JobCtrl::getInstance()->Connect(anTASKEVT_CSUMCALC,
+	JobCtrl::instance()->Connect(anTASKEVT_CSUMCALC,
 	    wxTaskEventHandler(RuleWizardProgramPage::onCsumCalc), NULL, this);
 }
 
 RuleWizardProgramPage::~RuleWizardProgramPage(void)
 {
-	JobCtrl::getInstance()->Disconnect(anTASKEVT_CSUM_GET,
+	JobCtrl::instance()->Disconnect(anTASKEVT_CSUM_GET,
 	    wxTaskEventHandler(RuleWizardProgramPage::onCsumGet), NULL, this);
-	JobCtrl::getInstance()->Disconnect(anTASKEVT_CSUM_ADD,
+	JobCtrl::instance()->Disconnect(anTASKEVT_CSUM_ADD,
 	    wxTaskEventHandler(RuleWizardProgramPage::onCsumAdd), NULL, this);
-	JobCtrl::getInstance()->Disconnect(anTASKEVT_CSUMCALC,
+	JobCtrl::instance()->Disconnect(anTASKEVT_CSUMCALC,
 	    wxTaskEventHandler(RuleWizardProgramPage::onCsumCalc), NULL, this);
 	if (csumGetTask_)
 		delete csumGetTask_;
@@ -104,10 +104,10 @@ RuleWizardProgramPage::update(Subject *subject)
 			 * because maybe a checksum needs to be registered for
 			 * the selected binary.
 			 */
-			if (JobCtrl::getInstance()->isConnected()) {
+			if (JobCtrl::instance()->isConnected()) {
 				csumGetTask_ = new ComCsumGetTask();
 				csumGetTask_->addPath(path);
-				JobCtrl::getInstance()->addTask(csumGetTask_);
+				JobCtrl::instance()->addTask(csumGetTask_);
 			} else {
 				getWizardPage()->setNextEnabled(true);
 			}
@@ -134,7 +134,7 @@ RuleWizardProgramPage::onPageChanging(wxWizardEvent &event)
 	if (history_->getProgram().IsEmpty()) {
 		message = _("Please choose a program first.");
 	}
-	if (JobCtrl::getInstance()->isConnected()
+	if (JobCtrl::instance()->isConnected()
 	    && history_->getChecksumType() == APN_CS_NONE) {
 		message = wxString::Format(_("The checksum for %ls "
 		    "does not match! Please go to the SFS Browser and update "
@@ -174,7 +174,7 @@ RuleWizardProgramPage::onCsumGet(TaskEvent &event)
 		 */
 		csumCalcTask_ = new CsumCalcTask();
 		csumCalcTask_->setPath(programPicker->getFileName());
-		JobCtrl::getInstance()->addTask(csumCalcTask_);
+		JobCtrl::instance()->addTask(csumCalcTask_);
 		/*
 		 * NOTE: Do NOT delete comCsumGetTask_ here.
 		 * NOTE: The handler for ComCsumCalcTask will need it.
@@ -187,7 +187,7 @@ RuleWizardProgramPage::onCsumGet(TaskEvent &event)
 		 */
 		csumAddTask_ = new ComCsumAddTask();
 		csumAddTask_->addPath(programPicker->getFileName());
-		JobCtrl::getInstance()->addTask(csumAddTask_);
+		JobCtrl::instance()->addTask(csumAddTask_);
 		delete csumGetTask_;
 		csumGetTask_ = NULL;
 	} else {

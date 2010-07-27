@@ -42,8 +42,10 @@
 #include "MainUtils.h"
 #include "PolicyCtrl.h"
 #include "PolicyRuleSet.h"
-#include "Singleton.cpp"
 #include "VersionCtrl.h"
+
+#include "Singleton.cpp"
+template class Singleton<PolicyCtrl>;
 
 PolicyCtrl::~PolicyCtrl(void)
 {
@@ -65,20 +67,14 @@ PolicyCtrl::~PolicyCtrl(void)
 		delete t;
 	}
 
-	JobCtrl::getInstance()->Disconnect(anTASKEVT_POLICY_REQUEST,
+	JobCtrl::instance()->Disconnect(anTASKEVT_POLICY_REQUEST,
 	    wxTaskEventHandler(PolicyCtrl::OnPolicyRequest), NULL, this);
-	JobCtrl::getInstance()->Disconnect(anTASKEVT_POLICY_SEND,
+	JobCtrl::instance()->Disconnect(anTASKEVT_POLICY_SEND,
 	    wxTaskEventHandler(PolicyCtrl::OnPolicySend), NULL, this);
-	AnEvents::getInstance()->Disconnect(anEVT_ANSWER_ESCALATION,
+	AnEvents::instance()->Disconnect(anEVT_ANSWER_ESCALATION,
 	    wxCommandEventHandler(PolicyCtrl::OnAnswerEscalation), NULL, this);
-	AnEvents::getInstance()->Disconnect(anEVT_POLICY_CHANGE,
+	AnEvents::instance()->Disconnect(anEVT_POLICY_CHANGE,
 	    wxCommandEventHandler(PolicyCtrl::OnPolicyChange), NULL, this);
-}
-
-PolicyCtrl *
-PolicyCtrl::getInstance(void)
-{
-	return (Singleton<PolicyCtrl>::instance());
 }
 
 long
@@ -314,7 +310,7 @@ PolicyCtrl::importPolicy(PolicyRuleSet *rs)
 		wxCommandEvent event(anEVT_LOAD_RULESET);
 		event.SetInt(id);
 		event.SetExtraLong(rs->getRuleSetId());
-		wxPostEvent(AnEvents::getInstance(), event);
+		wxPostEvent(AnEvents::instance(), event);
 	}
 
 	return (true);
@@ -368,7 +364,7 @@ PolicyCtrl::receiveOneFromDaemon(long prio, long uid)
 	struct apn_ruleset	*apnrs = NULL;
 
 	requestTaskList_.push_back(task);
-	JobCtrl::getInstance()->addTask(task);
+	JobCtrl::instance()->addTask(task);
 
 	if (seekId(prio, uid) >= 0)
 		return (true);
@@ -423,7 +419,7 @@ PolicyCtrl::sendToDaemon(long id)
 
 	sendTaskList_.push_back(task);
 	rs->setInProgress();
-	JobCtrl::getInstance()->addTask(task);
+	JobCtrl::instance()->addTask(task);
 
 	return (RESULT_POL_OK);
 }
@@ -605,7 +601,7 @@ PolicyCtrl::OnPolicySend(TaskEvent &event)
 	if (eventBroadcastEnabled_) {
 		wxCommandEvent event(anEVT_SEND_RULESET);
 		event.SetInt(seekId(isAdmin, task->getUid()));
-		wxPostEvent(AnEvents::getInstance(), event);
+		wxPostEvent(AnEvents::instance(), event);
 	}
 
 	sendTaskList_.remove(task);
@@ -676,7 +672,7 @@ PolicyCtrl::makeBackup(const wxString &profile)
 	    _("Automatically created version while saving the %ls profile"),
 	    profile.c_str());
 
-	VersionCtrl *versionCtrl = VersionCtrl::getInstance();
+	VersionCtrl *versionCtrl = VersionCtrl::instance();
 	return (versionCtrl->createVersion(rs, profile, comment, true));
 }
 
@@ -761,7 +757,7 @@ PolicyCtrl::OnPolicyChange(wxCommandEvent &event)
 
 			oldrs->lock();
 			backupEvent.SetExtraLong(id);
-			wxPostEvent(AnEvents::getInstance(), backupEvent);
+			wxPostEvent(AnEvents::instance(), backupEvent);
 		}
 	}
 	receiveOneFromDaemon(prio, uid);
@@ -770,7 +766,7 @@ PolicyCtrl::OnPolicyChange(wxCommandEvent &event)
 PolicyCtrl::PolicyCtrl(void) : Singleton<PolicyCtrl>()
 {
 	eventBroadcastEnabled_ = true;
-	JobCtrl *jobCtrl = JobCtrl::getInstance();
+	JobCtrl *jobCtrl = JobCtrl::instance();
 
 	updateProfileList();
 
@@ -778,9 +774,9 @@ PolicyCtrl::PolicyCtrl(void) : Singleton<PolicyCtrl>()
 	    wxTaskEventHandler(PolicyCtrl::OnPolicyRequest), NULL, this);
 	jobCtrl->Connect(anTASKEVT_POLICY_SEND,
 	    wxTaskEventHandler(PolicyCtrl::OnPolicySend), NULL, this);
-	AnEvents::getInstance()->Connect(anEVT_ANSWER_ESCALATION,
+	AnEvents::instance()->Connect(anEVT_ANSWER_ESCALATION,
 	    wxCommandEventHandler(PolicyCtrl::OnAnswerEscalation), NULL, this);
-	AnEvents::getInstance()->Connect(anEVT_POLICY_CHANGE,
+	AnEvents::instance()->Connect(anEVT_POLICY_CHANGE,
 	    wxCommandEventHandler(PolicyCtrl::OnPolicyChange), NULL, this);
 }
 

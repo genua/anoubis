@@ -34,7 +34,7 @@ ProfileListCtrl::ProfileListCtrl(wxWindow *w, wxWindowID id,
     const wxPoint &p, const wxSize &sz, long type)
     : AnListCtrl(w, id, p, sz, type | wxLC_VIRTUAL)
 {
-	setRowProvider(PolicyCtrl::getInstance());
+	setRowProvider(PolicyCtrl::instance());
 
 	/* Setup properties of the view */
 	addColumn(new ProfilePermissionProperty);
@@ -78,7 +78,7 @@ wxString
 ProfilePermissionProperty::getText(AnListClass *obj) const
 {
 	Profile *profile = dynamic_cast<Profile *>(obj);
-	PolicyCtrl *ctrl = PolicyCtrl::getInstance();
+	PolicyCtrl *ctrl = PolicyCtrl::instance();
 
 	if (!ctrl->isProfileWritable(profile->getProfileName()))
 		return _("read-only");

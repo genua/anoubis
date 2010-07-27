@@ -38,7 +38,7 @@ ModAnoubisOverviewPanelImpl::ModAnoubisOverviewPanelImpl(wxWindow* parent, \
 
 	setConnectionState(false);
 
-	JobCtrl *jobCtrl = JobCtrl::getInstance();
+	JobCtrl *jobCtrl = JobCtrl::instance();
 	jobCtrl->Connect(anEVT_COM_CONNECTION,
 	    wxCommandEventHandler(
 	       ModAnoubisOverviewPanelImpl::OnConnectionStateChange),

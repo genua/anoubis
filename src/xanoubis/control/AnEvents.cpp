@@ -28,6 +28,7 @@
 #include "AnEvents.h"
 
 #include "Singleton.cpp"
+template class Singleton<AnEvents>;
 
 AnEvents::~AnEvents(void)
 {
@@ -37,11 +38,6 @@ AnEvents::~AnEvents(void)
 	 * no function to do a Disconnect()) -- thus there's nothing
 	 * to do here.
 	 */
-}
-
-AnEvents *
-AnEvents::getInstance(void) {
-	return Singleton<AnEvents>::instance();
 }
 
 AnEvents::AnEvents(void) : Singleton<AnEvents>()

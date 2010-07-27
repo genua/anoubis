@@ -85,5 +85,5 @@ ModAlfMainPanelImpl::OnGridCellLeftDClick(wxGridEvent& event)
 
 	showEvent.SetInt(ruleset->isAdmin());
 	showEvent.SetExtraLong(policy->getApnRuleId());
-	wxPostEvent(AnEvents::getInstance(), showEvent);
+	wxPostEvent(AnEvents::instance(), showEvent);
 }

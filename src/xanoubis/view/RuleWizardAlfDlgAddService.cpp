@@ -187,11 +187,11 @@ RuleWizardAlfDlgAddService::onSearchTextEnter(wxCommandEvent &event)
 
 	/* Did we find something? */
 	if (serviceListCtrl->hasSelection()) {
-		searchIcon->SetIcon(AnIconList::getInstance()->GetIcon(
+		searchIcon->SetIcon(AnIconList::instance()->GetIcon(
 		    AnIconList::ICON_OK));
 		addButton->SetFocus();
 	} else {
-		searchIcon->SetIcon(AnIconList::getInstance()->GetIcon(
+		searchIcon->SetIcon(AnIconList::instance()->GetIcon(
 		    AnIconList::ICON_ALERT));
 	}
 	searchIcon->Show();

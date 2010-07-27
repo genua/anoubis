@@ -74,11 +74,6 @@ class MainUtils : public Singleton<MainUtils>
 		 */
 		~MainUtils(void);
 
-		/**
-		 * Get single instance.
-		 */
-		static MainUtils* instance(void);
-
 		uid_t getUserIdByName(wxString) const;
 		wxString getUserNameById(uid_t) const;
 		wxString getIconPath(wxString);

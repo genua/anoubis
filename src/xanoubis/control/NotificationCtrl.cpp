@@ -34,14 +34,16 @@
 #include "NotificationCtrl.h"
 #include "PolicyCtrl.h"
 #include "PolicyRuleSet.h"
-#include "Singleton.cpp"
 #include "StatusNotify.h"
+
+#include "Singleton.cpp"
+template class Singleton<NotificationCtrl>;
 
 NotificationCtrl::~NotificationCtrl(void)
 {
 	Disconnect(anEVT_UPDATE_PERSPECTIVE, wxCommandEventHandler(
 	    NotificationCtrl::onUpdatePerspectives), NULL, this);
-	JobCtrl::getInstance()->Disconnect(anEVT_COM_CONNECTION,
+	JobCtrl::instance()->Disconnect(anEVT_COM_CONNECTION,
 	    wxCommandEventHandler(NotificationCtrl::onDaemonDisconnect),
 	    NULL, this);
 
@@ -133,7 +135,7 @@ NotificationCtrl::answerEscalationNotify(EscalationNotify *notify,
 	wxString	 module;
 	AnEvents	*anEvents;
 
-	anEvents = AnEvents::getInstance();
+	anEvents = AnEvents::instance();
 
 	if ((notify != NULL) && IS_ESCALATIONOBJ(notify)) {
 		id = notify->getId();
@@ -179,7 +181,7 @@ NotificationCtrl::NotificationCtrl(void) : Singleton<NotificationCtrl>()
 {
 	notificationHash_.clear();
 
-	JobCtrl::getInstance()->Connect(anEVT_COM_CONNECTION,
+	JobCtrl::instance()->Connect(anEVT_COM_CONNECTION,
 	    wxCommandEventHandler(NotificationCtrl::onDaemonDisconnect),
 	    NULL, this);
 	Connect(anEVT_UPDATE_PERSPECTIVE, wxCommandEventHandler(
@@ -273,8 +275,8 @@ NotificationCtrl::addEscalationNotify(Notification *notification)
 	EscalationNotify	*escalation;
 
 	module = wxEmptyString;
-	anEvents = AnEvents::getInstance();
-	policyCtrl = PolicyCtrl::getInstance();
+	anEvents = AnEvents::instance();
+	policyCtrl = PolicyCtrl::instance();
 	rs = NULL;
 	escalation = NULL;
 
@@ -420,9 +422,3 @@ NotificationCtrl::fixupEscalationAnswer(int type, anoubis_token_t token,
 
 	return NULL;
 }
-
-/* Explicit instantiation of Singleton Baseclass methods. */
-template NotificationCtrl *
-Singleton<NotificationCtrl>::instance();
-template NotificationCtrl *
-Singleton<NotificationCtrl>::existingInstance();

@@ -34,13 +34,13 @@ AnEventsSpy::AnEventsSpy(WXTYPE eventType)
 	eventType_ = eventType;
 	invocations_ = 0;
 
-	AnEvents::getInstance()->Connect(eventType_,
+	AnEvents::instance()->Connect(eventType_,
 	    wxCommandEventHandler(AnEventsSpy::onEvent), NULL, this);
 }
 
 AnEventsSpy::~AnEventsSpy(void)
 {
-	AnEvents::getInstance()->Disconnect(eventType_,
+	AnEvents::instance()->Disconnect(eventType_,
 	    wxCommandEventHandler(AnEventsSpy::onEvent), NULL, this);
 }
 

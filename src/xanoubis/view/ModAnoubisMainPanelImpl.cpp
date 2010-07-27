@@ -98,7 +98,7 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 
 	currentNotify_ = NULL;
 	savedNotify_ = NULL;
-	anEvents = AnEvents::getInstance();
+	anEvents = AnEvents::instance();
 
 	notifyCtrl = NotificationCtrl::instance();
 	listPerspective_ = notifyCtrl->getPerspective(
@@ -147,7 +147,7 @@ ModAnoubisMainPanelImpl::~ModAnoubisMainPanelImpl(void)
 {
 	AnEvents *anEvents;
 
-	anEvents = AnEvents::getInstance();
+	anEvents = AnEvents::instance();
 
 	if (listPerspective_ != NULL) {
 		removeSubject(listPerspective_);
@@ -327,7 +327,7 @@ ModAnoubisMainPanelImpl::profileTabInit(void)
 void
 ModAnoubisMainPanelImpl::profileTabUpdate(void)
 {
-	PolicyCtrl *policyCtrl = PolicyCtrl::getInstance();
+	PolicyCtrl *policyCtrl = PolicyCtrl::instance();
 	bool haveSelected = (selectedProfile != wxEmptyString);
 	bool haveLoaded = (loadedProfile != wxEmptyString);
 
@@ -357,7 +357,7 @@ ModAnoubisMainPanelImpl::OnLoadRuleSet(wxCommandEvent &event)
 void
 ModAnoubisMainPanelImpl::OnProfileDeleteClicked(wxCommandEvent &)
 {
-	PolicyCtrl *policyCtrl = PolicyCtrl::getInstance();
+	PolicyCtrl *policyCtrl = PolicyCtrl::instance();
 
 	if (policyCtrl->removeProfile(selectedProfile)) {
 		selectedProfile = wxEmptyString;
@@ -373,7 +373,7 @@ ModAnoubisMainPanelImpl::OnProfileDeleteClicked(wxCommandEvent &)
 void
 ModAnoubisMainPanelImpl::OnProfileLoadClicked(wxCommandEvent &)
 {
-	PolicyCtrl *policyCtrl = PolicyCtrl::getInstance();
+	PolicyCtrl *policyCtrl = PolicyCtrl::instance();
 
 	if (policyCtrl->importFromProfile(selectedProfile)) {
 		loadedProfile = selectedProfile;
@@ -396,7 +396,7 @@ ModAnoubisMainPanelImpl::OnProfileSaveClicked(wxCommandEvent &)
 	    new DlgProfileSelection(loadedProfile, this);
 
 	if (dlg->ShowModal() == wxID_OK) {
-		PolicyCtrl *policyCtrl = PolicyCtrl::getInstance();
+		PolicyCtrl *policyCtrl = PolicyCtrl::instance();
 		wxString profile = dlg->getSelectedProfile();
 
 		if (!policyCtrl->isProfileWritable(profile)) {
@@ -427,7 +427,7 @@ ModAnoubisMainPanelImpl::OnProfileSaveClicked(wxCommandEvent &)
 void
 ModAnoubisMainPanelImpl::OnProfileActivateClicked(wxCommandEvent &)
 {
-	PolicyCtrl *policyCtrl = PolicyCtrl::getInstance();
+	PolicyCtrl *policyCtrl = PolicyCtrl::instance();
 	PolicyCtrl::PolicyResult polRes;
 	long userId;
 
@@ -487,8 +487,8 @@ ModAnoubisMainPanelImpl::versionListUpdate(void)
 	PolicyCtrl	*policyCtrl;
 	wxString	 profile;
 
-	versionCtrl = VersionCtrl::getInstance();
-	policyCtrl = PolicyCtrl::getInstance();
+	versionCtrl = VersionCtrl::instance();
+	policyCtrl = PolicyCtrl::instance();
 	profile = versionCtrl->getVersionProfile();
 
 	VersionProfileChoice->Clear();
@@ -518,8 +518,8 @@ ModAnoubisMainPanelImpl::versionListUpdateFromSelection(void)
 	else
 		profile = VersionProfileChoice->GetStringSelection();
 
-	versionCtrl = VersionCtrl::getInstance();
-	policyCtrl = PolicyCtrl::getInstance();
+	versionCtrl = VersionCtrl::instance();
+	policyCtrl = PolicyCtrl::instance();
 
 	if (!versionCtrl->isInitialized()) {
 		anMessageBox(_("Repository not initialized."),
@@ -571,7 +571,7 @@ ModAnoubisMainPanelImpl::sendNotifierOptionsEvents(WXTYPE type, bool show,
 	showEvent.SetInt(show);
 	showEvent.SetExtraLong(timeout);
 
-	wxPostEvent(AnEvents::getInstance(), showEvent);
+	wxPostEvent(AnEvents::instance(), showEvent);
 }
 
 void
@@ -627,7 +627,7 @@ ModAnoubisMainPanelImpl::update(void)
 		wxCommandEvent	showEvent(anEVT_OPEN_ALERTS);
 		showEvent.SetInt(0);
 		showEvent.SetExtraLong(false);
-		wxPostEvent(AnEvents::getInstance(), showEvent);
+		wxPostEvent(AnEvents::instance(), showEvent);
 	}
 
 	/*
@@ -666,8 +666,8 @@ ModAnoubisMainPanelImpl::update(void)
 				    sizeListNotAnswered_)
 				    &&
 				    (listPerspective_->getIndex(
-				    	listPerspectiveNotAnswered->getId(
-				    	elementNoHash_[
+					listPerspectiveNotAnswered->getId(
+					elementNoHash_[
 					    listPerspectiveNotAnswered])
 				    ) - 1 >
 				    listPerspective_->getIndex(
@@ -1149,7 +1149,7 @@ ModAnoubisMainPanelImpl::OnEscalationsShow(wxCommandEvent& event)
 	if (event.GetString().Cmp(wxT("ALERTS")) == 0) {
 		wxCommandEvent	showEvent(anEVT_OPEN_ALERTS);
 		showEvent.SetInt(0);
-		wxPostEvent(AnEvents::getInstance(), showEvent);
+		wxPostEvent(AnEvents::instance(), showEvent);
 		/* select "current messages" */
 		ch_type->SetSelection(1);
 		setPerspective(NotificationCtrl::LIST_MESSAGES);
@@ -1209,7 +1209,7 @@ ModAnoubisMainPanelImpl::OnNotebookTabChanged(wxNotebookEvent&)
 	   == tb_MainAnoubisNotification) {
 		wxCommandEvent	showEvent(anEVT_OPEN_ALERTS);
 		showEvent.SetInt(0);
-		wxPostEvent(AnEvents::getInstance(), showEvent);
+		wxPostEvent(AnEvents::instance(), showEvent);
 	}
 }
 
@@ -1221,7 +1221,7 @@ ModAnoubisMainPanelImpl::OnVersionListCtrlSelected(wxListEvent&)
 	if (idx == -1)
 		return;
 
-	VersionCtrl *versionCtrl = VersionCtrl::getInstance();
+	VersionCtrl *versionCtrl = VersionCtrl::instance();
 
 	/* Selected version */
 	ApnVersion *version = versionCtrl->getVersion(idx);
@@ -1233,8 +1233,8 @@ ModAnoubisMainPanelImpl::OnVersionListCtrlSelected(wxListEvent&)
 void
 ModAnoubisMainPanelImpl::OnVersionRestoreButtonClick(wxCommandEvent&)
 {
-	VersionCtrl	*versionCtrl = VersionCtrl::getInstance();
-	PolicyCtrl	*policyCtrl = PolicyCtrl::getInstance();
+	VersionCtrl	*versionCtrl = VersionCtrl::instance();
+	PolicyCtrl	*policyCtrl = PolicyCtrl::instance();
 	bool		useActiveProfile;
 	wxString	profile;
 	int		idx = versionListCtrl->getFirstSelection();
@@ -1320,7 +1320,7 @@ ModAnoubisMainPanelImpl::OnVersionExportButtonClick(wxCommandEvent&)
 	if (fileDlg.ShowModal() != wxID_OK)
 		return;
 
-	VersionCtrl *versionCtrl = VersionCtrl::getInstance();
+	VersionCtrl *versionCtrl = VersionCtrl::instance();
 	if (!versionCtrl->exportVersion(idx, profile, fileDlg.GetPath())) {
 		wxString msg = _("Failed to export a version!");
 		wxString title = _("Export version");
@@ -1332,7 +1332,7 @@ ModAnoubisMainPanelImpl::OnVersionExportButtonClick(wxCommandEvent&)
 void
 ModAnoubisMainPanelImpl::OnVersionDeleteButtonClick(wxCommandEvent&)
 {
-	VersionCtrl	*versionCtrl = VersionCtrl::getInstance();
+	VersionCtrl	*versionCtrl = VersionCtrl::instance();
 	int		selection = -1;
 
 	while (true) {
@@ -1370,11 +1370,11 @@ ModAnoubisMainPanelImpl::OnVersionShowButtonClick(wxCommandEvent&)
 	 * Show-button is hidden.
 	 */
 
-	/*VersionCtrl *versionCtrl = VersionCtrl::getInstance();
+	/*VersionCtrl *versionCtrl = VersionCtrl::instance();
 
 	wxCommandEvent showEvent(anEVT_RULEEDITOR_SHOW);
 	showEvent.SetInt(1);
-	wxPostEvent(AnEvents::getInstance(), showEvent);
+	wxPostEvent(AnEvents::instance(), showEvent);
 
 	struct apn_ruleset *rs = versionCtrl->fetchRuleSet(idx);
 	wxGetApp().importPolicyRuleSet(1, rs);*/

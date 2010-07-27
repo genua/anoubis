@@ -27,7 +27,9 @@
 
 #include "AnIconList.h"
 #include "MainUtils.h"
+
 #include "Singleton.cpp"
+template class Singleton<AnIconList>;
 
 AnIconList::AnIconList(void)
 {
@@ -61,12 +63,6 @@ AnIconList::AnIconList(void)
 	addIcon(wxT("ModAnoubis_question_24.png"));
 	addIcon(wxT("ModAnoubis_question_32.png"));
 	addIcon(wxT("ModAnoubis_question_48.png"));
-}
-
-AnIconList *
-AnIconList::getInstance(void)
-{
-	return (Singleton<AnIconList>::instance());
 }
 
 void

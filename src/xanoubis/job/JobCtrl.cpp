@@ -34,6 +34,7 @@
 #include "main.h"
 
 #include "Singleton.cpp"
+template class Singleton<JobCtrl>;
 
 #include <wx/listimpl.cpp>
 WX_DEFINE_LIST(JobThreadList);
@@ -80,12 +81,6 @@ JobCtrl::~JobCtrl(void)
 		delete regTask_;
 	delete csumCalcTaskQueue_;
 	delete comTaskQueue_;
-}
-
-JobCtrl *
-JobCtrl::getInstance(void)
-{
-	return (instance());
 }
 
 wxString
@@ -164,7 +159,7 @@ JobCtrl::disconnect(void)
 {
 	regTask_ = new ComRegistrationTask;
 	regTask_->setAction(ComRegistrationTask::ACTION_UNREGISTER);
-	JobCtrl::getInstance()->addTask(regTask_);
+	JobCtrl::instance()->addTask(regTask_);
 }
 
 bool
@@ -369,5 +364,5 @@ JobCtrl::sendComEvent(JobCtrl::ConnectionState state)
 	event.SetInt(state);
 	event.SetString(wxT("localhost"));
 
-	wxPostEvent(JobCtrl::getInstance(), event);
+	wxPostEvent(JobCtrl::instance(), event);
 }

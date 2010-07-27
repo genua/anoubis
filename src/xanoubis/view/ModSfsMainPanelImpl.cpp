@@ -69,10 +69,10 @@ ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent, wxWindowID id)
 	lst_Rules->SetColSize(5, 90);
 	lst_Rules->SetColSize(6, 50);
 
-	AnEvents::getInstance()->Connect(anEVT_SFSBROWSER_SHOW,
+	AnEvents::instance()->Connect(anEVT_SFSBROWSER_SHOW,
 	    wxCommandEventHandler(ModSfsMainPanelImpl::onSfsBrowserShow),
 	    NULL, this);
-	JobCtrl::getInstance()->Connect(anEVT_COM_CONNECTION,
+	JobCtrl::instance()->Connect(anEVT_COM_CONNECTION,
 	   wxCommandEventHandler(ModSfsMainPanelImpl::OnConnectionStateChange),
 	   NULL, this);
 	Hide();
@@ -103,7 +103,7 @@ ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent, wxWindowID id)
 	certFingerprintLabel->SetMinSize(indent);
 
 	/* Set icon for key warning message */
-	icon = AnIconList::getInstance()->GetIcon(AnIconList::ICON_PROBLEM_48);
+	icon = AnIconList::instance()->GetIcon(AnIconList::ICON_PROBLEM_48);
 	keyWarningIcon->SetIcon(icon);
 
 	Layout();
@@ -115,10 +115,10 @@ ModSfsMainPanelImpl::ModSfsMainPanelImpl(wxWindow* parent, wxWindowID id)
 
 ModSfsMainPanelImpl::~ModSfsMainPanelImpl(void)
 {
-	JobCtrl::getInstance()->Disconnect(anEVT_COM_CONNECTION,
+	JobCtrl::instance()->Disconnect(anEVT_COM_CONNECTION,
 	   wxCommandEventHandler(ModSfsMainPanelImpl::OnConnectionStateChange),
 	   NULL, this);
-	AnEvents::getInstance()->Disconnect(anEVT_SFSBROWSER_SHOW,
+	AnEvents::instance()->Disconnect(anEVT_SFSBROWSER_SHOW,
 	    wxCommandEventHandler(ModSfsMainPanelImpl::onSfsBrowserShow),
 	    NULL, this);
 
@@ -268,7 +268,7 @@ ModSfsMainPanelImpl::OnGridCellLeftDClick(wxGridEvent& event)
 
 	showEvent.SetInt(ruleset->isAdmin());
 	showEvent.SetExtraLong(policy->getApnRuleId());
-	wxPostEvent(AnEvents::getInstance(), showEvent);
+	wxPostEvent(AnEvents::instance(), showEvent);
 }
 
 void
@@ -647,7 +647,7 @@ ModSfsMainPanelImpl::initSfsMain(void)
 	sfsCtrl_->Connect(anEVT_SFSENTRY_ERROR,
 	    wxCommandEventHandler(ModSfsMainPanelImpl::OnSfsError),
 	    NULL, this);
-	AnEvents::getInstance()->Connect(anEVT_LOAD_KEY,
+	AnEvents::instance()->Connect(anEVT_LOAD_KEY,
 	    wxCommandEventHandler(ModSfsMainPanelImpl::OnSfsMainKeyLoaded),
 	    NULL, this);
 
@@ -826,7 +826,7 @@ ModSfsMainPanelImpl::privKeyParamsUpdate(const wxString &path, int validity)
 	/* Inform any listener about change of key-configuration */
 	wxCommandEvent event(anEVT_LOAD_KEY);
 	event.SetInt(0); /* 0 := private key */
-	wxPostEvent(AnEvents::getInstance(), event);
+	wxPostEvent(AnEvents::instance(), event);
 }
 
 bool
@@ -885,7 +885,7 @@ ModSfsMainPanelImpl::certificateParamsUpdate(const wxString &path)
 	wxCommandEvent event(anEVT_LOAD_KEY);
 	event.SetInt(1); /* 1 := certificate */
 
-	wxPostEvent(AnEvents::getInstance(), event);
+	wxPostEvent(AnEvents::instance(), event);
 
 	return (changed);
 }

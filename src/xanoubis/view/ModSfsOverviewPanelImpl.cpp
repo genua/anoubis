@@ -42,14 +42,14 @@ ModSfsOverviewPanelImpl::ModSfsOverviewPanelImpl(wxWindow* parent,
 	stateIconNotConnected_ = utils->loadIcon(wxT("ModSfs_black_48.png"));
 	notAnswered_.Printf(wxT("%d"), 0);
 
-	AnEvents::getInstance()->Connect(anEVT_OPEN_SFS_ESCALATIONS,
+	AnEvents::instance()->Connect(anEVT_OPEN_SFS_ESCALATIONS,
 	    wxCommandEventHandler(ModSfsOverviewPanelImpl::OnOpenSfsEscalation),
 	    NULL, this);
 }
 
 ModSfsOverviewPanelImpl::~ModSfsOverviewPanelImpl(void)
 {
-	AnEvents::getInstance()->Disconnect(anEVT_OPEN_SFS_ESCALATIONS,
+	AnEvents::instance()->Disconnect(anEVT_OPEN_SFS_ESCALATIONS,
 	    wxCommandEventHandler(ModSfsOverviewPanelImpl::OnOpenSfsEscalation),
 	    NULL, this);
 
@@ -66,7 +66,7 @@ ModSfsOverviewPanelImpl::update(void)
 	ModSfs		*module;
 
 	module = (ModSfs *)(MainUtils::instance()->getModule(SFS));
-	if (!JobCtrl::getInstance()->isConnected()) {
+	if (!JobCtrl::instance()->isConnected()) {
 		stateText = _("not connected");
 		stateIcon = stateIconNotConnected_;
 	} else {

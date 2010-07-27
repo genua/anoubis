@@ -101,7 +101,7 @@ RuleWizardHistory::setProgram(const wxString &program)
 	program_ = program;
 
 	/* Search for this program. Does it have alf policies? */
-	policyCtrl = PolicyCtrl::getInstance();
+	policyCtrl = PolicyCtrl::instance();
 	ruleSet = policyCtrl->getRuleSet(policyCtrl->getUserId());
 	if (ruleSet == NULL) {
 		haveContextPolicy_ = false;

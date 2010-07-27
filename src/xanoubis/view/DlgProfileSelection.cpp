@@ -31,7 +31,7 @@
 DlgProfileSelection::DlgProfileSelection(const wxString &selection,
     wxWindow *parent) : ModAnoubisProfileSelectionDialogBase(parent)
 {
-	PolicyCtrl *policyCtrl = PolicyCtrl::getInstance();
+	PolicyCtrl *policyCtrl = PolicyCtrl::instance();
 
 	/* Filter writeable profiles */
 	for (int i = 0; i < policyCtrl->getSize(); i++) {

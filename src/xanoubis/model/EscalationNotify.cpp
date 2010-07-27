@@ -92,7 +92,7 @@ EscalationNotify::answer(NotifyAnswer *answer)
 	answer_ = answer;
 
 	event.SetClientObject((wxClientData *)this);
-	wxPostEvent(AnEvents::getInstance(), event);
+	wxPostEvent(AnEvents::instance(), event);
 }
 
 NotifyAnswer *

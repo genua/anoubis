@@ -45,7 +45,7 @@ AnListCtrl::AnListCtrl(wxWindow *parent, wxWindowID id, const wxPoint &pos,
 	SetItemCount(0);
 	rowProvider_ = NULL;
 
-	SetImageList(AnIconList::getInstance(), wxIMAGE_LIST_SMALL);
+	SetImageList(AnIconList::instance(), wxIMAGE_LIST_SMALL);
 }
 
 void

@@ -28,7 +28,9 @@
 #include <ctime>
 
 #include "KeyCtrl.h"
+
 #include "Singleton.cpp"
+template class Singleton<KeyCtrl>;
 
 /*
  * Event if only used internally. That's why, it not not part of the
@@ -201,9 +203,3 @@ KeyCtrl::onLoadPrivateKeyRequest(wxCommandEvent &)
 	/* Inform the calling thread that the key is loaded */
 	loadCondition_->Signal();
 }
-
-/* Explicit instantiation of Singleton Baseclass methods. */
-template KeyCtrl *
-Singleton<KeyCtrl>::instance();
-template KeyCtrl *
-Singleton<KeyCtrl>::existingInstance();

@@ -110,7 +110,7 @@ DlgLogViewer::DlgLogViewer(wxWindow* parent) : DlgLogViewerBase(parent)
 	AnListProperty		*property;
 	AnListColumn		*col;
 
-	anEvents = AnEvents::getInstance();
+	anEvents = AnEvents::instance();
 	notifyCtrl = NotificationCtrl::instance();
 
 	this->GetSizer()->Layout();
@@ -147,7 +147,7 @@ DlgLogViewer::~DlgLogViewer(void)
 {
 	AnEvents	*anEvents;
 
-	anEvents = AnEvents::getInstance();
+	anEvents = AnEvents::instance();
 	anEvents->Disconnect(anEVT_LOGVIEWER_SHOW,
 	    wxCommandEventHandler(DlgLogViewer::onShow), NULL, this);
 
@@ -161,7 +161,7 @@ DlgLogViewer::onShow(wxCommandEvent &event)
 	wxCommandEvent	showEvent(anEVT_OPEN_ALERTS);
 	showEvent.SetInt(0);
 	showEvent.SetExtraLong(false);
-	wxPostEvent(AnEvents::getInstance(), showEvent);
+	wxPostEvent(AnEvents::instance(), showEvent);
 
 	this->Show(event.GetInt());
 	event.Skip();
@@ -173,7 +173,7 @@ DlgLogViewer::onClose(wxCloseEvent &)
 	wxCommandEvent	showEvent(anEVT_LOGVIEWER_SHOW);
 
 	showEvent.SetInt(false);
-	wxPostEvent(AnEvents::getInstance(), showEvent);
+	wxPostEvent(AnEvents::instance(), showEvent);
 }
 
 void
@@ -195,7 +195,7 @@ DlgLogViewer::onLogSelect(wxListEvent &event)
 	if (notify->getRuleId() > 0) {
 		showEvent.SetInt(notify->isAdmin());
 		showEvent.SetExtraLong(notify->getRuleId());
-		wxPostEvent(AnEvents::getInstance(), showEvent);
+		wxPostEvent(AnEvents::instance(), showEvent);
 	}
 }
 

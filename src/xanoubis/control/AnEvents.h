@@ -86,10 +86,10 @@
  * For propper functionality of the event mechanism, we strongly suggest to
  * obey to the following hints:
  * \li For connecting to a broadcast event, use \c
- *	AnEvents::getInstance()->Connect() the way \ref
+ *	AnEvents::instance()->Connect() the way \ref
  *	ANEVENTS_IDENT_BCAST_REGISTRATION does.
  * \li For disconnecting from a broadcast event, use \c
- *	AnEvents::getInstance()->Disconnect() the way \ref
+ *	AnEvents::instance()->Disconnect() the way \ref
  *	ANEVENTS_IDENT_BCAST_DEREGISTRATION does.
  * \li It's (again) \em strongly \em suggested to use \c event.Skip() within
  *	your implementation of your callback method to ensure the event also
@@ -265,15 +265,6 @@ class AnEvents : public wxEvtHandler, public Singleton<AnEvents>
 		 * Destructor of AnEvents.
 		 */
 		~AnEvents(void);
-
-		/**
-		 * Get object.
-		 * This returns the (only) object of this class
-		 * (see singleton pattern).
-		 * @param None.
-		 * @return It self.
-		 */
-		static AnEvents *getInstance(void);
 
 	protected:
 		/**

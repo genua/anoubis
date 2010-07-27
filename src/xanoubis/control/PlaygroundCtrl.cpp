@@ -44,11 +44,11 @@ template class Singleton<PlaygroundCtrl>;
 
 PlaygroundCtrl::~PlaygroundCtrl(void)
 {
-	JobCtrl::getInstance()->Disconnect(anTASKEVT_PG_LIST,
+	JobCtrl::instance()->Disconnect(anTASKEVT_PG_LIST,
 	    wxTaskEventHandler(PlaygroundCtrl::OnPlaygroundListArrived),
 	    NULL, this);
 
-	JobCtrl::getInstance()->Disconnect(anTASKEVT_PG_FILES,
+	JobCtrl::instance()->Disconnect(anTASKEVT_PG_FILES,
 	    wxTaskEventHandler(PlaygroundCtrl::OnPlaygroundFilesArrived),
 	    NULL, this);
 
@@ -102,10 +102,10 @@ PlaygroundCtrl::clearErrors(void)
 
 PlaygroundCtrl::PlaygroundCtrl(void) : Singleton<PlaygroundCtrl>()
 {
-	JobCtrl::getInstance()->Connect(anTASKEVT_PG_LIST,
+	JobCtrl::instance()->Connect(anTASKEVT_PG_LIST,
 	    wxTaskEventHandler(PlaygroundCtrl::OnPlaygroundListArrived),
 	    NULL, this);
-	JobCtrl::getInstance()->Connect(anTASKEVT_PG_FILES,
+	JobCtrl::instance()->Connect(anTASKEVT_PG_FILES,
 	    wxTaskEventHandler(PlaygroundCtrl::OnPlaygroundFilesArrived),
 	    NULL, this);
 }

@@ -124,7 +124,7 @@ setup(void)
 	mark_point();
 
 	/* Object to be tested */
-	jobCtrl = JobCtrl::getInstance();
+	jobCtrl = JobCtrl::instance();
 	fail_unless(jobCtrl->start(), "Failed to start JobCtrl");
 	mark_point();
 

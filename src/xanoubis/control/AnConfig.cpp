@@ -50,7 +50,7 @@ AnConfig::Flush(bool bCurrentOnly)
 		if (result) {
 			/* Inform any listener about new configuration */
 			wxCommandEvent event(anEVT_ANOUBISOPTIONS_UPDATE);
-			wxPostEvent(AnEvents::getInstance(), event);
+			wxPostEvent(AnEvents::instance(), event);
 		}
 
 		needFlush_ = false; /* Reset flush-flag */

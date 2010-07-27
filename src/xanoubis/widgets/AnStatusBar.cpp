@@ -68,7 +68,7 @@ AnStatusBar::AnStatusBar(wxWindow *parent) : wxStatusBar(parent, ID_STATUSBAR)
 	wxStaticText	*sunkenRuleEditorLabel;
 	AnEvents	*anEvents;
 
-	anEvents = AnEvents::getInstance();
+	anEvents = AnEvents::instance();
 
 	/*
 	 * 4 fields, the left one takes all remaining space, two
@@ -269,7 +269,7 @@ AnStatusBar::~AnStatusBar(void)
 {
 	AnEvents *anEvents;
 
-	anEvents = AnEvents::getInstance();
+	anEvents = AnEvents::instance();
 
 	anEvents->Disconnect(anEVT_WIZARD_SHOW,
 	    wxCommandEventHandler(AnStatusBar::onWizardShow), NULL, this);
@@ -431,7 +431,7 @@ AnStatusBar::OnWizardClick(wxMouseEvent& event)
 	isWizardPressed_ = !isWizardPressed_;
 	wxCommandEvent  showEvent(anEVT_WIZARD_SHOW);
 	showEvent.SetInt(isWizardPressed_);
-	wxPostEvent(AnEvents::getInstance(), showEvent);
+	wxPostEvent(AnEvents::instance(), showEvent);
 	event.Skip();
 }
 
@@ -448,7 +448,7 @@ AnStatusBar::OnLogViewerClick(wxMouseEvent& event)
 	isLogViewerPressed_ = !isLogViewerPressed_;
 	wxCommandEvent  showEvent(anEVT_LOGVIEWER_SHOW);
 	showEvent.SetInt(isLogViewerPressed_);
-	wxPostEvent(AnEvents::getInstance(), showEvent);
+	wxPostEvent(AnEvents::instance(), showEvent);
 	event.Skip();
 }
 
@@ -465,7 +465,7 @@ AnStatusBar::OnRuleEditorClick(wxMouseEvent& event)
 	isRuleEditorPressed_ = !isRuleEditorPressed_;
 	wxCommandEvent  showEvent(anEVT_RULEEDITOR_SHOW);
 	showEvent.SetInt(isRuleEditorPressed_);
-	wxPostEvent(AnEvents::getInstance(), showEvent);
+	wxPostEvent(AnEvents::instance(), showEvent);
 	event.Skip();
 }
 

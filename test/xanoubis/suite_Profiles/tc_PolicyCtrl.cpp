@@ -213,7 +213,7 @@ setup(void)
 	touch_file("%s/.tc_PolicyCtrl/profiles/user6", tmp_home);
 
 	fail_if(pc != NULL, "Previous PolicyCtrl was not removed.");
-	pc = PolicyCtrl::getInstance();
+	pc = PolicyCtrl::instance();
 	fail_if(pc == NULL, "Couldn't create new PolicyCtrl.");
 	pc->setEventBroadcastEnabled(false);
 
@@ -251,11 +251,11 @@ testPolicyCtrl(PolicyCtrl *ctrl, int flags)
 
 START_TEST(PolicyCtrl_create)
 {
-	if (pc != pc->getInstance()) {
+	if (pc != pc->instance()) {
 		fail("Got different instance.");
 	}
 
-	if (pc != PolicyCtrl::getInstance()) {
+	if (pc != PolicyCtrl::instance()) {
 		fail("Got different instance.");
 	}
 }
