@@ -699,6 +699,7 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 
 		if (reply->ask) {
 			anoubisd_msg_t		*nmsg;
+			eventdev_token		 token = hdr->msg_token;
 
 			nmsg = fill_eventask_message(ANOUBISD_MSG_EVENTASK,
 			    0 /* loglevel */, hdr, reply);
@@ -708,6 +709,8 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 				master_terminate(ENOMEM);
 				return;
 			}
+			/* The hdr is in the freed message! */
+			hdr = NULL;
 			free(msg);
 
 			msg = nmsg;
@@ -719,7 +722,7 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 				continue;
 			}
 
-			msg_wait->token = hdr->msg_token;
+			msg_wait->token = token;
 			if (time(&msg_wait->starttime) == -1) {
 				free(msg);
 				free(reply);
@@ -736,7 +739,7 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 
 			/* send msg to the session */
 			enqueue(&eventq_p2s, msg);
-			DEBUG(DBG_QUEUE, " >eventq_p2s: %x", hdr->msg_token);
+			DEBUG(DBG_QUEUE, " >eventq_p2s: %x", token);
 		} else {
 			int	hold = reply->hold;
 			msg_reply = msg_factory(ANOUBISD_MSG_EVENTREPLY,
@@ -953,6 +956,8 @@ dispatch_s2p(int fd, short sig __used, void *arg)
 				DEBUG(DBG_QUEUE, " >eventq_p2m: %x",
 					evrep->msg_token);
 			} else {
+				DEBUG(DBG_QUEUE, " reply not found for 0x%x",
+				    evrep->msg_token);
 				free(msg);
 			}
 			break;
