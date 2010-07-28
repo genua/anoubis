@@ -86,6 +86,8 @@ struct playground {
 	anoubis_cookie_t			 pgid;
 	anoubis_cookie_t			 founder;
 	uint64_t				 starttime;
+	uint64_t				 scandev;
+	uint64_t				 scanino;
 	int					 nrprocs;
 	int					 nrfiles;
 	char					*cmd;
@@ -539,6 +541,40 @@ pe_playground_file_delete(anoubis_cookie_t pgid, uint64_t dev, uint64_t ino)
 		pg->nrfiles--;
 		pe_playground_trykill(pg);
 	}
+}
+
+/**
+ * Check if the given user is allowed to request scanning of the
+ * given file. Additionally, the file is instantiated and the device
+ * and inode numbers are recorded in the playground. This is the only
+ * file that the user can request for scanning.
+ * Only the root user and the user that owns the playground are allowed
+ * to request scanning of the file.
+ *
+ * @param pgid The playground ID of the file.
+ * @param dev The device number of the file.
+ * @param ino The inode number of the file.
+ * @param path The path name of the file relative to root of the given
+ *     device.
+ * @param The user-ID of the user that requested the event.
+ */
+int
+pe_playground_file_scanrequest(anoubis_cookie_t pgid, uint64_t dev,
+    uint64_t ino, const char *path, uid_t uid)
+{
+	struct playground		*pg;
+
+	if (path == NULL || path[0] == 0)
+		return -EINVAL;
+	pe_playground_file_instantiate(pgid, dev, ino, path);
+	pg = pe_playground_find(pgid);
+	if (pg == NULL)
+		return -ESRCH;
+	if (uid && (pg->uid != uid || pg->uid == (uid_t)-1))
+		return -EPERM;
+	pg->scandev = dev;
+	pg->scanino = ino;
+	return 0;
 }
 
 /**

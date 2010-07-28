@@ -257,6 +257,9 @@ void			 pe_playground_file_instantiate(anoubis_cookie_t pgid,
 			     uint64_t dev, uint64_t ino, const char *path);
 void			 pe_playground_file_delete(anoubis_cookie_t pgid,
 			     uint64_t dev, uint64_t ino);
+int			 pe_playground_file_scanrequest(anoubis_cookie_t,
+			     uint64_t dev, uint64_t ino, const char *path,
+			     uid_t uid);
 void			 pe_playground_dump(void);
 void			 pe_playground_init(void);
 void			 pe_playground_dispatch_request(anoubisd_msg_t *,
