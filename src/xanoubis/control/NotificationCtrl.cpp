@@ -228,6 +228,8 @@ NotificationCtrl::onDaemonDisconnect(wxCommandEvent & event)
 		MainUtils::instance()->getModule(SFS)->update();
 	if (MainUtils::instance()->getModule(SB))
 		MainUtils::instance()->getModule(SB)->update();
+	if (MainUtils::instance()->getModule(PG))
+		MainUtils::instance()->getModule(PG)->update();
 	if (MainUtils::instance()->getModule(ANOUBIS))
 		MainUtils::instance()->getModule(ANOUBIS)->update();
 }
