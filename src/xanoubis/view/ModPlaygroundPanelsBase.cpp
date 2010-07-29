@@ -64,6 +64,8 @@ ModPlaygroundMainPanelBase::ModPlaygroundMainPanelBase( wxWindow* parent, wxWind
 	startSizer->Add( applicationComboBox, 0, wxALL, 5 );
 	
 	applicationStartButton = new wxButton( pgPage, PG_APP_STARTBUTTON, _("Start Playground"), wxDefaultPosition, wxDefaultSize, 0 );
+	applicationStartButton->Enable( false );
+	
 	startSizer->Add( applicationStartButton, 0, wxALL, 5 );
 	
 	pgPageSizer->Add( startSizer, 0, wxALL|wxEXPAND, 5 );
@@ -111,6 +113,7 @@ ModPlaygroundMainPanelBase::ModPlaygroundMainPanelBase( wxWindow* parent, wxWind
 	
 	// Connect Events
 	pgNotebook->Connect( wxEVT_COMMAND_NOTEBOOK_PAGE_CHANGING, wxNotebookEventHandler( ModPlaygroundMainPanelBase::onPgNotebookChanging ), NULL, this );
+	applicationComboBox->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( ModPlaygroundMainPanelBase::onAppPathEntered ), NULL, this );
 	applicationComboBox->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( ModPlaygroundMainPanelBase::onAppStartEnter ), NULL, this );
 	applicationStartButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModPlaygroundMainPanelBase::onAppStart ), NULL, this );
 	pgList->Connect( wxEVT_COMMAND_LIST_ITEM_ACTIVATED, wxListEventHandler( ModPlaygroundMainPanelBase::onPgListItemActivate ), NULL, this );

@@ -89,6 +89,7 @@ class ModPlaygroundMainPanelBase : public wxPanel
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void onPgNotebookChanging( wxNotebookEvent& event ){ event.Skip(); }
+		virtual void onAppPathEntered( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAppStartEnter( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAppStart( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onPgListItemActivate( wxListEvent& event ){ event.Skip(); }

@@ -65,6 +65,16 @@ class ModPlaygroundMainPanelImpl : public ModPlaygroundMainPanelBase
 		virtual void onConnectionStateChange(wxCommandEvent &);
 
 		/**
+		 * Handles keystrokes-events of AppComboBox.
+		 *
+		 * This is used to detect whether a path was entered. Then you are able to
+		 * enable/disable to start-playground-button.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onAppPathEntered(wxCommandEvent &);
+
+		/**
 		 * Handle <Return> events of AppComboBox.
 		 * @param[in] 1st The event.
 		 * @return Nothing.

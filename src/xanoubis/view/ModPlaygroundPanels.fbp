@@ -355,7 +355,7 @@
                                                     <event name="OnRightUp"></event>
                                                     <event name="OnSetFocus"></event>
                                                     <event name="OnSize"></event>
-                                                    <event name="OnText"></event>
+                                                    <event name="OnText">onAppPathEntered</event>
                                                     <event name="OnTextEnter">onAppStartEnter</event>
                                                     <event name="OnUpdateUI"></event>
                                                 </object>
@@ -368,7 +368,7 @@
                                                     <property name="bg"></property>
                                                     <property name="context_help"></property>
                                                     <property name="default">0</property>
-                                                    <property name="enabled">1</property>
+                                                    <property name="enabled">0</property>
                                                     <property name="fg"></property>
                                                     <property name="font"></property>
                                                     <property name="hidden">0</property>

@@ -133,6 +133,13 @@ ModPlaygroundMainPanelImpl::onConnectionStateChange(wxCommandEvent &event)
 }
 
 void
+ModPlaygroundMainPanelImpl::onAppPathEntered(wxCommandEvent &)
+{
+	applicationStartButton->Enable(
+	    applicationComboBox->GetValue().Length() > 0);
+}
+
+void
 ModPlaygroundMainPanelImpl::onAppStartEnter(wxCommandEvent &)
 {
 	startApplication();
