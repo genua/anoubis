@@ -311,7 +311,7 @@ ModPlaygroundMainPanelImpl::refreshPlaygroundList(void)
 void
 ModPlaygroundMainPanelImpl::openCommitDialog(void)
 {
-	DlgPlaygroundCommitFileListImpl dlg;
+	DlgPlaygroundCommitFileListImpl *dlg;
 
 	uint64_t		 pgId = 0;
 	AnListClass		*item = NULL;
@@ -337,9 +337,18 @@ ModPlaygroundMainPanelImpl::openCommitDialog(void)
 	}
 
 	playgroundCtrl->updatePlaygroundFiles(pgId);
-	dlg.SetTitle(wxString::Format(_("Commit files for playground %"PRIx64),
-	    pgId));
-	dlg.ShowModal();
+
+	dlg = new DlgPlaygroundCommitFileListImpl();
+	dlg->SetTitle(
+	    wxString::Format(_("Commit files for playground %"PRIx64), pgId));
+	#ifdef USE_WXGUITESTING
+		dlg->Show();
+		/* Note: the dialog will not be cleaned up. This is a
+		 * memleak, but only for the test. */
+	#else
+		dlg->ShowModal();
+		dlg->Destroy();
+	#endif
 }
 
 char **

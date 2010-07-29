@@ -344,6 +344,6 @@ wxGuiTest_Playground_DEPENDENCIES = $(dependencies)
 wxGuiTest_Playground_LDADD = $(GUITEST_LDADD)
 wxGuiTest_Playground_SOURCES = \
 	wxGuiTestRunner.cpp \
-	wxGuiTest/SuitPlayground.cpp \
-	wxGuiTest/SuitPlayground.h
+	wxGuiTest/SuitePlayground.cpp \
+	wxGuiTest/SuitePlayground.h
 endif

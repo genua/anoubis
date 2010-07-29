@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2010 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -65,7 +65,8 @@
 #define ID_MITOOLSLOGVIEWER 1509
 #define ID_MITOOLSWIZARD 1510
 #define ID_MIHELPABOUT 1511
-#define ID_TOOLBAR 1512
+#define ID_CONNECTIONSTATUS 1512
+#define ID_TOOLBAR 1513
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class MainFrameBase

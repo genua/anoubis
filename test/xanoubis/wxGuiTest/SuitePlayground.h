@@ -25,21 +25,26 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SUITPLAYGROUND_H_
-#define _SUITPLAYGROUND_H_
+#ifndef _SUITEPLAYGROUND_H_
+#define _SUITEPLAYGROUND_H_
 
 #include <cppunit/extensions/HelperMacros.h>
 
 #include "main.h"
 
-class SuitPlayground : public CPPUNIT_NS::TestFixture
+class SuitePlayground : public CPPUNIT_NS::TestFixture
 {
-	CPPUNIT_TEST_SUITE(SuitPlayground);
-	CPPUNIT_TEST(startPlayground);
+	CPPUNIT_TEST_SUITE(SuitePlayground);
+	CPPUNIT_TEST(do_playground_testsuite);
 	CPPUNIT_TEST_SUITE_END();
 
 	public:
+		void do_playground_testsuite(void);
+		void connect(void);
 		void startPlayground(void);
+		wxString getListValue(AnListCtrl* list, long id, int col);
+		void checkPlaygroundInfo(void);
+		void checkPlaygroundFiles(void);
 };
 
-#endif	/* _SUITPLAYGROUND_H_ */
+#endif	/* _SUITEPLAYGROUND_H_ */

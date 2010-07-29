@@ -71,13 +71,13 @@ ModPlaygroundMainPanelBase::ModPlaygroundMainPanelBase( wxWindow* parent, wxWind
 	wxStaticBoxSizer* pgOverviewListSizer;
 	pgOverviewListSizer = new wxStaticBoxSizer( new wxStaticBox( pgPage, -1, _("Playground Overview:") ), wxVERTICAL );
 	
-	pgList = new AnListCtrl( pgPage, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_SINGLE_SEL|wxLC_VIRTUAL );
+	pgList = new AnListCtrl( pgPage, PG_VIEW_LIST, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_SINGLE_SEL|wxLC_VIRTUAL );
 	pgOverviewListSizer->Add( pgList, 1, wxALL|wxEXPAND, 5 );
 	
 	wxBoxSizer* pgButtonSizer;
 	pgButtonSizer = new wxBoxSizer( wxHORIZONTAL );
 	
-	pgRefreshButton = new wxButton( pgPage, wxID_ANY, _("Refresh view"), wxDefaultPosition, wxDefaultSize, 0 );
+	pgRefreshButton = new wxButton( pgPage, PG_VIEW_REFRESHBUTTON, _("Refresh view"), wxDefaultPosition, wxDefaultSize, 0 );
 	pgRefreshButton->Enable( false );
 	
 	pgButtonSizer->Add( pgRefreshButton, 0, wxALIGN_LEFT|wxALIGN_TOP|wxALL, 5 );
@@ -85,7 +85,7 @@ ModPlaygroundMainPanelBase::ModPlaygroundMainPanelBase( wxWindow* parent, wxWind
 	
 	pgButtonSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	pgCommitButton = new wxButton( pgPage, wxID_ANY, _("Commit files..."), wxDefaultPosition, wxDefaultSize, 0 );
+	pgCommitButton = new wxButton( pgPage, PG_VIEW_COMMITBUTTON, _("Commit files..."), wxDefaultPosition, wxDefaultSize, 0 );
 	pgCommitButton->Enable( false );
 	
 	pgButtonSizer->Add( pgCommitButton, 0, wxALL, 5 );
@@ -195,7 +195,7 @@ DlgPlaygroundCommitFileListBase::DlgPlaygroundCommitFileListBase( wxWindow* pare
 	
 	listSizer->Add( listHeaderSizer, 0, wxEXPAND, 5 );
 	
-	fileGrid = new AnGrid( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL );
+	fileGrid = new AnGrid( this, PG_COMMIT_LIST, wxDefaultPosition, wxDefaultSize, wxVSCROLL );
 	
 	// Grid
 	fileGrid->CreateGrid( 1, 1 );

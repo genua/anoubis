@@ -857,7 +857,7 @@ ModAnoubisOverviewPanelBase::ModAnoubisOverviewPanelBase( wxWindow* parent, wxWi
 	
 	bSizer26->Add( 20, 0, 0, wxEXPAND, 5 );
 	
-	connectButton = new wxButton( this, wxID_ANY, _("Connect"), wxDefaultPosition, wxDefaultSize, 0 );
+	connectButton = new wxButton( this, MAIN_CONNECTBUTTON, _("Connect"), wxDefaultPosition, wxDefaultSize, 0 );
 	connectButton->SetToolTip( _("Establishes a connection to the Anoubis daemon") );
 	
 	bSizer26->Add( connectButton, 0, wxALL, 5 );

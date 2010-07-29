@@ -5829,7 +5829,7 @@
             <event name="OnSetFocus"></event>
             <event name="OnSize"></event>
             <event name="OnUpdateUI"></event>
-            <object class="wxFlexGridSizer" expanded="1">
+            <object class="wxFlexGridSizer" expanded="0">
                 <property name="cols">3</property>
                 <property name="flexible_direction">wxBOTH</property>
                 <property name="growablecols"></property>
@@ -5904,7 +5904,7 @@
                     <property name="border">5</property>
                     <property name="flag">wxEXPAND</property>
                     <property name="proportion">1</property>
-                    <object class="wxBoxSizer" expanded="1">
+                    <object class="wxBoxSizer" expanded="0">
                         <property name="minimum_size"></property>
                         <property name="name">bSizer24</property>
                         <property name="orient">wxVERTICAL</property>
@@ -5913,7 +5913,7 @@
                             <property name="border">5</property>
                             <property name="flag">wxEXPAND</property>
                             <property name="proportion">0</property>
-                            <object class="wxBoxSizer" expanded="1">
+                            <object class="wxBoxSizer" expanded="0">
                                 <property name="minimum_size"></property>
                                 <property name="name">bSizer25</property>
                                 <property name="orient">wxHORIZONTAL</property>
@@ -6012,7 +6012,7 @@
                                         <property name="fg"></property>
                                         <property name="font"></property>
                                         <property name="hidden">0</property>
-                                        <property name="id">wxID_ANY</property>
+                                        <property name="id">MAIN_CONNECTBUTTON</property>
                                         <property name="label">Connect</property>
                                         <property name="maximum_size"></property>
                                         <property name="minimum_size"></property>

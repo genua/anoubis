@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2010 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -109,7 +109,7 @@ MainFrameBase::MainFrameBase( wxWindow* parent, wxWindowID id, const wxString& t
 	
 	statusBoxContextSizer->Add( statusBoxComLabel, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	statusBoxComText = new wxStaticText( this, wxID_ANY, _("no"), wxDefaultPosition, wxDefaultSize, 0 );
+	statusBoxComText = new wxStaticText( this, ID_CONNECTIONSTATUS, _("no"), wxDefaultPosition, wxDefaultSize, 0 );
 	statusBoxComText->Wrap( -1 );
 	statusBoxContextSizer->Add( statusBoxComText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	

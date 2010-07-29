@@ -435,7 +435,7 @@
                                                     <property name="fg"></property>
                                                     <property name="font"></property>
                                                     <property name="hidden">0</property>
-                                                    <property name="id">wxID_ANY</property>
+                                                    <property name="id">PG_VIEW_LIST</property>
                                                     <property name="maximum_size"></property>
                                                     <property name="minimum_size"></property>
                                                     <property name="name">pgList</property>
@@ -514,7 +514,7 @@
                                                             <property name="fg"></property>
                                                             <property name="font"></property>
                                                             <property name="hidden">0</property>
-                                                            <property name="id">wxID_ANY</property>
+                                                            <property name="id">PG_VIEW_REFRESHBUTTON</property>
                                                             <property name="label">Refresh view</property>
                                                             <property name="maximum_size"></property>
                                                             <property name="minimum_size"></property>
@@ -576,7 +576,7 @@
                                                             <property name="fg"></property>
                                                             <property name="font"></property>
                                                             <property name="hidden">0</property>
-                                                            <property name="id">wxID_ANY</property>
+                                                            <property name="id">PG_VIEW_COMMITBUTTON</property>
                                                             <property name="label">Commit files...</property>
                                                             <property name="maximum_size"></property>
                                                             <property name="minimum_size"></property>
@@ -1292,7 +1292,7 @@
                                 <property name="grid_line_color"></property>
                                 <property name="grid_lines">1</property>
                                 <property name="hidden">0</property>
-                                <property name="id">wxID_ANY</property>
+                                <property name="id">PG_COMMIT_LIST</property>
                                 <property name="label_bg"></property>
                                 <property name="label_font">,90,90,-1,70,0</property>
                                 <property name="label_text"></property>
