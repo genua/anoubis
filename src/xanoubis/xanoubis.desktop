@@ -1,14 +1,14 @@
 [Desktop Entry]
-Version=1
+Version=1.0
 Type=Application
-Encoding=UTF-8
 Name=xanoubis
 Comment=GUI of the Anoubis Security Suite
+Name[de]=xanoubis
 Comment[de]=Graphische Oberfläche der Anoubis Security Suite
 TryExec=xanoubis
 Exec=xanoubis -H
 Icon=xanoubis
-Categories=Application;Network
+Categories=Application;Network;
 Terminal=false
 X-KDE-autostart-phase=2
 X-KDE-autostart-after=panel

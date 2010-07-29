@@ -36,6 +36,8 @@ BuildRequires:	make
 BuildRequires:	wxGTK-devel >= 2.8
 
 %define daemon	%{name}d
+%define gui	x%{name}
+%define user	_%{name}d
 %define sbindir	/sbin
 %define policydir	/var/lib/%{name}
 %define rundir	/var/run/%{daemon}
@@ -45,30 +47,27 @@ BuildRequires:	wxGTK-devel >= 2.8
 The Anoubis Security Suite.
 
 ### subpackage anoubisd ####################################
-%package -n anoubisd
-Summary:	daemon of the Anoubis Security Suite
+%package -n %{daemon}
+Summary:	Daemon of the Anoubis Security Suite
 Group:		System Environment/Daemons
-Requires:	libevent
 Requires:	openssl
 Requires:	cvs
 
-%description -n anoubisd
+%description -n %{daemon}
 Central daemon of the Anoubis Security Suite.
 
 ### subpackage xanoubis ####################################
-%package -n xanoubis
+%package -n %{gui} 
 Summary:	GUI of the Anoubis Security Suite
 Group:		User Interface/X
-Requires:	anoubisd >= 0.9.1
+Requires:	%{daemon} >= 0.9.1
 Requires:	wxGTK >= 2.8
-Requires:	libevent
-Requires:	libnotify
 Requires:	xorg-x11-fonts
 Requires:	openssl
 Requires:	cvs
 
-%description -n xanoubis
-GUI of the Anoubis Security Suite.
+%description -n %{gui}
+Graphical user interface of the Anoubis Security Suite.
 
 
 ### build stages ###########################################
@@ -80,7 +79,7 @@ GUI of the Anoubis Security Suite.
 %{?suse_update_config}
 export CFLAGS="$RPM_OPT_FLAGS"
 ./configure --prefix=%{_prefix} \
- --enable-static-anoubisd \
+ --enable-static-%{daemon} \
  --infodir=%{_infodir} \
  --mandir=%{_mandir} \
  --sbindir=%{sbindir} \
@@ -91,13 +90,13 @@ export CFLAGS="$RPM_OPT_FLAGS"
 %install
 [ "$RPM_BUILD_ROOT" != "/" ] && [ -d $RPM_BUILD_ROOT ] \
   && rm -rf $RPM_BUILD_ROOT
-make install DESTDIR=$RPM_BUILD_ROOT
+make DESTDIR=$RPM_BUILD_ROOT install-strip
 install -D -m 755 %{SOURCE1} %{buildroot}%{_initddir}/%{daemon}
 install -D -m 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/%{name}/%{daemon}.conf
 
 # install policy profiles
 DEF_POLICY_DIR=$RPM_BUILD_ROOT/%{_datadir}/%{daemon}/policy_templates
-mkdir -p $DEF_POLICY_DIR/admin $DEF_POLICY_DIR/user $DEF_POLICY_DIR/profiles
+mkdir -p $DEF_POLICY_DIR/{admin,user,profiles}
 for a in admin user profiles ; do
     for f in $RPM_SOURCE_DIR/policy.$a.* ; do
 	tgt=$DEF_POLICY_DIR/$a/${f##*/policy.$a.}
@@ -107,12 +106,11 @@ for a in admin user profiles ; do
 done
 
 # install wizard templates of xanoubis
-DEF_WIZARD_DIR=$RPM_BUILD_ROOT/%{_datadir}/xanoubis/policy_templates/wizard
-mkdir -p $DEF_WIZARD_DIR
-install -p $RPM_BUILD_ROOT/%{_datadir}/xanoubis/profiles/wizard/{alf,sandbox} \
-	$DEF_WIZARD_DIR
-
-rm -rf $RPM_BUILD_ROOT/%{_datadir}/xanoubis/profiles
+GUI_POLICY_DIR=$RPM_BUILD_ROOT/%{_datadir}/%{gui}/policy_templates
+GUI_PROFILES_DIR=$RPM_BUILD_ROOT/%{_datadir}/%{gui}/profiles
+mkdir -p $GUI_POLICY_DIR/wizard
+install -m 644 $GUI_PROFILES_DIR/wizard/{alf,sandbox} $GUI_POLICY_DIR/wizard
+rm -rf $GUI_PROFILES_DIR
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/%{name}/profiles/wizard
 
 # install symlink in /etc/anoubis
@@ -131,39 +129,43 @@ rm -f  $RPM_BUILD_ROOT%{_libdir}/*.a
 rm -fr $RPM_BUILD_ROOT%{_mandir}/man3
 
 # install and register desktop icon and file
-mkdir -p $RPM_BUILD_ROOT%{_datadir}/{applications,pixmaps,xanoubis}
-install -p $RPM_BUILD_ROOT%{_datadir}/xanoubis/icons/xanoubis.png \
+mkdir -p $RPM_BUILD_ROOT%{_datadir}/{applications,pixmaps,%{gui}}
+install -p $RPM_BUILD_ROOT%{_datadir}/%{gui}/icons/%{gui}.png \
 	$RPM_BUILD_ROOT%{_datadir}/pixmaps
-install -p $RPM_BUILD_ROOT%{_datadir}/xanoubis/xanoubis.desktop \
+install -p $RPM_BUILD_ROOT%{_datadir}/%{gui}/%{gui}.desktop \
 	$RPM_BUILD_ROOT%{_datadir}/applications
+
+# locate translations
+%find_lang %{name}
 
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && [ -d $RPM_BUILD_ROOT ] \
   && rm -rf $RPM_BUILD_ROOT
 
 ### package scripts ########################################
-%pre -n anoubisd
-# Do not stop anoubisd during an upgrade restart it after the upgrade
-if ! getent passwd _anoubisd >/dev/null; then
-	groupadd -f -r _anoubisd
+%pre -n %{daemon}
+# Do not stop anoubisd during an upgrade,
+# instead restart it after the upgrade
+if ! getent passwd %{user} >/dev/null; then
+	groupadd -r %{user} 2>/dev/null || :
 	useradd -M -r -s /sbin/nologin -d %{rundir} \
-	    -g _anoubisd _anoubisd
+	    -g %{user} %{user}
 fi
+if ! getent group _nosfs >/dev/null; then
+	groupadd -r _nosfs 2>/dev/null || :
+fi
+exit 0
+
+%pre -n %{gui}
 if ! getent group _nosfs >/dev/null; then
 	groupadd -f -r _nosfs
 fi
 exit 0
 
-%pre -n xanoubis
-if ! getent group _nosfs >/dev/null; then
-	groupadd -f -r _nosfs
-fi
-exit 0
-
-%posttrans -n xanoubis
+%posttrans -n %{gui}
 # remove profile directory from old rpms, and add symlink manually.
 # rpm will not replace a directory with a symlink on upgrades
-PROFDIR=%{_datadir}/xanoubis/profiles
+PROFDIR=%{_datadir}/%{gui}/profiles
 if [ ! -L $PROFDIR ] ; then
 	if [ -e $PROFDIR ] ; then
 		mv $PROFDIR $PROFDIR.rpm-bak.$$
@@ -172,22 +174,22 @@ if [ ! -L $PROFDIR ] ; then
 fi
 exit 0
 
-%post -n xanoubis
+%post -n %{gui}
 # update xanoubis wizard profiles
 # we just overwrite the old files until we have a better mechanism
 # for updates
 rm -f %{_sysconfdir}/%{name}/profiles/wizard/alf
 rm -f %{_sysconfdir}/%{name}/profiles/wizard/sandbox
-cp %{_datadir}/xanoubis/policy_templates/wizard/* \
+cp %{_datadir}/%{gui}/policy_templates/wizard/* \
 	%{_sysconfdir}/%{name}/profiles/wizard
 chmod 644 %{_sysconfdir}/%{name}/profiles/wizard/*
 
 if getent group _nosfs >/dev/null; then
-	chown root:_nosfs %{_bindir}/xanoubis && \
-	chmod 2755 %{_bindir}/xanoubis
+	chown root:_nosfs %{_bindir}/%{gui} && \
+	chmod 2755 %{_bindir}/%{gui}
 fi
 
-%post -n anoubisd
+%post -n %{daemon}
 chkconfig --add %{daemon}
 chkconfig %{daemon} on
 mkdir -p %{policydir}/policy/{admin,user,pubkeys}
@@ -200,7 +202,7 @@ fi
 
 # update run dir permissions from old versions
 if [ -d %{rundir} ] ; then
-	chown root:_anoubisd %{rundir}
+	chown root:%{user} %{rundir}
 	chmod 0770 %{rundir}
 fi
 
@@ -224,7 +226,7 @@ rm -f %{_sysconfdir}/%{name}/profiles/high
 	%{_datadir}/%{daemon}/policy_templates/profiles \
 	%{_sysconfdir}/%{name}/profiles
 
-chown -R _anoubisd: %{policydir}/policy
+chown -R %{user}: %{policydir}/policy
 
 if [ ! -e /dev/eventdev ] ; then
 	mknod /dev/eventdev c 10 62
@@ -240,7 +242,7 @@ if [ "$1" = 1 ]; then
 fi
 exit 0
 
-%preun -n anoubisd
+%preun -n %{daemon}
 # execute only on package removal,
 # i.e. if last version is removed (0 versions left)
 if [ "$1" = 0 ] ; then
@@ -251,7 +253,7 @@ if [ "$1" = 0 ] ; then
 fi
 exit 0
 
-%postun -n anoubisd
+%postun -n %{daemon}
 # execute only on upgrades (i.e. at least 1 version left)
 if [ "$1" -ge 1 ]; then
     %{_initddir}/%{daemon} restart
@@ -260,11 +262,11 @@ exit 0
 
 
 ### files of subpackage anoubisd ###########################
-%files -n anoubisd
+%files -n %{daemon} -f %{name}.lang
 %defattr(-,root,root)
 %{_initddir}/%{daemon}
-%{_sysconfdir}/%{name}
-%{_sysconfdir}/udev/rules.d/06-%{name}.rules
+%config(noreplace) %{_sysconfdir}/%{name}
+%config(noreplace) %{_sysconfdir}/udev/rules.d/06-%{name}.rules
 %{sbindir}/%{daemon}
 %{sbindir}/anoubisctl
 %{sbindir}/sfssig
@@ -272,8 +274,7 @@ exit 0
 %{_bindir}/anoubis-keygen
 %{_bindir}/playground
 %{_datadir}/%{daemon}/*
-%{_datadir}/locale/de/LC_MESSAGES/%{name}.mo
-%attr(0750,root,_anoubisd) %dir %{policydir}
+%attr(0750,root,%{user}) %dir %{policydir}
 %{policydir}/*
 %{_mandir}/man1/anoubis-keygen.1.gz
 %{_mandir}/man1/anoubis-keyinstall.1.gz
@@ -284,18 +285,27 @@ exit 0
 %{_mandir}/man9/*
 
 ### files of subpackage xanoubis ###########################
-%files -n xanoubis
+%files -n %{gui}
 %defattr(-,root,root)
-%doc AUTHORS INSTALL NEWS README ChangeLog
-%{_bindir}/xanoubis
-%{_mandir}/man1/xanoubis*.1.gz
-%{_datadir}/xanoubis/*
-%attr(0644,root,root) %{_datadir}/applications/xanoubis.desktop
-%attr(0644,root,root) %{_datadir}/pixmaps/xanoubis.png
+%doc ChangeLog
+%{_bindir}/%{gui}
+%{_mandir}/man1/%{gui}*.1.gz
+%{_datadir}/%{gui}
+%{_datadir}/%{gui}/icons
+%{_datadir}/%{gui}/policy_templates
+%{_datadir}/%{gui}/%{gui}.desktop
+%attr(0755,root,root) %{_datadir}/%{gui}/utils
+%attr(0644,root,root) %{_datadir}/applications/%{gui}.desktop
+%attr(0644,root,root) %{_datadir}/pixmaps/%{gui}.png
 
 
 ### changelog ##############################################
 %changelog
+* Tue Jul 27 2010 Sten Spans
+- fixed most rpmlint errors
+- fixed groupadd errors
+- introduced more variables
+
 * Mon Mar 01 2010 Sten Spans
 - add new gettext translations
 - complete spring cleaning
