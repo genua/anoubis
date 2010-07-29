@@ -93,7 +93,7 @@ PlaygroundListProperty::getText(AnListClass *item) const
 			if (pgInfo->isActive()) {
 				text = _("active");
 			} else {
-				text = _("inactive");
+				text = _("terminated");
 			}
 			break;
 		case PROPERTY_FILES:
