@@ -568,8 +568,9 @@ typedef struct {
  *         playground. This is only allowed for playgrounds that were
  *         created by the user or for root.
  * _pad Padding. Should, not used.
- * pgid The playground ID of the affected playground. This is only used
- *     for some list requests.
+ * pgid The playground ID of the affected playground. Use zero here to list
+ *     all playgrounds. This is not allowed if the list type is
+ *     ANOUBIS_PGREC_FILELIST.
  */
 typedef struct {
 	u32n	type;

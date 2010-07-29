@@ -569,11 +569,11 @@ pe_context_will_pg(struct pe_proc *proc, uid_t uid,
 			continue;
 		}
 		if (pe_context_is_pg(newctx)) {
-			pe_context_put(newctx);
 			if (ruleidp)
 				(*ruleidp) = newctx->ctxrule->apn_id;
 			if (priop)
 				(*priop) = i;
+			pe_context_put(newctx);
 			return 1;
 		}
 		pe_context_put(newctx);

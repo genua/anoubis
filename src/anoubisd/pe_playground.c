@@ -631,7 +631,7 @@ pe_playground_read(anoubis_cookie_t pgid)
 		pg->uid = uid;
 	}
 	if (pe_playground_readfile(pg, "STARTTIME", buf, sizeof(buf)) >= 0) {
-		if (sscanf(buf, "%" PRIx64, &pg->starttime) != 1)
+		if (sscanf(buf, "%" PRId64, &pg->starttime) != 1)
 			pg->starttime = 0;
 	}
 	if (pg->cmd) {
@@ -867,18 +867,21 @@ pe_playground_reply_addrecord(struct pg_reply_context *ctx, int size)
 }
 
 /**
- * Send the list of all known playgrounds to the queue given as parameter.
- * This function iterates over all playgrounds and sends one or more
- * messages containing ANOUBIS_PGREC_PGLIST records to the given queue.
- * Each record represents one playground.
+ * Send information about a single or all known playgrounds to the queue
+ * given as parameter. This function iterates over all playgrounds and
+ * sends one or more messages containing ANOUBIS_PGREC_PGLIST records to
+ * the given queue. Each record represents one playground. If the playground
+ * ID is zero information all playgrounds are sent.
  *
  * @param token The token for the playground reply message.
- * @param auth_uid The authorized user ID of the user asking for the list.
- *     Not used by this function.
+ * @param pgid Send only information about the playground with this ID.
+ *     A value of zero implies that information about all playgrounds is
+ *     sent.
  * @param q Messages are added to this queue.
  */
 static int
-pe_playground_send_pglist(uint64_t token, uint32_t auth_uid __used, Queue *q)
+pe_playground_send_pglist(uint64_t token, anoubis_cookie_t pgid,
+    Queue *q)
 {
 	struct playground		*pg;
 	struct pg_reply_context		 ctx;
@@ -891,6 +894,8 @@ pe_playground_send_pglist(uint64_t token, uint32_t auth_uid __used, Queue *q)
 		unsigned int			 size;
 		Anoubis_PgInfoRecord		*rec;
 
+		if (pgid && pg->pgid != pgid)
+			continue;
 		size = sizeof(Anoubis_PgInfoRecord) + 1;
 		if (pg->cmd)
 			size += strlen(pg->cmd);
@@ -1129,8 +1134,8 @@ pe_playground_dispatch_request(struct anoubisd_msg *inmsg, Queue *queue)
 	switch(pgreq->listtype) {
 	case ANOUBIS_PGREC_PGLIST:
 		token = pgreq->token;
-		err = pe_playground_send_pglist(pgreq->token,
-		    pgreq->auth_uid, queue);
+		err = pe_playground_send_pglist(pgreq->token, pgreq->pgid,
+		    queue);
 		break;
 	case ANOUBIS_PGREC_FILELIST:
 		token = pgreq->token;

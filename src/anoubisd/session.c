@@ -511,7 +511,8 @@ notify_callback(struct anoubis_notify_head *head, int verdict, void *cbdata)
 	if (head) {
 		anoubis_notify_destroy_head(head);
 		DEBUG(DBG_TRACE, " >anoubis_notify_destroy_head");
-		DEBUG(DBG_QUEUE, " <headq: %x", rep->msg_token);
+		DEBUG(DBG_QUEUE, " <headq: %x reply=%d", rep->msg_token,
+		    rep->reply);
 		queue_delete(&headq, cbdata);
 	}
 	free(cbdata);

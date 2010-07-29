@@ -78,6 +78,11 @@
 #define PGCLI_OPT_SIGN 0x0004
 
 /**
+ * Generate verbose output.
+ */
+#define PGCLI_OPT_VERBOSE 0x0008
+
+/**
  * Field width for playground id.
  */
 #define PGCLI_OUTLEN_ID 8
@@ -193,15 +198,6 @@ static struct achat_channel *pgcli_create_channel(void);
 static struct anoubis_client *pgcli_create_client(struct achat_channel *);
 
 /**
- * Free list of messages.
- * This function will iterate ofer the list of messages starting with
- * the given root element and will free each message in the list.
- * @param[in] 1st Root of list of messages.
- * @return Nothing.
- */
-static void pgcli_msglist_free(struct anoubis_msg *);
-
-/**
  * Command: list
  * This function implements the list command. Communication with the
  * daemon is established and the list of playgrounds is requested. The
@@ -264,6 +260,19 @@ static void pgcli_list_print_record(Anoubis_PgInfoRecord *);
  * @see pgcli_files_print()
  */
 static int pgcli_files(anoubis_cookie_t);
+
+/**
+ * Command: remove
+ * This function implements the remove command. It remove an entire
+ * playground, i.e. it removes all files associated with that playground.
+ *
+ * @param[in] 1st The id of the playground in question.
+ * @return 0 on success, a negative error code if an error occured,
+ *     that must be reported by the caller and a positiv value if an error
+ *     occured that must lead to a non-zero exit status but was already
+ *     reported by this function.
+ */
+static int pgcli_remove(anoubis_cookie_t);
 
 /**
  * Print playground file list.
@@ -354,10 +363,13 @@ main(int argc, char *argv[])
 	}
 
 	/* Get command line arguments. */
-	while ((ch = getopt(argc, argv, "fhc:k:")) != -1) {
+	while ((ch = getopt(argc, argv, "vfhc:k:")) != -1) {
 		switch (ch) {
 		case 'f':
 			opts |= PGCLI_OPT_FORCE;
+			break;
+		case 'v':
+			opts |= PGCLI_OPT_VERBOSE;
 			break;
 		case 'h':
 			usage();
@@ -406,7 +418,7 @@ main(int argc, char *argv[])
 		}
 		error = pgcli_list();
 	} else if (strcmp(command, "files") == 0) {
-		if (argc < 1) {
+		if (argc != 1) {
 			usage();
 			/* NOTREACHED */
 		}
@@ -415,6 +427,12 @@ main(int argc, char *argv[])
 			/* NOTREACHED */
 		}
 		error = pgcli_files(pgid);
+	} else if (strcmp(command, "remove") == 0) {
+		if (argc != 1)
+			usage();
+		if (sscanf(argv[0], "%"PRIx64, &pgid) != 1)
+			usage();
+		error = pgcli_remove(pgid);
 	} else {
 		usage();
 	}
@@ -558,15 +576,40 @@ pgcli_create_client(struct achat_channel *channel)
 	return (client);
 }
 
-void
-pgcli_msglist_free(struct anoubis_msg *message)
+/**
+ * Read message from the client connection until either an error occurs
+ * or the transaction completes. If the transaction completes successfully
+ * the result can be retrieved from the message in the transaction.
+ * If an error occurs, the transaction is destroyed.
+ *
+ * @param client The anoubis client connection.
+ * @param ta The transaction the complete (NULL results in -ENOMEM).
+ * @return Zero if the transaction completed successfully, an anoubis
+ *     error code that indicates the error.
+ */
+static int
+anoubis_transaction_complete(struct anoubis_client *client,
+    struct anoubis_transaction *ta)
 {
-	struct anoubis_msg *tmp;
-	while (message) {
-		tmp = message;
-		message = message->next;
-		anoubis_msg_free(tmp);
+	int		rc;
+
+	if (ta == NULL)
+		return -ENOMEM;
+	while (1) {
+		rc = anoubis_client_wait(client);
+		if (rc <= 0) {
+			anoubis_transaction_destroy(ta);
+			if (rc == 0)
+				rc = -EPROTO;
+			return rc;
+		}
+		if (ta->flags & ANOUBIS_T_DONE)
+			break;
 	}
+	rc = -ta->result;
+	if (rc < 0)
+		anoubis_transaction_destroy(ta);
+	return rc;
 }
 
 int
@@ -597,33 +640,17 @@ pgcli_list(void)
 	/* Connection established. Send message and wait for answer. */
 	transaction = anoubis_client_pglist_start(client,
 	    ANOUBIS_PGREC_PGLIST, 0);
-	if (transaction == NULL) {
+	rc = anoubis_transaction_complete(client, transaction);
+	if (rc < 0) {
 		PGCLI_CONNECTION_WIPE(channel, client);
-		return (-ENOMEM);
+		return rc;
 	}
-	while (1) {
-		rc = anoubis_client_wait(client);
-		if (rc <= 0) {
-			anoubis_transaction_destroy(transaction);
-			PGCLI_CONNECTION_WIPE(channel, client);
-			if (rc == 0)
-				rc = -EPROTO;
-			return (rc);
-		}
-		if (transaction->flags & ANOUBIS_T_DONE) {
-			break;
-		}
-	}
-	message = transaction->msg;
-	transaction->msg = NULL;
 
 	/* Print received list. */
-	rc = -transaction->result;
-	if (rc == 0)
-		pgcli_list_print_msg(message);
+	message = transaction->msg;
+	pgcli_list_print_msg(message);
 
 	/* Cleanup. */
-	pgcli_msglist_free(message);
 	anoubis_transaction_destroy(transaction);
 	PGCLI_CONNECTION_WIPE(channel, client);
 
@@ -725,34 +752,157 @@ pgcli_files(anoubis_cookie_t pgid)
 	/* Connection established. Send message and wait for answer. */
 	transaction = anoubis_client_pglist_start(client,
 	    ANOUBIS_PGREC_FILELIST, pgid);
-	if (transaction == NULL) {
+	rc = anoubis_transaction_complete(client, transaction);
+	if (rc < 0) {
 		PGCLI_CONNECTION_WIPE(channel, client);
-		return (-ENOMEM);
+		return rc;
 	}
-	while (1) {
-		rc = anoubis_client_wait(client);
-		if (rc <= 0) {
-			anoubis_transaction_destroy(transaction);
-			PGCLI_CONNECTION_WIPE(channel, client);
-			if (rc == 0)
-				rc = -EPROTO;
-			return (rc);
-		}
-		if (transaction->flags & ANOUBIS_T_DONE) {
-			break;
-		}
-	}
-	message = transaction->msg;
-	transaction->msg = NULL;
 
 	/* Print received list. */
-	rc = -transaction->result;
-	if (rc == 0)
-		pgcli_files_print_msg(message);
+	message = transaction->msg;
+	pgcli_files_print_msg(message);
 
 	/* Cleanup. */
-	pgcli_msglist_free(message);
 	anoubis_transaction_destroy(transaction);
+	PGCLI_CONNECTION_WIPE(channel, client);
+
+	return rc;
+}
+
+/**
+ * Try to delete all files that are reported in a series of messages that
+ * contain ANOUBIS_PGREC_FILELIST records. A single line of text is printed
+ * for each file/directory that is removed. Failure to remove a file in
+ * the record does not lead to any error message. Instead the caller must
+ * retry the removal until no more progress is made.
+ *
+ * @param msg The first message in the message list.
+ * @return Zero if no file was removed, one if at least one file was
+ *     removed.
+ */
+static int
+pgcli_delete_filelist(struct anoubis_msg *msg)
+{
+	int	ret = 0;
+
+	for(; msg; msg = msg->next) {
+		int	i, offset;
+
+		for (i=offset=0; i<get_value(msg->u.pgreply->nrec); ++i) {
+			Anoubis_PgFileRecord	*rec;
+			char			*path;
+			uint64_t		 dev, ino;
+
+			rec = (Anoubis_PgFileRecord *)
+			    (msg->u.pgreply->payload + offset);
+			offset += get_value(rec->reclen);
+			dev = get_value(rec->dev);
+			ino = get_value(rec->ino);
+			if (rec->path[0] == 0 || pgfile_composename(&path,
+			    dev, ino, rec->path) < 0) {
+				if (opts & PGCLI_OPT_VERBOSE)
+					printf(" ERROR invalid file data: "
+					    "dev=0x%" PRIx64 " ino=0x%" PRIx64
+					    " path=%s\n", dev, ino, rec->path);
+				continue;
+			}
+			if (unlink(path) == 0
+			    || (errno == EISDIR && rmdir(path) == 0)) {
+				ret = 1;
+				printf(" UNLINKED %s\n", path);
+			} else if (opts & PGCLI_OPT_VERBOSE) {
+				printf(" ERROR for %s: %s", path,
+				    strerror(errno));
+			}
+			free(path);
+		}
+	}
+	return ret;
+}
+
+int
+pgcli_remove(anoubis_cookie_t pgid)
+{
+	int rc = 0;
+
+	struct achat_channel		*channel = NULL;
+	struct anoubis_client		*client = NULL;
+	struct anoubis_msg		*message = NULL;
+	struct anoubis_transaction	*transaction = NULL;
+
+	rc = pgcli_ui_init();
+	if (rc != 0)
+		return 1;
+
+	channel = pgcli_create_channel();
+	if (channel == NULL)
+		return -EIO;
+
+	client = pgcli_create_client(channel);
+	if (client == NULL) {
+		acc_destroy(channel);
+		return -EIO;
+	}
+
+	/* Retrieve information about the playground. */
+	transaction = anoubis_client_pglist_start(client,
+	    ANOUBIS_PGREC_PGLIST, pgid);
+	rc = anoubis_transaction_complete(client, transaction);
+	if (rc < 0) {
+		PGCLI_CONNECTION_WIPE(channel, client);
+		return rc;
+	}
+
+	message = transaction->msg;
+	rc = 1;
+	if (get_value(message->u.pgreply->nrec) == 0) {
+		fprintf(stderr, "Playground %" PRIx64 " does not exist\n",
+		    pgid);
+	} else {
+		Anoubis_PgInfoRecord	*rec;
+
+		rec = (Anoubis_PgInfoRecord *)message->u.pgreply->payload;
+		if (opts & PGCLI_OPT_FORCE) {
+			rc = 0;
+		} else if (get_value(rec->nrprocs)) {
+			fprintf(stderr,  "Cannot delete active playground %"
+			    PRIx64 "\n", pgid);
+		} else if (geteuid() && geteuid() != get_value(rec->uid)) {
+			rc = -EPERM;
+		} else {
+			rc = 0;
+		}
+	}
+	anoubis_transaction_destroy(transaction);
+	if (rc != 0)
+		return rc;
+
+	while (1) {
+		transaction = anoubis_client_pglist_start(client,
+		    ANOUBIS_PGREC_FILELIST, pgid);
+		rc = anoubis_transaction_complete(client, transaction);
+		if (rc < 0) {
+			if (rc == -ESRCH)
+				rc = 0;
+			break;
+		}
+		if (get_value(transaction->msg->u.pgreply->nrec) == 0) {
+			fprintf(stderr, "No more playground files but "
+			    "playground is still active");
+			rc = 1;
+			break;
+		}
+		if (!pgcli_delete_filelist(transaction->msg)) {
+			fprintf(stderr, "Could not remove all files in "
+			    "the playground\n");
+			anoubis_transaction_destroy(transaction);
+			rc = 1;
+			break;
+		}
+		anoubis_transaction_destroy(transaction);
+	}
+
+	/* Cleanup. */
 	PGCLI_CONNECTION_WIPE(channel, client);
 
 	return rc;
@@ -864,9 +1014,6 @@ auth_callback(struct anoubis_client *client __used, struct anoubis_msg *in,
 		}
 	}
 
-	if ((opts & PGCLI_OPT_FORCE) != 0) {
-		flags = ANOUBIS_AUTHFLAG_IGN_KEY_MISMATCH;
-	}
 	rc = anoubis_auth_callback(as, as, in, outp, flags);
 
 	switch (-rc) {

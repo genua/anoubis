@@ -751,6 +751,7 @@ pe_handle_playgroundask(struct eventdev_hdr *hdr)
 	reply->rule_id = 0;
 	reply->prio = 1;
 	reply->sfsmatch = ANOUBIS_SFS_NONE;
+	reply->reply = 0;
 
 	if (!proc) {
 		reply->reply = EPERM;

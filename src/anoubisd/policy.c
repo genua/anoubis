@@ -342,7 +342,8 @@ dispatch_timer(int sig __used, short event __used, void *arg)
 			enqueue(&eventq_p2s, msg);
 			DEBUG(DBG_QUEUE, " >eventq_p2s: %x", msg_wait->token);
 
-			DEBUG(DBG_QUEUE, " <replyq: %x", msg_wait->token);
+			DEBUG(DBG_QUEUE, " <replyq: %x error=%d",
+			    msg_wait->token, rep->reply);
 			queue_delete(&replyq, msg_wait);
 			switch(msg_wait->log) {
 			case APN_LOG_NORMAL:
@@ -735,7 +736,8 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 			msg_wait->log = reply->log;
 
 			enqueue(&replyq, msg_wait);
-			DEBUG(DBG_QUEUE, " >replyq: %x", msg_wait->token);
+			DEBUG(DBG_QUEUE, " >replyq: %x flags=%x",
+			    msg_wait->token, msg_wait->flags);
 
 			/* send msg to the session */
 			enqueue(&eventq_p2s, msg);
@@ -937,8 +939,8 @@ dispatch_s2p(int fd, short sig __used, void *arg)
 				 * timeout or other GUI
 				 */
 				queue_delete(&replyq, rep_wait);
-				DEBUG(DBG_QUEUE, " <replyq: %x",
-				    rep_wait->token);
+				DEBUG(DBG_QUEUE, " <replyq: %x error=%d",
+				    rep_wait->token, evrep->reply);
 				switch(rep_wait->log) {
 				case APN_LOG_NORMAL:
 					log_info("token %u: Reply %d",
@@ -952,9 +954,9 @@ dispatch_s2p(int fd, short sig __used, void *arg)
 				/* restore flags set via APN */
 				evrep->reply |= rep_wait->flags;
 				abuf_free_type(rep_wait, struct reply_wait);
+				DEBUG(DBG_QUEUE, " >eventq_p2m: %x error=%d",
+					evrep->msg_token, evrep->reply);
 				enqueue(&eventq_p2m, msg);
-				DEBUG(DBG_QUEUE, " >eventq_p2m: %x",
-					evrep->msg_token);
 			} else {
 				DEBUG(DBG_QUEUE, " reply not found for 0x%x",
 				    evrep->msg_token);
