@@ -146,10 +146,10 @@ AnTable::setColumnVisability(unsigned int idx, bool visibility)
 void
 AnTable::setColumnWidth(unsigned int idx, int width)
 {
-	if (idx >= columnList_.size()) {
+	if (idx >= visibilityList_.size()) {
 		return;
 	}
-	columnList_[idx]->setWidth(width);
+	columnList_[visibilityList_[idx]]->setWidth(width);
 }
 
 void

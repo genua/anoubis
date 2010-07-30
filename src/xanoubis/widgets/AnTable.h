@@ -107,7 +107,7 @@ class AnTable : public wxGridTableBase, public wxEvtHandler
 		/**
 		 * Set column width.
 		 * This method set the width of a specified column.
-		 * @param[in] 1st The index of the column in question.
+		 * @param[in] 1st The index of the visible column in question.
 		 * @param[in] 2nd The new width.
 		 */
 		void setColumnWidth(unsigned int, int);
