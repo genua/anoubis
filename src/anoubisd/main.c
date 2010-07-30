@@ -273,7 +273,7 @@ sighandler(int sig, short event __used, void *arg __used)
 				signal_del(info->ev_sigs[i]);
 			break;
 		}
-		log_warn("Cannot undeclare eventdev queue");
+		log_warnx("Cannot undeclare eventdev queue");
 		/* FALLTHROUGH */
 	}
 	case SIGQUIT:
@@ -456,6 +456,24 @@ write_sfsversion()
 	}
 	return ANOUBISD_SFS_TREE_FORMAT_VERSION;
 }
+
+#ifdef LINUX
+static void
+deactivate_oom_kill(int pid)
+{
+	FILE *fp;
+	char filename[40];
+
+	snprintf(filename, sizeof(filename), "/proc/%d/oom_adj", pid);
+	fp = fopen(filename, "w");
+	if (!fp)
+		return;
+
+	/* -17 means disable oom killer for this process */
+	fprintf(fp, "-17");
+	fclose(fp);
+}
+#endif
 
 int
 main(int argc, char *argv[])
@@ -683,6 +701,11 @@ main(int argc, char *argv[])
 		omit_pid_file = omit_pid_files[p];
 		break;
 	}
+	deactivate_oom_kill(master_pid);
+	deactivate_oom_kill(se_pid);
+	deactivate_oom_kill(policy_pid);
+	deactivate_oom_kill(logger_pid);
+	deactivate_oom_kill(upgrade_pid);
 #endif
 
 	/* We catch or block signals rather than ignore them. */
@@ -797,7 +820,7 @@ main(int argc, char *argv[])
 
 	DEBUG(DBG_TRACE, "master event loop");
 	if (event_dispatch() == -1)
-		log_warn("main: event_dispatch");
+		log_warnx("main: event_dispatch");
 	DEBUG(DBG_TRACE, "master event loop ended");
 	/*
 	 * We only reach this point in case of a graceful shutdown. Thus
@@ -1696,7 +1719,7 @@ dispatch_s2m(int fd, short event __used, void *arg)
 			dispatch_auth_verify(msg);
 			break;
 		default:
-			log_warn("dispatch_s2m: bad mtype %d", msg->mtype);
+			log_warnx("dispatch_s2m: bad mtype %d", msg->mtype);
 			break;
 		}
 		free(msg);

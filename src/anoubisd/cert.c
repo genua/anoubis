@@ -275,7 +275,7 @@ cert_keyid(X509 *cert)
 
 	o_asn = X509_EXTENSION_get_data(ext);
 	if (!o_asn) {
-		log_warn("X509_EXTENSION_get_data failed\n");
+		log_warnx("X509_EXTENSION_get_data failed\n");
 		return ABUF_EMPTY;
 	}
 

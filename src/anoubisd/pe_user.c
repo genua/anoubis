@@ -249,7 +249,7 @@ pe_user_load_dir(const char *dirname, unsigned int prio, struct pe_policy_db *p)
 			struct stat		statbuf;
 
 			if (lstat(filename, &statbuf) < 0) {
-				log_warn("Faild to stat %s", filename);
+				log_warn("Failed to stat %s", filename);
 			} else if (S_ISREG(statbuf.st_mode)) {
 				dp->d_type = DT_REG;
 				DEBUG(DBG_PE_POLICY, "pe_user_load_dir: "
@@ -361,7 +361,7 @@ pe_user_load_policy(const char *name, int flags)
 
 	ret = apn_parse(name, &rs, flags);
 	if (ret == -1) {
-		log_warn("could not parse \"%s\"", name);
+		log_warnx("could not parse \"%s\"", name);
 		return (NULL);
 	}
 	if (ret != 0) {

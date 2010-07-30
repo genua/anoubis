@@ -101,7 +101,7 @@ pe_sb_evaluate(struct apnarr_array rulelist, struct pe_file_event *sbevent,
 			continue;
 		}
 		if (sbrule->apn_type != APN_SB_ACCESS) {
-			log_warn("Invalid rule type %d on sandbox queue",
+			log_warnx("Invalid rule type %d on sandbox queue",
 			    sbrule->apn_type);
 			continue;
 		}

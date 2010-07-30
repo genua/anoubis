@@ -53,7 +53,7 @@ enqueue(Queue * queuep, void *msgp)
 	Qentry *qep;
 
 	if (queuep == NULL) {
-		log_warn("uninitialized queue");
+		log_warnx("uninitialized queue");
 		free(msgp);
 		return 0;
 	}
@@ -88,7 +88,7 @@ dequeue(Queue *queuep)
 	void *msgp;
 
 	if (queuep == NULL) {
-		log_warn("uninitialized queue");
+		log_warnx("uninitialized queue");
 		return 0;
 	}
 	if (queuep->head == NULL)
@@ -106,7 +106,7 @@ Qentry *
 queue_head(Queue *queuep)
 {
 	if (queuep == NULL) {
-		log_warn("uninitialized queue");
+		log_warnx("uninitialized queue");
 		return 0;
 	}
 	return queuep->head;
@@ -116,7 +116,7 @@ Qentry *
 queue_walk(Queue *queuep, Qentry *qep)
 {
 	if (queuep == NULL) {
-		log_warn("uninitialized queue");
+		log_warnx("uninitialized queue");
 		return 0;
 	}
 	if (qep == NULL)
@@ -128,7 +128,7 @@ void *
 queue_peek(Queue *queuep)
 {
 	if (queuep == NULL) {
-		log_warn("uninitialized queue");
+		log_warnx("uninitialized queue");
 		return 0;
 	}
 	if (queuep->head == NULL)
@@ -142,7 +142,7 @@ queue_find(Queue *queuep, void *msgp, int(*cmp)(void *, void *))
 	Qentry *qep;
 
 	if (queuep == NULL) {
-		log_warn("uninitialized queue");
+		log_warnx("uninitialized queue");
 		return 0;
 	}
 	if (queuep->head == NULL)
@@ -163,7 +163,7 @@ queue_delete(Queue *queuep, void *msgp)
 	Qentry *lqep = NULL;
 
 	if (queuep == NULL) {
-		log_warn("uninitialized queue");
+		log_warnx("uninitialized queue");
 		return 0;
 	}
 	if (queuep->head == NULL)

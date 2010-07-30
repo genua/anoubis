@@ -100,7 +100,7 @@ msg_init(int fd, char *name)
 			return;
 		}
 	}
-	log_warn("msg_init: No unused msg_bufs found");
+	log_warnx("msg_init: No unused msg_bufs found");
 }
 
 /*@exposed@*/ /*@null@*/
@@ -196,7 +196,7 @@ int msg_eof(int fd)
 	struct msg_buf		*mbp;
 
 	if ((mbp = _get_mbp(fd)) == NULL) {
-		log_warn("msg_buf not initialized");
+		log_warnx("msg_buf not initialized");
 		return 1;
 	}
 	if (mbp->rmsg || (mbp->rheadp != mbp->rtailp))
@@ -250,7 +250,7 @@ get_msg(int fd)
 
 
 	if ((mbp = _get_mbp(fd)) == NULL) {
-		log_warn("msg_buf not initialized");
+		log_warnx("msg_buf not initialized");
 		return NULL;
 	}
 
@@ -317,7 +317,7 @@ get_event(int fd)
 	int			 size;
 
 	if ((mbp = _get_mbp(fd)) == NULL) {
-		log_warn("msg_buf not initialized");
+		log_warnx("msg_buf not initialized");
 		master_terminate(ENOENT);
 		return NULL;
 	}
@@ -444,7 +444,7 @@ msg_pending(int fd)
 	struct msg_buf * mbp;
 
 	if ((mbp = _get_mbp(fd)) == NULL) {
-		log_warn("msg_buf not initialized");
+		log_warnx("msg_buf not initialized");
 		return 0;
 	}
 	return mbp->wmsg != NULL;

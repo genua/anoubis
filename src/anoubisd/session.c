@@ -233,7 +233,7 @@ session_connect(int fd __used, short event __used, void *arg)
 			if (sp->channel->euid != session->channel->euid)
 				continue;
 			if (++conn_count > ANOUBISD_MAX_CONNS_PER_USER) {
-				log_warn("Connection limit reached for uid %d",
+				log_warnx("Connection limit reached for uid %d",
 				    session->channel->euid);
 				acc_close(session->channel);
 				acc_destroy(session->channel);
@@ -246,7 +246,7 @@ session_connect(int fd __used, short event __used, void *arg)
 
 	session->proto = anoubis_server_create(session->channel, info->policy);
 	if (session->proto == NULL) {
-		log_warn("cannot create server protocol handler");
+		log_warnx("cannot create server protocol handler");
 		acc_close(session->channel);
 		acc_destroy(session->channel);
 		free(session);
@@ -490,7 +490,7 @@ notify_callback(struct anoubis_notify_head *head, int verdict, void *cbdata)
 	DEBUG(DBG_TRACE, ">notify_callback");
 
 	if (cbdata == NULL) {
-		log_warn("notify_callback: null pointer");
+		log_warnx("notify_callback: null pointer");
 		master_terminate(EINVAL);
 		return;
 	}
@@ -1198,7 +1198,7 @@ dispatch_m2s(int fd, short sig __used, void *arg)
 				 * nothing more can be done here.
 				 */
 			} else {
-				log_warn("session: reconfigure failed");
+				log_warnx("session: reconfigure failed");
 			}
 			free(msg);
 			continue;
@@ -1241,7 +1241,7 @@ dispatch_m2s(int fd, short sig __used, void *arg)
 		DEBUG(DBG_QUEUE, " >m2s: %x", hdr->msg_token);
 
 		if (hdr->msg_flags & EVENTDEV_NEED_REPLY) {
-			log_warn("dispatch_m2s: bad flags %x", hdr->msg_flags);
+			log_warnx("dispatch_m2s: bad flags %x", hdr->msg_flags);
 		}
 
 		hdr = (struct eventdev_hdr *)msg->msg;
@@ -1518,7 +1518,7 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 			continue;
 		ret = anoubis_notify(ng, head, ANOUBISD_MAX_PENDNG_EVENTS);
 		if (ret < 0)
-			log_warn("anoubis_notify: Error code %d", -ret);
+			log_warnx("anoubis_notify: Error code %d", -ret);
 		if (ret > 0) {
 			DEBUG(DBG_TRACE, " >anoubis_notify: %x",
 			    cbdata->ev_token);
@@ -1631,7 +1631,7 @@ dispatch_m2s_checksum_reply(anoubisd_msg_t *msg,
 	    reply->reply, reply->data, reply->len, end);
 	if (ret < 0) {
 		errno = -ret;
-		log_warn("dispatch_m2s_checksum_reply: "
+		log_warnx("dispatch_m2s_checksum_reply: "
 		    "Failed to process answer");
 	}
 }
@@ -1729,7 +1729,7 @@ session_setupuds(struct sessionGroup *seg)
 
 	rc = acc_setsslmode(seg->keeper_uds, ACC_SSLMODE_CLEAR);
 	if (rc != ACHAT_RC_OK) {
-		log_warn("session_setupuds: acc_setsslmode");
+		log_warnx("session_setupuds: acc_setsslmode");
 		acc_destroy(seg->keeper_uds);
 		seg->keeper_uds = NULL;
 		return;
@@ -1761,7 +1761,7 @@ session_setupuds(struct sessionGroup *seg)
 
 	rc = acc_prepare(seg->keeper_uds);
 	if (rc != ACHAT_RC_OK) {
-		log_warn("session_setupuds: acc_prepare");
+		log_warnx("session_setupuds: acc_prepare");
 		acc_destroy(seg->keeper_uds);
 		seg->keeper_uds = NULL;
 		return;

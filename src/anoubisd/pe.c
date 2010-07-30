@@ -1152,7 +1152,7 @@ pe_compare(struct pe_proc *proc, struct pe_path_event *event, int type,
 		return (APN_ACTION_DENY);
 
 	if ((type != APN_SFS_ACCESS) && (type != APN_SB_ACCESS)) {
-		log_warn("Called with unhandled rule type");
+		log_warnx("Called with unhandled rule type");
 		return (-1);
 	}
 

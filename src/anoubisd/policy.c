@@ -663,7 +663,7 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 				log_info("policy: reconfigure");
 				/* XXX ch: do we need to do more? */
 			} else {
-				log_warn("policy: reconfigure failed");
+				log_warnx("policy: reconfigure failed");
 			}
 			free(msg);
 			continue;
