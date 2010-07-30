@@ -1274,8 +1274,8 @@
                                 <property name="cell_horiz_alignment">wxALIGN_LEFT</property>
                                 <property name="cell_text"></property>
                                 <property name="cell_vert_alignment">wxALIGN_TOP</property>
-                                <property name="col_label_horiz_alignment">wxALIGN_CENTRE</property>
-                                <property name="col_label_size">30</property>
+                                <property name="col_label_horiz_alignment">wxALIGN_LEFT</property>
+                                <property name="col_label_size">26</property>
                                 <property name="col_label_values"></property>
                                 <property name="col_label_vert_alignment">wxALIGN_CENTRE</property>
                                 <property name="cols">1</property>

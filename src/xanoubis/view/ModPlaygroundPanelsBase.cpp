@@ -210,8 +210,8 @@ DlgPlaygroundCommitFileListBase::DlgPlaygroundCommitFileListBase( wxWindow* pare
 	// Columns
 	fileGrid->EnableDragColMove( false );
 	fileGrid->EnableDragColSize( true );
-	fileGrid->SetColLabelSize( 30 );
-	fileGrid->SetColLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
+	fileGrid->SetColLabelSize( 26 );
+	fileGrid->SetColLabelAlignment( wxALIGN_LEFT, wxALIGN_CENTRE );
 	
 	// Rows
 	fileGrid->EnableDragRowSize( true );

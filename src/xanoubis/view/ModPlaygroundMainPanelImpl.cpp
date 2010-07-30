@@ -87,10 +87,10 @@ ModPlaygroundMainPanelImpl::ModPlaygroundMainPanelImpl(wxWindow* parent,
 	ADD_PROPERTY(pgList, PROPERTY_ATTENTION, 20);
 	ADD_PROPERTY(pgList, PROPERTY_ID, 55);
 	ADD_PROPERTY(pgList, PROPERTY_COMMAND, 260);
-	ADD_PROPERTY(pgList, PROPERTY_STAT, 60);
+	ADD_PROPERTY(pgList, PROPERTY_STAT, 80);
 	ADD_PROPERTY(pgList, PROPERTY_FILES, 65);
 	ADD_PROPERTY(pgList, PROPERTY_USER, 70);
-	ADD_PROPERTY(pgList, PROPERTY_TIME, 200);
+	ADD_PROPERTY(pgList, PROPERTY_TIME, 180);
 
 	pgList->setStateKey(wxT("/State/ModPlaygroundMainPanelImpl"));
 	pgList->setRowProvider(playgroundCtrl->getInfoProvider());
@@ -279,6 +279,7 @@ ModPlaygroundMainPanelImpl::startApplication(void)
 
 		/* Clear combobox input. */
 		applicationComboBox->SetValue(wxEmptyString);
+		applicationStartButton->Enable(false);
 
 		/*
 		 * Do history.
