@@ -26,12 +26,12 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" The following requests are required for all man pages.
-.Dd May 21, 2010
+.Dd Aug 02, 2010
 .Dt PLAYGROUND 1
 .Os Anoubis
 .Sh NAME
 .Nm playground
-.Nd manage playgrounds for the Anoubis Security Suite.
+.Nd manage Anoubis playgrounds
 .Sh SYNOPSIS
 .\" For a program:  program [-abc] file ...
 .Nm playground
@@ -42,7 +42,10 @@
 .Sh DESCRIPTION
 The
 .Nm
-is used to manage different aspects of playgrounds.
+program manages Anoubis playgrounds. Playgrounds are used to provide
+untrusted programs with a separate view of the filesystem. The
+.Nm
+utility can be used perform various useful operations on playground instances.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -50,35 +53,34 @@ The options are as follows:
 Print usage.
 .It Fl f
 Force.
-E.g usage of key and certificat even if they do not match.
+Continue certain operations even when encountering errors.
 This option is intended for debugging purposes.
 Its use is not recommended.
 .It Fl k Ar keyfile
-Specify location of private key (default ~/.xanoubis/default.key)
+Specify the private key (default ~/.xanoubis/default.key)
 .It Fl c Ar certfile
-Specify location of certificate. (default ~/.xanoubis/default.crt)
+Specify the certificate. (default ~/.xanoubis/default.crt)
 .It Ar command
 .Pp
 .Bl -tag -width Ds
 .It start \&[--\&] \&<program\&> \&[args...\&]
-start program within new playground.
-Use "--" to seperate options for
+start a program within a new playground.
+Use "--" to separate options for
 .Nm
-from options for \&<program\&>.
-The program
+from options for the program.
 .Nm
-is replaced with \&<program\&> by
+will start\&<program\&> by calling
 .Xr exec 3 .
 After execution of
 .Nm
 \&$? represents an error from
 .Nm
 or the exit code of \&<program\&> in case of
-an successfull call of
+a successful 
 .Xr exec 3 .
 .It list
 This will print out a list of all known playgrounds.
-The list will provide the following items for each playground:
+The list contains the following items for each playground:
 .Bl -tag -width Ds
 .It PGID - id of playground
 .It USER - user id
@@ -88,14 +90,21 @@ The list will provide the following items for each playground:
 .It COMMAND - command
 .El
 .It files \&<playground id\&>
-This will print out a list of files assigned to a given playground.
-The playground is specified by its id (in hexadecimal as given by list command).
-The list will provide the following items for each file:
+This prints out a list of files belonging to a given playground.
+The playground is specified by it's id (in hexadecimal as supplied by the
+list command). The list contains the following items for each file:
 .Bl -tag -width Ds
 .It PGID - id of playground
 .It DEV - device number
 .It INODE - inode number
 .It FILE - file path
+.El
+.It remove \&<playground id\&>
+This deletes all the files belonging to a given playground.
+The playground is specified by it's id (in hexadecimal as supplied by the
+list command). Removing an active playground requires the
+.Fl f
+option. 
 .El
 .El
 .El

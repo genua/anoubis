@@ -336,6 +336,7 @@ usage(void)
 	fprintf(stderr, "	start <program>\n");
 	fprintf(stderr, "	list\n");
 	fprintf(stderr, "	files <playground id>\n");
+	fprintf(stderr, "	remove <playground id>\n");
 
 	exit(1);
 }
@@ -398,6 +399,10 @@ main(int argc, char *argv[])
 	}
 	argc -= optind;
 	argv += optind;
+
+	/* Only continue if there is at least a command */
+	if (!argc)
+		usage();
 
 	command = *argv++;
 	argc--;
