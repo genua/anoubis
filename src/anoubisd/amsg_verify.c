@@ -259,7 +259,7 @@
 
 /*
  * Define a function that verifies the length of the buffer against
- * the data type (TYPE).
+ * the data type TYPE.
  */
 #define DEFINE_CHECK_FUNCTION(STRUCT, TYPE)				\
 static int								\
@@ -268,6 +268,44 @@ TYPE ## _size(const char *buf __attribute__((unused)), int buflen)	\
 	if (buflen < (int)sizeof(STRUCT TYPE))				\
 		return -1;						\
 	return sizeof(STRUCT TYPE);					\
+}
+
+/*
+ * Define a funtion that verifies the length of the buffer assuming that
+ * the message consists of a record of type STRUCT TYPE with a variable
+ * length character array at the end that contains a string. The name of
+ * the variable length array field is given by FIELD.
+ */
+#define DEFINE_STRING_CHECK_FUNCTION(STRUCT, TYPE, FIELD)		\
+static int								\
+TYPE ## _size(const char *buf, int buflen)				\
+{									\
+	DECLARE_SIZE();							\
+	STRUCT TYPE		*msg;					\
+	CAST(msg, buf, buflen);						\
+	SHIFT_FIELD(msg, FIELD, buf, buflen);				\
+	SHIFT_STRING(buf, buflen);					\
+	RETURN_SIZE();							\
+}
+
+/*
+ * Define a function that verifies the length of the buffer assuming that
+ * the message consists of a record of type STRUCT TYPE with a varible
+ * length character array at the end. The length of the variable length
+ * array is given by the field LEN and the variable length array itself
+ * is given by FIELD.
+ */
+#define DEFINE_LEN_CHECK_FUNCTION(STRUCT, TYPE, FIELD, LEN)		\
+static int								\
+TYPE ## _size(const char *buf, int buflen)				\
+{									\
+	DECLARE_SIZE();							\
+	STRUCT TYPE		*msg;					\
+	CAST(msg, buf, buflen);						\
+	SHIFT_FIELD(msg, FIELD, buf, buflen);				\
+	CHECK_LEN(msg->LEN, buflen);					\
+	ADD_SIZE(msg->LEN);						\
+	RETURN_SIZE();							\
 }
 
 /*
@@ -355,56 +393,14 @@ amsg_sfs_checksumop_size(const char *buf, int buflen)
 	RETURN_SIZE();
 }
 
-/*
- * Size of an anoubisd_msg_csumreply structure.
- */
-static int
-anoubisd_msg_csumreply_size(const char *buf, int buflen)
-{
-	struct anoubisd_msg_csumreply	*msg;
-	DECLARE_SIZE();
-
-	CAST(msg, buf, buflen);
-	SHIFT_FIELD(msg, data, buf, buflen);
-	CHECK_LEN(msg->len, buflen);
-	ADD_SIZE(msg->len);
-
-	RETURN_SIZE();
-}
-
-static int
-anoubisd_msg_pgreply_size(const char *buf, int buflen)
-{
-	struct anoubisd_msg_pgreply	*msg;
-	DECLARE_SIZE();
-
-	CAST(msg, buf, buflen);
-	SHIFT_FIELD(msg, data, buf, buflen);
-	CHECK_LEN(msg->len, buflen);
-	ADD_SIZE(msg->len);
-
-	RETURN_SIZE();
-}
-
+DEFINE_LEN_CHECK_FUNCTION(struct, anoubisd_msg_csumreply, data, len)
+DEFINE_LEN_CHECK_FUNCTION(struct, anoubisd_msg_pgreply, data, len)
+DEFINE_STRING_CHECK_FUNCTION(struct, anoubisd_msg_pgcommit, path)
+DEFINE_LEN_CHECK_FUNCTION(struct, anoubisd_msg_pgcommit_reply, payload, len)
 DEFINE_CHECK_FUNCTION(struct, alf_event)
 DEFINE_CHECK_FUNCTION(struct, ac_process_message)
 DEFINE_CHECK_FUNCTION(struct, ac_ipc_message)
-
-/*
- * Size of an sfs_open_message.
- */
-static int
-sfs_open_message_size(const char *buf, int buflen)
-{
-	struct sfs_open_message	*sfs;
-	DECLARE_SIZE();
-
-	CAST(sfs, buf, buflen);
-	SHIFT_FIELD(sfs, pathhint, buf, buflen);
-	SHIFT_STRING(buf, buflen);
-
-	RETURN_SIZE();
-}
+DEFINE_STRING_CHECK_FUNCTION(struct, sfs_open_message, pathhint)
 
 /*
  * Size of a pg_open_message
@@ -428,22 +424,7 @@ pg_open_message_size(const char *buf, int buflen)
 }
 
 DEFINE_CHECK_FUNCTION(struct, pg_proc_message)
-
-/*
- * Size of a pg_file_message.
- */
-static int
-pg_file_message_size(const char *buf, int buflen)
-{
-	struct pg_file_message *pg;
-	DECLARE_SIZE();
-
-	CAST(pg, buf, buflen);
-	SHIFT_FIELD(pg, path, buf, buflen);
-	SHIFT_STRING(buf, buflen);
-
-	RETURN_SIZE();
-}
+DEFINE_STRING_CHECK_FUNCTION(struct, pg_file_message, path)
 
 #ifdef ANOUBIS_SOURCE_SFSPATH
 /*
@@ -773,19 +754,7 @@ anoubisd_msg_logit_size(const char *buf, int buflen)
 	RETURN_SIZE();
 }
 
-static int
-anoubisd_msg_passphrase_size(const char *buf, int buflen)
-{
-	struct anoubisd_msg_passphrase	*msg;
-	DECLARE_SIZE();
-
-	CAST(msg, buf, buflen);
-	SHIFT_FIELD(msg, payload, buf, buflen);
-	SHIFT_STRING(buf, buflen);
-
-	RETURN_SIZE();
-}
-
+DEFINE_STRING_CHECK_FUNCTION(struct, anoubisd_msg_passphrase, payload)
 DEFINE_CHECK_FUNCTION(struct, anoubisd_msg_authrequest)
 
 static int
@@ -862,6 +831,9 @@ anoubisd_msg_size(const char *buf, int buflen)
 	VARIANT(ANOUBISD_MSG_CSMULTIREPLY, anoubisd_msg_csumreply, buf, buflen);
 	VARIANT(ANOUBISD_MSG_PGREQUEST, anoubisd_msg_pgrequest, buf, buflen);
 	VARIANT(ANOUBISD_MSG_PGREPLY, anoubisd_msg_pgreply, buf, buflen);
+	VARIANT(ANOUBISD_MSG_PGCOMMIT, anoubisd_msg_pgcommit, buf, buflen);
+	VARIANT(ANOUBISD_MSG_PGCOMMIT_REPLY, anoubisd_msg_pgcommit_reply,
+	    buf, buflen);
 	default:
 		log_warnx("anoubisd_msg_size: Bad message type %d",
 		    msg->mtype);

@@ -125,6 +125,8 @@ static void	dispatch_csmulti(struct anoubis_server *,
 		    struct anoubis_msg *, uid_t, void *);
 static void	dispatch_pglist(struct anoubis_server *,
 		    struct anoubis_msg *, uid_t, void *);
+static void	dispatch_pgcommit(struct anoubis_server *,
+		    struct anoubis_msg *, uid_t, void *);
 static int	dispatch_csmulti_reply(void *, int, void *, int, int);
 static int	dispatch_pglist_reply(void *, int, void *, int, int);
 static void	dispatch_m2s(int, short, void *);
@@ -143,6 +145,8 @@ static void	dispatch_p2s_pol_reply(anoubisd_msg_t *,
 		    struct event_info_session *);
 static void	dispatch_p2s_pg_reply(anoubisd_msg_t *,
 		    struct event_info_session *);
+static void	dispatch_p2s_commit_reply(struct anoubisd_msg *msg,
+		    struct event_info_session *ev_info);
 static void	dispatch_m2s_checksum_reply(anoubisd_msg_t *msg,
 		    struct event_info_session *ev_info);
 static void	dispatch_m2s_upgrade_notify(anoubisd_msg_t *msg,
@@ -261,6 +265,8 @@ session_connect(int fd __used, short event __used, void *arg)
 	    &dispatch_passphrase, NULL);
 	anoubis_dispatch_create(session->proto, ANOUBIS_P_PGLISTREQ,
 	    &dispatch_pglist, info);
+	anoubis_dispatch_create(session->proto, ANOUBIS_P_PGCOMMIT,
+	    &dispatch_pgcommit, info);
 	anoubis_dispatch_create(session->proto, ANOUBIS_C_AUTHDATA,
 	    &dispatch_authdata, info);
 	LIST_INSERT_HEAD(&(seg->sessionList), session, nextSession);
@@ -639,7 +645,59 @@ dispatch_pglist(struct anoubis_server *server, struct anoubis_msg *m,
 
 	enqueue(&eventq_s2p, msg);
 	DEBUG(DBG_QUEUE, " >eventq_s2p");
-	DEBUG(DBG_TRACE, "<dispatch_passphrase");
+	DEBUG(DBG_TRACE, "<dispatch_pglist");
+}
+
+static void
+dispatch_pgcommit(struct anoubis_server *server, struct anoubis_msg *m,
+    uid_t auth_uid, void *arg)
+{
+	struct anoubisd_msg			*msg;
+	struct anoubisd_msg_pgcommit		*pgmsg;
+	struct event_info_session		*ev_info = arg;
+	struct achat_channel			*chan;
+	int					 err, len;
+
+	DEBUG(DBG_TRACE, ">dispatch_pgcommit");
+
+	if (!VERIFY_LENGTH(m, sizeof(Anoubis_PgCommitMessage))
+	    || PAYLOAD_LEN(m, pgcommit, payload) < 2) {
+		dispatch_generic_reply(server, EINVAL, NULL, 0,
+		    ANOUBIS_P_PGCOMMIT);
+		DEBUG(DBG_TRACE, "<dispatch_pglist(error): verify length");
+		return;
+	}
+	/* Force NULL termination on the string. */
+	len = PAYLOAD_LEN(m, pgcommit, payload);
+	m->u.pgcommit->payload[len-1] = 0;
+	len = strlen(m->u.pgcommit->payload) + 1;
+
+	msg = msg_factory(ANOUBISD_MSG_PGCOMMIT,
+	    sizeof(struct anoubisd_msg_pgcommit) + len);
+	if (!msg) {
+		master_terminate(ENOMEM);
+		return;
+	}
+
+	pgmsg = (struct anoubisd_msg_pgcommit *)msg->msg;
+	pgmsg->auth_uid = auth_uid;
+	pgmsg->pgid = get_value(m->u.pgcommit->pgid);
+	pgmsg->dev = 0;
+	pgmsg->ino = 0;
+	memcpy(pgmsg->path, m->u.pgcommit->payload, len);
+	chan = anoubis_server_getchannel(server);
+	err = anoubis_policy_comm_addrequest(ev_info->policy, chan,
+	    POLICY_FLAG_START | POLICY_FLAG_END, &dispatch_generic_reply,
+	    NULL, server, &pgmsg->token);
+	if (err < 0) {
+		log_warnx("Dropping pgcommit request (error %d)", -err);
+		free(msg);
+		return;
+	}
+
+	enqueue(&eventq_s2p, msg);
+	DEBUG(DBG_QUEUE, " >eventq_s2p: token=%" PRId64, pgmsg->token);
+	DEBUG(DBG_TRACE, "<dispatch_pgcommit");
 }
 
 static void
@@ -1307,18 +1365,23 @@ dispatch_p2s(int fd, short sig __used, void *arg)
 			break;
 
 		switch (msg->mtype) {
-
 		case ANOUBISD_MSG_POLREPLY:
-			DEBUG(DBG_QUEUE, " >p2s");
+			DEBUG(DBG_QUEUE, " >p2s: polreply");
 			dispatch_p2s_pol_reply(msg, ev_info);
 			break;
+
 		case ANOUBISD_MSG_PGREPLY:
-			DEBUG(DBG_QUEUE, " >p2s");
+			DEBUG(DBG_QUEUE, " >p2s: pgreply");
 			dispatch_p2s_pg_reply(msg, ev_info);
 			break;
 
+		case ANOUBISD_MSG_PGCOMMIT_REPLY:
+			DEBUG(DBG_QUEUE, " >p2s: commitreply");
+			dispatch_p2s_commit_reply(msg, ev_info);
+			break;
+
 		case ANOUBISD_MSG_EVENTASK:
-			DEBUG(DBG_QUEUE, ">p2s");
+			DEBUG(DBG_QUEUE, ">p2s: eventask");
 			dispatch_p2s_evt_request(msg, ev_info);
 			break;
 
@@ -1326,6 +1389,7 @@ dispatch_p2s(int fd, short sig __used, void *arg)
 			DEBUG(DBG_QUEUE, " >p2s: log");
 			dispatch_p2s_log_request(msg, ev_info);
 			break;
+
 		case ANOUBISD_MSG_POLICYCHANGE:
 			DEBUG(DBG_QUEUE, " >p2s: policychange");
 			dispatch_p2s_policychange(msg, ev_info);
@@ -1589,6 +1653,8 @@ dispatch_p2s_pol_reply(anoubisd_msg_t *msg, struct event_info_session *ev_info)
 	end = reply->flags & POLICY_FLAG_END;
 	ret = anoubis_policy_comm_answer(ev_info->policy, reply->token,
 	    reply->reply, buf, reply->len, end != 0);
+	if (ret < 0)
+		log_warnx("Dropping unexpected policy reply");
 	DEBUG(DBG_TRACE, " >anoubis_policy_comm_answer: %" PRId64 " %d %d",
 	    reply->token, ret, reply->reply);
 
@@ -1612,9 +1678,33 @@ dispatch_p2s_pg_reply(struct anoubisd_msg *msg,
 	end = pgreply->flags & POLICY_FLAG_END;
 	ret = anoubis_policy_comm_answer(ev_info->policy, pgreply->token, 0,
 	    buf, pgreply->len, end != 0);
+	if (ret < 0)
+		log_warnx("Dropping unexpected playground list reply");
 	DEBUG(DBG_TRACE, ">anoubis_policy_comm_answer: %" PRId64,
 	    pgreply->token);
 	DEBUG(DBG_TRACE, "<dispatch_p2s_pg_reply");
+}
+
+static void
+dispatch_p2s_commit_reply(struct anoubisd_msg *msg,
+    struct event_info_session *ev_info)
+{
+	struct anoubisd_msg_pgcommit_reply	*commitreply;
+	void					*buf = NULL;
+	int					 ret;
+
+	DEBUG(DBG_TRACE, ">dispatch_p2s_commit_reply");
+	commitreply = (struct anoubisd_msg_pgcommit_reply *)msg->msg;
+	DEBUG(DBG_QUEUE, " dispatch_p2s_commit_reply: token=%" PRId64,
+	    commitreply->token);
+	if (commitreply->len)
+		buf = commitreply->payload;
+	ret = anoubis_policy_comm_answer(ev_info->policy, commitreply->token,
+	    commitreply->error, buf, commitreply->len,
+	    POLICY_FLAG_START | POLICY_FLAG_END);
+	if (ret < 0)
+		log_warnx("Dropping unexpected playground commit reply");
+	DEBUG(DBG_TRACE, "<dispatch_p2s_commit_reply");
 }
 
 /* Does not free the message */

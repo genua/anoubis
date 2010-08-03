@@ -435,6 +435,19 @@ verify_pgrequest(const struct anoubis_msg *m)
 }
 
 static int
+verify_pgcommit(const struct anoubis_msg *m)
+{
+	int	i, plen;
+	if (!VERIFY_LENGTH(m, sizeof(Anoubis_PgCommitMessage)))
+		return 0;
+	plen = PAYLOAD_LEN(m, pgcommit, payload);
+	for (i=0; i<plen; ++i)
+		if (m->u.pgcommit->payload[i] == 0)
+			return 1;
+	return 0;
+}
+
+static int
 verify_pginfo_record(Anoubis_PgInfoRecord *r, int reclen)
 {
 	int		i;
@@ -544,6 +557,7 @@ anoubis_msg_verify(const struct anoubis_msg *m)
 	CASE(ANOUBIS_P_VERSION, general);
 	CASE(ANOUBIS_P_VERSIONREPLY, version);
 	CASE(ANOUBIS_P_PGLISTREQ, pgrequest);
+	CASE(ANOUBIS_P_PGCOMMIT, pgcommit);
 	CASE(ANOUBIS_P_PGLISTREP, pgreply);
 	CASE(ANOUBIS_N_REGISTER, register);
 	CASE(ANOUBIS_N_UNREGISTER, register);

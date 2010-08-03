@@ -175,6 +175,7 @@ static inline u_int64_t __ntohll(u_int64_t arg)
 
 #define		ANOUBIS_P_PGLISTREQ	0x3A00
 #define		ANOUBIS_P_PGLISTREP	0x3A01
+#define		ANOUBIS_P_PGCOMMIT	0x3A02
 
 #define		ANOUBIS_P_MAX		0x3FFF
 
@@ -610,6 +611,27 @@ typedef struct {
 	u16n	rectype;
 	char	payload[0];
 } __attribute__((packed)) Anoubis_PgReplyMessage;
+
+/**
+ * This message is sent by the client to ask the daemon for the removal
+ * of the anoubis security label from a file. This is (part of) the commit
+ * process. The anoubis daemon will scan the file as configured and report
+ * the result of the scan or success if the label was removed successfully.
+ * Only the last file reported in a playground event with source
+ * PLAYGROUNDFILE can be committed.
+ *
+ * Fields:
+ * type The type of the message. Must be ANOUBIS_P_PGCOMMIT.
+ * _pad Unused, set to zero.
+ * pgid The playground ID
+ * path The path name of the file.
+ */
+typedef struct {
+	u32n	type;
+	u32n	_pad;
+	u64n	pgid;
+	char	payload[0];
+} __attribute__((packed)) Anoubis_PgCommitMessage;
 
 /**
  * This structure contains information about a single playground. It is

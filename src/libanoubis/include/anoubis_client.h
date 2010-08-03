@@ -197,7 +197,7 @@ anoubis_csmulti_msg(struct anoubis_csmulti_request *request);
  *
  * @param client The protocol client object for the request.
  * @param request The anoubis_csmulti_request structure.
- * @return A transaction of NULL if an error occured.
+ * @return A transaction or NULL if an error occured.
  */
 struct anoubis_transaction *
 anoubis_client_csmulti_start(struct anoubis_client *client,
@@ -215,6 +215,17 @@ anoubis_client_csmulti_start(struct anoubis_client *client,
  */
 struct anoubis_transaction *anoubis_client_pglist_start(
     struct anoubis_client *client, uint32_t listtype, uint64_t pgid);
+
+/**
+ * Start a transaction that request that a file is committed.
+ *
+ * @param client The protocol client object for the request.
+ * @param pgid The playground ID of the file.
+ * @param path The full path name of the file.
+ * @return A transaction or NULL if an error occured.
+ */
+struct anoubis_transaction *anoubis_client_pgcommit_start(
+    struct anoubis_client *client, uint64_t pgid, const char *path);
 
 __END_DECLS
 

@@ -88,6 +88,7 @@ struct playground {
 	uint64_t				 starttime;
 	uint64_t				 scandev;
 	uint64_t				 scanino;
+	uint64_t				 scantok;
 	int					 nrprocs;
 	int					 nrfiles;
 	char					*cmd;
@@ -170,6 +171,9 @@ pe_playground_create(anoubis_cookie_t pgid, int do_mkdir)
 	pg->uid = (uid_t)-1;
 	pg->did_exec = 0;
 	pg->starttime = 0;
+	pg->scandev = 0;
+	pg->scanino = 0;
+	pg->scantok = 0;
 	LIST_INSERT_HEAD(&playgrounds, pg, next);
 	return pg;
 }
@@ -1209,4 +1213,117 @@ pe_playground_notify_forced(struct pe_proc_ident *ident,
 	__send_lognotify(ident, ident, hdr, 0 /* error */, APN_LOG_ALERT,
 	    ruleid, prio, 0 /* sfsmatch */);
 	free(hdr);
+}
+
+/**
+ * Handle a commit request received from the session process. The
+ * user must be root or own the playground. Additionally, a file to
+ * scan must have been recorded previously. The device and inode of the
+ * file is filled in and the message is sent to the master process.
+ *
+ * This function frees (or reuses) the incoming message. It is no
+ * longer available to the caller after this function returns.
+ *
+ * @param The playground message received from the session engine.
+ *     This message is either freed or reused for communication with
+ *     the master.
+ * @param session Messages that should go back to the session engine are
+ *     sent to this queue. This function only sends error messages to
+ *     session.
+ * @param master Messages that should go to the master process are sent to
+ *     this queue. If everything is ok, the incoming message is forwarded
+ *     to this queue.
+ * @return None.
+ */
+void
+pe_playground_dispatch_commit(struct anoubisd_msg *msg, Queue *session,
+    Queue *master)
+{
+	struct anoubisd_msg			*repmsg;
+	struct anoubisd_msg_pgcommit		*pgmsg;
+	struct anoubisd_msg_pgcommit_reply	*pgrep;
+	struct playground			*pg, *pg2;
+	int					 err;
+	int					 i, match;
+	static const char			 badcomp[] = "/..";
+
+	DEBUG(DBG_TRACE, ">pe_playground_dispatch_commit");
+	pgmsg = (struct anoubisd_msg_pgcommit *)msg->msg;
+	DEBUG(DBG_PG, " pe_playground_dispatch_commit: pgid=%" PRIx64
+	    " token=%" PRId64, pgmsg->pgid, pgmsg->token);
+	err = ESRCH;
+	pg = pe_playground_find(pgmsg->pgid);
+	if (pg == NULL)
+		goto error;
+	err = EPERM;
+	if (pgmsg->auth_uid && pg->uid != pgmsg->auth_uid)
+		goto error;
+	err = EINVAL;
+	if (pgmsg->dev || pgmsg->ino || pg->scandev == 0 || pg->scanino == 0)
+		goto error;
+	err = EBUSY;
+	/* Only one scan per user. */
+	LIST_FOREACH(pg2, &playgrounds, next) {
+		if (pg2->uid == pg->uid && pg2->scantok)
+			goto error;
+	}
+	/* Make sure that the path is absolute and has no hidden components. */
+	if (pgmsg->path[0] != '/')
+		goto error;
+	match = 0;
+	for (i=0; pgmsg->path[i]; ++i) {
+		if (pgmsg->path[i] == '/' && match)
+			goto error;
+		if (pgmsg->path[i] == badcomp[match])
+			match++;
+		else
+			match = 0;
+	}
+	if (match)
+		goto error;
+	pgmsg->dev = pg->scandev;
+	pgmsg->ino = pg->scanino;
+	pg->scantok = pgmsg->token;
+	enqueue(master, msg);
+	DEBUG(DBG_TRACE, "<pe_playground_dispatch_commit (success)");
+	return;
+error:
+	repmsg = msg_factory(ANOUBISD_MSG_PGCOMMIT_REPLY,
+	    sizeof(struct anoubisd_msg_pgcommit_reply));
+	pgrep = (struct anoubisd_msg_pgcommit_reply *)repmsg->msg;
+	pgrep->error = err;
+	pgrep->token = pgmsg->token;
+	pgrep->len = 0;
+	enqueue(session, repmsg);
+	free(msg);
+	DEBUG(DBG_TRACE, "<pe_playground_dispatch_commit "
+	    "(error=%d token=%" PRId64 ")", pgrep->error, pgrep->token);
+}
+
+/**
+ * Clear scanning status in the playground once a reply is received.
+ * After this function is called, it will be possible to start a new commit
+ * request.
+ *
+ * @param msg The commit reply message.
+ * @return None.
+ */
+void
+pe_playground_dispatch_commitreply(struct anoubisd_msg *msg)
+{
+	struct anoubisd_msg_pgcommit_reply	*pgmsg;
+	struct playground			*pg;
+
+	pgmsg = (struct anoubisd_msg_pgcommit_reply *)msg->msg;
+	LIST_FOREACH(pg, &playgrounds, next) {
+		if (pgmsg->token == pg->scantok)
+			break;
+	}
+	if (pg == NULL) {
+		log_warnx("Playground for reply token not found");
+		return;
+	}
+	pg->scandev = 0;
+	pg->scanino = 0;
+	pg->scantok = 0;
 }

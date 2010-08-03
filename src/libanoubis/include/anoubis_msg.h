@@ -67,6 +67,7 @@ struct anoubis_msg {
 		Anoubis_PassphraseMessage *passphrase;
 		Anoubis_PgRequestMessage *pgreq;
 		Anoubis_PgReplyMessage *pgreply;
+		Anoubis_PgCommitMessage *pgcommit;
 		void * buf;
 	} u;
 };

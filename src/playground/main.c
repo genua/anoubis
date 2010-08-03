@@ -59,6 +59,7 @@
 
 #ifdef LINUX
 #include <bsdcompat.h>
+#include <attr/xattr.h>
 #define __dead	__attribute__((__noreturn__))
 #endif
 
@@ -275,6 +276,21 @@ static int pgcli_files(anoubis_cookie_t);
 static int pgcli_remove(anoubis_cookie_t);
 
 /**
+ * Command: commit
+ * This function implements the commit command. It removes the playground
+ * label from a single file in a particular playground and moves the
+ * file from its playground name to the real name.
+ *
+ * @param pgid The playground ID of the playground.
+ * @param file The file name to commit.
+ * @return 0 on success, a negative error code if an error occured,
+ *     that must be reported by the caller and a positiv value if an error
+ *     occured that must lead to a non-zero exit status but was already
+ *     reported by this function.
+ */
+static int pgcli_commit(uint64_t pgid, const char *file);
+
+/**
  * Print playground file list.
  * This function will print the header information and iterates over the
  * given list of messages. Those a split in records for each file
@@ -337,6 +353,7 @@ usage(void)
 	fprintf(stderr, "	list\n");
 	fprintf(stderr, "	files <playground id>\n");
 	fprintf(stderr, "	remove <playground id>\n");
+	fprintf(stderr, "	commit <playground id> file ...\n");
 
 	exit(1);
 }
@@ -438,6 +455,16 @@ main(int argc, char *argv[])
 		if (sscanf(argv[0], "%"PRIx64, &pgid) != 1)
 			usage();
 		error = pgcli_remove(pgid);
+	} else if (strcmp(command, "commit") == 0) {
+		char		dummy;
+		int		i;
+
+		if (argc < 2)
+			usage();
+		if (sscanf(argv[0], "%"PRIx64"%c", &pgid, &dummy) != 1)
+			usage();
+		for (i=1; i<argc; ++i)
+			error = pgcli_commit(pgid, argv[i]);
 	} else {
 		usage();
 	}
@@ -816,7 +843,7 @@ pgcli_delete_filelist(struct anoubis_msg *msg)
 				ret = 1;
 				printf(" UNLINKED %s\n", path);
 			} else if (opts & PGCLI_OPT_VERBOSE) {
-				printf(" ERROR for %s: %s", path,
+				printf(" ERROR for %s: %s\n", path,
 				    strerror(errno));
 			}
 			free(path);
@@ -951,10 +978,9 @@ pgcli_files_print_msg(struct anoubis_msg *message)
 			if (lastrec == NULL
 			    || get_value(rec->dev) != get_value(lastrec->dev)
 			    || get_value(rec->ino) != get_value(lastrec->ino)) {
-				if (!printed) {
+				if (!printed)
 					pgcli_files_print_record(lastrec, 0);
-					printed = 0;
-				}
+				printed = 0;
 				lastrec = rec;
 			}
 			if (pgcli_files_print_record(rec, 1))
@@ -1070,6 +1096,51 @@ auth_callback(struct anoubis_client *client __used, struct anoubis_msg *in,
 	}
 
 	return (rc);
+}
+
+/*
+ * XXX CEH: The implementation of this function is hack that is only used
+ * XXX CEH: to prove that the protocol part in the daemon works as expected.
+ */
+static int
+pgcli_commit(uint64_t pgid, const char *file)
+{
+	struct achat_channel		*channel = NULL;
+	struct anoubis_client		*client = NULL;
+	struct anoubis_transaction	*transaction = NULL;
+	int				 rc;
+
+	if (lremovexattr(file, "security.anoubis_pg") < 0) {
+		if (errno != EINPROGRESS && errno != EPERM && errno)
+			return -errno;
+	}
+	fprintf(stderr, "Waiting one second ...\n");
+	sleep(1);
+	rc = pgcli_ui_init();
+	if (rc != 0)
+		return 1;
+	channel = pgcli_create_channel();
+	if (channel == NULL)
+		return -EIO;
+	client = pgcli_create_client(channel);
+	if (client == NULL) {
+		acc_destroy(channel);
+		return -EIO;
+	}
+
+	/* Connection established. Send message and wait for answer. */
+	transaction = anoubis_client_pgcommit_start(client, pgid, file);
+	rc = anoubis_transaction_complete(client, transaction);
+	if (rc < 0) {
+		PGCLI_CONNECTION_WIPE(channel, client);
+		return rc;
+	}
+
+	/* Cleanup. */
+	anoubis_transaction_destroy(transaction);
+	PGCLI_CONNECTION_WIPE(channel, client);
+
+	return rc;
 }
 
 #endif /* LINUX */

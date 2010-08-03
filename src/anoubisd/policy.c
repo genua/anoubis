@@ -667,8 +667,12 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 			}
 			free(msg);
 			continue;
+		case ANOUBISD_MSG_PGCOMMIT_REPLY:
+			pe_playground_dispatch_commitreply(msg);
+			enqueue(&eventq_p2s, msg);
+			continue;
 		default:
-			DEBUG(DBG_TRACE, "<dispatch_m2p (bad type %d)",
+			log_warnx("dispatch_m2p: bad message type %d",
 			    msg->mtype);
 			free(msg);
 			continue;
@@ -966,6 +970,11 @@ dispatch_s2p(int fd, short sig __used, void *arg)
 		case ANOUBISD_MSG_PGREQUEST:
 			pe_playground_dispatch_request(msg, &eventq_p2s);
 			free(msg);
+			break;
+		case ANOUBISD_MSG_PGCOMMIT:
+			/* NOTE: This functions frees or reuses the message. */
+			pe_playground_dispatch_commit(msg, &eventq_p2s,
+			    &eventq_p2m);
 			break;
 		default:
 

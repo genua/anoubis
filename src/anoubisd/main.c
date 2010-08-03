@@ -43,6 +43,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
+#define _GNU_SOURCE	1
 #include <fcntl.h>
 #include <pwd.h>
 #include <signal.h>
@@ -65,6 +66,7 @@
 #include <bsdcompat.h>
 #include <linux/anoubis_sfs.h>
 #include <openssl/sha.h>
+#include <attr/xattr.h>
 #else
 #include <dev/anoubis_sfs.h>
 #include <sha2.h>
@@ -1745,6 +1747,82 @@ dispatch_m2p(int fd, short event __used, void *arg __used)
 	DEBUG(DBG_TRACE, "<dispatch_m2p");
 }
 
+#ifdef LINUX
+static inline uint64_t
+expand_dev(dev_t dev)
+{
+	uint64_t	major = (dev & 0xfff00) >> 8;
+	uint64_t	minor = (dev & 0xff) | ((dev >> 12) & 0xfff00);
+
+	return (major << 20) | minor;
+}
+#endif
+
+/*
+ * NOTE: This must move into a child process. We should not try to open
+ * NOTE: arbitrary user provided files in the master process. This can
+ * NOTE: lead to denial of service.
+ */
+static void
+dispatch_pgcommit(struct anoubisd_msg *msg,
+    struct event_info_main *evinfo __used)
+{
+	struct anoubisd_msg_pgcommit		*pgmsg;
+	struct anoubisd_msg			*rmsg;
+	struct anoubisd_msg_pgcommit_reply	*pgrep;
+	struct stat				 statbuf;
+	int					 fd = -1;
+	int					 err = ENOSYS;
+
+	pgmsg = (struct anoubisd_msg_pgcommit *)msg->msg;
+	DEBUG(DBG_TRACE, ">dispatch_pgcommit token %" PRId64, pgmsg->token);
+	fd = open(pgmsg->path, O_RDONLY | O_NOFOLLOW | O_NONBLOCK);
+	if (fd < 0) {
+		err = errno;
+		goto out;
+	}
+	if (fstat(fd, &statbuf) < 0) {
+		err = errno;
+		goto out;
+	}
+#ifdef LINUX
+	err = EPERM;
+	if (expand_dev(statbuf.st_dev) != pgmsg->dev
+	    || statbuf.st_ino != pgmsg->ino)
+		goto out;
+	if (ioctl(evinfo->anoubisfd, ANOUBIS_SCAN_STARTED, fd) < 0) {
+		err = errno;
+		goto out;
+	}
+	/* Do the actual scan here ... */
+	log_info("scanning of file %" PRIx64 ":%" PRIx64 " (%s) in playground "
+	    "%" PRIx64 " successful", pgmsg->dev, pgmsg->ino, pgmsg->path,
+	    pgmsg->pgid);
+	if (ioctl(evinfo->anoubisfd, ANOUBIS_SCAN_SUCCESS, fd) < 0) {
+		err = errno;
+		goto out;
+	}
+	if (fremovexattr(fd, "security.anoubis_pg") < 0) {
+		err = errno;
+		goto out;
+	}
+	err = 0;
+#endif
+out:
+	if (fd >= 0)
+		close(fd);
+	rmsg = msg_factory(ANOUBISD_MSG_PGCOMMIT_REPLY,
+	    sizeof(struct anoubisd_msg_pgcommit_reply));
+	pgrep = (struct anoubisd_msg_pgcommit_reply *)rmsg->msg;
+	pgrep->error = err;
+	pgrep->len = 0;
+	pgrep->token = pgmsg->token;
+	enqueue(&eventq_m2p, rmsg);
+	DEBUG(DBG_QUEUE, " >eventq_m2p: commit reply error=%d token=%" PRId64,
+	    pgrep->error, pgrep->token);
+	DEBUG(DBG_TRACE, "<dispatch_pgcommit token %" PRId64, pgmsg->token);
+}
+
 static void
 dispatch_p2m(int fd, short event __used, /*@dependent@*/ void *arg)
 {
@@ -1770,6 +1848,11 @@ dispatch_p2m(int fd, short event __used, /*@dependent@*/ void *arg)
 		case ANOUBISD_MSG_UPGRADE:
 			DEBUG(DBG_QUEUE, " >p2m: upgrade msg");
 			enqueue(&eventq_m2u, msg);
+			break;
+		case ANOUBISD_MSG_PGCOMMIT:
+			DEBUG(DBG_QUEUE, " >p2m: pgcommit msg");
+			dispatch_pgcommit(msg, ev_info);
+			free(msg);
 			break;
 		default:
 			DEBUG(DBG_TRACE, "<dispatch_p2m (bad msg)");

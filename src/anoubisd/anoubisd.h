@@ -190,7 +190,9 @@ enum anoubisd_msg_type {
 	ANOUBISD_MSG_CSMULTIREQUEST,	/* anoubisd_msg_csumop */
 	ANOUBISD_MSG_CSMULTIREPLY,	/* anoubisd_msg_csumreply */
 	ANOUBISD_MSG_PGREQUEST,		/* anoubisd_msg_pgrequest */
-	ANOUBISD_MSG_PGREPLY		/* anoubisd_msg_pgreply */
+	ANOUBISD_MSG_PGREPLY,		/* anoubisd_msg_pgreply */
+	ANOUBISD_MSG_PGCOMMIT,		/* anoubisd_msg_pgcommit */
+	ANOUBISD_MSG_PGCOMMIT_REPLY,	/* anoubisd_msg_pgcommit_reply */
 };
 
 /* Format of ANOUBISD_MSG_EVENTASK and ANOUBISD_MSG_LOGREQUEST messages */
@@ -351,6 +353,22 @@ struct anoubisd_msg_pgreply {
 	uint32_t	flags;
 	uint32_t	len;
 	char		data[0];
+};
+
+struct anoubisd_msg_pgcommit {
+	uint64_t	token;
+	uint64_t	pgid;
+	uint64_t	dev;
+	uint64_t	ino;
+	uint32_t	auth_uid;
+	char		path[0];
+};
+
+struct anoubisd_msg_pgcommit_reply {
+	uint64_t	token;
+	uint32_t	len;
+	uint32_t	error;
+	char		payload[0];
 };
 
 /* These are used to populate the logger socketpairs and should
