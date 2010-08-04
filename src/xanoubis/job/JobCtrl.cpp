@@ -29,7 +29,7 @@
 
 #include "AnEvents.h"
 #include "ComThread.h"
-#include "CsumCalcThread.h"
+#include "FsThread.h"
 #include "JobCtrl.h"
 #include "main.h"
 
@@ -52,7 +52,7 @@ JobCtrl::JobCtrl(void)
 
 	regTask_ = NULL;
 	versionTask_ = NULL;
-	csumCalcTaskQueue_ = new SynchronizedQueue<Task>(true);
+	fsTaskQueue_ = new SynchronizedQueue<Task>(true);
 	comTaskQueue_ = new SynchronizedQueue<Task>(false);
 
 	Connect(anTASKEVT_REGISTER,
@@ -79,7 +79,7 @@ JobCtrl::~JobCtrl(void)
 		delete versionTask_;
 	if (regTask_)
 		delete regTask_;
-	delete csumCalcTaskQueue_;
+	delete fsTaskQueue_;
 	delete comTaskQueue_;
 }
 
@@ -99,7 +99,7 @@ bool
 JobCtrl::start(void)
 {
 	/* Checksum calculation thread */
-	CsumCalcThread *csumCalcThread = new CsumCalcThread(this);
+	FsThread *csumCalcThread = new FsThread(this);
 	threadList_.push_back(csumCalcThread);
 	if (!csumCalcThread->start()) {
 		stop();
@@ -201,9 +201,9 @@ JobCtrl::addTask(Task *task)
 {
 	JobThread	*t = NULL;
 	switch (task->getType()) {
-	case Task::TYPE_CSUMCALC:
-		csumCalcTaskQueue_->push(task);
-		t = findCsumCalcThread();
+	case Task::TYPE_FS:
+		fsTaskQueue_->push(task);
+		t = findFsThread();
 		break;
 	case Task::TYPE_COM:
 		comTaskQueue_->push(task);
@@ -218,8 +218,8 @@ Task *
 JobCtrl::popTask(Task::Type type)
 {
 	switch (type) {
-	case Task::TYPE_CSUMCALC:
-		return (csumCalcTaskQueue_->pop(CALCTASKQUEUE_POP_TIMEOUT));
+	case Task::TYPE_FS:
+		return (fsTaskQueue_->pop(CALCTASKQUEUE_POP_TIMEOUT));
 	case Task::TYPE_COM:
 		return (comTaskQueue_->pop());
 	}
@@ -339,15 +339,15 @@ JobCtrl::findComThread(void) const
 	return (0); /* No such thread */
 }
 
-CsumCalcThread *
-JobCtrl::findCsumCalcThread(void) const
+FsThread *
+JobCtrl::findFsThread(void) const
 {
 	const JobThreadList::const_iterator end = threadList_.end();
 
 	for (JobThreadList::const_iterator it = threadList_.begin();
 	    it != end; ++it) {
 
-		CsumCalcThread *t = dynamic_cast<CsumCalcThread*>(*it);
+		FsThread *t = dynamic_cast<FsThread*>(*it);
 
 		if (t != 0)
 			return (t);

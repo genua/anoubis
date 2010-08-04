@@ -43,7 +43,7 @@
 #include "CsumCalcTask.h"
 #include "JobCtrl.h"
 
-CsumCalcTask::CsumCalcTask(void) : Task(Task::TYPE_CSUMCALC)
+CsumCalcTask::CsumCalcTask(void) : Task(Task::TYPE_FS)
 {
 	reset();
 }

@@ -546,10 +546,10 @@ xanoubis_SOURCES= \
 	job/ComVersionTask.h \
 	job/CsumCalcTask.cpp \
 	job/CsumCalcTask.h \
-	job/CsumCalcThread.cpp \
-	job/CsumCalcThread.h \
 	job/DummyTask.cpp \
 	job/DummyTask.h \
+	job/FsThread.cpp \
+	job/FsThread.h \
 	job/JobCtrl.cpp \
 	job/JobCtrl.h \
 	job/JobThread.cpp \
@@ -560,6 +560,8 @@ xanoubis_SOURCES= \
 	job/PlaygroundListTask.h \
 	job/PlaygroundTask.cpp \
 	job/PlaygroundTask.h \
+	job/PlaygroundUnlinkTask.cpp \
+	job/PlaygroundUnlinkTask.h \
 	job/Task.cpp \
 	job/Task.h \
 	job/TaskEvent.cpp \

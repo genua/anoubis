@@ -49,8 +49,8 @@ class Task
 		 */
 		enum Type
 		{
-			TYPE_CSUMCALC = 0, /*!< Checksum calculation */
-			TYPE_COM           /*!< Daemon-communication */
+			TYPE_FS = 0,	/*!< Filesystem ops like csum calc */
+			TYPE_COM	/*!< Daemon-communication */
 		};
 
 		virtual ~Task(void);

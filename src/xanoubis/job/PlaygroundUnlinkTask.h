@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2010 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,24 +25,75 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _CSUMCALCTHREAD_H_
-#define _CSUMCALCTHREAD_H_
+#ifndef _PLAYGROUNDUNLINKTASK_H_
+#define _PLAYGROUNDUNLINKTASK_H_
 
-#include "JobThread.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif /* HAVE_CONFIG_H */
 
-class JobCtrl;
+#include <set>
+
+#include "PlaygroundFileEntry.h"
+#include "Task.h"
+#include "TaskEvent.h"
 
 /**
- * The thread, which is responsible for tasks of the Task::TASKTYPE_CSUMCALC.
+ * Task to unlink list of (playground) files.
  *
- * Here, checksum-calculations are performed.
+ * You need to setup the file list (setPath()) before the tasks gets scheduled!
  */
-class CsumCalcThread : public JobThread
+class PlaygroundUnlinkTask : public Task
 {
 	public:
-		CsumCalcThread(JobCtrl *);
-		void *Entry(void);
-		void wakeup(bool);
+		/**
+		 * Constructor.
+		 */
+		PlaygroundUnlinkTask(void);
+
+		/**
+		 * Add file to this task.
+		 * @param[in] 1st The PlaygroundFileEntry to add.
+		 * @return Nothing.
+		 */
+		void addFile(PlaygroundFileEntry *);
+
+		/**
+		 * Implementation of Task::getEventType().
+		 */
+		wxEventType getEventType(void) const;
+
+		/**
+		 * Implementation of Task::exec().
+		 */
+		void exec(void);
+
+		/**
+		 * Returns the state of the latest unlink.
+		 * @param None.
+		 * @return 0 on success, an errno in case of error.
+		 */
+		int getResult(void) const;
+
+	private:
+		/**
+		 * Resets the task.
+		 * This means cleaning the fileList_ and setting the result
+		 * to EINVAL.
+		 * @param None.
+		 * @return Notinig.
+		 */
+		void reset(void);
+
+		/**
+		 * Store latest unlink result.
+		 */
+		int result_;
+
+		/**
+		 * These files will be deleted.
+		 */
+		std::set<PlaygroundFileEntry *> fileList_;
 };
 
-#endif	/* _CSUMCALCTHREAD_H_ */
+#endif	/* _PLAYGROUNDUNLINKTASK_H_ */

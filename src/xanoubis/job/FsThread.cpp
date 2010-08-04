@@ -25,48 +25,47 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "AnEvents.h"
+#include "FsThread.h"
 #include "Task.h"
-#include "TaskEvent.h"
+#include "DummyTask.h"
+#include "JobCtrl.h"
 
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_DUMMY)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUMCALC)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_REGISTER)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_POLICY_SEND)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_POLICY_REQUEST)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_ADD)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_GET)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_DEL)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_SFS_LIST)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_VERSION)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_PG_LIST)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_PG_FILES)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_PG_UNLINK)
-
-TaskEvent::TaskEvent(Task *task, int id)
-    : wxEvent(id, task->getEventType())
+FsThread::FsThread(JobCtrl *jobCtrl) : JobThread(jobCtrl)
 {
-	this->m_propagationLevel = wxEVENT_PROPAGATE_MAX;
-	this->task_ = task;
 }
 
-TaskEvent::TaskEvent(const TaskEvent &other)
-    : wxEvent(other.GetId(), other.GetEventType())
+void *
+FsThread::Entry(void)
 {
-	SetEventObject(other.GetEventObject());
-	SetTimestamp(other.GetTimestamp());
+	while (!exitThread()) {
+		Task		*task = getNextTask(Task::TYPE_FS);
 
-	this->m_propagationLevel = wxEVENT_PROPAGATE_MAX;
-	this->task_ = other.task_;
+		if (task == 0)
+			continue;
+
+		if (task->shallAbort()) {
+			task->setTaskResultAbort();
+		} else {
+			task->exec();
+			if (task->getType() != Task::TYPE_FS) {
+				JobCtrl::instance()->addTask(task);
+				continue;
+			}
+		}
+
+		TaskEvent event(task, wxID_ANY);
+		sendEvent(event);
+	}
+
+	return (0);
 }
 
-wxEvent *
-TaskEvent::Clone(void) const
+void
+FsThread::wakeup(bool isexit)
 {
-	return new TaskEvent(*this);
-}
-
-Task *
-TaskEvent::getTask(void) const
-{
-	return (this->task_);
+	if (isexit) {
+		DummyTask	*task = new DummyTask(Task::TYPE_FS);
+		JobCtrl::instance()->addTask(task);
+	}
 }

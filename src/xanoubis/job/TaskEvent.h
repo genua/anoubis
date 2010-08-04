@@ -110,6 +110,13 @@ BEGIN_DECLARE_EVENT_TYPES()
 	 * @see PlaygroundFilesTask
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anTASKEVT_PG_FILES, wxNewEventType())
+
+	/**
+	 * Event-type of TaskEvent when a list of files of a playground
+	 * were deleted.
+	 * @see PlaygroundUnlinkTask
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anTASKEVT_PG_UNLINK, wxNewEventType())
 END_DECLARE_EVENT_TYPES()
 //@}
 

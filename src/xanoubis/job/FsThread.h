@@ -25,48 +25,24 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Task.h"
-#include "TaskEvent.h"
+#ifndef _FSTHREAD_H_
+#define _FSTHREAD_H_
 
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_DUMMY)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUMCALC)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_REGISTER)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_POLICY_SEND)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_POLICY_REQUEST)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_ADD)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_GET)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUM_DEL)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_SFS_LIST)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_VERSION)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_PG_LIST)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_PG_FILES)
-DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_PG_UNLINK)
+#include "JobThread.h"
 
-TaskEvent::TaskEvent(Task *task, int id)
-    : wxEvent(id, task->getEventType())
+class JobCtrl;
+
+/**
+ * The thread, which is responsible for tasks of the Task::TASKTYPE_FS.
+ *
+ * Here, checksum-calculations and playground file deletions are performed.
+ */
+class FsThread : public JobThread
 {
-	this->m_propagationLevel = wxEVENT_PROPAGATE_MAX;
-	this->task_ = task;
-}
+	public:
+		FsThread(JobCtrl *);
+		void *Entry(void);
+		void wakeup(bool);
+};
 
-TaskEvent::TaskEvent(const TaskEvent &other)
-    : wxEvent(other.GetId(), other.GetEventType())
-{
-	SetEventObject(other.GetEventObject());
-	SetTimestamp(other.GetTimestamp());
-
-	this->m_propagationLevel = wxEVENT_PROPAGATE_MAX;
-	this->task_ = other.task_;
-}
-
-wxEvent *
-TaskEvent::Clone(void) const
-{
-	return new TaskEvent(*this);
-}
-
-Task *
-TaskEvent::getTask(void) const
-{
-	return (this->task_);
-}
+#endif	/* _FSTHREAD_H_ */

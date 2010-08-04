@@ -40,7 +40,7 @@
 WX_DECLARE_LIST(JobThread, JobThreadList);
 
 class ComThread;
-class CsumCalcThread;
+class FsThread;
 class Notification;
 
 /**
@@ -258,7 +258,7 @@ class JobCtrl : public wxEvtHandler, public Singleton<JobCtrl>
 
 	private:
 		wxString socketPath_;
-		SynchronizedQueue<Task> *csumCalcTaskQueue_;
+		SynchronizedQueue<Task> *fsTaskQueue_;
 		SynchronizedQueue<Task> *comTaskQueue_;
 		JobThreadList threadList_;
 		ComRegistrationTask *regTask_;
@@ -267,7 +267,7 @@ class JobCtrl : public wxEvtHandler, public Singleton<JobCtrl>
 		int apnVersion_;
 
 		ComThread	*findComThread(void) const;
-		CsumCalcThread	*findCsumCalcThread(void) const;
+		FsThread	*findFsThread(void) const;
 		void		 stopThread(JobThread *);
 		void		 sendComEvent(JobCtrl::ConnectionState);
 

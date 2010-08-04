@@ -52,7 +52,7 @@
 
 ComCsumAddTask::ComCsumAddTask(void) : ComCSMultiTask()
 {
-	type_ = Task::TYPE_CSUMCALC;
+	type_ = Task::TYPE_FS;
 	privKey_ = NULL;
 	checksumsCalculated_ = false;
 }
@@ -92,8 +92,8 @@ ComCsumAddTask::exec(void)
 {
 	int				 ret;
 
-	/* Checksum calculation is done in the checksum thread. */
-	if (type_ == Task::TYPE_CSUMCALC) {
+	/* Checksum calculation is done in the filesystem thread. */
+	if (type_ == Task::TYPE_FS) {
 		createRequests(ANOUBIS_CHECKSUM_OP_ADDSUM);
 		if (getComTaskResult() != RESULT_INIT)
 			return;

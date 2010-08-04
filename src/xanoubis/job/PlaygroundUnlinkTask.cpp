@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 GeNUA mbH <info@genua.de>
+ * Copyright (c) 2010 GeNUA mbH <info@genua.de>
  *
  * All rights reserved.
  *
@@ -25,47 +25,70 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "AnEvents.h"
-#include "CsumCalcThread.h"
-#include "Task.h"
-#include "DummyTask.h"
-#include "JobCtrl.h"
+#include "anoubis_errno.h"
+#include "PlaygroundUnlinkTask.h"
 
-CsumCalcThread::CsumCalcThread(JobCtrl *jobCtrl) : JobThread(jobCtrl)
+PlaygroundUnlinkTask::PlaygroundUnlinkTask(void) : Task(Task::TYPE_FS)
 {
-}
-
-void *
-CsumCalcThread::Entry(void)
-{
-	while (!exitThread()) {
-		Task		*task = getNextTask(Task::TYPE_CSUMCALC);
-
-		if (task == 0)
-			continue;
-
-		if (task->shallAbort()) {
-			task->setTaskResultAbort();
-		} else {
-			task->exec();
-			if (task->getType() != Task::TYPE_CSUMCALC) {
-				JobCtrl::instance()->addTask(task);
-				continue;
-			}
-		}
-
-		TaskEvent event(task, wxID_ANY);
-		sendEvent(event);
-	}
-
-	return (0);
+	reset();
 }
 
 void
-CsumCalcThread::wakeup(bool isexit)
+PlaygroundUnlinkTask::addFile(PlaygroundFileEntry *entry)
 {
-	if (isexit) {
-		DummyTask	*task = new DummyTask(Task::TYPE_CSUMCALC);
-		JobCtrl::instance()->addTask(task);
+	fileList_.insert(entry);
+}
+
+wxEventType
+PlaygroundUnlinkTask::getEventType(void) const
+{
+	return (anTASKEVT_PG_UNLINK);
+}
+
+void
+PlaygroundUnlinkTask::exec(void)
+{
+	std::vector<wxString> pathList;
+
+	std::vector<wxString>::iterator		 pIt;
+	std::set<PlaygroundFileEntry*>::iterator eIt;
+
+	for (eIt=fileList_.begin(); eIt!=fileList_.end(); eIt++) {
+		pathList = (*eIt)->getPaths();
+		if (pathList.size() == 0) {
+			result_ = -EINVAL;
+			return;
+		}
+		for (pIt=pathList.begin(); pIt!=pathList.end(); pIt++) {
+			if (unlink((*pIt).fn_str()) == 0 ||
+			    (errno == EISDIR && rmdir((*pIt).fn_str()) == 0)) {
+				result_ = 0;
+			} else {
+				result_ = -errno;
+				return;
+			}
+		}
 	}
+}
+
+int
+PlaygroundUnlinkTask::getResult(void) const
+{
+	return (result_);
+}
+
+void
+PlaygroundUnlinkTask::reset(void)
+{
+	PlaygroundFileEntry			 *entry;
+	std::set<PlaygroundFileEntry*>::iterator  it;
+
+	for (it=fileList_.begin(); it!=fileList_.end(); it++) {
+		entry = *it;
+		fileList_.erase(it);
+		delete entry;
+	}
+
+	result_ = -EINVAL;
+
 }
