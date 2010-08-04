@@ -692,7 +692,7 @@ pgcli_list(void)
 void
 pgcli_list_print_msg(struct anoubis_msg *message)
 {
-	int			 offset = 0;
+	int			 offset;
 	int			 i	= 0;
 	Anoubis_PgInfoRecord	*record = NULL;
 
@@ -718,7 +718,7 @@ pgcli_list_print_msg(struct anoubis_msg *message)
 
 	/* Print table lines */
 	while (message) {
-		for (i=0; i<get_value(message->u.pgreply->nrec); ++i) {
+		for (offset=i=0; i<get_value(message->u.pgreply->nrec); ++i) {
 			record = (Anoubis_PgInfoRecord *)(
 			    message->u.pgreply->payload + offset);
 			offset += get_value(record->reclen);
@@ -943,7 +943,7 @@ pgcli_remove(anoubis_cookie_t pgid)
 void
 pgcli_files_print_msg(struct anoubis_msg *message)
 {
-	int			 offset = 0;
+	int			 offset;
 	int			 i = 0;
 	Anoubis_PgFileRecord	*rec = NULL;
 	Anoubis_PgFileRecord	*lastrec = NULL;
@@ -970,7 +970,7 @@ pgcli_files_print_msg(struct anoubis_msg *message)
 
 	/* Print table lines */
 	while (message) {
-		for (i=0; i<get_value(message->u.pgreply->nrec); ++i) {
+		for (offset=i=0; i<get_value(message->u.pgreply->nrec); ++i) {
 			rec = (Anoubis_PgFileRecord *)(
 			    message->u.pgreply->payload + offset);
 			offset += get_value(rec->reclen);

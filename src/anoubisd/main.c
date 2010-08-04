@@ -43,7 +43,6 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
-#define _GNU_SOURCE	1
 #include <fcntl.h>
 #include <pwd.h>
 #include <signal.h>
