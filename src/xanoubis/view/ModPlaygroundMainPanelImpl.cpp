@@ -189,6 +189,41 @@ ModPlaygroundMainPanelImpl::onCommitFiles(wxCommandEvent &)
 }
 
 void
+ModPlaygroundMainPanelImpl::onDeleteFiles(wxCommandEvent &)
+{
+	PlaygroundCtrl      *playgroundCtrl;
+	AnRowProvider       *rowProvider;
+	AnListClass         *item;
+	PlaygroundInfoEntry *entry;
+	uint64_t            pgId;
+
+	/* basic validation */
+	if (!pgList->hasSelection()) {
+		/* How did we get here if nothing is selected? */
+		pgCommitButton->Disable();
+		pgDeleteButton->Disable();
+		return;
+	}
+
+	/* determine pgid */
+	playgroundCtrl = PlaygroundCtrl::instance();
+	rowProvider = playgroundCtrl->getInfoProvider();
+	item = rowProvider->getRow(pgList->getFirstSelection());
+	entry = dynamic_cast<PlaygroundInfoEntry *>(item);
+	if (entry != NULL) {
+		pgId = entry->getPgid();
+	} else {
+		pgId = 0;
+	}
+
+	/* start delete task */
+	if (!PlaygroundCtrl::instance()->removePlayground(pgId)) {
+		anMessageBox(_("Could not delete playground.\n"),
+		    _("Playground error"), wxOK | wxICON_ERROR, this);
+	}
+}
+
+void
 ModPlaygroundMainPanelImpl::onPgListItemSelect(wxListEvent &event)
 {
 	AnListClass		*item = NULL;
@@ -204,6 +239,7 @@ ModPlaygroundMainPanelImpl::onPgListItemSelect(wxListEvent &event)
 	if ((entry != NULL) && (entry->getNumFiles() > 0) &&
 	    (entry->getUid() == geteuid())) {
 		pgCommitButton->Enable();
+		pgDeleteButton->Enable();
 	}
 }
 

@@ -97,6 +97,7 @@ class ModPlaygroundMainPanelBase : public wxPanel
 		virtual void onPgListItemSelect( wxListEvent& event ){ event.Skip(); }
 		virtual void onPgListRefreshClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onCommitFiles( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onDeleteFiles( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:

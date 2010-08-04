@@ -89,6 +89,16 @@ class PlaygroundCtrl : public Singleton<PlaygroundCtrl> , public wxEvtHandler
 		bool updatePlaygroundFiles(uint64_t pgid);
 
 		/**
+		 * Command: Remove a playground.
+		 * This method will start a task that deletes all files from
+		 * the selected playground. Once the task is finished an event
+		 * is sent.
+		 * @param 1st  The ID of the playground to remove.
+		 * @return True on success.
+		 */
+		bool removePlayground(uint64_t pgid);
+
+		/**
 		 * Returns a list of errors, which occured during the execution
 		 * of the last command. The errors are valid until the next
 		 * command is started.

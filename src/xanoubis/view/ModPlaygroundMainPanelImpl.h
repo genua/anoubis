@@ -67,8 +67,8 @@ class ModPlaygroundMainPanelImpl : public ModPlaygroundMainPanelBase
 		/**
 		 * Handles keystrokes-events of AppComboBox.
 		 *
-		 * This is used to detect whether a path was entered. Then you are able to
-		 * enable/disable to start-playground-button.
+		 * This is used to detect whether a path was entered. Then you
+		 * are able to enable/disable the start-playground-button.
 		 * @param[in] 1st The event.
 		 * @return Nothing.
 		 */
@@ -115,6 +115,13 @@ class ModPlaygroundMainPanelImpl : public ModPlaygroundMainPanelBase
 		 * @return Nothing.
 		 */
 		virtual void onCommitFiles(wxCommandEvent &);
+
+		/**
+		 * Handle onClick events to 'Delete' button.
+		 * @param[in] 1st The click event.
+		 * @return Nothing.
+		 */
+		virtual void onDeleteFiles(wxCommandEvent &);
 
 		/**
 		 * Handle deselection of a playground.

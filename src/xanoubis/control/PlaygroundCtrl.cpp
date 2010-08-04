@@ -88,6 +88,14 @@ PlaygroundCtrl::updatePlaygroundFiles(uint64_t pgid)
 	return (createFileTask(pgid));
 }
 
+bool
+PlaygroundCtrl::removePlayground(uint64_t pgid)
+{
+	/* to be implemented ... */
+	(void)pgid;
+	return true;
+}
+
 const wxArrayString &
 PlaygroundCtrl::getErrors(void) const
 {

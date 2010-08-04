@@ -121,6 +121,7 @@ ModPlaygroundMainPanelBase::ModPlaygroundMainPanelBase( wxWindow* parent, wxWind
 	pgList->Connect( wxEVT_COMMAND_LIST_ITEM_SELECTED, wxListEventHandler( ModPlaygroundMainPanelBase::onPgListItemSelect ), NULL, this );
 	pgRefreshButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModPlaygroundMainPanelBase::onPgListRefreshClicked ), NULL, this );
 	pgCommitButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModPlaygroundMainPanelBase::onCommitFiles ), NULL, this );
+	pgDeleteButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModPlaygroundMainPanelBase::onDeleteFiles ), NULL, this );
 }
 
 ModPlaygroundOverviewPanelBase::ModPlaygroundOverviewPanelBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )
