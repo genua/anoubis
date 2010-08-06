@@ -73,6 +73,34 @@ int	 pgfile_check(uint64_t dev, uint64_t ino, const char *names[]);
 int	 pgfile_process(uint64_t dev, uint64_t ino, const char *names[]);
 int	 pgfile_composename(char **, uint64_t dev, uint64_t ino, const char *);
 
+/**
+ * Convert a device number as returned by stat into a device number as used
+ * inside the kernel and inside anoubis events. See include/linux/kdev_t.h
+ * for the source code. The core facts are:
+ * Kernel uses
+ *   - low 20 Bits for the minor number
+ *   - the rest is used for the major number.
+ * User space uses
+ * - low 8 Bits for the low 8 bits of the minor number
+ * - next 12 Bits are used for the major number
+ * - next 12 Bits are used for higher 12 Bits of the minor number.
+ * The reason for this encoding are historical. Note that legacy code that
+ * assumes a 16-Bit dev_t with 8 Bit major and 8 Bit minor number will work
+ * correctly with this encoding (provided that the major and minor numbers
+ * fit into 8 bits).
+ *
+ * @param dev A dev_t type from a stat structures st_dev field.
+ * @return A kernel encoded device number.
+ */
+static inline uint64_t
+expand_dev(dev_t dev)
+{
+	uint64_t	major = (dev & 0xfff00) >> 8;
+	uint64_t	minor = (dev & 0xff) | ((dev >> 12) & 0xfff00);
+
+	return (major << 20) | minor;
+}
+
 __END_DECLS
 
 #endif /* LINUX */

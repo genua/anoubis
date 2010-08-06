@@ -43,36 +43,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h>
+
+#include <anoubis_playground.h>
 
 #ifdef LINUX
-
-/**
- * Convert a device number as returned by stat into a device number as used
- * inside the kernel and inside anoubis events. See include/linux/kdev_t.h
- * for the source code. The core facts are:
- * Kernel uses
- *   - low 20 Bits for the minor number
- *   - the rest is used for the major number.
- * User space uses
- * - low 8 Bits for the low 8 bits of the minor number
- * - next 12 Bits are used for the major number
- * - next 12 Bits are used for higher 12 Bits of the minor number.
- * The reason for this encoding are historical. Note that legacy code that
- * assumes a 16-Bit dev_t with 8 Bit major and 8 Bit minor number will work
- * correctly with this encoding (provided that the major and minor numbers
- * fit into 8 bits).
- *
- * @param dev A dev_t type from a stat structures st_dev field.
- * @return A kernel encoded device number.
- */
-static inline uint64_t
-expand_dev(dev_t dev)
-{
-	uint64_t	major = (dev & 0xfff00) >> 8;
-	uint64_t	minor = (dev & 0xff) | ((dev >> 12) & 0xfff00);
-
-	return (major << 20) | minor;
-}
 
 /**
  * This structure describes a single mount point that is currently in
@@ -243,6 +218,206 @@ pgmounts_find(uint64_t dev)
 }
 
 /**
+ * A helper structure that holds an extensible list of strings.
+ * Fields:
+ * list: The string list itself.
+ * alloclen: The number of entries allocated for the string list.
+ * listlen: The number of entries in the string list.
+ */
+struct pgfile_list {
+	char	**list;
+	int	  alloclen;
+	int	  listlen;
+};
+
+/**
+ * Free all memory associated with a filename list. Both the file names
+ * themselves and the pointer array are assumed to be malloced and will be
+ * freed. The list structure itself is left untouched.
+ *
+ * @param list The list to free.,
+ * @return None.
+ */
+void
+pgfile_free_list(struct pgfile_list *list)
+{
+	int		i;
+
+	if (list == NULL)
+		return;
+	for (i=0; i<list->listlen; ++i)
+		if (list->list[i])
+			free(list->list[i]);
+	free(list->list);
+	list->list = NULL;
+	list->alloclen = list->listlen = 0;
+}
+
+/**
+ * Append a pointer to a (potentially pre-existing) file list. The list
+ * might change its size and list length.
+ *
+ * @list The file name list.
+ * @ptr The string to append to the list.
+ * @return Zero in case of success, -ENOMEM if memory allocation fails.
+ *     The memory associated with the list is freed if memory allocation
+ *     fails.
+ */
+int
+pgfile_append_to_list(struct pgfile_list *list, char *ptr)
+{
+	char		**newlist;
+
+	if (list->listlen == list->alloclen) {
+		if (list->alloclen == 0)
+			list->alloclen = 10;
+		else
+			list->alloclen *= 2;
+		newlist = realloc(list->list, list->alloclen * sizeof(char *));
+		if (newlist == NULL) {
+			pgfile_free_list(list);
+			return -ENOMEM;
+		}
+		list->list = newlist;
+	}
+	list->list[list->listlen++] = ptr;
+	return 0;
+}
+
+/**
+ * Find the first valid ".plgr.xxx[.D] prefix of an intermediate path
+ * component of the string.
+ *
+ * @param str The path name string.
+ * @param lenp The length of the prefix is returned in this variable.
+ * @return The prefix or NULL if no valid prefix was found.
+ */
+static char *
+pgfile_find_first_plgr_prefix(char *str, int *lenp)
+{
+	char			*search;
+	int			 len, len2;
+
+	search = str;
+	while (1) {
+		search = strstr(search, ".plgr.");
+		if (search == NULL)
+			return NULL;
+		if (search != str && search[-1] != '/')
+			goto next;
+		len = strlen(".plgr.");
+		if (search[len] == '.' || search[len] == 'D')
+			goto next;
+		while (1) {
+			if (search[len] == '.' || search[len] == 'D') {
+				len++;
+				break;
+			}
+			if (!isxdigit(search[len]) || isupper(search[len]))
+				goto next;
+			len++;
+		}
+		if (search[len] == 0)
+			return NULL;
+		if (search[len] == '/')
+			goto next;
+		len2 = 0;
+		while (search[len + len2]) {
+			if (search[len+len2] == '/') {
+				(*lenp) = len;
+				return search;
+			}
+			len2++;
+		}
+next:
+		search += 5;
+	}
+}
+
+/**
+ * Compare two strings. This function is intended for the use with qsort.
+ *
+ * @param ap A pointer to the pointer that points to the first string.
+ * @param bp A pointer to the pointer that points to the second string.
+ * @return Negative, zero or positive depending on the result of the
+ *     comparison.
+ */
+int
+pgfile_strcmp(const void *ap, const void *bp)
+{
+	return strcmp(*(char **)ap, *(char **)bp);
+}
+
+/**
+ * Take a list of file names and normalize the list. This removes
+ * duplicates and adds name variantes where playground directory component
+ * have been replaced by their non-playground equivalents.
+ *
+ * @param list The new names are filled into this list. The list can
+ *     be uninitialized but any memory that might be associated with the
+ *     list will leak.
+ * @names The list of input names.
+ * @return Zero if the list could be normalized. A negative error code if
+ *     an error occured.
+ */
+int
+pgfile_normalize_file_list(struct pgfile_list *list, const char const *names[])
+{
+	int		 i, src, dst;
+	int		 ret;
+	char		*str;
+
+	if (list == NULL)
+		return -EINVAL;
+	list->list = NULL;
+	list->alloclen = list->listlen = 0;
+	for (i=0; names[i]; ++i) {
+		ret = -ENOMEM;
+		str = strdup(names[i]);
+		if (str == NULL)
+			goto err;
+		if (pgfile_append_to_list(list, str) < 0)
+			goto err;
+		while (1) {
+			char		*prefix;
+			int		 len;
+
+			str = strdup(str);
+			if (str == NULL)
+				goto err;
+			prefix = pgfile_find_first_plgr_prefix(str, &len);
+			if (prefix == NULL) {
+				free(str);
+				break;
+			}
+			while(1) {
+				prefix[0] = prefix[len];
+				if ((*prefix) == 0)
+					break;
+				prefix++;
+			}
+			if (pgfile_append_to_list(list, str) < 0)
+				goto err;
+		}
+	}
+	if (list->listlen == 0)
+		return 0;
+	/* Remove duplicate strings. */
+	qsort(list->list, list->listlen, sizeof(char *), pgfile_strcmp);
+	for (src=dst=1; src < list->listlen; ++src) {
+		if (strcmp(list->list[dst-1], list->list[src]) != 0)
+			list->list[dst++] = list->list[src];
+		else
+			free(list->list[src]);
+	}
+	list->listlen = dst;
+	return 0;
+err:
+	pgfile_free_list(list);
+	return -ENOMEM;
+}
+
+/**
  * Convert a whiteout file name to the corresponding file name
  * that is affected by the whiteout. Both file names include the
  * ".plgr.<ID>." prefix.
@@ -318,7 +493,14 @@ pgfile_validate_one_name(uint64_t dev, uint64_t ino, int dirfd,
 		return 0;
 	if (expand_dev(statbuf.st_dev) != dev || statbuf.st_ino != ino)
 		return 0;
-	ret = statbuf.st_nlink;
+	/*
+	 * Directories cannot have real hard links. However, the link
+	 * count increases due to dir/. and dir/subdir/...
+	 */
+	if (S_ISDIR(statbuf.st_nlink))
+		ret = 1;
+	else
+		ret = statbuf.st_nlink;
 
 	/*
 	 * Now check if this is a whiteout marker and suppress it, if
@@ -342,7 +524,7 @@ pgfile_validate_one_name(uint64_t dev, uint64_t ino, int dirfd,
  *
  * @param dev The device where the file resides.
  * @param ino The inode number of the file.
- * @param names a list of path names relative to the root of the given
+ * @param namearr a list of path names relative to the root of the given
  *     device. These name are searched for links the file with the given
  *     inode number.
  * @return Zero if all links to the file could be found. A negative
@@ -351,27 +533,32 @@ pgfile_validate_one_name(uint64_t dev, uint64_t ino, int dirfd,
  *     ENOENT: None of the file names references the given inode.
  *     EBUSY: Some but not all links to the file were found in the
  *         list of file names.
+ *     ENOMEM: Memory allocation failure.
  */
 int
-pgfile_check(uint64_t dev, uint64_t ino, const char *names[])
+pgfile_check(uint64_t dev, uint64_t ino, const char *namearr[])
 {
 	struct pgmount		*mnt = pgmounts_find(dev);
 	int			 totallinks = 0, foundlinks = 0;
 	int			 i;
+	struct pgfile_list	 list;
 
 	/* Device is currently not mounted. */
 	if (!mnt)
 		return -EXDEV;
-	for (i=0; names[i]; ++i) {
+	if (pgfile_normalize_file_list(&list, namearr) < 0)
+		return -ENOMEM;
+	for (i=0; i<list.listlen; ++i) {
 		int		nlinks;
 
 		nlinks = pgfile_validate_one_name(dev, ino, mnt->dirfd,
-		    names[i]);
+		    list.list[i]);
 		if (nlinks == 0)
 			continue;
 		totallinks = nlinks;
 		foundlinks++;
 	}
+	pgfile_free_list(&list);
 	if (totallinks == 0)
 		return -ENOENT;
 	if (totallinks > foundlinks)
@@ -380,14 +567,14 @@ pgfile_check(uint64_t dev, uint64_t ino, const char *names[])
 }
 
 /**
- * This file turns all references to a particular playground file into
+ * This function turns all references to a particular playground file into
  * appropriate production system files. This means that real playground
  * files are renamed and whiteout playground files cause the original file
  * (and the whiteout) to be deleted.
  *
  * @param dev The device number of the file.
  * @param ino The inode number of the playground file.
- * @names A list of all names (relative to the root of the device)
+ * @namearr A list of all names (relative to the root of the device)
  *     that might reference the file. Only names that actually reference
  *     the correct file (as identified by device and inode number) are
  *     processed. All other names are skipped.
@@ -400,23 +587,27 @@ pgfile_check(uint64_t dev, uint64_t ino, const char *names[])
  *     EBUSY: The file was found but one or more links to the file could
  *         not be renamed/deleted. Possible cause are permission errors
  *         or missing names in the name list.
+ *     ENOMEM: Memory allocation failure.
  */
 int
-pgfile_process(uint64_t dev, uint64_t ino, const char *names[])
+pgfile_process(uint64_t dev, uint64_t ino, const char *namearr[])
 {
 	struct pgmount		*mnt = pgmounts_find(dev);
 	int			 totallinks = 0, renamedok = 0;
 	int			 i;
+	struct pgfile_list	 list;
 
 	if (!mnt)
 		return -EXDEV;
-	for (i=0; names[i]; ++i) {
+	if (pgfile_normalize_file_list(&list, namearr) < 0)
+		return -ENOMEM;
+	for (i=0; i<list.listlen; ++i) {
 		int	 dir2, nlink;
 		int	 off;
 		char	*p2, *dir, *oldname, *newname, ch1, ch2;
 
 		nlink = pgfile_validate_one_name(dev, ino, mnt->dirfd,
-		    names[i]);
+		    list.list[i]);
 		if (nlink == 0)
 			continue;
 		totallinks = nlink;
@@ -427,7 +618,7 @@ pgfile_process(uint64_t dev, uint64_t ino, const char *names[])
 		 * is neither NUL nor a slash after the first slash. This
 		 * avoid a lot of useless error handling code below.
 		 */
-		p2 = strdup(names[i]);
+		p2 = strdup(list.list[i]);
 		if (!p2)
 			continue;
 		dir = p2;
@@ -483,6 +674,7 @@ next:
 		close(dir2);
 		free(p2);
 	}
+	pgfile_free_list(&list);
 	if (totallinks == 0)
 		return -ENOENT;
 	if (renamedok < totallinks)
@@ -511,17 +703,32 @@ next:
  *     -ENOMEM: Out of memory.
  */
 int
-pgfile_composename(char **pathp, uint64_t dev, uint64_t ino, const char *name)
+pgfile_composename(char **pathp, uint64_t dev, uint64_t ino, const char *nam)
 {
 	struct pgmount		*mnt = pgmounts_find(dev);
+	const char		*names[2];
+	int			 i, ret;
+	struct pgfile_list	 list;
 
+	names[0] = nam;
+	names[1] = NULL;
 	if (!mnt)
 		return -EXDEV;
-	if (!pgfile_validate_one_name(dev, ino, mnt->dirfd, name))
-		return -EBUSY;
-	if (asprintf(pathp, "%s%s", mnt->prefix, name) < 0)
+	if (pgfile_normalize_file_list(&list, names) < 0)
 		return -ENOMEM;
-	return 0;
+	for (i=0; i<list.listlen; ++i) {
+		if (pgfile_validate_one_name(dev, ino, mnt->dirfd,
+		    list.list[i]))
+			break;
+	}
+	ret = -EBUSY;
+	if (i < list.listlen) {
+		ret = -ENOMEM;
+		if (asprintf(pathp, "%s%s", mnt->prefix, list.list[i]) >= 0)
+			ret = 0;
+	}
+	pgfile_free_list(&list);
+	return ret;
 }
 
 #endif
