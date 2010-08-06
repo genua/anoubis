@@ -53,6 +53,13 @@ AnPolicyNotebook::AnPolicyNotebook(wxWindow* parent, wxWindowID id,
 	Connect(ID_APP_PAGE_DELETE, wxEVT_COMMAND_BUTTON_CLICKED,
 	    wxCommandEventHandler(AnPolicyNotebook::onDeleteButton),
 	    NULL, this);
+	Connect(wxEVT_COMMAND_NOTEBOOK_PAGE_CHANGING,
+	    wxNotebookEventHandler(AnPolicyNotebook::onPageChanging),
+	    NULL, this);
+	Connect(wxEVT_COMMAND_NOTEBOOK_PAGE_CHANGED,
+	    wxNotebookEventHandler(AnPolicyNotebook::onPageChanged),
+	    NULL, this);
+	appDetailsVisibility_ = false;
 }
 
 AnPolicyNotebook::~AnPolicyNotebook(void)
@@ -62,6 +69,12 @@ AnPolicyNotebook::~AnPolicyNotebook(void)
 	Disconnect(ID_APP_PAGE_DELETE, wxEVT_COMMAND_BUTTON_CLICKED,
 	    wxCommandEventHandler(AnPolicyNotebook::onDeleteButton),
 	    NULL, this);
+	Disconnect(wxEVT_COMMAND_NOTEBOOK_PAGE_CHANGING,
+	    wxNotebookEventHandler(AnPolicyNotebook::onPageChanging),
+	    NULL, this);
+	Disconnect(wxEVT_COMMAND_NOTEBOOK_PAGE_CHANGED,
+	    wxNotebookEventHandler(AnPolicyNotebook::onPageChanged),
+	    NULL, this);
 }
 
 void
@@ -70,6 +83,7 @@ AnPolicyNotebook::select(Policy *policy)
 	if (dynamic_cast<AppPolicy*>(policy)) {
 		appPolicy_ = dynamic_cast<AppPolicy*>(policy);
 		selectAppPolicy(appPolicy_);
+		restoreDetailsVisibility();
 	} else if (dynamic_cast<AlfFilterPolicy*>(policy)) {
 		selectAlfFilterPolicy(policy);
 	} else if (dynamic_cast<AlfCapabilityFilterPolicy*>(policy)) {
@@ -90,10 +104,62 @@ AnPolicyNotebook::select(Policy *policy)
 		return;
 	}
 	if (selectedTab_ < GetPageCount()) {
+		saveDetailsVisibility();
 		ChangeSelection(selectedTab_);
+		restoreDetailsVisibility();
 	} else {
-	    selectedTab_ = 0;
+		selectedTab_ = 0;
 	}
+}
+
+void
+AnPolicyNotebook::saveDetailsVisibility(void)
+{
+	int			 selection = GetSelection();
+	wxNotebookPage		*page;
+	DlgRuleEditorAppPage	*appPage;
+
+	if (selection < 0)
+		return;
+	page = GetPage(selection);
+	if (page == NULL)
+		return;
+	appPage = dynamic_cast<DlgRuleEditorAppPage *>(page);
+	if (appPage == NULL)
+		return;
+	appDetailsVisibility_ = appPage->getDetailsVisibility();
+}
+
+void
+AnPolicyNotebook::restoreDetailsVisibility(void)
+{
+	int			 selection = GetSelection();
+	wxNotebookPage		*page;
+	DlgRuleEditorAppPage	*appPage;
+
+	if (selection < 0)
+		return;
+	page = GetPage(selection);
+	if (page == NULL)
+		return;
+	appPage = dynamic_cast<DlgRuleEditorAppPage *>(page);
+	if (appPage == NULL)
+		return;
+	appPage->setDetailsVisibility(appDetailsVisibility_);
+}
+
+void
+AnPolicyNotebook::onPageChanging(wxNotebookEvent &event)
+{
+	saveDetailsVisibility();
+	event.Skip();
+}
+
+void
+AnPolicyNotebook::onPageChanged(wxNotebookEvent &event)
+{
+	restoreDetailsVisibility();
+	event.Skip();
 }
 
 void
@@ -102,6 +168,7 @@ AnPolicyNotebook::deselect(void)
 	appPolicy_ = NULL;
 	ctxPolicy_ = NULL;
 	selectedTab_ = GetSelection();
+	saveDetailsVisibility();
 	DeleteAllPages();
 }
 
@@ -169,7 +236,9 @@ AnPolicyNotebook::onDeleteButton(wxCommandEvent &)
 		 */
 		DeleteAllPages();
 		select(appPolicy_);
+		saveDetailsVisibility();
 		ChangeSelection(idx);
+		restoreDetailsVisibility();
 	}
 	if (ctxPolicy_ != NULL) {
 		ctxPolicy_->removeBinary(idx);

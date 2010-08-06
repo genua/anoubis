@@ -171,7 +171,8 @@ typedef struct {
 %token	INET INET6 FROM TO PORT ANY TCP UDP SCTP DEFAULT NEW ASK ALERT OPEN
 %token	READ WRITE EXEC CHMOD ERROR APPLICATION RULE HOST TFILE BOTH SEND
 %token	RECEIVE TASK UNTIL COLON PATH KEY UID APNVERSION
-%token	SELF SIGNEDSELF VALID INVALID UNKNOWN CONTINUE BORROW NOSFS PLAYGROUND
+%token	SELF SIGNEDSELF VALID INVALID UNKNOWN CONTINUE BORROW
+%token	NOSFS PGFORCE PGONLY
 %token	<v.string>		STRING
 %destructor {
 	free($$);
@@ -210,9 +211,8 @@ typedef struct {
 	apn_free_host($$.tohost);
 }				hosts
 %type	<v.number>		not capability defaultspec ruleid sbrwx
-%type	<v.number>		ctxflags
-%type	<v.number>		ctxnosfs
-%type	<v.number>		ctxplayground
+%type	<v.number>		ctxflags ctxflag nonctxflags nonctxflag
+%type	<v.number>		flagnosfs flagpgforce flagpgonly
 %type	<v.string>		sfspath
 %destructor {
 	free($$);
@@ -351,14 +351,14 @@ alfruleset_l	: alfruleset_l alfruleset
 		| alfruleset
 		;
 
-alfruleset	: ruleid apps optnl '{' optnl alfrule_l '}' optnl {
+alfruleset	: ruleid apps nonctxflags optnl '{' optnl alfrule_l '}' optnl {
 			struct apn_rule	*rule;
 
 			rule = calloc(1, sizeof(struct apn_rule));
 			if (rule == NULL) {
 				apn_free_app($2);
-				apn_free_chain($6, NULL);
-				free($6);
+				apn_free_chain($7, NULL);
+				free($7);
 				yyerror("Out of memory");
 				YYERROR;
 			}
@@ -369,17 +369,17 @@ alfruleset	: ruleid apps optnl '{' optnl alfrule_l '}' optnl {
 			rule->apn_id = $1;
 			rule->userdata = NULL;
 			rule->pchain = NULL;
-			rule->flags = 0;
+			rule->flags = $3;
 			TAILQ_INIT(&rule->rule.chain);
-			while(!TAILQ_EMPTY($6)) {
+			while(!TAILQ_EMPTY($7)) {
 				struct apn_rule *arule;
-				arule = TAILQ_FIRST($6);
-				TAILQ_REMOVE($6, arule, entry);
+				arule = TAILQ_FIRST($7);
+				TAILQ_REMOVE($7, arule, entry);
 				TAILQ_INSERT_TAIL(&rule->rule.chain,
 				    arule, entry);
 				arule->pchain = &rule->rule.chain;
 			}
-			free($6);
+			free($7);
 
 			if (apn_add_alfblock(apnrsp, rule, file->name,
 			    yylval.lineno) != 0) {
@@ -928,14 +928,14 @@ sbruleset_l	: sbruleset_l sbruleset
 		| sbruleset
 		;
 
-sbruleset	: ruleid apps optnl '{' optnl sbrule_l '}' optnl {
+sbruleset	: ruleid apps nonctxflags optnl '{' optnl sbrule_l '}' optnl {
 			struct apn_rule	*rule;
 
 			rule = calloc(1, sizeof(struct apn_rule));
 			if (rule == NULL) {
 				apn_free_app($2);
-				apn_free_chain($6, NULL);
-				free($6);
+				apn_free_chain($7, NULL);
+				free($7);
 				yyerror("Out of memory");
 				YYERROR;
 			}
@@ -946,17 +946,17 @@ sbruleset	: ruleid apps optnl '{' optnl sbrule_l '}' optnl {
 			rule->apn_id = $1;
 			rule->userdata = NULL;
 			rule->pchain = NULL;
-			rule->flags = 0;
+			rule->flags = $3;
 			TAILQ_INIT(&rule->rule.chain);
-			while(!TAILQ_EMPTY($6)) {
+			while(!TAILQ_EMPTY($7)) {
 				struct apn_rule *sbrule;
-				sbrule = TAILQ_FIRST($6);
-				TAILQ_REMOVE($6, sbrule, entry);
+				sbrule = TAILQ_FIRST($7);
+				TAILQ_REMOVE($7, sbrule, entry);
 				TAILQ_INSERT_TAIL(&rule->rule.chain,
 				    sbrule, entry);
 				sbrule->pchain = &rule->rule.chain;
 			}
-			free($6);
+			free($7);
 
 			if (apn_add_sbblock(apnrsp, rule, file->name,
 			    yylval.lineno) != 0) {
@@ -1108,24 +1108,7 @@ ctxruleset_l	: ctxruleset_l ctxruleset
 		| ctxruleset
 		;
 
-ctxflags	: ctxnosfs ctxplayground {
-			$$ = $1 | $2;
-		}
-		| ctxplayground ctxnosfs {
-			$$ = $1 | $2;
-		}
-		| ctxnosfs {
-			$$ = $1;
-		}
-		| ctxplayground {
-			$$ = $1;
-		}
-		| /* empty */ {
-			$$ = 0;
-		}
-		;
-
-ctxnosfs	: NOSFS {
+flagnosfs	: NOSFS {
 			if (apnrsp->version < APN_PARSER_MKVERSION(1, 1)) {
 				/* nosfs-flag not supported for this version */
 				yyerror("The flag nosfs is not supported in "
@@ -1138,16 +1121,64 @@ ctxnosfs	: NOSFS {
 		}
 		;
 
-ctxplayground   : PLAYGROUND {
+flagpgforce   : PGFORCE {
 			if (apnrsp->version < APN_PARSER_MKVERSION(1, 3)) {
-				/* p/g-flag not supported for this version */
-				yyerror("The flag playground is not supported "
+				/* flag not supported for this version */
+				yyerror("The flag PGFORCE is not supported "
 				    "in v%i.%i! At least v1.3 expected.",
 				    APN_PARSER_MAJOR(apnrsp->version),
 				    APN_PARSER_MINOR(apnrsp->version));
 				YYERROR;
 			}
-			$$ = APN_RULE_PLAYGROUND;
+			$$ = APN_RULE_PGFORCE;
+		}
+		;
+
+flagpgonly	: PGONLY {
+			if (apnrsp->version < APN_PARSER_MKVERSION(1, 3)) {
+				/* flag not supported for this version */
+				yyerror("The flag PGONLY is not supported "
+				    "in %i.%i! At least v1.3 expected.",
+				    APN_PARSER_MAJOR(apnrsp->version),
+				    APN_PARSER_MINOR(apnrsp->version));
+				YYERROR;
+			}
+			$$ = APN_RULE_PGONLY;
+		};
+
+ctxflag		: flagnosfs {
+			$$ = $1;
+		}
+		| flagpgforce {
+			$$ = $1;
+		}
+		;
+
+nonctxflag	: flagpgonly {
+			$$ = $1;
+		}
+		;
+
+ctxflags	: /* Empty */ {
+			$$ = 0;
+		}
+		| ctxflags ctxflag {
+			if ($1 & $2) {
+				yyerror("Duplicate flag in flag list");
+				YYERROR;
+			}
+			$$ = $1 | $2;
+		};
+
+nonctxflags	: /* Empty */ {
+			$$ = 0;
+		}
+		| nonctxflag nonctxflags {
+			if ($1 & $2) {
+				yyerror("Duplicate flag in flag list");
+				YYERROR;
+			}
+			$$ = $1 | $2;
 		}
 		;
 
@@ -1395,7 +1426,8 @@ lookup(char *s)
 		{ "open",	OPEN },
 		{ "other",	OTHER },
 		{ "path",	PATH },
-		{ "playground",	PLAYGROUND },
+		{ "pgforce",	PGFORCE },
+		{ "pgonly",	PGONLY },
 		{ "port",	PORT },
 		{ "raw",	RAW },
 		{ "read",	READ },

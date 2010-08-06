@@ -32,6 +32,7 @@
 
 #include <AnListClass.h>
 #include <AnEvents.h>
+#include <Subject.h>
 
 class AnListCtrl;
 
@@ -41,7 +42,7 @@ class AnListCtrl;
  * must also send appropriate events (anEVT_ROW_SIZECHANGE or
  * anEVT_ROW_UPDATE) if the contents of the model change.
  */
-class AnRowProvider : public wxEvtHandler {
+class AnRowProvider : public wxEvtHandler, public Subject {
 	public:
 		/**
 		 * Return the element with index idx in the model.

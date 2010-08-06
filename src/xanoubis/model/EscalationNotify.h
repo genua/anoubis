@@ -77,6 +77,7 @@ class EscalationNotify : public Notification {
 		NotifyAnswer	*getAnswer(void);
 		anoubis_token_t	 getToken(void);
 		anoubis_cookie_t getTaskCookie(void);
+		anoubis_cookie_t getPlaygroundID(void);
 		wxString	 getBinaryName(void);
 		wxString	 getCtxBinaryName(void);
 		virtual wxString getAction(void);

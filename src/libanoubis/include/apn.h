@@ -209,8 +209,9 @@ enum {
 	APN_SB_ACCESS,		/* rule.sbaccess, app = NULL */
 };
 
-#define APN_RULE_NOSFS      1
-#define APN_RULE_PLAYGROUND 2
+#define APN_RULE_NOSFS		1
+#define APN_RULE_PGFORCE	2
+#define APN_RULE_PGONLY		4
 
 #define apn_type	_rbentry.dtype
 #define apn_id		_rbentry.key
@@ -334,7 +335,7 @@ int	apn_insert_ctxrule(struct apn_ruleset *, struct apn_rule *,
  */
 int		 apn_add_app(struct apn_rule *, const char *,
 		     const struct apn_subject *);
-struct apn_rule	*apn_match_appname(struct apn_chain *, const char *);
+struct apn_rule	*apn_match_appname(struct apn_chain *, const char *, int);
 
 /*
  * Use these functions to copy an application block and simultaneously

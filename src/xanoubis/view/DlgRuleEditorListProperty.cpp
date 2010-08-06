@@ -162,11 +162,17 @@ DlgRuleEditorListProperty::examineAppPolicy(AppPolicy *app) const
 		if (app->getFlag(APN_RULE_NOSFS)) {
 			text = wxT("nosfs");
 		}
-		if (app->getFlag(APN_RULE_PLAYGROUND)) {
+		if (app->getFlag(APN_RULE_PGFORCE)) {
 			if (!text.IsEmpty()) {
 				text.Append(wxT(", "));
 			}
-			text.Append(wxT("playground"));
+			text.Append(wxT("pgforce"));
+		}
+		if (app->getFlag(APN_RULE_PGONLY)) {
+			if (!text.IsEmpty()) {
+				text.Append(wxT(", "));
+			}
+			text.Append(wxT("pgonly"));
 		}
 		break;
 	case PROPERTY_BINARY:

@@ -107,8 +107,9 @@ AnDetails::showDetails(bool visible)
 }
 
 void
-AnDetails::onDetailClick(wxMouseEvent &)
+AnDetails::onDetailClick(wxMouseEvent &event)
 {
+	event.Skip();
 	showDetails(!isVisible_);
 }
 
@@ -122,6 +123,7 @@ AnDetails::update(void)
 	/* modify the widgets */
 	if (contentSizer_ != NULL) {
 		contentSizer_->Show(isVisible_);
+		contentSizer_->Layout();
 	}
 
 	if (isVisible_) {

@@ -110,6 +110,28 @@ class DlgRuleEditorAppPage : public DlgRuleEditorPage,
 		 */
 		void setBinaryIndex(unsigned int);
 
+		/**
+		 * Return the status of the Details widget in the
+		 * context page.
+		 *
+		 * @param None.
+		 * @return True if the details are visible (expanded),
+		 *     false if they are collapsed.
+		 */
+		bool getDetailsVisibility(void);
+
+		/**
+		 * Set the status of the Details widget in the context
+		 * page.
+		 *
+		 * @param[in] 1st True if the details should be visible
+		 *     uncollapsed, false if the Details should be collapsed.
+		 *     This function can be used even if the current page
+		 *     does not even show the details widget.
+		 * @return None.
+		 */
+		void setDetailsVisibility(bool);
+
 	protected:
 		/**
 		 * Handles selection events from the "Disable SFS" checkbox.
@@ -124,7 +146,14 @@ class DlgRuleEditorAppPage : public DlgRuleEditorPage,
 		 * Updates the model.
 		 * @param[in] 1st The event.
 		 */
-		void onPlaygroundClicked(wxCommandEvent &);
+		void onPgForceClicked(wxCommandEvent &);
+
+		/**
+		 * Handles selection events from the "playground only"
+		 * checkbox. Updates the model.
+		 * @param[in] 1st The event.
+		 */
+		void onPgOnlyClicked(wxCommandEvent &);
 
 	private:
 		/**
@@ -148,16 +177,6 @@ class DlgRuleEditorAppPage : public DlgRuleEditorPage,
 		wxString pageHeader_;
 
 		/**
-		 * Static attribute holds visibility-status of the
-		 * context-page.
-		 *
-		 * The visibility should be the same over all
-		 * DlgRuleEditorAppPage-instances. That's why, the attribute is
-		 * static.
-		 */
-		static bool contextPageVisible_;
-
-		/**
 		 * Write the binary to page header.
 		 * @param None.
 		 * @return Nothing.
@@ -170,9 +189,14 @@ class DlgRuleEditorAppPage : public DlgRuleEditorPage,
 		void setDisableSFS(void);
 
 		/**
-		 * Puts the value of the playerground-flag into the checkbox.
+		 * Puts the value of the pgforce-flag into the checkbox.
 		 */
-		void setRunInPlayground(void);
+		void setPgForce(void);
+
+		/**
+		 * Puts the value of the pgonly->flag into the checkbox.
+		 */
+		void setPgOnly(void);
 };
 
 #endif	/* _DLGRULEEDITORAPPPAGE_H_ */

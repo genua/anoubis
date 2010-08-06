@@ -120,7 +120,7 @@ struct anoubis_msg {
 	int	__ret = 0;						\
 	int	__start = offsetof(typeof(*((M)->u.SEL)), FIELD);	\
 	if (__start >= 0 && VERIFY_LENGTH((M), __start)) {		\
-		__ret = m->length - __start - CSUM_LEN;			\
+		__ret = (M)->length - __start - CSUM_LEN;		\
 	}								\
 	__ret;								\
 })

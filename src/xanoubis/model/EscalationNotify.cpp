@@ -113,6 +113,26 @@ EscalationNotify::getTaskCookie(void)
 	return (get_value(notify_->u.notify->task_cookie));
 }
 
+anoubis_cookie_t
+EscalationNotify::getPlaygroundID(void)
+{
+#ifdef LINUX
+	char				*buffer;
+	int				 off, m;
+
+	off = get_value(notify_->u.notify->evoff);
+	m = sizeof(struct anoubis_event_common);
+	if (get_value(notify_->u.notify->evlen) < m)
+		return 0;
+	if (PAYLOAD_LEN(notify_, notify, payload) < off + m)
+		return 0;
+	buffer = notify_->u.notify->payload + off;
+	return ((struct anoubis_event_common *)buffer)->pgid;
+#else
+	return 0;
+#endif
+}
+
 wxString
 EscalationNotify::getBinaryName(void)
 {

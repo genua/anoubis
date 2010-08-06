@@ -36,13 +36,10 @@
 #include "AnDetails.h"
 #include "AnPickFromFs.h"
 #include "ContextAppPolicy.h"
+#include "AlfAppPolicy.h"
+#include "SbAppPolicy.h"
 #include "DlgRuleEditorAppPage.h"
 #include "DlgRuleEditorFilterSubjectPage.h"
-
-/*
- * Definition of contextPageVisible_-attribute.
- */
-bool DlgRuleEditorAppPage::contextPageVisible_ = false;
 
 DlgRuleEditorAppPage::DlgRuleEditorAppPage(wxWindow *parent,
     wxWindowID id, const wxPoint & pos, const wxSize & size, long style)
@@ -53,13 +50,10 @@ DlgRuleEditorAppPage::DlgRuleEditorAppPage(wxWindow *parent,
 	appPolicy_ = NULL;
 	ctxPolicy_ = NULL;
 	pageHeader_ = wxT("");
-
-	contextPage->showDetails(contextPageVisible_);
 }
 
 DlgRuleEditorAppPage::~DlgRuleEditorAppPage(void)
 {
-	contextPageVisible_ = contextPage->detailsVisible();
 }
 
 void
@@ -68,9 +62,10 @@ DlgRuleEditorAppPage::update(Subject *subject)
 	if (subject == appPolicy_ || subject == ctxPolicy_)
 		setBinary();
 
-	if (subject && dynamic_cast<ContextAppPolicy*>(subject)) {
+	if (subject && (subject == appPolicy_)) {
 		setDisableSFS();
-		setRunInPlayground();
+		setPgForce();
+		setPgOnly();
 	}
 }
 
@@ -94,10 +89,22 @@ DlgRuleEditorAppPage::select(Policy *policy)
 	}
 
 	/*
-	 * The contextPanel is only displayed for Context applications.
+	 * The contextPage is only displayed for Context applications.
 	 */
-	contextPage->Show(policy &&
-	    dynamic_cast<ContextAppPolicy*>(policy));
+	if (policy && (dynamic_cast<AlfAppPolicy *>(policy)
+	    || dynamic_cast<SbAppPolicy *>(policy))) {
+		pgOnlyCheckbox->Show();
+		pgForceCheckbox->Hide();
+		noSfsCheckbox->Hide();
+		contextPage->Show(true);
+	} else if (policy && dynamic_cast<ContextAppPolicy *>(policy)) {
+		pgOnlyCheckbox->Hide();
+		pgForceCheckbox->Show();
+		noSfsCheckbox->Show();
+		contextPage->Show(true);
+	} else {
+		contextPage->Show(false);
+	}
 }
 
 void
@@ -127,11 +134,21 @@ DlgRuleEditorAppPage::onNoSfsClicked(wxCommandEvent &event)
 }
 
 void
-DlgRuleEditorAppPage::onPlaygroundClicked(wxCommandEvent &event)
+DlgRuleEditorAppPage::onPgForceClicked(wxCommandEvent &event)
 {
 	if (appPolicy_ != 0 &&
 	    dynamic_cast<ContextAppPolicy *>(appPolicy_)) {
-		appPolicy_->setFlag(APN_RULE_PLAYGROUND, event.IsChecked());
+		appPolicy_->setFlag(APN_RULE_PGFORCE, event.IsChecked());
+	}
+}
+
+void
+DlgRuleEditorAppPage::onPgOnlyClicked(wxCommandEvent &event)
+{
+	if (appPolicy_ != 0) {
+		if (dynamic_cast<AlfAppPolicy *>(appPolicy_)
+		    || dynamic_cast<SbAppPolicy *>(appPolicy_))
+			appPolicy_->setFlag(APN_RULE_PGONLY, event.IsChecked());
 	}
 }
 
@@ -181,7 +198,25 @@ DlgRuleEditorAppPage::setDisableSFS(void)
 }
 
 void
-DlgRuleEditorAppPage::setRunInPlayground(void)
+DlgRuleEditorAppPage::setPgForce(void)
 {
-	playgroundCheckbox->SetValue(appPolicy_->getFlag(APN_RULE_PLAYGROUND));
+	pgForceCheckbox->SetValue(appPolicy_->getFlag(APN_RULE_PGFORCE));
+}
+
+void
+DlgRuleEditorAppPage::setPgOnly(void)
+{
+	pgOnlyCheckbox->SetValue(appPolicy_->getFlag(APN_RULE_PGONLY));
+}
+
+bool
+DlgRuleEditorAppPage::getDetailsVisibility(void)
+{
+	return contextPage->detailsVisible();
+}
+
+void
+DlgRuleEditorAppPage::setDetailsVisibility(bool state)
+{
+	contextPage->showDetails(state);
 }

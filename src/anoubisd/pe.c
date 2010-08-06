@@ -787,7 +787,12 @@ pe_handle_playgroundproc(struct eventdev_hdr *hdr)
 	pg = (struct pg_proc_message *)(hdr+1);
 	proc = pe_proc_get(pg->common.task_cookie);
 	if (proc) {
+		int		i;
+
 		pe_proc_set_playgroundid(proc, extract_pgid(&pg->common));
+		/* Policy might change due to a modified playground ID. */
+		for (i=0; i<PE_PRIO_MAX; ++i)
+			pe_context_refresh(proc, i, NULL);
 		pe_proc_put(proc);
 	}
 	return NULL;

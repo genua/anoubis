@@ -777,9 +777,15 @@ apn_print_rule_cleaned(struct apn_rule *rule, int flags, FILE *file,
 			else
 				return (1);
 		}
-		if (rule->flags & APN_RULE_PLAYGROUND) {
+		if (rule->flags & APN_RULE_PGFORCE) {
 			if (apn_version >= APN_PARSER_MKVERSION(1, 3))
-				fprintf(file, " playground");
+				fprintf(file, " pgforce");
+			else
+				return (1);
+		}
+		if (rule->flags & APN_RULE_PGONLY) {
+			if (apn_version >= APN_PARSER_MKVERSION(1, 3))
+				fprintf(file, " pgonly");
 			else
 				return (1);
 		}
@@ -2361,11 +2367,14 @@ err:
 }
 
 struct apn_rule *
-apn_match_appname(struct apn_chain *chain, const char *name)
+apn_match_appname(struct apn_chain *chain, const char *name, int ispg)
 {
 	struct apn_rule		*tmp;
 	TAILQ_FOREACH(tmp, chain, entry) {
 		struct apn_app	*app, *napp;
+
+		if ((tmp->flags & APN_RULE_PGONLY) && !ispg)
+			continue;
 		if (tmp->app == NULL)
 			return tmp;
 		napp = tmp->app;

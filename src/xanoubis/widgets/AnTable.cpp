@@ -29,7 +29,7 @@
 #include "AnEvents.h"
 #include <wx/event.h>
 
-AnTable::AnTable(const wxString & configPath)
+AnTable::AnTable(const wxString & configPath) : Observer(NULL)
 {
 	configPath_  = configPath;
 	rowProvider_ = NULL;
@@ -190,6 +190,7 @@ AnTable::setRowProvider(AnRowProvider *rowProvider)
 		rowProvider_->Connect(anEVT_ROW_SIZECHANGE,
 		    wxCommandEventHandler(AnTable::onRowSizeChange),
 		    NULL, this);
+		addSubject(rowProvider_);
 	}
 
 	updateGrid();
@@ -358,4 +359,16 @@ AnTable::fireColsRemoved(int start, int count)
 		    this, wxGRIDTABLE_NOTIFY_COLS_DELETED, start, count);
 		GetView()->ProcessTableMessage(msg);
 	}
+}
+
+void
+AnTable::update(Subject *)
+{
+}
+
+void
+AnTable::updateDelete(Subject *subject)
+{
+	if (subject == rowProvider_)
+		setRowProvider(NULL);
 }

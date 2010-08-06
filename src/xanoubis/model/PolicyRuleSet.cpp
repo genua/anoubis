@@ -448,7 +448,8 @@ PolicyRuleSet::searchAlfAppPolicy(wxString binary) const
 
 	result = NULL;
 
-	rule = apn_match_appname(&(ruleSet_->alf_queue), binary.To8BitData());
+	rule = apn_match_appname(&(ruleSet_->alf_queue),
+	    binary.To8BitData(), 0);
 	if (rule != NULL) {
 		result = dynamic_cast<AlfAppPolicy*>((Policy*) rule->userdata);
 	}
@@ -471,7 +472,8 @@ PolicyRuleSet::searchContextAppPolicy(wxString binary) const
 
 	result = NULL;
 
-	rule = apn_match_appname(&(ruleSet_->ctx_queue), binary.To8BitData());
+	rule = apn_match_appname(&(ruleSet_->ctx_queue),
+	    binary.To8BitData(), 0);
 	if (rule != NULL) {
 		result = dynamic_cast<ContextAppPolicy*>(
 		    (Policy*) rule->userdata);
@@ -495,7 +497,8 @@ PolicyRuleSet::searchSandboxAppPolicy(wxString binary) const
 
 	result = NULL;
 
-	rule = apn_match_appname(&(ruleSet_->sb_queue), binary.To8BitData());
+	rule = apn_match_appname(&(ruleSet_->sb_queue),
+	    binary.To8BitData(), 0);
 	if (rule != NULL) {
 		result = dynamic_cast<SbAppPolicy*>((Policy*) rule->userdata);
 	}
@@ -742,6 +745,8 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 	FilterPolicy			*triggerPolicy;
 	AppPolicy			*parentPolicy;
 	wxString			 module = escalation->getModule();
+	int				 ispg;
+	bool				 copyblock;
 
 	TAILQ_INIT(&tmpchain);
 	rs = getApnRuleSet();
@@ -749,6 +754,7 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 		return;
 
 	answer = escalation->getAnswer();
+	ispg = (escalation->getPlaygroundID() != 0);
 	triggerid = escalation->getRuleId();
 	flags = answer->getFlags();
 	triggerrule = apn_find_rule(rs, triggerid);
@@ -761,10 +767,16 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 	parentPolicy = triggerPolicy->getParentPolicy();
 	if (!parentPolicy)
 		return;
-	if (parentPolicy->isAnyBlock() && module != wxT("SFS")) {
+	copyblock = false;
+	if (module != wxT("CTX")) {
+		if (parentPolicy->isAnyBlock() && module != wxT("SFS"))
+			copyblock = true;
+		if (ispg && !parentPolicy->getFlag(APN_RULE_PGONLY))
+			copyblock = true;
+	}
+	if (copyblock) {
 		wxString		 filename;
 		struct apn_rule		*tmp;
-		struct apn_subject	 tmpsubject;
 
 		filename = escalation->getCtxBinaryName();
 		if (filename.IsEmpty())
@@ -774,7 +786,7 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 			goto err;
 		/* XXX CEH: This check might need more thought. */
 		tmp = apn_match_appname(newblock->pchain,
-		    filename.To8BitData());
+		    filename.To8BitData(), ispg);
 		if (tmp != newblock) {
 			newblock = NULL;
 			goto err;
@@ -782,15 +794,21 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 		newblock = apn_copy_one_rule(newblock);
 		if (!newblock)
 			goto err;
+		if (ispg)
+			newblock->flags |= APN_RULE_PGONLY;
 		TAILQ_FOREACH(triggerrule, &newblock->rule.chain, entry)
 			if (triggerrule->apn_id == triggerid)
 				break;
 		if (!triggerrule)
 			goto err;
-		tmpsubject.type = APN_CS_NONE;
-		if (apn_add_app(newblock, filename.To8BitData(),
-		    &tmpsubject) != 0)
-			goto err;
+		if (newblock->app == NULL) {
+			struct apn_subject	 tmpsubject;
+
+			tmpsubject.type = APN_CS_NONE;
+			if (apn_add_app(newblock, filename.To8BitData(),
+			    &tmpsubject) != 0)
+				goto err;
+		}
 	}
 	msg = escalation->rawMsg();
 	if (answer->wasAllowed()) {

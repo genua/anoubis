@@ -130,8 +130,10 @@ acc_flush(struct achat_channel *chan)
 		ret = (error == EAGAIN) ? ACHAT_RC_PENDING : ACHAT_RC_ERROR;
 	else /* bwritten > 0 */
 		ret = (bwritten == bsize) ? ACHAT_RC_OK : ACHAT_RC_PENDING;
-	if (ret == ACHAT_RC_PENDING && chan->event)
+	if (ret == ACHAT_RC_PENDING && chan->event) {
 		event_add(chan->event, NULL);
+		ret = ACHAT_RC_OK;
+	}
 	return ret;
 }
 

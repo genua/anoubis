@@ -379,24 +379,37 @@ DlgRuleEditorAppPageBase::DlgRuleEditorAppPageBase( wxWindow* parent, wxWindowID
 	mainSizer->Add( subjPage, 1, wxALL|wxEXPAND, 5 );
 	
 	contextPage = new AnDetails( mainPage, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxRAISED_BORDER|wxTAB_TRAVERSAL, wxT("Details") );
+	wxBoxSizer* bSizer28;
+	bSizer28 = new wxBoxSizer( wxVERTICAL );
+	
+	m_panel9 = new wxPanel( contextPage, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxBoxSizer* bSizer26;
 	bSizer26 = new wxBoxSizer( wxVERTICAL );
 	
-	noSfsCheckbox = new wxCheckBox( contextPage, wxID_ANY, _("Disable SFS"), wxDefaultPosition, wxDefaultSize, 0 );
+	pgForceCheckbox = new wxCheckBox( m_panel9, wxID_ANY, _("Run in playground"), wxDefaultPosition, wxDefaultSize, 0 );
+	
+	pgForceCheckbox->SetToolTip( _("Activate it, if the playground should be enabled for this policy (and all of it's binaries).") );
+	
+	bSizer26->Add( pgForceCheckbox, 0, wxALL, 5 );
+	
+	pgOnlyCheckbox = new wxCheckBox( m_panel9, wxID_ANY, _("Use this policy for Playground processes only"), wxDefaultPosition, wxDefaultSize, 0 );
+	
+	bSizer26->Add( pgOnlyCheckbox, 0, wxALL, 5 );
+	
+	noSfsCheckbox = new wxCheckBox( m_panel9, wxID_ANY, _("Disable SFS"), wxDefaultPosition, wxDefaultSize, 0 );
 	
 	noSfsCheckbox->SetToolTip( _("Activate it, if SFS should be disabled for this policy (and all of it's binaries).") );
 	
 	bSizer26->Add( noSfsCheckbox, 0, wxALL, 5 );
 	
-	playgroundCheckbox = new wxCheckBox( contextPage, wxID_ANY, _("Run in playground"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_panel9->SetSizer( bSizer26 );
+	m_panel9->Layout();
+	bSizer26->Fit( m_panel9 );
+	bSizer28->Add( m_panel9, 1, wxEXPAND | wxALL, 5 );
 	
-	playgroundCheckbox->SetToolTip( _("Activate it, if the playground should be enabled for this policy (and all of it's binaries).") );
-	
-	bSizer26->Add( playgroundCheckbox, 0, wxALL, 5 );
-	
-	contextPage->SetSizer( bSizer26 );
+	contextPage->SetSizer( bSizer28 );
 	contextPage->Layout();
-	bSizer26->Fit( contextPage );
+	bSizer28->Fit( contextPage );
 	mainSizer->Add( contextPage, 0, wxEXPAND | wxALL, 5 );
 	
 	wxBoxSizer* footerSizer;
@@ -426,8 +439,9 @@ DlgRuleEditorAppPageBase::DlgRuleEditorAppPageBase( wxWindow* parent, wxWindowID
 	this->Layout();
 	
 	// Connect Events
+	pgForceCheckbox->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DlgRuleEditorAppPageBase::onPgForceClicked ), NULL, this );
+	pgOnlyCheckbox->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DlgRuleEditorAppPageBase::onPgOnlyClicked ), NULL, this );
 	noSfsCheckbox->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DlgRuleEditorAppPageBase::onNoSfsClicked ), NULL, this );
-	playgroundCheckbox->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( DlgRuleEditorAppPageBase::onPlaygroundClicked ), NULL, this );
 	addButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorAppPageBase::onAddButton ), NULL, this );
 	deleteButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorAppPageBase::onDeleteButton ), NULL, this );
 }

@@ -167,15 +167,18 @@ class DlgRuleEditorAppPageBase : public wxPanel
 		wxScrolledWindow* mainPage;
 		DlgRuleEditorFilterSubjectPage* subjPage;
 		AnDetails* contextPage;
+		wxPanel* m_panel9;
+		wxCheckBox* pgForceCheckbox;
+		wxCheckBox* pgOnlyCheckbox;
 		wxCheckBox* noSfsCheckbox;
-		wxCheckBox* playgroundCheckbox;
 		wxButton* addButton;
 		wxButton* deleteButton;
 		
 		
 		// Virtual event handlers, overide them in your derived class
+		virtual void onPgForceClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onPgOnlyClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onNoSfsClicked( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onPlaygroundClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAddButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onDeleteButton( wxCommandEvent& event ){ event.Skip(); }
 		

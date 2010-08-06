@@ -35,6 +35,7 @@
 #include <wx/listctrl.h>
 
 #include "AnRowProvider.h"
+#include "Observer.h"
 
 class AnListClass;
 class AnListClassProperty;
@@ -75,7 +76,7 @@ class AnListProperty;
  * by hand. To enable all the features of the class, you needs to specify the
  * wxLC_VIRTUAL-flag as a window-style!
  */
-class AnListCtrl : public wxListCtrl
+class AnListCtrl : public wxListCtrl, public Observer
 {
 	public:
 		/**
@@ -374,6 +375,22 @@ class AnListCtrl : public wxListCtrl
 		 * Returns the selected index or -1 if nothing is selected.
 		 */
 		long getSelectedIndex(void);
+
+		/**
+		 * Implementation of the Observer interface.
+		 *
+		 * @param subject The subject.
+		 * @return None.
+		 */
+		void update(Subject *);
+
+		/**
+		 * Implementation of the Observer interface.
+		 *
+		 * @param subject The subject.
+		 * @return None.
+		 */
+		void updateDelete(Subject *);
 
 		AnRowProvider	*rowProvider_;
 };

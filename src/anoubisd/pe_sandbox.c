@@ -218,8 +218,9 @@ int
 pe_sb_getrules (struct pe_proc *proc, uid_t uid, int prio, const char *path,
     struct apnarr_array *rulelist)
 {
-	struct apn_rule	 *sbrules;
-	int		  error;
+	struct apn_rule	*sbrules;
+	int		 error;
+	int		 ispg = (pe_proc_get_playgroundid(proc) != 0);
 
 	/*
 	 * If we do not have a process, find the default rules
@@ -235,9 +236,12 @@ pe_sb_getrules (struct pe_proc *proc, uid_t uid, int prio, const char *path,
 		struct apn_ruleset	*rs;
 		rs = pe_user_get_ruleset(uid, prio, NULL);
 		if (rs) {
-			TAILQ_FOREACH(sbrules, &rs->sb_queue, entry)
+			TAILQ_FOREACH(sbrules, &rs->sb_queue, entry) {
+				if (!ispg && (sbrules->flags & APN_RULE_PGONLY))
+					continue;
 				if (sbrules->app == NULL)
 					break;
+			}
 		} else {
 			sbrules = NULL;
 		}

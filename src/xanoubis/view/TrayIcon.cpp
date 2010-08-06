@@ -249,7 +249,7 @@ TrayIcon::OnOpenEscalations(wxCommandEvent& event)
 }
 
 void
-TrayIcon::OnLeftButtonClick(wxTaskBarIconEvent&)
+TrayIcon::OnLeftButtonClick(wxTaskBarIconEvent &event)
 {
 	if (messageEscalationCount_ > 0 || messageAlertCount_ > 0) {
 		this->systemNotifyCallback();
@@ -257,6 +257,7 @@ TrayIcon::OnLeftButtonClick(wxTaskBarIconEvent&)
 		wxWindow *topWindow = wxGetApp().GetTopWindow();
 		topWindow->Show(!topWindow->IsShown());
 	}
+	event.Skip();
 }
 
 void

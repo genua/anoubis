@@ -107,6 +107,53 @@ class AnPolicyNotebook : public wxNotebook
 		unsigned int selectedTab_;
 
 		/**
+		 * This holds the desired visibility status of the
+		 * details widget in an AppPage. This must be stored
+		 * in the policy notebook because it is a notebook
+		 * property that is identical for current and future
+		 * pages displayed in the notebook.
+		 */
+		bool appDetailsVisibility_;
+
+		/**
+		 * Save the current visibility status of the details
+		 * widget in an AppPage.
+		 *
+		 * @param None.
+		 * @return None.
+		 */
+		void saveDetailsVisibility(void);
+
+		/**
+		 * Set the current visibility status of the details
+		 * widget in an AppPage to the saved state.
+		 *
+		 * @param None.
+		 * @return None.
+		 */
+		void restoreDetailsVisibility(void);
+
+		/**
+		 * Event handler for the PAGE_CHANGING event. This
+		 * is used to save the visibility state of the details
+		 * widget.
+		 *
+		 * @param[in] 1st The event.
+		 * @return None.
+		 */
+		void onPageChanging(wxNotebookEvent &);
+
+		/**
+		 * Event handler for the PAGE_CHANGED event. This
+		 * is used to restore the visibility state of the details
+		 * widget.
+		 *
+		 * @param[in] 1st The event.
+		 * @return None.
+		 */
+		void onPageChanged(wxNotebookEvent &);
+
+		/**
 		 * Handle events from add button.
 		 * This will handle the events of the add button at the
 		 * DlgRuleEditorAppPage. This will create a new page

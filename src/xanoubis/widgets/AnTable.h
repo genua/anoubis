@@ -37,6 +37,7 @@
 #include "AnGridColumn.h"
 #include "AnListProperty.h"
 #include "AnRowProvider.h"
+#include "Observer.h"
 
 /**
  * Common table for AnGrids.
@@ -45,7 +46,7 @@
  * The columns are feed by adding properties and a
  * row provider is asked for the data.
  */
-class AnTable : public wxGridTableBase, public wxEvtHandler
+class AnTable : public wxGridTableBase, public wxEvtHandler, public Observer
 {
 	public:
 		/**
@@ -273,6 +274,25 @@ class AnTable : public wxGridTableBase, public wxEvtHandler
 		 * @return Nothing.
 		 */
 		void fireColsRemoved(int, int);
+
+	protected:
+		/**
+		 * Implementation of the Observer interface. This
+		 * class observes its row provider.
+		 *
+		 * @param subject The subject.
+		 * @return None.
+		 */
+		void update(Subject *subject);
+
+		/**
+		 * Implementation of the Observer interface. This class
+		 * observers its row provider.
+		 *
+		 * @param subject The subject.
+		 * @return None.
+		 */
+		void updateDelete(Subject *subject);
 };
 
 #endif	/* _ANTABLE_H_ */

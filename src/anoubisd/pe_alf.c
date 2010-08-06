@@ -208,15 +208,19 @@ pe_alf_evaluate(struct pe_proc *proc, int prio, uid_t uid,
 	struct apn_rule	*rule;
 	int		 decision;
 	time_t		 t;
+	int		 ispg = (extract_pgid(&msg->common) != 0);
 
 	if (proc) {
 		rule = pe_context_get_alfrule(pe_proc_get_context(proc, prio));
 	} else {
 		struct apn_ruleset *rs = pe_user_get_ruleset(uid, prio, NULL);
 		if (rs) {
-			TAILQ_FOREACH(rule, &rs->alf_queue, entry)
+			TAILQ_FOREACH(rule, &rs->alf_queue, entry) {
+				if (!ispg && (rule->flags & APN_RULE_PGONLY))
+					continue;
 				if (rule->app == NULL)
 					break;
+			}
 		} else {
 			rule = NULL;
 		}

@@ -36,7 +36,7 @@
 AnListCtrl::AnListCtrl(wxWindow *parent, wxWindowID id, const wxPoint &pos,
     const wxSize &size, long style, const wxValidator &validator,
     const wxString &name)
-    : wxListCtrl(parent, id, pos, size, style, validator, name)
+    : wxListCtrl(parent, id, pos, size, style, validator, name), Observer(NULL)
 {
 	this->stateKey_ = wxEmptyString;
 	this->rowProperty_ = 0;
@@ -72,6 +72,7 @@ AnListCtrl::setRowProvider(AnRowProvider *provider)
 		newSize = provider->getSize();
 		SetItemCount(newSize);
 		RefreshItems(0, newSize-1);
+		addSubject(rowProvider_);
 	} else {
 		/* No provider anymore. Invalidate the view. */
 		SetItemCount(0);
@@ -379,4 +380,16 @@ AnListCtrl::onRowUpdate(wxCommandEvent &event)
 	}
 	if (0 <= from && from <= to)
 		RefreshItems(from, to);
+}
+
+void
+AnListCtrl::update(Subject *)
+{
+}
+
+void
+AnListCtrl::updateDelete(Subject *subject)
+{
+	if (subject == rowProvider_)
+		setRowProvider(NULL);
 }

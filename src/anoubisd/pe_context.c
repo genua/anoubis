@@ -160,7 +160,7 @@ struct pe_context {
 
 static void			 pe_dump_dbgctx(const char *, struct pe_proc *);
 static struct pe_context	*pe_context_search(struct apn_ruleset *,
-				     struct pe_proc_ident *, uid_t uid);
+				     struct pe_proc_ident *, uid_t uid, int pg);
 static int			 pe_context_decide(struct pe_proc *, int, int,
 				     struct pe_proc_ident *, uid_t uid);
 static struct pe_context	*pe_context_alloc(struct apn_ruleset *,
@@ -264,10 +264,10 @@ pe_context_refresh(struct pe_proc *proc, int prio, struct pe_policy_db *pdb)
 	oldctx = pe_proc_get_context(proc, prio);
 	if (oldctx) {
 		context = pe_context_search(newrules, &oldctx->ident,
-		    pe_proc_get_uid(proc));
+		    pe_proc_get_uid(proc), pe_proc_get_playgroundid(proc) != 0);
 	} else {
 		context = pe_context_search(newrules, pe_proc_ident(proc),
-		    pe_proc_get_uid(proc));
+		    pe_proc_get_uid(proc), pe_proc_get_playgroundid(proc) != 0);
 	}
 	DEBUG(DBG_PE_POLICY, "pe_context_refresh: context %p alfrule %p "
 	    "sbrule %p ctxrule %p", context, context ? context->alfrule : NULL,
@@ -279,7 +279,7 @@ pe_context_refresh(struct pe_proc *proc, int prio, struct pe_policy_db *pdb)
 	oldctx = pe_proc_get_savedctx(proc, prio);
 	if (oldctx) {
 		context = pe_context_search(newrules, &oldctx->ident,
-		    pe_proc_get_uid(proc));
+		    pe_proc_get_uid(proc), pe_proc_get_playgroundid(proc) != 0);
 		pe_proc_set_savedctx(proc, prio, context);
 		pe_context_put(context);
 	}
@@ -452,7 +452,8 @@ pe_context_switch(struct pe_proc *proc, int prio,
 		pe_context_norules(proc, prio);
 		return;
 	}
-	tmpctx = pe_context_search(ruleset, pident, uid);
+	tmpctx = pe_context_search(ruleset, pident, uid,
+	    pe_proc_get_playgroundid(proc) != 0);
 	pe_proc_set_context(proc, prio, tmpctx);
 	DEBUG(DBG_PE_CTX, "pe_context_switch: proc %p 0x%08" PRIx64 " prio %d "
 	    "got context %p alfrule %p sbrule %p ctxrule %p", proc,
@@ -519,7 +520,8 @@ pe_context_will_transition(struct pe_proc *proc, uid_t uid,
 		if (!ruleset)
 			continue;
 		curctx = pe_proc_get_context(proc, i);
-		tmpctx = pe_context_search(ruleset, pident, uid);
+		tmpctx = pe_context_search(ruleset, pident, uid,
+		    pe_proc_get_playgroundid(proc) != 0);
 		/* Both contexts NULL => no context switch */
 		if (!tmpctx && !curctx)
 			continue;
@@ -560,7 +562,8 @@ pe_context_will_pg(struct pe_proc *proc, uid_t uid,
 			continue;
 
 		curctx = pe_proc_get_context(proc, i);
-		newctx = pe_context_search(ruleset, pident, uid);
+		newctx = pe_context_search(ruleset, pident, uid,
+		    pe_proc_get_playgroundid(proc) != 0);
 
 		if (!newctx)
 			continue;
@@ -681,7 +684,7 @@ pe_context_restore(struct pe_proc *proc, anoubis_cookie_t cookie)
 
 static struct apn_rule *
 pe_context_search_chain(struct apn_chain *chain, struct pe_proc_ident *pident,
-    uid_t uid)
+    uid_t uid, int ispg)
 {
 	struct apn_rule		*r;
 	struct apn_app		*hp;
@@ -692,6 +695,8 @@ pe_context_search_chain(struct apn_chain *chain, struct pe_proc_ident *pident,
 		 * as we still have to walk the full tailq.  Thus we use
 		 * "continue" below
 		 */
+		if (!ispg && (r->flags & APN_RULE_PGONLY))
+			continue;
 		if (r->app == NULL)
 			return r;
 		if (!pident)
@@ -717,7 +722,7 @@ pe_context_search_chain(struct apn_chain *chain, struct pe_proc_ident *pident,
  */
 static struct pe_context *
 pe_context_search(struct apn_ruleset *rs, struct pe_proc_ident *pident,
-    uid_t uid)
+    uid_t uid, int ispg)
 {
 	struct pe_context	*context;
 
@@ -738,9 +743,12 @@ pe_context_search(struct apn_ruleset *rs, struct pe_proc_ident *pident,
 		master_terminate(ENOMEM);
 		return NULL;
 	}
-	context->alfrule = pe_context_search_chain(&rs->alf_queue, pident, uid);
-	context->sbrule = pe_context_search_chain(&rs->sb_queue, pident, uid);
-	context->ctxrule = pe_context_search_chain(&rs->ctx_queue, pident, uid);
+	context->alfrule = pe_context_search_chain(&rs->alf_queue, pident,
+	    uid, ispg);
+	context->sbrule = pe_context_search_chain(&rs->sb_queue, pident,
+	    uid, ispg);
+	context->ctxrule = pe_context_search_chain(&rs->ctx_queue, pident,
+	    uid, ispg);
 
 	DEBUG(DBG_PE_CTX, "pe_context_search: context %p alfrule %p sbrule %p "
 	    "ctxrule %p", context, context->alfrule, context->sbrule,
@@ -913,5 +921,5 @@ pe_context_is_pg(struct pe_context *ctx)
 {
 	if (ctx == NULL || ctx->ctxrule == NULL)
 		return 0;
-	return !!(ctx->ctxrule->flags & APN_RULE_PLAYGROUND);
+	return !!(ctx->ctxrule->flags & APN_RULE_PGFORCE);
 }

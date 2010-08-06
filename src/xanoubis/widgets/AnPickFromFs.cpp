@@ -314,9 +314,10 @@ AnPickFromFs::onPickButton(wxCommandEvent &)
 }
 
 void
-AnPickFromFs::onPickButtonMenu(wxMouseEvent &)
+AnPickFromFs::onPickButtonMenu(wxMouseEvent &event)
 {
 	PopupMenu(&pickButtonMenu_, ScreenToClient(wxGetMousePosition()));
+	event.Skip();
 }
 
 wxString
