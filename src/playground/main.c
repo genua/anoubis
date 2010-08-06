@@ -291,6 +291,16 @@ static int pgcli_remove(anoubis_cookie_t);
 static int pgcli_commit(uint64_t pgid, const char *file);
 
 /**
+ * Command: delete
+ * This functions implements the delete command. It deletes single files
+ * within a playground.
+ * @param[in] 1st The id of the playground in question.
+ * @param[in] 2nd The number of file arguments in 3rd parameter
+ * @param[in] 3rd The filenames of the files to delete.
+ */
+static int pgcli_delete(anoubis_cookie_t, int, char**);
+
+/**
  * Print playground file list.
  * This function will print the header information and iterates over the
  * given list of messages. Those a split in records for each file
@@ -354,6 +364,7 @@ usage(void)
 	fprintf(stderr, "	files <playground id>\n");
 	fprintf(stderr, "	remove <playground id>\n");
 	fprintf(stderr, "	commit <playground id> file ...\n");
+	fprintf(stderr, "	delete <playground id> file ...\n");
 
 	exit(1);
 }
@@ -465,6 +476,14 @@ main(int argc, char *argv[])
 			usage();
 		for (i=1; i<argc; ++i)
 			error = pgcli_commit(pgid, argv[i]);
+	} else if (strcmp(command, "delete") == 0) {
+		if (argc < 2)
+			usage();
+		if (sscanf(argv[0], "%"PRIx64, &pgid) != 1)
+			usage();
+		argc--;
+		argv++;
+		error = pgcli_delete(pgid, argc, (char**)argv);
 	} else {
 		usage();
 	}
@@ -802,6 +821,58 @@ pgcli_files(anoubis_cookie_t pgid)
 }
 
 /**
+ * Validate that the specified playground exists, belongs to the current
+ * user and is not active.
+ * @param pgid The playground id to validate
+ * @param channel The communcation channel to use.
+ * @param client  The communication client to use.
+ * @param message The communication message to use.
+ * @param transaction The communication transaction to use.
+ * @return Zero if playground was successfully validated, error else.
+ */
+int
+pgcli_validate_playground(anoubis_cookie_t pgid, struct achat_channel *channel,
+    struct anoubis_client *client, struct anoubis_msg *message)
+{
+	struct anoubis_transaction *transaction;
+
+	/* Retrieve information about the playground. */
+	transaction = anoubis_client_pglist_start(client,
+	    ANOUBIS_PGREC_PGLIST, pgid);
+	int rc = anoubis_transaction_complete(client, transaction);
+	if (rc < 0) {
+		PGCLI_CONNECTION_WIPE(channel, client);
+		return rc;
+	}
+
+	message = transaction->msg;
+	rc = 1;
+	if (get_value(message->u.pgreply->nrec) == 0) {
+		fprintf(stderr, "Playground %" PRIx64 " does not exist\n",
+		    pgid);
+	} else {
+		Anoubis_PgInfoRecord    *rec;
+
+		rec = (Anoubis_PgInfoRecord *)message->u.pgreply->payload;
+		if (opts & PGCLI_OPT_FORCE) {
+			rc = 0;
+		} else if (get_value(rec->nrprocs)) {
+			fprintf(stderr,  "Cannot delete active playground %"
+			    PRIx64 "\n", pgid);
+		} else if (geteuid() && geteuid() != get_value(rec->uid)) {
+			fprintf(stderr, "UID does not match: %d != %d\n",
+			    (int)(geteuid()), (int)(get_value(rec->uid)));
+			rc = -EPERM;
+		} else {
+			rc = 0;
+		}
+	}
+	anoubis_transaction_destroy(transaction);
+
+	return rc;
+}
+
+/**
  * Try to delete all files that are reported in a series of messages that
  * contain ANOUBIS_PGREC_FILELIST records. A single line of text is printed
  * for each file/directory that is removed. Failure to remove a file in
@@ -877,38 +948,11 @@ pgcli_remove(anoubis_cookie_t pgid)
 	}
 
 	/* Retrieve information about the playground. */
-	transaction = anoubis_client_pglist_start(client,
-	    ANOUBIS_PGREC_PGLIST, pgid);
-	rc = anoubis_transaction_complete(client, transaction);
-	if (rc < 0) {
-		PGCLI_CONNECTION_WIPE(channel, client);
-		return rc;
-	}
-
-	message = transaction->msg;
-	rc = 1;
-	if (get_value(message->u.pgreply->nrec) == 0) {
-		fprintf(stderr, "Playground %" PRIx64 " does not exist\n",
-		    pgid);
-	} else {
-		Anoubis_PgInfoRecord	*rec;
-
-		rec = (Anoubis_PgInfoRecord *)message->u.pgreply->payload;
-		if (opts & PGCLI_OPT_FORCE) {
-			rc = 0;
-		} else if (get_value(rec->nrprocs)) {
-			fprintf(stderr,  "Cannot delete active playground %"
-			    PRIx64 "\n", pgid);
-		} else if (geteuid() && geteuid() != get_value(rec->uid)) {
-			rc = -EPERM;
-		} else {
-			rc = 0;
-		}
-	}
-	anoubis_transaction_destroy(transaction);
+	rc = pgcli_validate_playground(pgid, channel, client, message);
 	if (rc != 0)
 		return rc;
 
+	/* delete files until the playground is gone */
 	while (1) {
 		transaction = anoubis_client_pglist_start(client,
 		    ANOUBIS_PGREC_FILELIST, pgid);
@@ -935,6 +979,125 @@ pgcli_remove(anoubis_cookie_t pgid)
 	}
 
 	/* Cleanup. */
+	PGCLI_CONNECTION_WIPE(channel, client);
+
+	return rc;
+}
+
+/**
+ * Delete one file from a playground.
+ * Prints warnings if file does not exist, does not belong to the
+ * playground or cannot be deleted.
+ * @param filelist  The anoubis filelist message with the files in the
+ *                  selected playground.
+ * @param filename  The filename to delete.
+ * @return 0 on success, 1 on error
+ */
+int
+pgcli_delete_file(struct anoubis_msg *filelist, char* filename)
+{
+	while (filelist) {
+		int record_cnt;
+		int offset = 0;
+
+		for (record_cnt = 0;
+		    record_cnt < get_value(filelist->u.pgreply->nrec);
+		    ++record_cnt) {
+			Anoubis_PgFileRecord *rec;
+			char *   path;
+			uint64_t dev, ino;
+
+			rec = (Anoubis_PgFileRecord *)
+			    (filelist->u.pgreply->payload + offset);
+			offset += get_value(rec->reclen);
+			dev = get_value(rec->dev);
+			ino = get_value(rec->ino);
+
+			if ((rec->path[0] == 0) || pgfile_composename(
+			    &path, dev, ino, rec->path) < 0) {
+				/* this happens quite often for files that we
+				 * just deleted and if this happens because the
+				 * file is really unknown we don't care. */
+				continue;
+			}
+
+			if (strcmp(filename, path) != 0) {
+				/* wrong file, check next */
+				free(path);
+				continue;
+			}
+
+			if ((unlink(path) == 0) ||
+			    (errno == EISDIR && rmdir(path) == 0)) {
+				printf(" UNLINKED %s\n", path);
+				free(path);
+				return 0;
+			} else {
+				printf(" ERROR for %s: %s\n", path,
+				    strerror(errno));
+				free(path);
+				return 1;
+			}
+		}
+
+		filelist = filelist->next;
+		offset = 0;
+	}
+
+
+	printf(" ERROR file not in playground: %s\n", filename);
+	return 1;
+}
+
+static int
+pgcli_delete(anoubis_cookie_t pgid, int filecnt, char** filenames)
+{
+	int rc;
+
+	struct achat_channel        *channel = NULL;
+	struct anoubis_client       *client = NULL;
+	struct anoubis_msg          *message = NULL;
+	struct anoubis_transaction  *transaction = NULL;
+
+	int fileidx;
+	int errcnt;
+
+	rc = pgcli_ui_init();
+	if (rc != 0)
+		return 1;
+
+	channel = pgcli_create_channel();
+	if (channel == NULL)
+		return -EIO;
+
+	client = pgcli_create_client(channel);
+	if (client == NULL) {
+		acc_destroy(channel);
+		return -EIO;
+	}
+
+	/* Retrieve information about the playground. */
+	rc = pgcli_validate_playground(pgid, channel, client, message);
+	if (rc != 0)
+		return rc;
+
+	transaction = anoubis_client_pglist_start(client,
+	    ANOUBIS_PGREC_FILELIST, pgid);
+	rc = anoubis_transaction_complete(client, transaction);
+	if (rc < 0)
+		return rc;
+
+	/* check if files exist and delete them */
+	fprintf(stderr, "now deleting files:\n");
+	errcnt=0;
+	for (fileidx=0; fileidx<filecnt; fileidx++) {
+		errcnt +=
+		    pgcli_delete_file(transaction->msg, filenames[fileidx]);
+	}
+	rc = errcnt?1:0;
+
+	/* Cleanup. */
+	anoubis_transaction_destroy(transaction);
 	PGCLI_CONNECTION_WIPE(channel, client);
 
 	return rc;

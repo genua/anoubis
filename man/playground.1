@@ -104,7 +104,12 @@ This deletes all the files belonging to a given playground.
 The playground is specified by it's id (in hexadecimal as supplied by the
 list command). Removing an active playground requires the
 .Fl f
-option. 
+option.
+.It delete \&<playground id\&> \&<file\&>
+Delete the specified file(s) from the specified playground. The playground is
+specified by it's id in hexadecimal, the files are specified with their full
+playground name as shown in the list command. Files from active playgrounds
+can be deleted with the -f option.
 .El
 .El
 .El
