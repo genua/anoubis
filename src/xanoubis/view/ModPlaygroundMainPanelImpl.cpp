@@ -61,26 +61,17 @@
 		_col->setWidth(width); \
 	} while (0)
 
-#ifdef LINUX
-static void
-chldhandler(int)
-{
-	int	status;
-	pid_t	pid;
-
-	pid = wait(&status);
-	if (WIFEXITED(status)) {
-		Debug::trace(wxString::Format(wxT("Playground - child "
-		    "with pid %d exited with status %d"), pid,
-		    WEXITSTATUS(status)));
-	}
-}
-#endif /* LINUX */
-
 ModPlaygroundMainPanelImpl::ModPlaygroundMainPanelImpl(wxWindow* parent,
     wxWindowID id) : ModPlaygroundMainPanelBase(parent, id)
 {
-	PlaygroundCtrl *playgroundCtrl = NULL;
+	struct sigaction		 act;
+	PlaygroundCtrl			*playgroundCtrl = NULL;
+
+	act.sa_flags = 0;
+	sigemptyset(&act.sa_mask);
+	act.sa_handler = SIG_IGN;
+	if (sigaction(SIGCHLD, &act, NULL) < 0)
+		perror("sigaction");
 
 	playgroundCtrl = PlaygroundCtrl::instance();
 
@@ -276,6 +267,8 @@ ModPlaygroundMainPanelImpl::onPgListItemActivate(wxListEvent &event)
 	}
 }
 
+#include <stdio.h>
+
 void
 ModPlaygroundMainPanelImpl::startApplication(void)
 {
@@ -296,7 +289,6 @@ ModPlaygroundMainPanelImpl::startApplication(void)
 	}
 
 #ifdef LINUX
-	signal(SIGCHLD, chldhandler);
 	rc = playground_start_fork(argv);
 #else
 	rc = -ENOSYS;

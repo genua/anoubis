@@ -477,13 +477,15 @@ main(int argc, char *argv[])
 		for (i=1; i<argc; ++i)
 			error = pgcli_commit(pgid, argv[i]);
 	} else if (strcmp(command, "delete") == 0) {
+		char		dummy;
+
 		if (argc < 2)
 			usage();
-		if (sscanf(argv[0], "%"PRIx64, &pgid) != 1)
+		if (sscanf(argv[0], "%"PRIx64"%c", &pgid, &dummy) != 1)
 			usage();
 		argc--;
 		argv++;
-		error = pgcli_delete(pgid, argc, (char**)argv);
+		error = pgcli_delete(pgid, argc, argv);
 	} else {
 		usage();
 	}
