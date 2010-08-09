@@ -74,6 +74,7 @@ ModPlaygroundMainPanelImpl::ModPlaygroundMainPanelImpl(wxWindow* parent,
 		perror("sigaction");
 
 	playgroundCtrl = PlaygroundCtrl::instance();
+	comEnabled_ = false;
 
 	ADD_PROPERTY(pgList, PROPERTY_ATTENTION, 20);
 	ADD_PROPERTY(pgList, PROPERTY_ID, 55);
@@ -118,7 +119,11 @@ ModPlaygroundMainPanelImpl::onConnectionStateChange(wxCommandEvent &event)
 {
 	JobCtrl::ConnectionState state =
 	    (JobCtrl::ConnectionState)event.GetInt();
-	pgRefreshButton->Enable(state == JobCtrl::CONNECTED);
+	comEnabled_ = (state == JobCtrl::CONNECTED);
+
+	pgRefreshButton->Enable(comEnabled_);
+	applicationStartButton->Enable(
+	    comEnabled_ && !applicationComboBox->GetValue().IsEmpty());
 
 	event.Skip();
 }
@@ -127,7 +132,7 @@ void
 ModPlaygroundMainPanelImpl::onAppPathEntered(wxCommandEvent &)
 {
 	applicationStartButton->Enable(
-	    applicationComboBox->GetValue().Length() > 0);
+	    comEnabled_ && !applicationComboBox->GetValue().IsEmpty());
 }
 
 void

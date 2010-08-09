@@ -63,6 +63,7 @@ class ModPlaygroundMainPanelImpl : public ModPlaygroundMainPanelBase
 		 * @param[in] 1st The event.
 		 */
 		virtual void onConnectionStateChange(wxCommandEvent &);
+		bool comEnabled_;
 
 		/**
 		 * Handles keystrokes-events of AppComboBox.
