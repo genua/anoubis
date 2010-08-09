@@ -63,12 +63,8 @@ Specify the certificate. (default ~/.xanoubis/default.crt)
 .It Ar command
 .Pp
 .Bl -tag -width Ds
-.It start \&[--\&] \&<program\&> \&[args...\&]
+.It start \&<program\&> \&[args...\&]
 start a program within a new playground.
-Use "--" to separate options for
-.Nm
-from options for the program.
-.Nm
 will start\&<program\&> by calling
 .Xr exec 3 .
 After execution of
@@ -76,7 +72,7 @@ After execution of
 \&$? represents an error from
 .Nm
 or the exit code of \&<program\&> in case of
-a successful 
+a successful
 .Xr exec 3 .
 .It list
 This will print out a list of all known playgrounds.
@@ -124,7 +120,7 @@ can be deleted with the -f option.
 start firefox
 .Pp
 .Nm
-start -- ls -lh
+start ls -lh
 .\" This next request is for sections 1, 4, 6, and 8 only.
 .\" .Sh DIAGNOSTICS
 .\" The next request is for sections 2, 3, and 9 error and signal handling only.

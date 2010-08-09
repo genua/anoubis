@@ -224,7 +224,7 @@ main(int argc, char *argv[])
 	if (uid == 0)
 		prio = 0;
 
-	while ((ch = getopt(argc, argv, "fnc:k:p:u:vi:o:")) != -1) {
+	while ((ch = getopt(argc, argv, "+fnc:k:p:u:vi:o:")) != -1) {
 		switch (ch) {
 		case 'p':
 			for (i=0; prios[i] != NULL; i++) {

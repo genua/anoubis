@@ -242,7 +242,7 @@ main(int argc, char *argv[])
 		{ 0, 0, 0, 0 }
 	};
 
-	while ((ch = getopt_long(argc, argv, "A:URLCSf:c:k:u:o:nlidvr",
+	while ((ch = getopt_long(argc, argv, "+A:URLCSf:c:k:u:o:nlidvr",
 	    options, NULL)) != -1) {
 		/* No more options are allowed after a syssig option. */
 		if (syssigmode > 0)

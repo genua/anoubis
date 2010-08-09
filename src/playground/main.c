@@ -392,7 +392,7 @@ main(int argc, char *argv[])
 	}
 
 	/* Get command line arguments. */
-	while ((ch = getopt(argc, argv, "vfhc:k:")) != -1) {
+	while ((ch = getopt(argc, argv, "+vfhc:k:")) != -1) {
 		switch (ch) {
 		case 'f':
 			opts |= PGCLI_OPT_FORCE;
