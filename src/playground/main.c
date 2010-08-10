@@ -49,6 +49,7 @@
 #include <anoubis_playground.h>
 #include <anoubis_sig.h>
 #include <anoubis_transaction.h>
+#include <linux/anoubis_playground.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -1263,6 +1264,133 @@ auth_callback(struct anoubis_client *client __used, struct anoubis_msg *in,
 	return (rc);
 }
 
+/**
+ * Preparation method for the commit command, must be called
+ * once to register for notifications.
+ * @param client  The connected anoubis client structure for communication
+ * @return  0 on success, errno else
+ */
+static int
+pgcli_commit_file_prepare(struct anoubis_client *client) {
+	struct anoubis_transaction *transaction;
+	int rc;
+
+	/* register for security label remove notifications */
+	transaction = anoubis_client_register_start(client, 1 /*token*/,
+	    geteuid(), 0 /*rule_id*/, ANOUBIS_SOURCE_PLAYGROUNDFILE);
+	rc = anoubis_transaction_complete(client, transaction);
+
+	return rc;
+}
+
+/**
+ * Commit one file, expects verified parameters.
+ * This method will do the actual work to commit one file. It expects verified
+ * parameters and should not be called directly. It will remove the security
+ * label, wait for the daemon to acknowledge this and start the file scanning.
+ * Finally it will rename the file(s). 
+ *
+ * @param dev       The device of the file to commit
+ * @param inode     The inode of the file to commit
+ * @param filenames The filename(s) of the file to commit, array must be
+ *                  terminated with a NULL pointer entry.
+ * @return 0 on success
+ */
+static int
+pgcli_commit_file(struct anoubis_client *client,
+    uint64_t pgid, uint64_t dev, uint64_t inode, const char* filenames[])
+{
+	int                         rc;
+	struct anoubis_transaction *transaction;
+	struct anoubis_msg         *notification;
+	struct pg_file_message     *filemsg;
+	int                         offset;
+	int                         have_notification;
+	char                       *scanfile;
+	int                         filenamecnt;
+
+	/* some validations */
+	filenamecnt = 0;
+	while (filenames[filenamecnt] != NULL) {
+		filenamecnt++;
+	}
+	if (filenamecnt == 0) {
+		/* cant commit file without at least one valid name */
+		return -EINVAL;
+	}
+
+	/* remove the security label */
+	rc = lremovexattr(filenames[0], "security.anoubis_pg");
+	/* EINPROGRESS means success */
+	if ((rc >= 0) || (errno != EINPROGRESS)) {
+		/* Note: needs better logging:
+                 *   ENOTEMPTY: directories must be commited before
+                 *              committing files within it 
+                 *   (rc==0):   file not in playground
+                 */
+		return rc;
+	}
+
+	/* wait until the daemon sends us a notification that the file is
+	 * ready for scanning */
+	have_notification = 0;
+	while (!have_notification) {
+		rc = anoubis_client_wait(client);
+		if (rc < 0) {
+			return -rc;
+		}
+
+		while((notification = anoubis_client_getnotify(client))) {
+			/* ignore incorrect messages */
+			if ((get_value(notification->u.notify->type) != 
+			    ANOUBIS_N_LOGNOTIFY) ||
+			    (get_value(notification->u.notify->subsystem) !=
+			    ANOUBIS_SOURCE_PLAYGROUNDFILE)) {
+				anoubis_msg_free(notification);
+				continue;
+			}
+
+			/* get the containing kernel message */
+			offset = get_value(notification->u.notify->evoff);
+			filemsg = (struct pg_file_message*)
+			    (notification->u.notify->payload+offset);
+
+			/* ignore incorrect messages */
+			if ((filemsg->pgid != pgid) ||
+			    (filemsg->dev != dev) ||
+			    (filemsg->ino != inode) ||
+			    (filemsg->op != ANOUBIS_PGFILE_SCAN)) {
+				anoubis_msg_free(notification);
+				continue;
+			}
+
+			/* kernel notify is for our requested file */
+			/* store the the verified path within the device */
+			scanfile = strdup(filemsg->path);
+
+			anoubis_msg_free(notification);
+			have_notification = 1;
+			break;
+                }
+	}
+
+	/* send the commit request to the daemon */
+	transaction = anoubis_client_pgcommit_start(client, pgid, scanfile);
+	free(scanfile);
+	rc = anoubis_transaction_complete(client, transaction);
+	if (rc < 0) {
+		return rc;
+	}
+
+	/* rename the files */
+	rc = pgfile_process(dev, inode, filenames);
+	if (rc < 0) {
+		return rc;
+	}
+
+	return 0;
+}
+
 /*
  * XXX CEH: The implementation of this function is hack that is only used
  * XXX CEH: to prove that the protocol part in the daemon works as expected.
@@ -1272,15 +1400,11 @@ pgcli_commit(uint64_t pgid, const char *file)
 {
 	struct achat_channel		*channel = NULL;
 	struct anoubis_client		*client = NULL;
-	struct anoubis_transaction	*transaction = NULL;
+	//struct anoubis_transaction	*transaction = NULL;
 	int				 rc;
+	struct stat stats;
+	char * filenames[2];
 
-	if (lremovexattr(file, "security.anoubis_pg") < 0) {
-		if (errno != EINPROGRESS && errno != EPERM && errno)
-			return -errno;
-	}
-	fprintf(stderr, "Waiting one second ...\n");
-	sleep(1);
 	rc = pgcli_ui_init();
 	if (rc != 0)
 		return 1;
@@ -1293,16 +1417,23 @@ pgcli_commit(uint64_t pgid, const char *file)
 		return -EIO;
 	}
 
-	/* Connection established. Send message and wait for answer. */
-	transaction = anoubis_client_pgcommit_start(client, pgid, file);
-	rc = anoubis_transaction_complete(client, transaction);
+	/* Note: this is just very hacky demonstration code for
+	 * commiting single files */
+	rc = pgcli_commit_file_prepare(client);
 	if (rc < 0) {
-		PGCLI_CONNECTION_WIPE(channel, client);
+		printf("prepare failed\n");
 		return rc;
 	}
 
+	filenames[0] = (char*)file;
+	filenames[1] = 0;
+	stat(file, &stats);
+
+	rc = pgcli_commit_file(client, pgid, expand_dev(stats.st_dev), stats.st_ino,
+	    (const char**)filenames);
+
 	/* Cleanup. */
-	anoubis_transaction_destroy(transaction);
+	//anoubis_transaction_destroy(transaction);
 	PGCLI_CONNECTION_WIPE(channel, client);
 
 	return rc;
