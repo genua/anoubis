@@ -988,16 +988,16 @@ pgcli_remove(anoubis_cookie_t pgid)
 }
 
 /**
- * Delete one file from a playground.
- * Prints warnings if file does not exist, does not belong to the
- * playground or cannot be deleted.
+ * Locate one file in a playground.
+ * Prints warnings if file does not exist or does not belong to the
+ * playground 
  * @param filelist  The anoubis filelist message with the files in the
  *                  selected playground.
- * @param filename  The filename to delete.
- * @return 0 on success, 1 on error
+ * @param filename  The filename to locate.
+ * @return The playground file or NULL on error.
  */
-int
-pgcli_delete_file(struct anoubis_msg *filelist, char* filename)
+char *
+pgcli_find_file(struct anoubis_msg *filelist, const char *filename)
 {
 	while (filelist) {
 		int record_cnt;
@@ -1007,7 +1007,7 @@ pgcli_delete_file(struct anoubis_msg *filelist, char* filename)
 		    record_cnt < get_value(filelist->u.pgreply->nrec);
 		    ++record_cnt) {
 			Anoubis_PgFileRecord *rec;
-			char *   path;
+			char	*path, *npath;
 			uint64_t dev, ino;
 
 			rec = (Anoubis_PgFileRecord *)
@@ -1024,46 +1024,38 @@ pgcli_delete_file(struct anoubis_msg *filelist, char* filename)
 				continue;
 			}
 
-			if (strcmp(filename, path) != 0) {
+			if ((npath = strdup(path)) == NULL) {
+				free(path);
+				return NULL;
+			}
+			pgfile_normalize_file(npath);
+			if (strcmp(filename, npath) != 0) {
 				/* wrong file, check next */
 				free(path);
+				free(npath);
 				continue;
 			}
-
-			if ((unlink(path) == 0) ||
-			    (errno == EISDIR && rmdir(path) == 0)) {
-				printf(" UNLINKED %s\n", path);
-				free(path);
-				return 0;
-			} else {
-				printf(" ERROR for %s: %s\n", path,
-				    strerror(errno));
-				free(path);
-				return 1;
-			}
+			free(npath);
+			return path;
 		}
 
 		filelist = filelist->next;
 		offset = 0;
 	}
 
-
-	printf(" ERROR file not in playground: %s\n", filename);
-	return 1;
+	return(NULL);
 }
 
 static int
 pgcli_delete(anoubis_cookie_t pgid, int filecnt, char** filenames)
 {
-	int rc;
-
 	struct achat_channel        *channel = NULL;
 	struct anoubis_client       *client = NULL;
 	struct anoubis_msg          *message = NULL;
 	struct anoubis_transaction  *transaction = NULL;
 
-	int fileidx;
-	int errcnt;
+	int rc, fileidx, errcnt = 0;
+	char *path;
 
 	rc = pgcli_ui_init();
 	if (rc != 0)
@@ -1091,13 +1083,25 @@ pgcli_delete(anoubis_cookie_t pgid, int filecnt, char** filenames)
 		return rc;
 
 	/* check if files exist and delete them */
-	fprintf(stderr, "now deleting files:\n");
-	errcnt=0;
 	for (fileidx=0; fileidx<filecnt; fileidx++) {
-		errcnt +=
-		    pgcli_delete_file(transaction->msg, filenames[fileidx]);
+		path = pgcli_find_file(transaction->msg, filenames[fileidx]);
+		if (path == NULL) {
+			printf(" ERROR file not in playground: %s\n",
+			    filenames[fileidx]);
+			continue;
+		}
+
+		if ((unlink(path) == 0) ||
+		    (errno == EISDIR && rmdir(path) == 0)) {
+			printf(" UNLINKED %s\n", filenames[fileidx]);
+		} else {
+			printf(" ERROR for %s: %s\n", path,
+			    strerror(errno));
+			errcnt++;
+		}
+		free(path);
 	}
-	rc = errcnt?1:0;
+	rc = errcnt? 1:0;
 
 	/* Cleanup. */
 	anoubis_transaction_destroy(transaction);
@@ -1172,7 +1176,10 @@ pgcli_files_print_record(Anoubis_PgFileRecord *record, int needpath)
 		if (needpath)
 			return 0;
 		path = anoubis_strerror(-error);
+	} else {
+		pgfile_normalize_file(path);
 	}
+
 	printf("%*"PRIx64" ", PGCLI_OUTLEN_ID, get_value(record->pgid));
 	printf("%*"PRIx64" ", PGCLI_OUTLEN_DEV, dev);
 	printf("%*"PRIx64" ", PGCLI_OUTLEN_INODE, ino);
@@ -1400,10 +1407,11 @@ pgcli_commit(uint64_t pgid, const char *file)
 {
 	struct achat_channel		*channel = NULL;
 	struct anoubis_client		*client = NULL;
-	//struct anoubis_transaction	*transaction = NULL;
+	struct anoubis_msg		*message = NULL;
+	struct anoubis_transaction	*transaction = NULL;
 	int				 rc;
 	struct stat stats;
-	char * filenames[2];
+	char *path, *filenames[2];
 
 	rc = pgcli_ui_init();
 	if (rc != 0)
@@ -1417,17 +1425,40 @@ pgcli_commit(uint64_t pgid, const char *file)
 		return -EIO;
 	}
 
+	/* Retrieve information about the playground. */
+	rc = pgcli_validate_playground(pgid, channel, client, message);
+	if (rc != 0)
+		return rc;
+
+	transaction = anoubis_client_pglist_start(client,
+	    ANOUBIS_PGREC_FILELIST, pgid);
+	rc = anoubis_transaction_complete(client, transaction);
+	if (rc < 0)
+		return rc;
+
+	/* check if files exist and delete them */
+	if ((path = pgcli_find_file(transaction->msg, file)) == NULL) {;
+		printf(" ERROR file not in playground: %s\n", file);
+		return -ENOENT;
+	}
+	if (stat(path, &stats) == -1) {
+		printf(" ERROR failed to stat '%s': %s\n",
+		    path, strerror(errno));
+		free(path);
+		return -errno;
+	}
+
+	filenames[0] = path;
+	filenames[1] = 0;
+
 	/* Note: this is just very hacky demonstration code for
 	 * commiting single files */
 	rc = pgcli_commit_file_prepare(client);
 	if (rc < 0) {
 		printf("prepare failed\n");
+		free(path);
 		return rc;
 	}
-
-	filenames[0] = (char*)file;
-	filenames[1] = 0;
-	stat(file, &stats);
 
 	rc = pgcli_commit_file(client, pgid, expand_dev(stats.st_dev), stats.st_ino,
 	    (const char**)filenames);
@@ -1435,6 +1466,7 @@ pgcli_commit(uint64_t pgid, const char *file)
 	/* Cleanup. */
 	//anoubis_transaction_destroy(transaction);
 	PGCLI_CONNECTION_WIPE(channel, client);
+	free(path);
 
 	return rc;
 }

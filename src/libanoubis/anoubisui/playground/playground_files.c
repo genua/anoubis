@@ -285,7 +285,7 @@ pgfile_append_to_list(struct pgfile_list *list, char *ptr)
 }
 
 /**
- * Find the first valid ".plgr.xxx[.D] prefix of an intermediate path
+ * Locate the first valid ".plgr.xxx[.D] prefix of an intermediate path
  * component of the string.
  *
  * @param str The path name string.
@@ -296,7 +296,7 @@ static char *
 pgfile_find_first_plgr_prefix(char *str, int *lenp)
 {
 	char			*search;
-	int			 len, len2;
+	int			 len;
 
 	search = str;
 	while (1) {
@@ -321,14 +321,9 @@ pgfile_find_first_plgr_prefix(char *str, int *lenp)
 			return NULL;
 		if (search[len] == '/')
 			goto next;
-		len2 = 0;
-		while (search[len + len2]) {
-			if (search[len+len2] == '/') {
-				(*lenp) = len;
-				return search;
-			}
-			len2++;
-		}
+
+		(*lenp) = len;
+		return search;
 next:
 		search += 5;
 	}
@@ -350,7 +345,7 @@ pgfile_strcmp(const void *ap, const void *bp)
 
 /**
  * Take a list of file names and normalize the list. This removes
- * duplicates and adds name variantes where playground directory component
+ * duplicates and adds name variants where playground directory components
  * have been replaced by their non-playground equivalents.
  *
  * @param list The new names are filled into this list. The list can
@@ -386,7 +381,7 @@ pgfile_normalize_file_list(struct pgfile_list *list, const char const *names[])
 			if (str == NULL)
 				goto err;
 			prefix = pgfile_find_first_plgr_prefix(str, &len);
-			if (prefix == NULL) {
+			if (!prefix || !strchr(prefix, '/')) {
 				free(str);
 				break;
 			}
@@ -415,6 +410,21 @@ pgfile_normalize_file_list(struct pgfile_list *list, const char const *names[])
 err:
 	pgfile_free_list(list);
 	return -ENOMEM;
+}
+
+/**
+ * Take a file name and remove all playground markers.
+ *
+ * @param file The string that will be normalized.
+ */
+void
+pgfile_normalize_file(char *file)
+{
+	char *prefix;
+	int len;
+
+	while ((prefix = pgfile_find_first_plgr_prefix(file, &len)) != NULL)
+		memmove(prefix, prefix + len, strlen(prefix) + 1 - len);
 }
 
 /**
