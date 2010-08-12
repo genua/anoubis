@@ -35,9 +35,9 @@
 .Sh SYNOPSIS
 .\" For a program:  program [-abc] file ...
 .Nm playground
-.Op Fl fh
-.Op -k keyfile
-.Op -c certificate
+.Op Fl hf
+.Op Fl k Ar keyfile
+.Op Fl c Ar certificate
 .Ar command
 .Sh DESCRIPTION
 The
@@ -64,8 +64,9 @@ Specify the certificate. (default ~/.xanoubis/default.crt)
 .Pp
 .Bl -tag -width Ds
 .It start \&<program\&> \&[args...\&]
-start a program within a new playground.
-will start\&<program\&> by calling
+start a program within a new playground. The
+.Nm
+utility will start \&<program\&> by calling
 .Xr exec 3 .
 After execution of
 .Nm
@@ -87,7 +88,7 @@ The list contains the following items for each playground:
 .El
 .It files \&<playground id\&>
 This prints out a list of files belonging to a given playground.
-The playground is specified by it's id (in hexadecimal as supplied by the
+The playground is specified by its id (in hexadecimal as supplied by the
 list command). The list contains the following items for each file:
 .Bl -tag -width Ds
 .It PGID - id of playground
@@ -97,15 +98,26 @@ list command). The list contains the following items for each file:
 .El
 .It remove \&<playground id\&>
 This deletes all the files belonging to a given playground.
-The playground is specified by it's id (in hexadecimal as supplied by the
-list command). Removing an active playground requires the
+The playground is specified by its id (in hexadecimal as supplied by the
+.Ar list
+command). Removing an active playground requires the
 .Fl f
 option.
 .It delete \&<playground id\&> \&<file\&>
 Delete the specified file(s) from the specified playground. The playground is
-specified by it's id in hexadecimal, the files are specified with their full
-playground name as shown in the list command. Files from active playgrounds
-can be deleted with the -f option.
+specified by its id in hexadecimal, the files are specified with their
+regular name as shown in the
+.Ar list
+command. Files from active playgrounds
+can be deleted with the
+.Fl f
+option.
+.It commit \&<playground id\&> \&<file\&>
+Move the specified file(s) from the specified playground to the normal
+filesystem. The playground is specified by its id in hexadecimal, the files
+are specified with their full path as shown in the
+.Ar list
+command.
 .El
 .El
 .El
