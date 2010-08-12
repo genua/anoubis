@@ -100,7 +100,7 @@ playground_start_fork(char **argv)
 		return (-errno);
 	}
 
-	if ((pid = fork()) < 0) {
+	if ((pid = vfork()) < 0) {
 		return (-errno);
 	}
 
@@ -156,6 +156,12 @@ playground_start_fork(char **argv)
 			sscanf(buffer, "%d", &rc);
 		}
 		close(pipes[0]);
+		/*
+		 * Give the child time to complete its startup. This
+		 * is mainly useful in the GUI which wants to see the
+		 * program name after the exec in the playground list.
+		 */
+		usleep(100000);
 	}
 
 	return (rc);
