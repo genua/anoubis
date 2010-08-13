@@ -31,7 +31,7 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <errno.h>
-#include <unistd.h>
+#include <signal.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -337,17 +337,31 @@ anoubis_waitfor(pid_t pid)
  * @return Zero if the command could be executed successfully. A negative
  *         errno code in case of an error. The special return code -ECHILD
  *         indicates that the child command did not complete successfully.
+ * NOTE: This function temporarily resets the SIGCHLD signal handler of the
+ *     calling process to SIG_DFL.
  */
 static int
 anoubis_exec_openssl(char *argv[], const char *pass, mode_t umaskadd)
 {
-	int			 p[2], len = 0, ret = 0;
+	int			 p[2] = {-1, -1 }, len = 0, ret = 0;
 	pid_t			 pid;
+	struct sigaction	 act, oldact;
 
-	if (pipe(p) < 0)
+
+	sigemptyset(&act.sa_mask);
+	act.sa_handler = SIG_DFL;
+	act.sa_flags = 0;
+	if (sigaction(SIGCHLD, &act, &oldact) < 0)
 		return -errno;
-	if ((pid = fork()) < 0)
-		return -errno;
+
+	if (pipe(p) < 0) {
+		ret = -errno;
+		goto err;
+	}
+	if ((pid = fork()) < 0) {
+		ret = -errno;
+		goto err;
+	}
 
 	if (pid == 0) {		/* Child */
 		/* We don't have any stdio file handles ==> use _exit */
@@ -382,13 +396,19 @@ anoubis_exec_openssl(char *argv[], const char *pass, mode_t umaskadd)
 	close(p[1]);
 	if (pass && ret != len) {
 		anoubis_waitfor(pid);
+		sigaction(SIGCHLD, &oldact, NULL);
 		return -ECHILD;
 	}
 	ret = anoubis_waitfor(pid);
-	if (ret < 0) {
-		return ret;
-	}
-	return 0;
+	sigaction(SIGCHLD, &oldact, NULL);
+	return ret;
+err:
+	if (p[0] >= 0)
+		close(p[0]);
+	if (p[1] >= 0)
+		close(p[1]);
+	sigaction(SIGCHLD, &oldact, NULL);
+	return ret;
 }
 
 /**

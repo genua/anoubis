@@ -70,6 +70,7 @@ apncmd_create(const char *workdir, const char *fullpath,
 
 	if (ret == NULL)
 		return NULL;
+	ret->restoresigact = 0;
 	memset(ret, 0, sizeof(struct apncmd));
 	if (workdir) {
 		ret->workdir = strdup(workdir);
@@ -133,6 +134,8 @@ apncmd_free(struct apncmd *cmd)
 		free(cmd->fullpath);
 	if (cmd->workdir)
 		free(cmd->workdir);
+	if (cmd->restoresigact)
+		sigaction(SIGCHLD, &cmd->oldact, NULL);
 	free(cmd);
 }
 
@@ -144,13 +147,20 @@ apncmd_free(struct apncmd *cmd)
 int
 apncmd_start(struct apncmd *cmd)
 {
-	int	fd;
-	int	startpipe[2];
-	char	buf[10];
+	int			fd;
+	int			startpipe[2];
+	char			buf[10];
+	struct sigaction	act;
 
 	/* Cmd already running. */
 	if (cmd->pid != 0)
 		return -EINPROGRESS;
+	act.sa_flags = 0;
+	sigemptyset(&act.sa_mask);
+	act.sa_handler = SIG_DFL;
+	if (sigaction(SIGCHLD, &act, &cmd->oldact) < 0)
+		return -errno;
+	cmd->restoresigact = 1;
 	if (pipe(startpipe) < 0)
 		return -errno;
 	cmd->pid = fork();
@@ -199,12 +209,20 @@ apncmd_start(struct apncmd *cmd)
 int
 apncmd_start_pipe(struct apncmd *cmd)
 {
-	int	p[2], startpipe[2];
-	char	buf[10];
+	int			p[2], startpipe[2];
+	char			buf[10];
+	struct sigaction	act;
 
 	/* Cmd alread running. */
 	if (cmd->pid != 0)
 		return -EINPROGRESS;
+
+	act.sa_flags = 0;
+	sigemptyset(&act.sa_mask);
+	act.sa_handler = SIG_DFL;
+	if (sigaction(SIGCHLD, &act, &cmd->oldact) < 0)
+		return -errno;
+	cmd->restoresigact = 1;
 	if (pipe(startpipe) < 0)
 		return -errno;
 	if (pipe(p) < 0) {
@@ -267,5 +285,9 @@ apncmd_wait(struct apncmd *cmd)
 	if (cmd->pidcallback)
 		cmd->pidcallback(cmd->pid, 0);
 	cmd->pid = 0;
+	if (cmd->restoresigact) {
+		sigaction(SIGCHLD, &cmd->oldact, NULL);
+		cmd->restoresigact = 0;
+	}
 	return status;
 }

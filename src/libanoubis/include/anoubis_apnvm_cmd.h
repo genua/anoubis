@@ -29,6 +29,7 @@
 #define _APNCMD_H_
 
 #include <sys/types.h>
+#include <signal.h>
 #include <unistd.h>
 
 #include "anoubis_apnvm.h"
@@ -42,6 +43,8 @@ struct apncmd {
 	int	 argc;		/* Number of arguments. */
 	char	*argv[APNCMD_MAXARGS];	/* Argument vector. */
 	apnvm_pidcallback_t	pidcallback;
+	struct sigaction	oldact;
+	char			restoresigact;
 };
 
 extern struct apncmd	*apncmd_create(const char *workdir,
