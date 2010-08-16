@@ -254,6 +254,8 @@ xanoubis_SOURCES= \
 	model/NotificationPerspective.h \
 	model/NotifyAnswer.cpp \
 	model/NotifyAnswer.h \
+	model/PlaygroundFileNotify.cpp \
+	model/PlaygroundFileNotify.h \
 	model/PlaygroundFileEntry.cpp \
 	model/PlaygroundFileEntry.h \
 	model/PlaygroundInfoEntry.cpp \

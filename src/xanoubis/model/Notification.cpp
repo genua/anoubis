@@ -63,6 +63,7 @@
 #include "MainUtils.h"
 #include "StatusNotify.h"
 #include "DaemonAnswerNotify.h"
+#include "PlaygroundFileNotify.h"
 
 #include <wx/listimpl.cpp>
 WX_DEFINE_LIST(NotifyList);
@@ -660,6 +661,13 @@ Notification::factory(struct anoubis_msg *notifyMsg)
 		notify = new DaemonAnswerNotify(notifyMsg);
 		break;
 	case ANOUBIS_N_LOGNOTIFY:
+		/* special case: PlaygroundFileNotify */
+		if (subsystem == ANOUBIS_SOURCE_PLAYGROUNDFILE) {
+			notify = new PlaygroundFileNotify(notifyMsg);
+			break;
+		}
+
+		/* else: 'regular' case */
 		switch (loglevel) {
 		case APN_LOG_NONE:
 			/* don't show notifies of loglevel 0/none */
