@@ -344,7 +344,7 @@ static char	*keyFile = NULL;
 static char	*certFile = NULL;
 
 static const char defaultCertFile[] = ".xanoubis/default.crt";
-static const char defaultKeyFile[]  =  ".xanoubis/default.key";
+static const char defaultKeyFile[]  = ".xanoubis/default.key";
 
 #endif /* LINUX */
 
@@ -829,14 +829,13 @@ pgcli_files(anoubis_cookie_t pgid)
  * @param pgid The playground id to validate
  * @param channel The communcation channel to use.
  * @param client  The communication client to use.
- * @param message The communication message to use.
- * @param transaction The communication transaction to use.
  * @return Zero if playground was successfully validated, error else.
  */
 int
 pgcli_validate_playground(anoubis_cookie_t pgid, struct achat_channel *channel,
-    struct anoubis_client *client, struct anoubis_msg *message)
+    struct anoubis_client *client)
 {
+	struct anoubis_msg *message;
 	struct anoubis_transaction *transaction;
 
 	/* Retrieve information about the playground. */
@@ -933,7 +932,6 @@ pgcli_remove(anoubis_cookie_t pgid)
 
 	struct achat_channel		*channel = NULL;
 	struct anoubis_client		*client = NULL;
-	struct anoubis_msg		*message = NULL;
 	struct anoubis_transaction	*transaction = NULL;
 
 	rc = pgcli_ui_init();
@@ -951,7 +949,7 @@ pgcli_remove(anoubis_cookie_t pgid)
 	}
 
 	/* Retrieve information about the playground. */
-	rc = pgcli_validate_playground(pgid, channel, client, message);
+	rc = pgcli_validate_playground(pgid, channel, client);
 	if (rc != 0)
 		return rc;
 
@@ -990,7 +988,7 @@ pgcli_remove(anoubis_cookie_t pgid)
 /**
  * Locate one file in a playground.
  * Prints warnings if file does not exist or does not belong to the
- * playground 
+ * playground
  * @param filelist  The anoubis filelist message with the files in the
  *                  selected playground.
  * @param filename  The filename to locate.
@@ -1051,7 +1049,6 @@ pgcli_delete(anoubis_cookie_t pgid, int filecnt, char** filenames)
 {
 	struct achat_channel        *channel = NULL;
 	struct anoubis_client       *client = NULL;
-	struct anoubis_msg          *message = NULL;
 	struct anoubis_transaction  *transaction = NULL;
 
 	int rc, fileidx, errcnt = 0;
@@ -1072,7 +1069,7 @@ pgcli_delete(anoubis_cookie_t pgid, int filecnt, char** filenames)
 	}
 
 	/* Retrieve information about the playground. */
-	rc = pgcli_validate_playground(pgid, channel, client, message);
+	rc = pgcli_validate_playground(pgid, channel, client);
 	if (rc != 0)
 		return rc;
 
@@ -1295,8 +1292,10 @@ pgcli_commit_file_prepare(struct anoubis_client *client) {
  * This method will do the actual work to commit one file. It expects verified
  * parameters and should not be called directly. It will remove the security
  * label, wait for the daemon to acknowledge this and start the file scanning.
- * Finally it will rename the file(s). 
+ * Finally it will rename the file(s).
  *
+ * @param client    The anoubis client connection.
+ * @param pgid      The playground id from which files are to be committed.
  * @param dev       The device of the file to commit
  * @param inode     The inode of the file to commit
  * @param filenames The filename(s) of the file to commit, array must be
@@ -1307,11 +1306,10 @@ static int
 pgcli_commit_file(struct anoubis_client *client,
     uint64_t pgid, uint64_t dev, uint64_t inode, const char* filenames[])
 {
-	int                         rc;
-	struct anoubis_transaction *transaction;
-	struct anoubis_msg         *notification;
-	struct pg_file_message     *filemsg;
-	int                         offset;
+	struct anoubis_msg		*notification;
+	struct pg_file_message		*filemsg;
+	struct anoubis_transaction	*transaction = NULL;
+	int                         rc, offset;
 	int                         have_notification;
 	char                       *scanfile;
 	int                         filenamecnt;
@@ -1322,20 +1320,35 @@ pgcli_commit_file(struct anoubis_client *client,
 		filenamecnt++;
 	}
 	if (filenamecnt == 0) {
-		/* cant commit file without at least one valid name */
+		/* can't commit file without at least one valid name */
 		return -EINVAL;
 	}
 
-	/* remove the security label */
-	rc = lremovexattr(filenames[0], "security.anoubis_pg");
+	/* [try to] remove the security label */
+	if ((rc = lremovexattr(filenames[0], "security.anoubis_pg") < 1)) {
 	/* EINPROGRESS means success */
-	if ((rc >= 0) || (errno != EINPROGRESS)) {
-		/* Note: needs better logging:
-                 *   ENOTEMPTY: directories must be commited before
-                 *              committing files within it 
-                 *   (rc==0):   file not in playground
-                 */
-		return rc;
+		if (errno != EINPROGRESS && errno != ENOTEMPTY && errno){
+			/* unknown error */
+			return -errno;
+		} else if (errno == ENOTEMPTY) {
+			/* parent dir not comitted */
+			char *slash;
+			slash = strrchr(filenames[0], '/');
+			if(slash == filenames[0])
+				slash++;
+			if(slash)
+				(*slash) = 0;
+			pgfile_normalize_file((char*)filenames[0]);
+			fprintf(stderr, "commit: Unable to commit playground"
+			    " file. Please commit the parent directory"
+			    " '%s' first!\n", filenames[0]);
+			return 1;
+		}
+	} else {
+		/* lremovexattr returned 0, which is not expected here */
+		fprintf(stderr, "commit: Internal error (lremovexattr"
+		    "returned unexpected result (%d))\n", rc);
+		return 1;
 	}
 
 	/* wait until the daemon sends us a notification that the file is
@@ -1349,7 +1362,7 @@ pgcli_commit_file(struct anoubis_client *client,
 
 		while((notification = anoubis_client_getnotify(client))) {
 			/* ignore incorrect messages */
-			if ((get_value(notification->u.notify->type) != 
+			if ((get_value(notification->u.notify->type) !=
 			    ANOUBIS_N_LOGNOTIFY) ||
 			    (get_value(notification->u.notify->subsystem) !=
 			    ANOUBIS_SOURCE_PLAYGROUNDFILE)) {
@@ -1378,7 +1391,7 @@ pgcli_commit_file(struct anoubis_client *client,
 			anoubis_msg_free(notification);
 			have_notification = 1;
 			break;
-                }
+		}
 	}
 
 	/* send the commit request to the daemon */
@@ -1398,21 +1411,19 @@ pgcli_commit_file(struct anoubis_client *client,
 	return 0;
 }
 
-/*
- * XXX CEH: The implementation of this function is hack that is only used
- * XXX CEH: to prove that the protocol part in the daemon works as expected.
- */
 static int
-pgcli_commit(uint64_t pgid, const char *file)
+pgcli_commit(uint64_t pgid, const char* file)
 {
-	struct achat_channel		*channel = NULL;
-	struct anoubis_client		*client = NULL;
-	struct anoubis_msg		*message = NULL;
+	struct achat_channel		*channel     = NULL;
+	struct anoubis_client		*client      = NULL;
 	struct anoubis_transaction	*transaction = NULL;
-	int				 rc;
-	struct stat stats;
-	char *path, *filenames[2];
+	struct anoubis_msg		*filelist    = NULL;
+	int		rc, filecount, file_index = 0;
+	struct		stat stats;
+	char		*pg_path     = NULL;
+	char**		filenames = NULL;
 
+	/* establish connection to daemon */
 	rc = pgcli_ui_init();
 	if (rc != 0)
 		return 1;
@@ -1425,48 +1436,110 @@ pgcli_commit(uint64_t pgid, const char *file)
 		return -EIO;
 	}
 
-	/* Retrieve information about the playground. */
-	rc = pgcli_validate_playground(pgid, channel, client, message);
-	if (rc != 0)
-		return rc;
+	/* first check if commit is allowed for specified playground */
+	rc = pgcli_validate_playground(pgid, channel, client);
+	if (rc != 0){
+	    fprintf(stderr, "commit: operation is not allowed"
+		" for this playground\n");
+	    return 1;
+	}
 
+	/* request PG file list from daemon */
 	transaction = anoubis_client_pglist_start(client,
 	    ANOUBIS_PGREC_FILELIST, pgid);
-	rc = anoubis_transaction_complete(client, transaction);
-	if (rc < 0)
-		return rc;
 
-	/* check if files exist and delete them */
-	if ((path = pgcli_find_file(transaction->msg, file)) == NULL) {;
+	rc = anoubis_transaction_complete(client, transaction);
+	if (rc < 0) {
+		PGCLI_CONNECTION_WIPE(channel, client);
+		return rc;
+	}
+
+	filelist = transaction->msg;
+	rc = pgcli_commit_file_prepare(client);
+	if (rc < 0) {
+		fprintf(stderr, "commit: internal error! (prepare failed)\n");
+		return rc;
+	}
+
+	if ((pg_path = pgcli_find_file(filelist, file)) == NULL) {
 		printf(" ERROR file not in playground: %s\n", file);
 		return -ENOENT;
 	}
-	if (stat(path, &stats) == -1) {
+
+	if (stat(pg_path, &stats) == -1) {
 		printf(" ERROR failed to stat '%s': %s\n",
-		    path, strerror(errno));
-		free(path);
+		    pg_path, strerror(errno));
+		free(pg_path);
 		return -errno;
 	}
 
-	filenames[0] = path;
-	filenames[1] = 0;
+	int iteration;
+	for (iteration=0; iteration<2; iteration++){
+		if (iteration == 0){
+		    filecount = 0;
+		} else {
+			if (!filecount){
+				fprintf(stderr, "commit: The specified"
+				    " playground contains no files which could"
+				    " be comitted!\n");
+				return 1;
+			}
+			/* initialize filename array */
+			filenames = malloc(sizeof(char*) * (filecount + 1));
+			filenames[filecount] = 0;
+			file_index = 0;
+		}
 
-	/* Note: this is just very hacky demonstration code for
-	 * commiting single files */
-	rc = pgcli_commit_file_prepare(client);
-	if (rc < 0) {
-		printf("prepare failed\n");
-		free(path);
-		return rc;
+		while (filelist) {
+			int record_cnt;
+			int offset = 0;
+			for (record_cnt = 0;
+			    record_cnt < get_value(filelist->u.pgreply->nrec);
+			    ++record_cnt) {
+				Anoubis_PgFileRecord *rec;
+				char *   path;
+				uint64_t dev, ino;
+
+				rec = (Anoubis_PgFileRecord *)
+				    (filelist->u.pgreply->payload + offset);
+				offset += get_value(rec->reclen);
+				dev = get_value(rec->dev);
+				ino = get_value(rec->ino);
+
+				if ( dev == expand_dev(stats.st_dev) &&
+				    ino == stats.st_ino ) {
+					if (iteration == 0){
+						/* fist pass -> count files */
+						filecount++;
+					} else {
+						/* second pass -> store name */
+						if ((rec->path[0] == 0)
+						    || pgfile_composename(&path,
+						    dev, ino, rec->path) < 0) {
+							continue;
+						}
+						filenames[file_index] = path;
+						file_index++;
+					}
+				}
+			}
+			filelist = filelist->next;
+			offset = 0;
+		}
+		/* rewind filelist */
+		filelist = transaction->msg;
 	}
+	filenames[file_index] = 0;
 
-	rc = pgcli_commit_file(client, pgid, expand_dev(stats.st_dev), stats.st_ino,
-	    (const char**)filenames);
+	/* initiate the actual commit procedure */
+	rc = pgcli_commit_file(client, pgid, expand_dev(stats.st_dev),
+	    stats.st_ino, (const char**)filenames);
 
-	/* Cleanup. */
-	//anoubis_transaction_destroy(transaction);
+	/* cleanup */
+	anoubis_transaction_destroy(transaction);
 	PGCLI_CONNECTION_WIPE(channel, client);
-	free(path);
+	free(filenames);
+	free(pg_path);
 
 	return rc;
 }

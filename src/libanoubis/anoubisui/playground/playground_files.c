@@ -507,7 +507,7 @@ pgfile_validate_one_name(uint64_t dev, uint64_t ino, int dirfd,
 	 * Directories cannot have real hard links. However, the link
 	 * count increases due to dir/. and dir/subdir/...
 	 */
-	if (S_ISDIR(statbuf.st_nlink))
+	if (S_ISDIR(statbuf.st_mode))
 		ret = 1;
 	else
 		ret = statbuf.st_nlink;
