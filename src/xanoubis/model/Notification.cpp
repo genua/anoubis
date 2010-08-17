@@ -169,6 +169,7 @@ Notification::getModule(void)
 			break;
 		case ANOUBIS_SOURCE_PLAYGROUND:
 		case ANOUBIS_SOURCE_PLAYGROUNDPROC:
+		case ANOUBIS_SOURCE_PLAYGROUNDFILE:
 			module_ = wxT("PLAYGROUND");
 			break;
 		case ANOUBIS_SOURCE_PROCESS:
@@ -372,6 +373,18 @@ Notification::getOperation(void)
 			}
 		} else if (subsystem == ANOUBIS_SOURCE_PLAYGROUNDPROC) {
 			return _("playground enforced for program");
+		} else if (subsystem == ANOUBIS_SOURCE_PLAYGROUNDFILE) {
+			struct pg_file_message *msg = (struct pg_file_message*)
+			    ((notify_->u.notify)->payload + evoff);
+
+			switch (msg->op) {
+			case ANOUBIS_PGFILE_SCAN:
+				operation = _("commit request");
+				break;
+			default:
+				operation = _("unknown operation");
+				break;
+			}
 		} else {
 			operation = _("unknown module");
 		}

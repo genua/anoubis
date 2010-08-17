@@ -32,11 +32,11 @@
 #include <sys/types.h>
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
+#include <wx/intl.h>
 
 #ifdef LINUX
 #include <linux/eventdev.h>
 #include <linux/anoubis.h>
-#include <linux/anoubis_playground.h>
 #endif
 #ifdef OPENBSD
 #include <dev/eventdev.h>
@@ -45,6 +45,8 @@
 
 #include <anoubis_msg.h>
 #include <anoubis_protocol.h>
+#include <anoubis_playground.h>
+#include <linux/anoubis_playground.h>
 
 #include "Notification.h"
 #include "PlaygroundFileNotify.h"
@@ -53,10 +55,41 @@
 PlaygroundFileNotify::PlaygroundFileNotify(struct anoubis_msg *msg) :
     Notification(msg)
 {
+#ifdef LINUX
+	const char* prefix = NULL;
+	char* prefixfail = NULL;
+	char* path = NULL;
+	int   rc;
+
 	/* get the containing kernel message */
 	int offset = get_value(msg->u.notify->evoff);
 	filemsg_ = (struct pg_file_message*)
 	    (msg->u.notify->payload+offset);
+
+	/* expand the path value (user friendly version of path) */
+	prefix = pgfile_resolve_dev(filemsg_->dev);
+	if (!prefix) {
+		rc = asprintf(&prefixfail, "<dev %"PRIx64">", filemsg_->dev);
+		(void)rc;
+		prefix = prefixfail;
+	}
+
+	path = strdup(filemsg_->path);
+
+	if (prefix && path) {
+		pgfile_normalize_file(path);
+
+		path_ = wxString::FromAscii(prefix) +
+		    wxString::FromAscii(path);
+	}
+
+	if (prefixfail) {
+		free(prefixfail);
+	}
+	if (path) {
+		free(path);
+	}
+#endif
 }
 
 PlaygroundFileNotify::~PlaygroundFileNotify(void)
@@ -64,38 +97,34 @@ PlaygroundFileNotify::~PlaygroundFileNotify(void)
 	/* Nothing to be done here. */
 }
 
+wxString
+PlaygroundFileNotify::getLogMessage(void)
+{
+	return wxString(_("Commit request for file "))+wxT("'")+path_+wxT("'");
+}
+
+wxString
+PlaygroundFileNotify::getPath(void)
+{
+	return path_;
+}
+
 uint64_t
 PlaygroundFileNotify::getPgId(void) {
-#ifdef LINUX
 	return filemsg_->pgid;
-#else
-	return 0;
-#endif
 }
 
 uint64_t
 PlaygroundFileNotify::getDevice(void) {
-#ifdef LINUX
 	return filemsg_->dev;
-#else
-	return 0;
-#endif
 }
 
 uint64_t
 PlaygroundFileNotify::getInode(void) {
-#ifdef LINUX
 	return filemsg_->ino;
-#else
-	return 0;
-#endif
 }
 
 const char*
-PlaygroundFileNotify::getFilePath(void) {
-#ifdef LINUX
+PlaygroundFileNotify::getRawPath(void) {
 	return filemsg_->path;
-#else
-	return NULL;
-#endif
 }

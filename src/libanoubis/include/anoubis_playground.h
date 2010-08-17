@@ -73,6 +73,7 @@ int	 pgfile_check(uint64_t dev, uint64_t ino, const char *names[]);
 int	 pgfile_process(uint64_t dev, uint64_t ino, const char *names[]);
 int	 pgfile_composename(char **, uint64_t dev, uint64_t ino, const char *);
 void	 pgfile_normalize_file(char *);
+const char* pgfile_resolve_dev(uint64_t dev);
 
 /**
  * Convert a device number as returned by stat into a device number as used

@@ -428,6 +428,21 @@ pgfile_normalize_file(char *file)
 }
 
 /**
+ * Resolve the name for the device.
+ * @returns The string prefix for the device, NULL if the device is not known
+ */
+const char *
+pgfile_resolve_dev(uint64_t dev) {
+	struct pgmount* mnt;
+	mnt = pgmounts_find(dev);
+	if (mnt) {
+		return mnt->prefix;
+	} else {
+		return NULL;
+	}
+}
+
+/**
  * Convert a whiteout file name to the corresponding file name
  * that is affected by the whiteout. Both file names include the
  * ".plgr.<ID>." prefix.

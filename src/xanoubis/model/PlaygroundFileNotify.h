@@ -42,13 +42,14 @@
 class PlaygroundFileNotify : public Notification {
 	private:
 		struct pg_file_message *filemsg_;  /**< kernel event part */
+		wxString path_;              /**< the expanded path value */
 
 	public:
 		/**
 		 * Constructor, create a new notification instance from a
-                 * notification message received from the daemon.
+		 * notification message received from the daemon.
 		 * @param msg  The anoubis notification message that this
-                 *             instance represents
+		 *             instance represents
 		 */
 		PlaygroundFileNotify(struct anoubis_msg *);
 
@@ -58,8 +59,22 @@ class PlaygroundFileNotify : public Notification {
 		~PlaygroundFileNotify(void);
 
 		/**
+		 * Get the log message for this event class.
+		 * @return The log message as wxstring.
+		 */
+		wxString    getLogMessage(void);
+
+		/**
+		 * Get the path from the notification. This is the
+		 * userfriendly version with the device prefix and
+		 * no playground references.
+		 * @return the path as wxstring.
+		 */
+		wxString    getPath(void);
+
+		/**
 		 * Get the Playground ID from the notification.
-                 * @return The ID of the playground.
+		 * @return The ID of the playground.
 		 */
 		uint64_t     getPgId(void);
 
@@ -76,12 +91,13 @@ class PlaygroundFileNotify : public Notification {
 		uint64_t     getInode(void);
 
 		/**
-		 * Get the (file) path from the notification. This is the file
-		 * referenced in the included kernel message. Do not confuse
-		 * this with getFile() in the notification itself.
+		 * Get the (raw) path from the notification. This is the
+		 * original path value from the kernel message for internal
+		 * use. It includes playground tags and is missing a device
+		 * prefix string.
 		 * @return The file path.
 		 */
-		const char*  getFilePath(void);
+		const char*  getRawPath(void);
 };
 
 #endif	/* _PLAYGROUNDFILENOTIFY_H_ */
