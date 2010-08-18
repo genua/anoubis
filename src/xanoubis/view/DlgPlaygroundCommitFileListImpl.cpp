@@ -68,9 +68,11 @@ DlgPlaygroundCommitFileListImpl::~DlgPlaygroundCommitFileListImpl(void)
 {
 	PlaygroundCtrl	*playgroundCtrl = PlaygroundCtrl::instance();
 
-	playgroundCtrl->Connect(anEVT_PLAYGROUND_ERROR, wxCommandEventHandler(
+	playgroundCtrl->Disconnect(anEVT_PLAYGROUND_ERROR,
+	    wxCommandEventHandler(
 	    DlgPlaygroundCommitFileListImpl::onPlaygroundError), NULL, this);
-	playgroundCtrl->Connect(anEVT_PLAYGROUND_ERROR, wxCommandEventHandler(
+	playgroundCtrl->Disconnect(anEVT_PLAYGROUND_COMPLETED,
+	    wxCommandEventHandler(
 	    DlgPlaygroundCommitFileListImpl::onPlaygroundCompleted), NULL,
 	    this);
 }

@@ -96,6 +96,10 @@ public:
 	 *
 	 * STATE_TODO: File should be committed (it wasn't really tried yet,
 	 *     or the initial link count check failed).
+	 * STATE_NEED_OVERWRITE: Committing failed because the target file
+	 *     exists. This user should confirm that the commit is wanted.
+	 *     If so a new task with the forceOverwrite_ flag set to true
+	 *     must be scheduled.
 	 * STATE_DO_COMMIT: The pre-commit checks of the file were successful
 	 *     and the ComThread should no try to commit the file.
 	 * STATE_LABEL_REMOVED: The file's security label was removed, the
@@ -109,6 +113,7 @@ public:
 	 */
 	enum FileState {
 		STATE_TODO,
+		STATE_NEED_OVERWRITE,
 		STATE_DO_COMMIT,
 		STATE_LABEL_REMOVED,
 		STATE_SCAN_FAILED,
@@ -124,6 +129,17 @@ public:
 	 */
 	int getFileState(int idx) {
 		return states_[idx];
+	}
+
+	/**
+	 * Return the detailed anoubis error code for a file that
+	 * could not be committed.
+	 *
+	 * @param The index of the file.
+	 * @return The error code.
+	 */
+	int getFileError(int idx) {
+		return errs_[idx];
 	}
 
 	/**
@@ -154,6 +170,14 @@ public:
 	 */
 	uint64_t getInode(int idx) {
 		return inos_[idx];
+	}
+
+	/**
+	 * Set the force overwrite flag to true. If this is set the
+	 * task will commit files even if the target file exists.
+	 */
+	void setForceOverwrite(void) {
+		forceOverwrite_ = true;
 	}
 
 private:
@@ -253,6 +277,11 @@ private:
 	std::vector<int>		  states_;
 
 	/**
+	 * The detailed error codes. Can be retrieved by getFileError().
+	 */
+	std::vector<int>		  errs_;
+
+	/**
 	 * The transaction for the current/last file list request.
 	 */
 	struct anoubis_transaction	 *listta_;
@@ -293,6 +322,12 @@ private:
 	 * are not empty, too.
 	 */
 	bool				  progress_;
+
+	/**
+	 * True if the commit should be done in force mode, i.e.
+	 * overwriting production system files is allowed.
+	 */
+	bool				  forceOverwrite_;
 };
 
 #endif	/* _PLAYGROUNDCOMMITTASK_H_ */

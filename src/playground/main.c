@@ -1309,10 +1309,10 @@ pgcli_commit_file(struct anoubis_client *client,
 	struct anoubis_msg		*notification;
 	struct pg_file_message		*filemsg;
 	struct anoubis_transaction	*transaction = NULL;
-	int                         rc, offset;
-	int                         have_notification;
-	char                       *scanfile;
-	int                         filenamecnt;
+	int				 rc, offset;
+	int				 have_notification;
+	char				*scanfile;
+	int				 filenamecnt;
 
 	/* some validations */
 	filenamecnt = 0;
@@ -1324,24 +1324,61 @@ pgcli_commit_file(struct anoubis_client *client,
 		return -EINVAL;
 	}
 
+	rc = pgfile_check(dev, inode, filenames, !(opts & PGCLI_OPT_FORCE));
+	if (rc < 0) {
+		switch (-rc) {
+		case EMLINK:
+			fprintf(stderr, "Cannot commit %" PRIx64 ":%s: "
+			    "Target file exists and has multiple hard links\n"
+			    "Use -f to overwrite\n", dev, filenames[0]);
+			return 1;
+		case EEXIST:
+			fprintf(stderr, "Cannot commit %" PRIx64 ":%s: "
+			    "Target file exists\nUse -f ot overwrite\n",
+			    dev, filenames[0]);
+			return 1;
+		case EBUSY:
+			if (opts & PGCLI_OPT_FORCE) {
+				fprintf(stderr, "Cannot find all hard links "
+				    "for %" PRIx64 ":%s: Committing anyway\n",
+				    dev, filenames[0]);
+				break;
+			}
+			fprintf(stderr, "Cannot find all hard links "
+			    "for %" PRIx64 ":%s: File will not be committed.\n"
+			    "Use -f to overwrite\n", dev, filenames[0]);
+			return 1;
+		case EXDEV:
+			fprintf(stderr, "Cannot commit file %" PRIx64 ":%s: "
+			    "Device is not mounted.\n", dev, filenames[0]);
+			return 1;
+		default:
+			return rc;
+		}
+	}
 	/* [try to] remove the security label */
-	if ((rc = lremovexattr(filenames[0], "security.anoubis_pg") < 1)) {
-	/* EINPROGRESS means success */
-		if (errno != EINPROGRESS && errno != ENOTEMPTY && errno){
+	if ((rc = lremovexattr(filenames[0], "security.anoubis_pg") < 0)) {
+		/* EINPROGRESS means success */
+		if (errno != EINPROGRESS && errno != ENOTEMPTY) {
 			/* unknown error */
 			return -errno;
 		} else if (errno == ENOTEMPTY) {
 			/* parent dir not comitted */
-			char *slash;
-			slash = strrchr(filenames[0], '/');
-			if(slash == filenames[0])
+			char	*dir, *slash;
+
+			dir = strdup(filenames[0]);
+			if (!dir)
+				return -ENOMEM;
+			slash = strrchr(dir, '/');
+			if (slash == dir)
 				slash++;
-			if(slash)
+			if (slash)
 				(*slash) = 0;
-			pgfile_normalize_file((char*)filenames[0]);
+			pgfile_normalize_file(dir);
 			fprintf(stderr, "commit: Unable to commit playground"
-			    " file. Please commit the parent directory"
-			    " '%s' first!\n", filenames[0]);
+			    " file %s. Please commit the parent directory"
+			    " %s first!\n", filenames[0], dir);
+			free(dir);
 			return 1;
 		}
 	} else {

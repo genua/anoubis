@@ -432,8 +432,10 @@ pgfile_normalize_file(char *file)
  * @returns The string prefix for the device, NULL if the device is not known
  */
 const char *
-pgfile_resolve_dev(uint64_t dev) {
+pgfile_resolve_dev(uint64_t dev)
+{
 	struct pgmount* mnt;
+
 	mnt = pgmounts_find(dev);
 	if (mnt) {
 		return mnt->prefix;
@@ -559,14 +561,21 @@ pgfile_validate_one_name(uint64_t dev, uint64_t ino, int dirfd,
  *     EBUSY: Some but not all links to the file were found in the
  *         list of file names.
  *     ENOMEM: Memory allocation failure.
+ *     EEXIST: At least one of the target files exists and would have to
+ *         be overwritten. Only returned if checkoverwrite is true.
+ *     EMLINK: The target file has more than one hardlink and this
+ *         hardlink will be broken by the commit. Only returned if
+ *         checkoverwrite is true.
  */
 int
-pgfile_check(uint64_t dev, uint64_t ino, const char *namearr[])
+pgfile_check(uint64_t dev, uint64_t ino, const char *namearr[],
+    int checkoverwrite)
 {
 	struct pgmount		*mnt = pgmounts_find(dev);
 	int			 totallinks = 0, foundlinks = 0;
 	int			 i;
 	struct pgfile_list	 list;
+	struct stat		 statbuf;
 
 	/* Device is currently not mounted. */
 	if (!mnt)
@@ -574,7 +583,8 @@ pgfile_check(uint64_t dev, uint64_t ino, const char *namearr[])
 	if (pgfile_normalize_file_list(&list, namearr) < 0)
 		return -ENOMEM;
 	for (i=0; i<list.listlen; ++i) {
-		int		nlinks;
+		int		 nlinks, off;
+		char		*targetname, *last, ch;
 
 		nlinks = pgfile_validate_one_name(dev, ino, mnt->dirfd,
 		    list.list[i]);
@@ -582,6 +592,37 @@ pgfile_check(uint64_t dev, uint64_t ino, const char *namearr[])
 			continue;
 		totallinks = nlinks;
 		foundlinks++;
+		if (!checkoverwrite)
+			continue;
+		off = 0;
+		while(list.list[i][off] == '/')
+			off++;
+		targetname = strdup(list.list[i]+off);
+		if (targetname == NULL) {
+			pgfile_free_list(&list);
+			return -ENOMEM;
+		}
+		last = strrchr(targetname, '/');
+		if (last)
+			last++;
+		else
+			last = targetname;
+		if (sscanf(last, ".plgr.%*x%c%n", &ch, &off) < 1) {
+			free(targetname);
+			continue;
+		}
+		memmove(last, last+off, strlen(last+off)+1);
+		nlinks = fstatat(mnt->dirfd, targetname, &statbuf,
+		    AT_SYMLINK_NOFOLLOW);
+		free(targetname);
+		if (nlinks < 0)
+			continue;
+		/* The target file exists. This is alway an error. */
+		pgfile_free_list(&list);
+		if (S_ISDIR(statbuf.st_mode) || statbuf.st_nlink == 1)
+			return -EEXIST;
+		else
+			return -EMLINK;
 	}
 	pgfile_free_list(&list);
 	if (totallinks == 0)
@@ -768,7 +809,7 @@ pgfile_composename(char **pathp __used, uint64_t dev __used,
 
 int
 pgfile_check(uint64_t dev __used, uint64_t ino __used,
-    const char *namearr[] __used)
+    const char *namearr[] __used, int checkoverwrite __used)
 {
 	return -ENOSYS;
 }
@@ -778,6 +819,17 @@ pgfile_process(uint64_t dev __used, uint64_t ino __used,
     const char *namearr[] __used)
 {
 	return -ENOSYS;
+}
+
+void
+pgfile_normalize_file(char *file __used)
+{
+}
+
+const char *
+pgfile_resolve_dev(uint64_t dev __used)
+{
+	return NULL;
 }
 
 #endif

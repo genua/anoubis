@@ -136,6 +136,43 @@ class PlaygroundCtrl : public Singleton<PlaygroundCtrl> , public wxEvtHandler
 		 */
 		PlaygroundCtrl(void);
 
+		/**
+		 * Commit a set of files that are already known by their
+		 * device and inode number. This is an internal helper
+		 * function.
+		 *
+		 * @param pgid The playground ID.
+		 * @param devs The list of device numbers.
+		 * @param inos The list of inode numbers.
+		 * @param force True if the force overwrite flag should be
+		 *     set on the commit task.
+		 * @return None.
+		 */
+		void commitFiles(uint64_t pgid, std::vector<uint64_t> devs,
+		    std::vector<uint64_t> inos, bool force);
+
+		/**
+		 * Construct a user readable error message from a file
+		 * commit state and an associated error code.
+		 *
+		 * @param state The file commit state.
+		 * @param err The anoubis error code (positive).
+		 * @return An error message string.
+		 */
+		wxString getCommitErrorMessage(int state, int err);
+
+		/**
+		 * Return a human readable identifier (a comma separated
+		 * list of path names) for a playground file given by
+		 * device and inode.
+		 *
+		 * @param dev The device number.
+		 * @param ino The inode number.
+		 * @return A string that can be used to present the file
+		 *     to the user.
+		 */
+		wxString fileIdentification(uint64_t dev, uint64_t ino);
+
 	private:
 		/**
 		 * List of playground infos.

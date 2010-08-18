@@ -28,6 +28,7 @@
 #include <config.h>
 
 #include <set>
+#include <wx/msgdlg.h>
 
 #include "anoubis_errno.h"
 #include "anoubis_playground.h"
@@ -190,10 +191,41 @@ PlaygroundCtrl::OnPlaygroundFilesArrived(TaskEvent & event)
 	delete task;
 }
 
+wxString
+PlaygroundCtrl::getCommitErrorMessage(int state, int err)
+{
+	switch (err) {
+	case EXDEV:
+		return _("The device is not mounted.");
+	case EBUSY:
+		return _("Cannot find all hard links to the file");
+	}
+	switch (state) {
+	case PlaygroundCommitTask::STATE_TODO:
+		return _("Did not try to commit the file.");
+	case PlaygroundCommitTask::STATE_NEED_OVERWRITE:
+		switch (err) {
+		case EMFILE:
+			return _("Target file exists and has multiple "
+			    "hard links.");
+		case EEXIST:
+			return _("Target file exists.");
+		}
+		break;
+	case PlaygroundCommitTask::STATE_SCAN_FAILED:
+		return _("File scanners reported a problem with the file.");
+	case PlaygroundCommitTask::STATE_RENAME_FAILED:
+		break;
+	}
+	return wxString::Format(wxT("%hs"), anoubis_strerror(err));
+}
+
 void
 PlaygroundCtrl::OnPlaygroundFilesCommitted(TaskEvent &event)
 {
 	PlaygroundCommitTask	*task = NULL;
+	bool			 errors = false;
+	std::vector<uint64_t>	 devs, inos;
 
 	task = dynamic_cast<PlaygroundCommitTask *>(event.getTask());
 	if (task == NULL) {
@@ -204,29 +236,44 @@ PlaygroundCtrl::OnPlaygroundFilesCommitted(TaskEvent &event)
 	event.Skip(false);
 	if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
 		handleComTaskResult(task);
-	} else {
-		bool	errors = false;
-
-		for (int i=0; i<task->getFileCount(); ++i) {
-			int	state = task->getFileState(i);
-
-			if (state == PlaygroundCommitTask::STATE_COMPLETE)
-				continue;
-			/*
-			 * XXX CEH: This must mention the file name and
-			 * XXX CEH: evaluate the file state.
-			 */
-			errorList_.Add(wxString::Format(_(
-			    "Commit for file dev=%lld ino=%lld failed. "
-			    "File state is %d"), (long long)task->getDevice(i),
-			    task->getInode(i), state));
-			errors = true;
-		}
-		if (errors)
-			sendErrorEvent();
+		sendCompletedEvent();
+		updatePlaygroundFiles(task->getPgid(), false);
+		delete task;
+		return;
 	}
-	sendCompletedEvent();
-	updatePlaygroundFiles(task->getPgid(), false);
+
+	for (int i=0; i<task->getFileCount(); ++i) {
+		int		s = task->getFileState(i);
+		wxString	msg, fullmsg, file;
+
+		if (s == PlaygroundCommitTask::STATE_COMPLETE)
+			continue;
+		msg = getCommitErrorMessage(s, task->getFileError(i));
+		file = fileIdentification(task->getDevice(i),
+		    task->getInode(i));
+		fullmsg = wxString::Format(_("Commit for file(s) %ls "
+		    "failed. %ls"), file.c_str(), msg.c_str());
+		if (s == PlaygroundCommitTask::STATE_NEED_OVERWRITE) {
+			fullmsg += _(" Commit anyway?");
+			if (wxMessageBox(fullmsg, _("Playground Commit"),
+			    wxYES_NO) == wxYES) {
+				devs.push_back(task->getDevice(i));
+				inos.push_back(task->getInode(i));
+				continue;
+			}
+		} else {
+			errorList_.Add(fullmsg);
+		}
+		errors = true;
+	}
+	if (errors)
+		sendErrorEvent();
+	if (devs.size() == 0) {
+		sendCompletedEvent();
+		updatePlaygroundFiles(task->getPgid(), false);
+	} else {
+		commitFiles(task->getPgid(), devs, inos, true);
+	}
 	delete task;
 }
 
@@ -307,6 +354,7 @@ PlaygroundCtrl::extractFilesTask(PlaygroundFilesTask *task)
 			/* ret.first contains the element from the list */
 			PlaygroundFileEntry *cur = *ret.first;
 			cur->addPath(wxString::FromAscii(path_abs));
+			free(path_abs);
 			break;
 		}
 		case -EBUSY:
@@ -319,17 +367,11 @@ PlaygroundCtrl::extractFilesTask(PlaygroundFilesTask *task)
 			/* we should log an error here but there is no memory
 			 * memory to add strings. simply do not add the file */
 			break;
-		default: {
+		default:
 			errorList_.Add(wxString::Format(_(
 			    "Could not determine filename for playground-file: "
 			    "%hs"), anoubis_strerror(res)));
 			sendErrorEvent();
-			break;
-		} // end default:
-		} // end switch
-
-		if (path_abs != 0) {
-			free(path_abs);
 		}
 	}
 
@@ -372,6 +414,37 @@ PlaygroundCtrl::clearPlaygroundFiles(void)
 	playgroundFiles_.clearRows();
 }
 
+wxString
+PlaygroundCtrl::fileIdentification(uint64_t dev, uint64_t ino)
+{
+	PlaygroundFileEntry	*e = NULL;
+	int			 i;
+
+	for (i=0; i<playgroundFiles_.getSize(); ++i) {
+		AnListClass		*item = playgroundFiles_.getRow(i);
+
+		if (item == NULL)
+			continue;
+		e = dynamic_cast<PlaygroundFileEntry *>(item);
+		if (e == NULL)
+			continue;
+		if (e->getDevice() == dev && e->getInode() == ino)
+			break;
+	}
+	if (i == playgroundInfo_.getSize()) {
+		return wxString::Format(wxT("dev=%lld ino=%lld"),
+		    (long long) dev, (long long)ino);
+	}
+	const std::vector<wxString>	 &paths = e->getPaths();
+	wxString			  ret = wxT("");
+	for (unsigned int j=0; j<paths.size(); ++j) {
+		if (j)
+			ret += wxT(", ");
+		ret += paths[j];
+	}
+	return ret;
+}
+
 void
 PlaygroundCtrl::sendErrorEvent(void)
 {
@@ -393,11 +466,10 @@ PlaygroundCtrl::sendCompletedEvent(void)
 bool
 PlaygroundCtrl::commitFiles(const std::vector<int> &files)
 {
+	AnRowProvider			*provider;
 	std::vector<uint64_t>		 devs;
 	std::vector<uint64_t>		 inos;
 	uint64_t			 pgid = 0;
-	AnRowProvider			*provider;
-	PlaygroundCommitTask		*ct;
 
 	provider = getFileProvider();
 	for (unsigned int i=0; i<files.size(); ++i) {
@@ -416,7 +488,18 @@ PlaygroundCtrl::commitFiles(const std::vector<int> &files)
 	}
 	if (pgid == 0 || inos.size() == 0)
 		return false;
-	ct = new PlaygroundCommitTask(pgid, devs, inos);
-	JobCtrl::instance()->addTask(ct);
+	commitFiles(pgid, devs, inos, false);
 	return true;
+}
+
+void
+PlaygroundCtrl::commitFiles(uint64_t pgid, std::vector<uint64_t> devs,
+    std::vector<uint64_t> inos, bool force)
+{
+	PlaygroundCommitTask		*ct;
+
+	ct = new PlaygroundCommitTask(pgid, devs, inos);
+	if (force)
+		ct->setForceOverwrite();
+	JobCtrl::instance()->addTask(ct);
 }

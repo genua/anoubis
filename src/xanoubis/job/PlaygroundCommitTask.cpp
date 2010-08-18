@@ -48,10 +48,12 @@ PlaygroundCommitTask::PlaygroundCommitTask(uint64_t pgid,
 	devs_ = devs;
 	pgid_ = pgid;
 	states_.resize(inos.size(), STATE_TODO);
+	errs_.resize(inos.size(), EPERM);
 	idx_ = -1;
 	names_ = NULL;
 	fullname_ = NULL;
 	progress_ = false;
+	forceOverwrite_ = false;
 }
 
 PlaygroundCommitTask::~PlaygroundCommitTask(void)
@@ -176,8 +178,14 @@ PlaygroundCommitTask::execFsFile(void)
 		createNames();
 		if (names_ == NULL)
 			return false;
-		if (pgfile_check(devs_[idx_], inos_[idx_], names_) < 0)
+		err = pgfile_check(devs_[idx_], inos_[idx_], names_,
+		    !forceOverwrite_);
+		if (err < 0) {
+			errs_[idx_] = -err;
+			if (errs_[idx_] == EMLINK || errs_[idx_] == EEXIST)
+				states_[idx_] = STATE_NEED_OVERWRITE;
 			return false;
+		}
 		if (fullname_)
 			free(fullname_);
 		fullname_ = NULL;
@@ -205,20 +213,24 @@ PlaygroundCommitTask::execFsFile(void)
 			states_[idx_] = STATE_DO_COMMIT;
 			return true;
 		case ENOTEMPTY:
+			errs_[idx_] = ENOTEMPTY;
 			return false;
 		default:
 			return false;
 		}
 	case STATE_LABEL_REMOVED:
 		progress_ = true;
-		if (pgfile_process(devs_[idx_], inos_[idx_], names_) < 0) {
+		errs_[idx_] = pgfile_process(devs_[idx_], inos_[idx_], names_);
+		if (errs_[idx_] < 0) {
 			states_[idx_] = STATE_RENAME_FAILED;
 		} else {
 			states_[idx_] = STATE_COMPLETE;
+			errs_[idx_] = 0;
 		}
 		break;
 	case STATE_DO_COMMIT:
 		states_[idx_] = STATE_SCAN_FAILED;
+		errs_[idx_] = EPERM;
 		break;
 	}
 	return false;

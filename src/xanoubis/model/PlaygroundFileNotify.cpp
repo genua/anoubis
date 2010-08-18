@@ -55,7 +55,6 @@
 PlaygroundFileNotify::PlaygroundFileNotify(struct anoubis_msg *msg) :
     Notification(msg)
 {
-#ifdef LINUX
 	const char* prefix = NULL;
 	char* prefixfail = NULL;
 	char* path = NULL;
@@ -89,7 +88,6 @@ PlaygroundFileNotify::PlaygroundFileNotify(struct anoubis_msg *msg) :
 	if (path) {
 		free(path);
 	}
-#endif
 }
 
 PlaygroundFileNotify::~PlaygroundFileNotify(void)
