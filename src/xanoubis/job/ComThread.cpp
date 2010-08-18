@@ -338,6 +338,13 @@ ComThread::Entry(void)
 		 */
 		if (current && (current->shallAbort() || current->done())) {
 			TaskEvent	event(current, wxID_ANY);
+
+			/* Task is no longer a COM task. Reschedule. */
+			if (current->getType() != Task::TYPE_COM) {
+				JobCtrl::instance()->addTask(current);
+				current = NULL;
+				continue;
+			}
 			if (current->shallAbort())
 				current->setTaskResultAbort();
 			sendEvent(event);

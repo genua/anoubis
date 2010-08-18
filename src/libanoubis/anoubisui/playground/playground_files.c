@@ -756,4 +756,28 @@ pgfile_composename(char **pathp, uint64_t dev, uint64_t ino, const char *nam)
 	return ret;
 }
 
+#else
+
+#define __used __attribute__((unused))
+int
+pgfile_composename(char **pathp __used, uint64_t dev __used,
+    uint64_t ino __used, const char *nam __used)
+{
+	return -ENOSYS;
+}
+
+int
+pgfile_check(uint64_t dev __used, uint64_t ino __used,
+    const char *namearr[] __used)
+{
+	return -ENOSYS;
+}
+
+int
+pgfile_process(uint64_t dev __used, uint64_t ino __used,
+    const char *namearr[] __used)
+{
+	return -ENOSYS;
+}
+
 #endif

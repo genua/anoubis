@@ -66,6 +66,7 @@ ModPlaygroundMainPanelImpl::ModPlaygroundMainPanelImpl(wxWindow* parent,
 {
 	struct sigaction		 act;
 	PlaygroundCtrl			*playgroundCtrl = NULL;
+	AnRowProvider			*provider;
 
 	act.sa_flags = 0;
 	sigemptyset(&act.sa_mask);
@@ -94,10 +95,18 @@ ModPlaygroundMainPanelImpl::ModPlaygroundMainPanelImpl(wxWindow* parent,
 	    wxCommandEventHandler(
 	      ModPlaygroundMainPanelImpl::onConnectionStateChange),
 	    NULL, this);
+	/* NOTE: This only works as long as the provider is never freed. */
+	provider = playgroundCtrl->getInfoProvider();
+	provider->Connect(anEVT_ROW_UPDATE, wxCommandEventHandler(
+	    ModPlaygroundMainPanelImpl::onRowChange), NULL, this);
+	provider->Connect(anEVT_ROW_SIZECHANGE, wxCommandEventHandler(
+	    ModPlaygroundMainPanelImpl::onRowChange), NULL, this);
 }
 
 ModPlaygroundMainPanelImpl::~ModPlaygroundMainPanelImpl(void)
 {
+	AnRowProvider			*provider;
+
 	PlaygroundCtrl::instance()->Disconnect(anEVT_PLAYGROUND_ERROR,
 	    wxCommandEventHandler(
 	    ModPlaygroundMainPanelImpl::onPlaygroundError), NULL, this);
@@ -105,7 +114,12 @@ ModPlaygroundMainPanelImpl::~ModPlaygroundMainPanelImpl(void)
 	    wxCommandEventHandler(
 	      ModPlaygroundMainPanelImpl::onConnectionStateChange),
 	    NULL, this);
-
+	/* NOTE: This only works as long as the provider is never freed. */
+	provider = PlaygroundCtrl::instance()->getInfoProvider();
+	provider->Disconnect(anEVT_ROW_UPDATE, wxCommandEventHandler(
+	    ModPlaygroundMainPanelImpl::onRowChange), NULL, this);
+	provider->Disconnect(anEVT_ROW_SIZECHANGE, wxCommandEventHandler(
+	    ModPlaygroundMainPanelImpl::onRowChange), NULL, this);
 }
 
 void
@@ -124,6 +138,7 @@ ModPlaygroundMainPanelImpl::onConnectionStateChange(wxCommandEvent &event)
 	pgRefreshButton->Enable(comEnabled_);
 	applicationStartButton->Enable(
 	    comEnabled_ && !applicationComboBox->GetValue().IsEmpty());
+	updateButtonState();
 
 	event.Skip();
 }
@@ -222,21 +237,8 @@ ModPlaygroundMainPanelImpl::onDeleteFiles(wxCommandEvent &)
 void
 ModPlaygroundMainPanelImpl::onPgListItemSelect(wxListEvent &event)
 {
-	AnListClass		*item = NULL;
-	AnRowProvider		*rowProvider = NULL;
-	PlaygroundCtrl		*playgroundCtrl = NULL;
-	PlaygroundInfoEntry	*entry = NULL;
-
-	playgroundCtrl = PlaygroundCtrl::instance();
-	rowProvider = playgroundCtrl->getInfoProvider();
-	item = rowProvider->getRow(event.GetIndex());
-	entry = dynamic_cast<PlaygroundInfoEntry *>(item);
-
-	if ((entry != NULL) && (entry->getNumFiles() > 0) &&
-	    (entry->getUid() == geteuid())) {
-		pgCommitButton->Enable();
-		pgDeleteButton->Enable();
-	}
+	event.Skip();
+	updateButtonState();
 }
 
 void
@@ -341,11 +343,38 @@ ModPlaygroundMainPanelImpl::startApplication(void)
 }
 
 void
+ModPlaygroundMainPanelImpl::updateButtonState(void)
+{
+	bool			 enable = false;
+	AnListClass		*item;
+	AnRowProvider		*rowProvider;
+	PlaygroundInfoEntry	*entry = NULL;
+	int			 sel;
+
+	sel = pgList->getFirstSelection();
+	if (JobCtrl::instance()->isConnected() && sel >= 0) {
+		rowProvider = PlaygroundCtrl::instance()->getInfoProvider();
+		item = rowProvider->getRow(sel);
+		if (item)
+			entry = dynamic_cast<PlaygroundInfoEntry *>(item);
+		if ((entry != NULL) && (entry->getNumFiles() > 0) &&
+		    (entry->getUid() == geteuid()))
+			enable = true;
+	}
+	pgDeleteButton->Enable(enable);
+	pgCommitButton->Enable(enable);
+}
+
+void
 ModPlaygroundMainPanelImpl::refreshPlaygroundList(void)
 {
 	if (!PlaygroundCtrl::instance()->updatePlaygroundInfo()) {
 		anMessageBox(_("Could not refresh list of playgrounds."),
 		    _("Playground error"), wxOK | wxICON_ERROR, this);
+		pgDeleteButton->Disable();
+		pgCommitButton->Disable();
+	} else {
+		updateButtonState();
 	}
 }
 
@@ -390,6 +419,7 @@ ModPlaygroundMainPanelImpl::openCommitDialog(void)
 		dlg->ShowModal();
 		dlg->Destroy();
 	#endif
+	refreshPlaygroundList();
 }
 
 char **

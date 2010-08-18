@@ -81,6 +81,7 @@ AnListCtrl::setRowProvider(AnRowProvider *provider)
 
 AnListCtrl::~AnListCtrl(void)
 {
+	setRowProvider(NULL);
 	if (this->rowProperty_ != 0)
 		delete this->rowProperty_;
 

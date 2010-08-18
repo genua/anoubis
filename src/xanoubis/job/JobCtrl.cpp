@@ -366,3 +366,12 @@ JobCtrl::sendComEvent(JobCtrl::ConnectionState state)
 
 	wxPostEvent(JobCtrl::instance(), event);
 }
+
+void
+JobCtrl::wakeupComThread(void)
+{
+	JobThread		*t = findComThread();
+
+	if (t)
+		t->wakeup(false);
+}

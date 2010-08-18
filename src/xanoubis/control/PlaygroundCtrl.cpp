@@ -36,6 +36,7 @@
 #include "PlaygroundCtrl.h"
 #include "PlaygroundFileEntry.h"
 #include "PlaygroundInfoEntry.h"
+#include "PlaygroundCommitTask.h"
 #include "anoubis_errno.h"
 
 #include "Singleton.cpp"
@@ -52,13 +53,9 @@ PlaygroundCtrl::~PlaygroundCtrl(void)
 	    wxTaskEventHandler(PlaygroundCtrl::OnPlaygroundFilesArrived),
 	    NULL, this);
 
-	/* Remove remaining tasks */
-	for (std::set<Task *>::iterator it = taskList_.begin();
-	    it != taskList_.end(); it++) {
-		Task *t = *it;
-		taskList_.erase(it);
-		delete t;
-	}
+	JobCtrl::instance()->Disconnect(anTASKEVT_PG_COMMIT,
+	    wxTaskEventHandler(PlaygroundCtrl::OnPlaygroundFilesCommitted),
+	    NULL, this);
 
 	clearPlaygroundInfo();
 	clearPlaygroundFiles();
@@ -83,9 +80,9 @@ PlaygroundCtrl::getFileProvider(void)
 }
 
 bool
-PlaygroundCtrl::updatePlaygroundFiles(uint64_t pgid)
+PlaygroundCtrl::updatePlaygroundFiles(uint64_t pgid, bool reportESRCH)
 {
-	return (createFileTask(pgid));
+	return createFileTask(pgid, reportESRCH);
 }
 
 bool
@@ -116,22 +113,44 @@ PlaygroundCtrl::PlaygroundCtrl(void) : Singleton<PlaygroundCtrl>()
 	JobCtrl::instance()->Connect(anTASKEVT_PG_FILES,
 	    wxTaskEventHandler(PlaygroundCtrl::OnPlaygroundFilesArrived),
 	    NULL, this);
+	JobCtrl::instance()->Connect(anTASKEVT_PG_COMMIT,
+	    wxTaskEventHandler(PlaygroundCtrl::OnPlaygroundFilesCommitted),
+	    NULL, this);
 }
 
 void
-PlaygroundCtrl::OnPlaygroundListArrived(TaskEvent & event)
+PlaygroundCtrl::handleComTaskResult(ComTask *task)
+{
+	switch (task->getComTaskResult()) {
+	case ComTask::RESULT_COM_ERROR:
+		errorList_.Add(wxString::Format(_("Communication error in "
+		    "playground request.")));
+		sendErrorEvent();
+		break;
+	case ComTask::RESULT_REMOTE_ERROR:
+		errorList_.Add(wxString::Format(_("The daemon returned an "
+		    "error for the playground request: %hs"),
+		    anoubis_strerror(task->getResultDetails())));
+		sendErrorEvent();
+		break;
+	case ComTask::RESULT_SUCCESS:
+		errorList_.Clear();
+		break;
+	default:
+		errorList_.Add(wxString::Format(_("Got unexpected result (%d) "
+		    "for playground request"), task->getComTaskResult()));
+		sendErrorEvent();
+		break;
+	}
+}
+
+void
+PlaygroundCtrl::OnPlaygroundListArrived(TaskEvent &event)
 {
 	PlaygroundListTask *task = NULL;
 
 	task = dynamic_cast<PlaygroundListTask *>(event.getTask());
 	if (task == NULL) {
-		/* No PlaygroundListTask -> stop propagating */
-		event.Skip(false);
-		return;
-	}
-
-	if (taskList_.find(task) == taskList_.end()) {
-		/* Belongs to someone other, ignore it */
 		event.Skip();
 		return;
 	}
@@ -140,50 +159,21 @@ PlaygroundCtrl::OnPlaygroundListArrived(TaskEvent & event)
 
 	/* Progress for the finished task. */
 	clearPlaygroundInfo();
-	switch (task->getComTaskResult()) {
-	case ComTask::RESULT_COM_ERROR:
-		errorList_.Add(wxString::Format(_("Communication error while "
-		    "fetching list of playgrounds.")));
-		sendErrorEvent();
-		break;
-	case ComTask::RESULT_REMOTE_ERROR:
-		errorList_.Add(wxString::Format(_("Got error from daemon "
-		    "while fetching list of playgrounds: %hs"),
-		    anoubis_strerror(task->getResultDetails())));
-		sendErrorEvent();
-		break;
-	case ComTask::RESULT_SUCCESS:
-		errorList_.Clear();
+	if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
+		handleComTaskResult(task);
+	} else {
 		extractListTask(task);
-		break;
-	default:
-		errorList_.Add(wxString::Format(_("Got unexpected result (%d) "
-		    "fetching list of playgrounds."),
-		    task->getComTaskResult()));
-		sendErrorEvent();
-		break;
 	}
-
-	taskList_.erase(task);
 	delete task;
 }
 
 void
 PlaygroundCtrl::OnPlaygroundFilesArrived(TaskEvent & event)
 {
-	/* Note: this looks like OnPlaygroundListArrived but there
-	 * is simply no way to remove redundancies here */
 	PlaygroundFilesTask *task = NULL;
 
 	task = dynamic_cast<PlaygroundFilesTask *>(event.getTask());
 	if (task == NULL) {
-		/* No PlaygroundFileTask -> stop propagating */
-		event.Skip(false);
-		return;
-	}
-
-	if (taskList_.find(task) == taskList_.end()) {
-		/* Belongs to someone other, ignore it */
 		event.Skip();
 		return;
 	}
@@ -192,31 +182,51 @@ PlaygroundCtrl::OnPlaygroundFilesArrived(TaskEvent & event)
 
 	/* Progress for the finished task. */
 	clearPlaygroundFiles();
-	switch (task->getComTaskResult()) {
-	case ComTask::RESULT_COM_ERROR:
-		errorList_.Add(wxString::Format(_("Communication error while "
-		    "fetching files for playground.")));
-		sendErrorEvent();
-		break;
-	case ComTask::RESULT_REMOTE_ERROR:
-		errorList_.Add(wxString::Format(_("Got error from daemon "
-		    "while fetching files for playgrounds: %hs"),
-		    anoubis_strerror(task->getResultDetails())));
-		sendErrorEvent();
-		break;
-	case ComTask::RESULT_SUCCESS:
-		errorList_.Clear();
+	if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
+		handleComTaskResult(task);
+	} else {
 		extractFilesTask(task);
-		break;
-	default:
-		errorList_.Add(wxString::Format(_("Got unexpected result (%d) "
-		    "while fetching files for playground."),
-		    task->getComTaskResult()));
-		sendErrorEvent();
-		break;
 	}
+	delete task;
+}
 
-	taskList_.erase(task);
+void
+PlaygroundCtrl::OnPlaygroundFilesCommitted(TaskEvent &event)
+{
+	PlaygroundCommitTask	*task = NULL;
+
+	task = dynamic_cast<PlaygroundCommitTask *>(event.getTask());
+	if (task == NULL) {
+		event.Skip();
+		return;
+	}
+	/* Our task. Stop propagating. */
+	event.Skip(false);
+	if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
+		handleComTaskResult(task);
+	} else {
+		bool	errors = false;
+
+		for (int i=0; i<task->getFileCount(); ++i) {
+			int	state = task->getFileState(i);
+
+			if (state == PlaygroundCommitTask::STATE_COMPLETE)
+				continue;
+			/*
+			 * XXX CEH: This must mention the file name and
+			 * XXX CEH: evaluate the file state.
+			 */
+			errorList_.Add(wxString::Format(_(
+			    "Commit for file dev=%lld ino=%lld failed. "
+			    "File state is %d"), (long long)task->getDevice(i),
+			    task->getInode(i), state));
+			errors = true;
+		}
+		if (errors)
+			sendErrorEvent();
+	}
+	sendCompletedEvent();
+	updatePlaygroundFiles(task->getPgid(), false);
 	delete task;
 }
 
@@ -226,29 +236,24 @@ PlaygroundCtrl::createListTask(void)
 	PlaygroundListTask *task = NULL;
 
 	task = new PlaygroundListTask();
-	if (task == NULL) {
-		return (false);
-	}
-
-	taskList_.insert(task);
+	if (task == NULL)
+		return false;
 	JobCtrl::instance()->addTask(task);
 
-	return (true);
+	return true;
 }
 
 bool
-PlaygroundCtrl::createFileTask(uint64_t pgid)
+PlaygroundCtrl::createFileTask(uint64_t pgid, bool reportESRCH)
 {
 	PlaygroundFilesTask *task = NULL;
-	task = new PlaygroundFilesTask(pgid);
-	if (task == NULL) {
-		return (false);
-	}
 
-	taskList_.insert(task);
+	task = new PlaygroundFilesTask(pgid, reportESRCH);
+	if (task == NULL)
+		return false;
 	JobCtrl::instance()->addTask(task);
 
-	return (true);
+	return true;
 }
 
 void
@@ -374,4 +379,44 @@ PlaygroundCtrl::sendErrorEvent(void)
 	event.SetEventObject(this);
 
 	ProcessEvent(event);
+}
+
+void
+PlaygroundCtrl::sendCompletedEvent(void)
+{
+	wxCommandEvent	event(anEVT_PLAYGROUND_COMPLETED);
+	event.SetEventObject(this);
+
+	ProcessEvent(event);
+}
+
+bool
+PlaygroundCtrl::commitFiles(const std::vector<int> &files)
+{
+	std::vector<uint64_t>		 devs;
+	std::vector<uint64_t>		 inos;
+	uint64_t			 pgid = 0;
+	AnRowProvider			*provider;
+	PlaygroundCommitTask		*ct;
+
+	provider = getFileProvider();
+	for (unsigned int i=0; i<files.size(); ++i) {
+		AnListClass		*item = provider->getRow(files[i]);
+		PlaygroundFileEntry	*e;
+
+		if (!item)
+			continue;
+		e = dynamic_cast<PlaygroundFileEntry *>(item);
+		if (!e)
+			continue;
+		devs.push_back(e->getDevice());
+		inos.push_back(e->getInode());
+		if (pgid == 0)
+			pgid = e->getPgid();
+	}
+	if (pgid == 0 || inos.size() == 0)
+		return false;
+	ct = new PlaygroundCommitTask(pgid, devs, inos);
+	JobCtrl::instance()->addTask(ct);
+	return true;
 }

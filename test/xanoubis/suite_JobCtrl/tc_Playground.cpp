@@ -80,7 +80,7 @@ START_TEST(fetch_list)
 	TaskEventSpy listSpy(jobCtrl, anTASKEVT_PG_LIST);
 	TaskEventSpy filesSpy(jobCtrl, anTASKEVT_PG_FILES);
 	PlaygroundListTask listTask;
-	PlaygroundFilesTask filesTask;
+	PlaygroundFilesTask *filesTask;
 
 	jobCtrl->addTask(&listTask);
 	listSpy.waitForInvocation(1);
@@ -101,16 +101,17 @@ START_TEST(fetch_list)
 		numRecords++;
 
 		/* Fetch files for the current playground */
-		filesTask.setRequestedPGID(listTask.getPGID());
-		jobCtrl->addTask(&filesTask);
+		filesTask = new PlaygroundFilesTask(listTask.getPGID());
+		jobCtrl->addTask(filesTask);
 		filesSpy.waitForInvocation(numRecords);
 
-		filesTask.resetRecordIterator();
+		filesTask->resetRecordIterator();
 		int numFiles = 0;
-		while (filesTask.readNextRecord()) {
-			fail_unless(filesTask.getPath().EndsWith(wxT("xxx")));
+		while (filesTask->readNextRecord()) {
+			fail_unless(filesTask->getPath().EndsWith(wxT("xxx")));
 			numFiles++;
 		}
+		delete filesTask;
 
 		fail_unless(numFiles == 1,
 		    "Wrong number of files: %i", numFiles);

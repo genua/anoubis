@@ -39,19 +39,14 @@ class PlaygroundFilesTask : public PlaygroundIteratorTask<Anoubis_PgFileRecord>
 {
 	public:
 		/**
-		 * Creates an task to fetch playground-files from the daemon.
-		 * You need to provide the playground-id before sending the
-		 * task!
-		 * @see setRequestPGID()
-		 */
-		PlaygroundFilesTask(void);
-
-		/**
 		 * Creates a task to fetch a list of playground-files from the
 		 * daemon.
 		 * @param pgid The id of the requested playground
+		 * @param reportESRCH True if a non-existing playground should
+		 *     be reported as an error. If false the file list will
+		 *     be reported as empty.
 		 */
-		PlaygroundFilesTask(uint64_t);
+		PlaygroundFilesTask(uint64_t, bool reportESRCH = true);
 
 		/**
 		 * Implementation of Task::getEventType().
@@ -65,15 +60,6 @@ class PlaygroundFilesTask : public PlaygroundIteratorTask<Anoubis_PgFileRecord>
 		 * @return The requested PGID send to the daemon
 		 */
 		uint64_t getRequestedPGID(void) const;
-
-		/**
-		 * Updates the requested playground-id.
-		 * Calling this method is useful when reusing the task for more
-		 * than one request. Then you can update the playground-id send
-		 * to the daemon.
-		 * @param pgid The new playground-id send to the daemon
-		 */
-		void setRequestedPGID(uint64_t);
 
 		/**
 		 * Returns the playground-id of the current file-record.
@@ -107,6 +93,19 @@ class PlaygroundFilesTask : public PlaygroundIteratorTask<Anoubis_PgFileRecord>
 		 * @return Relative path of the current file
 		 */
 		const char* getPathData(void) const;
+
+		/**
+		 * Implementation of ComTask::done(). This is used to
+		 * suppress ESRCH errors.
+		 */
+		bool done(void);
+
+	private:
+		/**
+		 * True if a non-existing playground should be reported as
+		 * an error.
+		 */
+		bool		reportESRCH_;
 };
 
 #endif /* _PLAYGROUNDFILESTASK_H_ */

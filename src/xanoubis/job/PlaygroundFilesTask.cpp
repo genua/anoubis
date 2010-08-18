@@ -28,14 +28,10 @@
 #include "PlaygroundFilesTask.h"
 #include "TaskEvent.h"
 
-PlaygroundFilesTask::PlaygroundFilesTask(void)
-    : PlaygroundIteratorTask<Anoubis_PgFileRecord>(ANOUBIS_PGREC_FILELIST, 0)
-{
-}
-
-PlaygroundFilesTask::PlaygroundFilesTask(uint64_t pgid)
+PlaygroundFilesTask::PlaygroundFilesTask(uint64_t pgid, bool reportESRCH)
     : PlaygroundIteratorTask<Anoubis_PgFileRecord>(ANOUBIS_PGREC_FILELIST, pgid)
 {
+	reportESRCH_ = reportESRCH;
 }
 
 wxEventType
@@ -48,12 +44,6 @@ uint64_t
 PlaygroundFilesTask::getRequestedPGID(void) const
 {
 	return (pgid_);
-}
-
-void
-PlaygroundFilesTask::setRequestedPGID(uint64_t pgid)
-{
-	pgid_ = pgid;
 }
 
 uint64_t
@@ -99,4 +89,19 @@ PlaygroundFilesTask::getPathData(void) const
 		return (getRecord()->path);
 	else
 		return "";
+}
+
+bool
+PlaygroundFilesTask::done(void)
+{
+	bool		isdone;
+
+	isdone = this->PlaygroundIteratorTask<Anoubis_PgFileRecord>::done();
+	if (!isdone)
+		return false;
+	if (getComTaskResult() == RESULT_REMOTE_ERROR
+	    && getResultDetails() == ESRCH && !reportESRCH_) {
+		setComTaskResult(RESULT_SUCCESS);
+	}
+	return true;
 }

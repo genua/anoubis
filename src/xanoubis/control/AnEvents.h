@@ -613,6 +613,15 @@ BEGIN_DECLARE_EVENT_TYPES()
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_PLAYGROUND_ERROR, wxNewEventType())
 
 	/**
+	 * Playground completed event.
+	 *
+	 * This event is sent after the completion of certain playground
+	 * operations. This can be used to re-enable controls that were
+	 * disabled during the operation.
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_PLAYGROUND_COMPLETED, wxNewEventType())
+
+	/**
 	 * Sent by the NotificationCtrl when notification informs the
 	 * us about a program that was forced into a playground environment.
 	 * @param GetExtraLong() The id of the notification event.

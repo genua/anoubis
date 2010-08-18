@@ -44,12 +44,12 @@ class PlaygroundTask : public ComTask
 		/**
 		 * Implementation of Task::exec().
 		 */
-		void exec(void);
+		virtual void exec(void);
 
 		/**
 		 * Implementation of Task::done().
 		 */
-		bool done(void);
+		virtual bool done(void);
 
 	protected:
 		/**

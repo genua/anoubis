@@ -41,6 +41,7 @@ DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_VERSION)
 DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_PG_LIST)
 DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_PG_FILES)
 DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_PG_UNLINK)
+DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_PG_COMMIT)
 
 TaskEvent::TaskEvent(Task *task, int id)
     : wxEvent(id, task->getEventType())
@@ -49,8 +50,7 @@ TaskEvent::TaskEvent(Task *task, int id)
 	this->task_ = task;
 }
 
-TaskEvent::TaskEvent(const TaskEvent &other)
-    : wxEvent(other.GetId(), other.GetEventType())
+TaskEvent::TaskEvent(const TaskEvent &other) : wxEvent(other)
 {
 	SetEventObject(other.GetEventObject());
 	SetTimestamp(other.GetTimestamp());

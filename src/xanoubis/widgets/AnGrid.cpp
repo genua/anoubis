@@ -73,7 +73,7 @@ AnGrid::DrawCellHighlight(wxDC &dc, const wxGridCellAttr *attribute)
 }
 
 void
-AnGrid::onLabelRightClick(wxGridEvent &)
+AnGrid::onLabelRightClick(wxGridEvent &event)
 {
 	size_t			 i;
 	wxArrayString		 choices;
@@ -81,6 +81,7 @@ AnGrid::onLabelRightClick(wxGridEvent &)
 	AnTable			*table;
 	wxMultiChoiceDialog	*multiChoiceDlg;
 
+	event.Skip();
 	table = dynamic_cast<AnTable*>(GetTable());
 	if (table == NULL) {
 		return;

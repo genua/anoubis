@@ -29,52 +29,106 @@
 #include "config.h"
 #endif
 
-#include "AnGrid.h"
-#include "AnTable.h"
+#include <wx/log.h>
+
+#include "AnListCtrl.h"
+#include "AnListColumn.h"
 #include "DlgPlaygroundCommitFileListImpl.h"
 #include "PlaygroundCtrl.h"
 #include "PlaygroundListProperty.h"
+#include "PlaygroundFileEntry.h"
 
-#define ADD_PROPERTY(table, type, width) \
-	table->addProperty(new PlaygroundListProperty( \
-	    PlaygroundListProperty::type), width)
+#define ADD_PROPERTY(listctrl, type) \
+	listctrl->addColumn(new PlaygroundListProperty( \
+	    PlaygroundListProperty::type))
 
 DlgPlaygroundCommitFileListImpl::DlgPlaygroundCommitFileListImpl(void)
     : DlgPlaygroundCommitFileListBase(NULL)
 {
-	AnTable *table = NULL;
-	PlaygroundCtrl *playgroundCtrl = NULL;
+	PlaygroundCtrl	*playgroundCtrl = PlaygroundCtrl::instance();
 
-	table = new AnTable(wxT("/State/DlgPlaygroundCommitFileList/Columns"));
-	playgroundCtrl = PlaygroundCtrl::instance();
+	ADD_PROPERTY(fileList, PROPERTY_DEV);
+	ADD_PROPERTY(fileList, PROPERTY_INODE);
+	ADD_PROPERTY(fileList, PROPERTY_FILENAME);
 
-	ADD_PROPERTY(table, PROPERTY_DEV, 60);
-	ADD_PROPERTY(table, PROPERTY_INODE, 60);
-	ADD_PROPERTY(table, PROPERTY_FILENAME, 200);
+	fileList->getColumn(0)->setVisible(false);
+	fileList->getColumn(1)->setVisible(false);
 
-	/* Make device and inode coulumn invisible on default. */
-	table->setColumnVisability(0, false);
-	table->setColumnVisability(1, false);
+	fileList->setRowProvider(playgroundCtrl->getFileProvider());
 
-	fileGrid->SetTable(table, true, wxGrid::wxGridSelectRows);
-	fileGrid->setCursorVisibility(false);
-	table->setRowProvider(playgroundCtrl->getFileProvider());
-	table->assignColumnWidth();
+	playgroundCtrl->Connect(anEVT_PLAYGROUND_ERROR, wxCommandEventHandler(
+	    DlgPlaygroundCommitFileListImpl::onPlaygroundError), NULL, this);
+	playgroundCtrl->Connect(anEVT_PLAYGROUND_COMPLETED,
+	    wxCommandEventHandler(
+	    DlgPlaygroundCommitFileListImpl::onPlaygroundCompleted), NULL,
+	    this);
+}
 
-	/* XXX ch: we can't commit files thus don't offer the button. */
-	comittButtonSizerOK->Disable();
+DlgPlaygroundCommitFileListImpl::~DlgPlaygroundCommitFileListImpl(void)
+{
+	PlaygroundCtrl	*playgroundCtrl = PlaygroundCtrl::instance();
+
+	playgroundCtrl->Connect(anEVT_PLAYGROUND_ERROR, wxCommandEventHandler(
+	    DlgPlaygroundCommitFileListImpl::onPlaygroundError), NULL, this);
+	playgroundCtrl->Connect(anEVT_PLAYGROUND_ERROR, wxCommandEventHandler(
+	    DlgPlaygroundCommitFileListImpl::onPlaygroundCompleted), NULL,
+	    this);
 }
 
 void
 DlgPlaygroundCommitFileListImpl::onColumnButtonClick(wxCommandEvent &)
 {
-	wxGridEvent event;
-
-	event.SetEventType(wxEVT_GRID_LABEL_RIGHT_CLICK);
-	wxPostEvent(fileGrid, event);
+	/* XXX */
 }
 
 void
-DlgPlaygroundCommitFileListImpl::onOkButton(wxCommandEvent &)
+DlgPlaygroundCommitFileListImpl::onDeleteClicked(wxCommandEvent &)
 {
+}
+
+void
+DlgPlaygroundCommitFileListImpl::onCommitClicked(wxCommandEvent &event)
+{
+	std::vector<int>		 sel;
+
+	event.Skip();
+	for (int i=fileList->getFirstSelection(); i>=0;
+	    i=fileList->getNextSelection(i)) {
+		sel.push_back(i);
+	}
+	if (PlaygroundCtrl::instance()->commitFiles(sel)) {
+		commitButton->Disable();
+		delButton->Disable();
+		closeButton->Disable();
+	}
+}
+
+void
+DlgPlaygroundCommitFileListImpl::onCloseClicked(wxCommandEvent &event)
+{
+	event.Skip();
+	Close();
+}
+
+void
+DlgPlaygroundCommitFileListImpl::onPlaygroundError(wxCommandEvent &)
+{
+	const wxArrayString &errors = PlaygroundCtrl::instance()->getErrors();
+
+	for (unsigned int i=0; i<errors.Count(); i++)
+		wxLogError(errors[i]);
+
+	if (errors.Count() > 1) {
+		wxLogError(_("Multiple errors occured while processing the "
+		    "Playground request"));
+	}
+	PlaygroundCtrl::instance()->clearErrors();
+}
+
+void
+DlgPlaygroundCommitFileListImpl::onPlaygroundCompleted(wxCommandEvent &)
+{
+	commitButton->Enable();
+	delButton->Enable();
+	closeButton->Enable();
 }

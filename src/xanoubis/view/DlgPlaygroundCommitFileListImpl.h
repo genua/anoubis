@@ -28,6 +28,7 @@
 #ifndef _DLGPLAYGROUNDCOMMITFILELISTIMPL_H_
 #define _DLGPLAYGROUNDCOMMITFILELISTIMPL_H_
 
+#include "AnListCtrl.h"
 #include "ModPlaygroundPanelsBase.h"
 
 class DlgPlaygroundCommitFileListImpl : public DlgPlaygroundCommitFileListBase
@@ -37,6 +38,11 @@ class DlgPlaygroundCommitFileListImpl : public DlgPlaygroundCommitFileListBase
 		 * Constructor
 		 */
 		DlgPlaygroundCommitFileListImpl(void);
+
+		/**
+		 * Destructor.
+		 */
+		~DlgPlaygroundCommitFileListImpl(void);
 
 	protected:
 		/**
@@ -49,11 +55,47 @@ class DlgPlaygroundCommitFileListImpl : public DlgPlaygroundCommitFileListBase
 		virtual void onColumnButtonClick(wxCommandEvent &);
 
 		/**
-		 * Handle onClick events to OK button.
+		 * Handle a click on the commit button in the file commit
+		 * dialog.
+		 *
 		 * @param[in] 1st The click event.
 		 * @return Nothing.
 		 */
-		virtual void onOkButton(wxCommandEvent &);
+		void onCommitClicked(wxCommandEvent &);
+
+		/**
+		 * Handle a click on the delete button in the file commit
+		 * dialog.
+		 *
+		 * @param[in] 1st The click event.
+		 * @return Nothing.
+		 */
+		void onDeleteClicked(wxCommandEvent &);
+
+		/**
+		 * Handle a clock on the close button in the file commit
+		 * dialog.
+		 *
+		 * @param[in] 1st The click event.
+		 * @return Nothing.
+		 */
+		void onCloseClicked(wxCommandEvent &);
+
+		/**
+		 * Handle error events of playground task's.
+		 *
+		 * @param event The error event.
+		 * @return None.
+		 */
+		void onPlaygroundError(wxCommandEvent &event);
+
+		/**
+		 * Handle completion events of playground task's.
+		 *
+		 * @param event The completion event.
+		 * @return None.
+		 */
+		void onPlaygroundCompleted(wxCommandEvent &event);
 };
 
 #endif	/* _DLGPLAYGROUNDCOMMITFILELISTIMPL_H_ */

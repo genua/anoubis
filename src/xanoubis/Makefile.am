@@ -564,6 +564,8 @@ xanoubis_SOURCES= \
 	job/PlaygroundTask.h \
 	job/PlaygroundUnlinkTask.cpp \
 	job/PlaygroundUnlinkTask.h \
+	job/PlaygroundCommitTask.h \
+	job/PlaygroundCommitTask.cpp \
 	job/Task.cpp \
 	job/Task.h \
 	job/TaskEvent.cpp \

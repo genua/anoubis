@@ -157,6 +157,15 @@ class ModPlaygroundMainPanelImpl : public ModPlaygroundMainPanelBase
 		void startApplication(void);
 
 		/**
+		 * Update the enabled state of the delete and commit
+		 * buttons.
+		 *
+		 * @param None.
+		 * @return None.
+		 */
+		void updateButtonState(void);
+
+		/**
 		 * Refreshes the grid of playgrounds and handles correspondig
 		 * errors.
 		 * @param None.
@@ -183,6 +192,17 @@ class ModPlaygroundMainPanelImpl : public ModPlaygroundMainPanelBase
 		 * @return A pointer to argv or NULL in case of error.
 		 */
 		char **convertStringToArgV(const wxString &) const;
+
+		/**
+		 * Update playground button state after a row change event.
+		 *
+		 * @param event The event.
+		 * @return None.
+		 */
+		void onRowChange(wxCommandEvent &event) {
+			event.Skip();
+			updateButtonState();
+		}
 };
 
 

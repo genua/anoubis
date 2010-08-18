@@ -35,6 +35,7 @@
 #include "NotificationPerspective.h"
 #include "Singleton.h"
 #include "EscalationNotify.h"
+#include "PlaygroundFileNotify.h"
 #include "AlertNotify.h"
 
 WX_DECLARE_STRING_HASH_MAP(long, Str2LongHash);
@@ -110,6 +111,16 @@ class NotificationCtrl : public wxEvtHandler, public Singleton<NotificationCtrl>
 		void answerEscalationNotify(EscalationNotify *, NotifyAnswer *,
 		    bool sendAnswer = true);
 
+		/**
+		 * Return the latest playground file notification. Each
+		 * notification is returned at most once from this function,
+		 * the next return will return NULL.
+		 *
+		 * @param None.
+		 * @return The playground file notification or NULL if
+		 *     there is none.
+		 */
+		PlaygroundFileNotify *getPlaygroundFileNotify(void);
 	protected:
 		/**
 		 * Constructor of NotificationCtrl.
@@ -195,6 +206,14 @@ class NotificationCtrl : public wxEvtHandler, public Singleton<NotificationCtrl>
 		EscalationNotify *fixupEscalationAnswer(int, anoubis_token_t,
 		    int);
 
+		/**
+		 * The ID of the latest playground file notification.
+		 * This is set to zero once the playground notification is
+		 * processed by a commit task.
+		 */
+		long	playgroundFileNotifyId_;
+
+	/* Allow singlton class access to protected constructor. */
 	friend class Singleton<NotificationCtrl>;
 };
 

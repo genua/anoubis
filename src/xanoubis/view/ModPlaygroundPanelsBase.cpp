@@ -31,7 +31,6 @@
 // PLEASE DO "NOT" EDIT THIS FILE!
 ///////////////////////////////////////////////////////////////////////////
 
-#include "AnGrid.h"
 #include "AnListCtrl.h"
 
 #include "ModPlaygroundPanelsBase.h"
@@ -199,50 +198,33 @@ DlgPlaygroundCommitFileListBase::DlgPlaygroundCommitFileListBase( wxWindow* pare
 	
 	listSizer->Add( listHeaderSizer, 0, wxEXPAND, 5 );
 	
-	fileGrid = new AnGrid( this, PG_COMMIT_LIST, wxDefaultPosition, wxDefaultSize, wxVSCROLL );
-	
-	// Grid
-	fileGrid->CreateGrid( 1, 1 );
-	fileGrid->EnableEditing( false );
-	fileGrid->EnableGridLines( true );
-	fileGrid->EnableDragGridSize( false );
-	fileGrid->SetMargins( 0, 0 );
-	
-	// Columns
-	fileGrid->EnableDragColMove( false );
-	fileGrid->EnableDragColSize( true );
-	fileGrid->SetColLabelSize( 26 );
-	fileGrid->SetColLabelAlignment( wxALIGN_LEFT, wxALIGN_CENTRE );
-	
-	// Rows
-	fileGrid->EnableDragRowSize( true );
-	fileGrid->SetRowLabelSize( 0 );
-	fileGrid->SetRowLabelAlignment( wxALIGN_CENTRE, wxALIGN_CENTRE );
-	
-	// Label Appearance
-	fileGrid->SetLabelFont( wxFont( wxNORMAL_FONT->GetPointSize(), 70, 90, 90, false, wxEmptyString ) );
-	
-	// Cell Defaults
-	fileGrid->SetDefaultCellAlignment( wxALIGN_LEFT, wxALIGN_TOP );
-	listSizer->Add( fileGrid, 1, wxALL|wxEXPAND, 0 );
+	fileList = new AnListCtrl( this, PG_COMMIT_LIST, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_ICON|wxLC_REPORT|wxLC_VIRTUAL|wxLC_VRULES );
+	listSizer->Add( fileList, 1, wxALL|wxEXPAND, 5 );
 	
 	wxBoxSizer* footerSizer;
 	footerSizer = new wxBoxSizer( wxHORIZONTAL );
 	
-	commitScanFilesCheckbox = new wxCheckBox( this, wxID_ANY, _("Scan files"), wxDefaultPosition, wxDefaultSize, 0 );
-	commitScanFilesCheckbox->SetValue(true);
 	
-	commitScanFilesCheckbox->Enable( false );
+	footerSizer->Add( 0, 0, 5, wxEXPAND, 5 );
 	
-	footerSizer->Add( commitScanFilesCheckbox, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	delButton = new wxButton( this, wxID_ANY, _("Delete"), wxDefaultPosition, wxDefaultSize, 0 );
+	delButton->SetToolTip( _("Delete selected playground Files.") );
 	
-	comittButtonSizer = new wxStdDialogButtonSizer();
-	comittButtonSizerOK = new wxButton( this, wxID_OK );
-	comittButtonSizer->AddButton( comittButtonSizerOK );
-	comittButtonSizerCancel = new wxButton( this, wxID_CANCEL );
-	comittButtonSizer->AddButton( comittButtonSizerCancel );
-	comittButtonSizer->Realize();
-	footerSizer->Add( comittButtonSizer, 1, wxEXPAND|wxALL, 5 );
+	footerSizer->Add( delButton, 0, wxALL, 5 );
+	
+	commitButton = new wxButton( this, wxID_ANY, _("Commit"), wxDefaultPosition, wxDefaultSize, 0 );
+	commitButton->SetToolTip( _("Commit selected Files to the production system.") );
+	
+	footerSizer->Add( commitButton, 0, wxALL, 5 );
+	
+	
+	footerSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	closeButton = new wxButton( this, wxID_ANY, _("Close"), wxDefaultPosition, wxDefaultSize, 0 );
+	closeButton->SetDefault(); 
+	closeButton->SetToolTip( _("Close this Window") );
+	
+	footerSizer->Add( closeButton, 0, wxALL, 5 );
 	
 	listSizer->Add( footerSizer, 0, wxEXPAND, 5 );
 	
@@ -253,5 +235,7 @@ DlgPlaygroundCommitFileListBase::DlgPlaygroundCommitFileListBase( wxWindow* pare
 	
 	// Connect Events
 	columnButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgPlaygroundCommitFileListBase::onColumnButtonClick ), NULL, this );
-	comittButtonSizerOK->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgPlaygroundCommitFileListBase::onOkButton ), NULL, this );
+	delButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgPlaygroundCommitFileListBase::onDeleteClicked ), NULL, this );
+	commitButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgPlaygroundCommitFileListBase::onCommitClicked ), NULL, this );
+	closeButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgPlaygroundCommitFileListBase::onCloseClicked ), NULL, this );
 }

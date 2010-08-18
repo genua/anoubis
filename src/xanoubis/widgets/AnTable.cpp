@@ -39,7 +39,7 @@ AnTable::~AnTable(void)
 {
 	AnGridColumn	*column = NULL;
 
-	rowProvider_ = NULL;
+	setRowProvider(NULL);
 	visibilityList_.clear();
 	/* clear() does not destroy object, thus we do it by hand. */
 	while (!columnList_.empty()) {

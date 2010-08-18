@@ -117,6 +117,12 @@ BEGIN_DECLARE_EVENT_TYPES()
 	 * @see PlaygroundUnlinkTask
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anTASKEVT_PG_UNLINK, wxNewEventType())
+
+	/**
+	 * Event-type of a TaskEvent that is sennt after a playground
+	 * commit task completes.
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anTASKEVT_PG_COMMIT, wxNewEventType())
 END_DECLARE_EVENT_TYPES()
 //@}
 

@@ -28,6 +28,7 @@
 #include "AlertNotify.h"
 #include "DaemonAnswerNotify.h"
 #include "EscalationNotify.h"
+#include "PlaygroundFileNotify.h"
 #include "JobCtrl.h"
 #include "LogNotify.h"
 #include "MainUtils.h"
@@ -35,6 +36,8 @@
 #include "PolicyCtrl.h"
 #include "PolicyRuleSet.h"
 #include "StatusNotify.h"
+
+#include "wx/utils.h"
 
 #include "Singleton.cpp"
 template class Singleton<NotificationCtrl>;
@@ -55,12 +58,21 @@ NotificationCtrl::addNotification(Notification *notification)
 {
 	long		id;
 	wxCommandEvent	updateEvent(anEVT_UPDATE_PERSPECTIVE);
+	bool		wakeup = false;
 
 	id = notification->getId();
 
 	notificationHashMutex_.Lock();
-	notificationHash_[id] = notification;
+	if (notification) {
+		notificationHash_[id] = notification;
+		if (dynamic_cast<PlaygroundFileNotify *>(notification)) {
+			playgroundFileNotifyId_ = id;
+			wakeup = true;
+		}
+	}
 	notificationHashMutex_.Unlock();
+	if (wakeup)
+		JobCtrl::existingInstance()->wakeupComThread();
 
 	/*
 	 * We need to update the perspectives as well. But we can't
@@ -87,17 +99,34 @@ NotificationCtrl::addNotification(Notification *notification)
 Notification *
 NotificationCtrl::getNotification(long id)
 {
-	NotifyHash::const_iterator it;
+	NotifyHash::const_iterator	 it;
+	Notification			*ret = NULL;
 
 	notificationHashMutex_.Lock();
 	it = notificationHash_.find(id);
+	if (it != notificationHash_.end())
+		ret = it->second;
 	notificationHashMutex_.Unlock();
 
-	if (it != notificationHash_.end()) {
-		return ((*it).second);
-	}
+	return  ret;
+}
 
-	return (NULL);
+PlaygroundFileNotify *
+NotificationCtrl::getPlaygroundFileNotify(void)
+{
+	NotifyHash::const_iterator		 it;
+	Notification				*notify = NULL;
+
+
+	notificationHashMutex_.Lock();
+	if (playgroundFileNotifyId_ != wxID_NONE)
+		it = notificationHash_.find(playgroundFileNotifyId_);
+	if (it != notificationHash_.end())
+		notify = it->second;
+	playgroundFileNotifyId_ = wxID_NONE;
+	notificationHashMutex_.Unlock();
+
+	return notify ? dynamic_cast<PlaygroundFileNotify *>(notify) : NULL;
 }
 
 NotificationPerspective *
@@ -186,6 +215,7 @@ NotificationCtrl::NotificationCtrl(void) : Singleton<NotificationCtrl>()
 	    NULL, this);
 	Connect(anEVT_UPDATE_PERSPECTIVE, wxCommandEventHandler(
 	    NotificationCtrl::onUpdatePerspectives), NULL, this);
+	playgroundFileNotifyId_ = wxID_NONE;
 }
 
 void

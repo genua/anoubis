@@ -223,6 +223,15 @@ class JobCtrl : public wxEvtHandler, public Singleton<JobCtrl>
 		 */
 		int getDaemonApnVersion(void) const;
 
+		/**
+		 * Wake up the ComThread after an action that might
+		 * be interesting to running ComTasks.
+		 *
+		 * @param None.
+		 * @return None.
+		 */
+		void wakeupComThread(void);
+
 	protected:
 		JobCtrl(void);
 

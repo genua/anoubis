@@ -84,9 +84,11 @@ class PlaygroundCtrl : public Singleton<PlaygroundCtrl> , public wxEvtHandler
 		 * filelist with the files from the specified playground.
 		 * Errors are reported through anEVT_PLAYGROUND_ERROR events.
 		 * @param 1st  the ID of the playground to read.
+		 * @param 2nd True if a non-existing playground should
+		 *     be reported as an error.
 		 * @return True on success.
 		 */
-		bool updatePlaygroundFiles(uint64_t pgid);
+		bool updatePlaygroundFiles(uint64_t pgid, bool err = true);
 
 		/**
 		 * Command: Remove a playground.
@@ -115,6 +117,18 @@ class PlaygroundCtrl : public Singleton<PlaygroundCtrl> , public wxEvtHandler
 		 */
 		void clearErrors(void);
 
+		/**
+		 * Command: Commit a set of files.
+		 * Try to commit a set of files by creating an appropriate
+		 * task. Once the task is finished an event is sent.
+		 *
+		 * @param[in] 1st The list of file to commit. This
+		 *     is a list of indexes into the file list maintained
+		 *     by the row provider.
+		 * @return True on success.
+		 */
+		bool commitFiles(const std::vector<int> &files);
+
 	protected:
 		/**
 		 * Constructor.
@@ -132,11 +146,6 @@ class PlaygroundCtrl : public Singleton<PlaygroundCtrl> , public wxEvtHandler
 		 * List of files in the previously requested playground.
 		 */
 		AnGenericRowProvider playgroundFiles_;
-
-		/**
-		 * List of tasks.
-		 */
-		std::set<Task *> taskList_;
 
 		/**
 		 * List of errors.
@@ -158,6 +167,15 @@ class PlaygroundCtrl : public Singleton<PlaygroundCtrl> , public wxEvtHandler
 		void OnPlaygroundFilesArrived(TaskEvent &);
 
 		/**
+		 * Event handler for complted PlaygroundCommitTasks.
+		 *
+		 * @param[in] 1st The event for the playground commit task
+		 *     in question.
+		 * @return Nothing.
+		 */
+		void OnPlaygroundFilesCommitted(TaskEvent &);
+
+		/**
 		 * Create Playground list task.
 		 * This method creates and starts the task to fetch the
 		 * playground list.
@@ -171,9 +189,11 @@ class PlaygroundCtrl : public Singleton<PlaygroundCtrl> , public wxEvtHandler
 		 * This method creates and starts the task ot fetch the
 		 * playground filelist.
 		 * @param 1st Playground ID for which to get files.
+		 * @param 2nd True if a non-existing playground should be
+		 *     reported as an error.
 		 * @return True on success.
 		 */
-		bool createFileTask(uint64_t pgid);
+		bool createFileTask(uint64_t pgid, bool = true);
 
 		/**
 		 * Extract list task.
@@ -211,11 +231,30 @@ class PlaygroundCtrl : public Singleton<PlaygroundCtrl> , public wxEvtHandler
 		/**
 		 * Send error event.
 		 * This method will send a anEVT_PLAYGROUND_ERROR event,
-		 * to inform all interested about an occured error.
+		 * to inform all interested parties about an occured error.
 		 * @param None.
 		 * @return Nothing.
 		 */
 		void sendErrorEvent(void);
+
+		/**
+		 * Send a completed event.
+		 * This method will send an anEVT_PLAYGROUND_COMPLETED event,
+		 * to inform all interested paties about a playground
+		 * operation that completed (successfully or not).
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void sendCompletedEvent(void);
+
+		/**
+		 * Handle errors of a ComTask by sending an appropriate
+		 * error event.
+		 *
+		 * @param task The task.
+		 * @return None.
+		 */
+		void handleComTaskResult(ComTask *task);
 
 	friend class Singleton<PlaygroundCtrl>;
 };

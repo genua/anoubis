@@ -34,7 +34,6 @@
 #ifndef __ModPlaygroundPanelsBase__
 #define __ModPlaygroundPanelsBase__
 
-class AnGrid;
 class AnListCtrl;
 
 #include <wx/string.h>
@@ -53,8 +52,6 @@ class AnListCtrl;
 #include <wx/image.h>
 #include <wx/notebook.h>
 #include <wx/statbmp.h>
-#include <wx/grid.h>
-#include <wx/checkbox.h>
 #include <wx/dialog.h>
 
 ///////////////////////////////////////////////////////////////////////////
@@ -137,15 +134,18 @@ class DlgPlaygroundCommitFileListBase : public wxDialog
 		wxStaticText* listTitleText;
 		
 		wxButton* columnButton;
-		AnGrid* fileGrid;
-		wxCheckBox* commitScanFilesCheckbox;
-		wxStdDialogButtonSizer* comittButtonSizer;
-		wxButton* comittButtonSizerOK;
-		wxButton* comittButtonSizerCancel;
+		AnListCtrl* fileList;
+		
+		wxButton* delButton;
+		wxButton* commitButton;
+		
+		wxButton* closeButton;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void onColumnButtonClick( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onOkButton( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onDeleteClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onCommitClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onCloseClicked( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:

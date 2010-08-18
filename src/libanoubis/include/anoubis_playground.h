@@ -105,6 +105,17 @@ expand_dev(dev_t dev)
 
 __END_DECLS
 
+#else /* LINUX */
+
+__BEGIN_DECLS
+
+/* See playground_files.c for documentation of these functions. */
+int	 pgfile_check(uint64_t dev, uint64_t ino, const char *names[]);
+int	 pgfile_process(uint64_t dev, uint64_t ino, const char *names[]);
+int	 pgfile_composename(char **, uint64_t dev, uint64_t ino, const char *);
+
+__END_DECLS
+
 #endif /* LINUX */
 
 #endif	/* _ANOUBIS_PLAYGROUND_H_ */
