@@ -328,20 +328,23 @@ PlaygroundCtrl::extractFilesTask(PlaygroundFilesTask *task)
 	/* insert data from task into temporary set 'files' */
 	task->resetRecordIterator();
 	while (task->readNextRecord()) {
-		/* assume that we have to create one */
-		PlaygroundFileEntry *entry = new PlaygroundFileEntry(
-		    task->getPGID(), task->getDevice(), task->getInode());
+		PlaygroundFileEntry	*entry;
+		char			*path_abs = NULL;
+		std::pair<std::set<PlaygroundFileEntry*>::iterator, bool> ret;
 
-		std::pair<std::set<PlaygroundFileEntry*>::iterator,bool> ret;
+
+		/* assume that we have to create one */
+		entry = new PlaygroundFileEntry(task->getPGID(),
+		    task->getDevice(), task->getInode());
 		ret = files.insert(entry);
 
-		if (!ret.second) {
-			delete(entry);  /* element already exists */
-		}
+		/* element already exists */
+		if (!ret.second)
+			delete(entry);
+		entry = *(ret.first);
 
-		/* compose the absolute, validated path */
-		char *path_abs = NULL;
 #ifdef LINUX
+		/* compose the absolute, validated path */
 		int res = pgfile_composename(&path_abs,
 		    task->getDevice(), task->getInode(), task->getPathData());
 #else
@@ -350,10 +353,9 @@ PlaygroundCtrl::extractFilesTask(PlaygroundFilesTask *task)
 
 		switch (res) {
 		case 0: {
-			/* add absolute path to entry */
-			/* ret.first contains the element from the list */
-			PlaygroundFileEntry *cur = *ret.first;
-			cur->addPath(wxString::FromAscii(path_abs));
+			/* Normalize and add path to entry */
+			pgfile_normalize_file(path_abs);
+			entry->addPath(wxString::FromAscii(path_abs));
 			free(path_abs);
 			break;
 		}
