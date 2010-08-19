@@ -38,18 +38,22 @@
 #include "PlaygroundListProperty.h"
 #include "PlaygroundFileEntry.h"
 
-#define ADD_PROPERTY(listctrl, type) \
-	listctrl->addColumn(new PlaygroundListProperty( \
-	    PlaygroundListProperty::type))
+#define ADD_PROPERTY(list, type, width) \
+	do { \
+		AnListColumn *_col; \
+		_col = fileList->addColumn(new PlaygroundListProperty( \
+		    PlaygroundListProperty::type)); \
+		_col->setWidth(width, true); \
+	} while(0);
 
 DlgPlaygroundCommitFileListImpl::DlgPlaygroundCommitFileListImpl(void)
     : DlgPlaygroundCommitFileListBase(NULL)
 {
 	PlaygroundCtrl	*playgroundCtrl = PlaygroundCtrl::instance();
 
-	ADD_PROPERTY(fileList, PROPERTY_DEV);
-	ADD_PROPERTY(fileList, PROPERTY_INODE);
-	ADD_PROPERTY(fileList, PROPERTY_FILENAME);
+	ADD_PROPERTY(fileList, PROPERTY_DEV, 80);
+	ADD_PROPERTY(fileList, PROPERTY_INODE, 80);
+	ADD_PROPERTY(fileList, PROPERTY_FILENAME, 440);
 
 	fileList->getColumn(0)->setVisible(false);
 	fileList->getColumn(1)->setVisible(false);
@@ -78,9 +82,10 @@ DlgPlaygroundCommitFileListImpl::~DlgPlaygroundCommitFileListImpl(void)
 }
 
 void
-DlgPlaygroundCommitFileListImpl::onColumnButtonClick(wxCommandEvent &)
+DlgPlaygroundCommitFileListImpl::onColumnButtonClick(wxCommandEvent &event)
 {
-	/* XXX */
+	event.Skip();
+	fileList->showColumnVisibilityDialog();
 }
 
 void

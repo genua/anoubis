@@ -198,7 +198,7 @@ DlgPlaygroundCommitFileListBase::DlgPlaygroundCommitFileListBase( wxWindow* pare
 	
 	listSizer->Add( listHeaderSizer, 0, wxEXPAND, 5 );
 	
-	fileList = new AnListCtrl( this, PG_COMMIT_LIST, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_ICON|wxLC_REPORT|wxLC_VIRTUAL|wxLC_VRULES );
+	fileList = new AnListCtrl( this, PG_COMMIT_LIST, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_VIRTUAL|wxLC_VRULES );
 	listSizer->Add( fileList, 1, wxALL|wxEXPAND, 5 );
 	
 	wxBoxSizer* footerSizer;

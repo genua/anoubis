@@ -25,6 +25,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <wx/defs.h>    /* mandatory but missing in choicdlg.h */
+#include <wx/choicdlg.h>
+
 #include "AnListClass.h"
 #include "AnListClassProperty.h"
 #include "AnListColumn.h"
@@ -381,6 +384,48 @@ AnListCtrl::onRowUpdate(wxCommandEvent &event)
 	}
 	if (0 <= from && from <= to)
 		RefreshItems(from, to);
+}
+
+void
+AnListCtrl::showColumnVisibilityDialog()
+{
+	unsigned            col;
+	wxArrayString       choices;
+	wxArrayInt          selections;
+	wxMultiChoiceDialog *columnDialog;
+	AnListColumn        *column;
+
+	/* prepare column information */
+	for (col=0; col<getColumnCount(); col++) {
+		column = getColumn(col);
+
+		choices.Add(column->getProperty()->getHeader());
+		if (column->isVisible()) {
+			selections.Add(col);
+		}
+	}
+
+	/* create the dialog */
+	columnDialog = new wxMultiChoiceDialog(this, _("Table columns"),
+	    _("Please select the columns to be shown"), choices);
+	columnDialog->SetSelections(selections);
+	columnDialog->SetSize(400, 350);
+	columnDialog->Layout();
+
+	if (columnDialog->ShowModal() == wxID_OK) {
+		/* apply result */
+		selections = columnDialog->GetSelections();
+		for (col=0; col<getColumnCount(); col++) {
+			column = getColumn(col);
+
+			setColumnVisible(column,
+			    (selections.Index(col) != wxNOT_FOUND));
+		}
+
+		Refresh();
+	}
+
+	columnDialog->Destroy();
 }
 
 void

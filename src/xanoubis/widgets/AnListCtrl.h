@@ -264,6 +264,13 @@ class AnListCtrl : public wxListCtrl, public Observer
 		 */
 		void setRowProvider(AnRowProvider *provider);
 
+		/**
+		 * Shows a choice dialog that allows to hide and show columns
+		 * of this AnListCtrl.
+		 * @return Nothing.
+		 */
+		void showColumnVisibilityDialog(void);
+
 	protected:
 		/**
 		 * Overloaded wxListCtrl::OnGetItemText().
