@@ -107,6 +107,7 @@ DlgPlaygroundCommitFileListImpl::onCommitClicked(wxCommandEvent &event)
 		commitButton->Disable();
 		delButton->Disable();
 		closeButton->Disable();
+		wxBeginBusyCursor();
 	}
 }
 
@@ -138,4 +139,5 @@ DlgPlaygroundCommitFileListImpl::onPlaygroundCompleted(wxCommandEvent &)
 	commitButton->Enable();
 	delButton->Enable();
 	closeButton->Enable();
+	wxEndBusyCursor();
 }

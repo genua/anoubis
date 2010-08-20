@@ -215,7 +215,9 @@ PlaygroundCtrl::getCommitErrorMessage(int state, int err)
 	case PlaygroundCommitTask::STATE_SCAN_FAILED:
 		return _("File scanners reported a problem with the file.");
 	case PlaygroundCommitTask::STATE_RENAME_FAILED:
-		break;
+		return wxString::Format(_("File was removed from the "
+		    "playground but could not be renamed (%hs)"),
+		    anoubis_strerror(err));
 	}
 	return wxString::Format(wxT("%hs"), anoubis_strerror(err));
 }

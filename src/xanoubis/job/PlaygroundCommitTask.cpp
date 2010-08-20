@@ -220,8 +220,8 @@ PlaygroundCommitTask::execFsFile(void)
 		}
 	case STATE_LABEL_REMOVED:
 		progress_ = true;
-		errs_[idx_] = pgfile_process(devs_[idx_], inos_[idx_], names_);
-		if (errs_[idx_] < 0) {
+		errs_[idx_] = -pgfile_process(devs_[idx_], inos_[idx_], names_);
+		if (errs_[idx_]) {
 			states_[idx_] = STATE_RENAME_FAILED;
 		} else {
 			states_[idx_] = STATE_COMPLETE;

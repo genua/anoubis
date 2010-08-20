@@ -98,7 +98,8 @@ PlaygroundFileNotify::~PlaygroundFileNotify(void)
 wxString
 PlaygroundFileNotify::getLogMessage(void)
 {
-	return wxString(_("Commit request for file "))+wxT("'")+path_+wxT("'");
+	return wxString::Format(_("Commit request for file %ls"),
+	    path_.c_str());
 }
 
 wxString
