@@ -1303,15 +1303,16 @@ pgcli_commit_file_prepare(struct anoubis_client *client) {
  * @return 0 on success
  */
 static int
-pgcli_commit_file(struct anoubis_client *client,
-    uint64_t pgid, uint64_t dev, uint64_t inode, const char* filenames[])
+pgcli_commit_file(struct anoubis_client *client, uint64_t pgid, uint64_t dev,
+    uint64_t inode, const char* filenames[], const char* abspaths[])
 {
 	struct anoubis_msg		*notification;
 	struct pg_file_message		*filemsg;
+	struct stat			 sb;
 	struct anoubis_transaction	*transaction = NULL;
 	int				 rc, offset;
 	int				 have_notification;
-	char				*scanfile;
+	char				*abspath;
 	int				 filenamecnt;
 
 	/* some validations */
@@ -1324,49 +1325,64 @@ pgcli_commit_file(struct anoubis_client *client,
 		return -EINVAL;
 	}
 
+	char *errpath = strdup(abspaths[0]);
+	pgfile_normalize_file(errpath);
+
 	rc = pgfile_check(dev, inode, filenames, !(opts & PGCLI_OPT_FORCE));
 	if (rc < 0) {
 		switch (-rc) {
 		case EMLINK:
 			fprintf(stderr, "Cannot commit %" PRIx64 ":%s: "
 			    "Target file exists and has multiple hard links\n"
-			    "Use -f to overwrite\n", dev, filenames[0]);
+			    "Use -f to overwrite\n", pgid, errpath);
 			return 1;
 		case EEXIST:
-			fprintf(stderr, "Cannot commit %" PRIx64 ":%s: "
-			    "Target file exists\nUse -f ot overwrite\n",
-			    dev, filenames[0]);
-			return 1;
+			rc = stat(errpath, &sb);
+			if (rc < 0){
+				return rc;
+			}
+			if (!S_ISDIR(sb.st_mode)){
+				fprintf(stderr, "Cannot commit %" PRIx64 ":%s: "
+				    "Target file exists\nUse -f to overwrite\n",
+				    pgid, errpath);
+				return 1;
+			} else {
+				fprintf(stderr, "Cannot commit %" PRIx64 ":%s: "
+				    "Target directory exists\nUse -f to"
+				    " overwrite\n", pgid, errpath);
+				return 1;
+			}
 		case EBUSY:
 			if (opts & PGCLI_OPT_FORCE) {
 				fprintf(stderr, "Cannot find all hard links "
 				    "for %" PRIx64 ":%s: Committing anyway\n",
-				    dev, filenames[0]);
+				    pgid, errpath);
 				break;
 			}
 			fprintf(stderr, "Cannot find all hard links "
 			    "for %" PRIx64 ":%s: File will not be committed.\n"
-			    "Use -f to overwrite\n", dev, filenames[0]);
+			    "Use -f to overwrite\n", pgid, errpath);
 			return 1;
 		case EXDEV:
 			fprintf(stderr, "Cannot commit file %" PRIx64 ":%s: "
-			    "Device is not mounted.\n", dev, filenames[0]);
+			    "Device is not mounted.\n", pgid, errpath);
 			return 1;
 		default:
 			return rc;
 		}
 	}
+
 	/* [try to] remove the security label */
-	if ((rc = lremovexattr(filenames[0], "security.anoubis_pg") < 0)) {
+	if ((rc = lremovexattr(abspaths[0], "security.anoubis_pg") < 0)) {
 		/* EINPROGRESS means success */
-		if (errno != EINPROGRESS && errno != ENOTEMPTY) {
+		if (errno != EINPROGRESS && errno != ENOTEMPTY && errno){
 			/* unknown error */
 			return -errno;
 		} else if (errno == ENOTEMPTY) {
 			/* parent dir not comitted */
 			char	*dir, *slash;
 
-			dir = strdup(filenames[0]);
+			dir = strdup(abspaths[0]);
 			if (!dir)
 				return -ENOMEM;
 			slash = strrchr(dir, '/');
@@ -1375,9 +1391,9 @@ pgcli_commit_file(struct anoubis_client *client,
 			if (slash)
 				(*slash) = 0;
 			pgfile_normalize_file(dir);
-			fprintf(stderr, "commit: Unable to commit playground"
-			    " file %s. Please commit the parent directory"
-			    " %s first!\n", filenames[0], dir);
+			fprintf(stderr, "Cannot commit file %" PRIx64 ":%s: "
+			    "Please commit its parent directory '%s' first!\n",
+			    pgid, errpath, dir);
 			free(dir);
 			return 1;
 		}
@@ -1387,6 +1403,7 @@ pgcli_commit_file(struct anoubis_client *client,
 		    "returned unexpected result (%d))\n", rc);
 		return 1;
 	}
+	free(errpath);
 
 	/* wait until the daemon sends us a notification that the file is
 	 * ready for scanning */
@@ -1394,7 +1411,7 @@ pgcli_commit_file(struct anoubis_client *client,
 	while (!have_notification) {
 		rc = anoubis_client_wait(client);
 		if (rc < 0) {
-			return -rc;
+			return rc;
 		}
 
 		while((notification = anoubis_client_getnotify(client))) {
@@ -1423,7 +1440,11 @@ pgcli_commit_file(struct anoubis_client *client,
 
 			/* kernel notify is for our requested file */
 			/* store the the verified path within the device */
-			scanfile = strdup(filemsg->path);
+			rc = pgfile_composename(&abspath, dev, inode,
+			    filemsg->path);
+			if (rc < 0){
+				return rc;
+			}
 
 			anoubis_msg_free(notification);
 			have_notification = 1;
@@ -1432,8 +1453,8 @@ pgcli_commit_file(struct anoubis_client *client,
 	}
 
 	/* send the commit request to the daemon */
-	transaction = anoubis_client_pgcommit_start(client, pgid, scanfile);
-	free(scanfile);
+	transaction = anoubis_client_pgcommit_start(client, pgid, abspath);
+	free(abspath);
 	rc = anoubis_transaction_complete(client, transaction);
 	if (rc < 0) {
 		return rc;
@@ -1457,8 +1478,8 @@ pgcli_commit(uint64_t pgid, const char* file)
 	struct anoubis_msg		*filelist    = NULL;
 	int		rc, filecount, file_index = 0;
 	struct		stat stats;
-	char		*pg_path     = NULL;
-	char**		filenames = NULL;
+	char		*abspath    = NULL;
+	char		**filenames = NULL, **abspaths = NULL;
 
 	/* establish connection to daemon */
 	rc = pgcli_ui_init();
@@ -1498,15 +1519,15 @@ pgcli_commit(uint64_t pgid, const char* file)
 		return rc;
 	}
 
-	if ((pg_path = pgcli_find_file(filelist, file)) == NULL) {
+	if ((abspath = pgcli_find_file(filelist, file)) == NULL) {
 		printf(" ERROR file not in playground: %s\n", file);
 		return -ENOENT;
 	}
 
-	if (stat(pg_path, &stats) == -1) {
+	if (stat(abspath, &stats) == -1) {
 		printf(" ERROR failed to stat '%s': %s\n",
-		    pg_path, strerror(errno));
-		free(pg_path);
+		    abspath, strerror(errno));
+		free(abspath);
 		return -errno;
 	}
 
@@ -1524,6 +1545,8 @@ pgcli_commit(uint64_t pgid, const char* file)
 			/* initialize filename array */
 			filenames = malloc(sizeof(char*) * (filecount + 1));
 			filenames[filecount] = 0;
+			abspaths = malloc(sizeof(char*) * (filecount + 1));
+			abspaths[filecount] = 0;
 			file_index = 0;
 		}
 
@@ -1534,7 +1557,6 @@ pgcli_commit(uint64_t pgid, const char* file)
 			    record_cnt < get_value(filelist->u.pgreply->nrec);
 			    ++record_cnt) {
 				Anoubis_PgFileRecord *rec;
-				char *   path;
 				uint64_t dev, ino;
 
 				rec = (Anoubis_PgFileRecord *)
@@ -1550,12 +1572,14 @@ pgcli_commit(uint64_t pgid, const char* file)
 						filecount++;
 					} else {
 						/* second pass -> store name */
-						if ((rec->path[0] == 0)
-						    || pgfile_composename(&path,
-						    dev, ino, rec->path) < 0) {
-							continue;
+						char *path = rec->path;
+						rc = pgfile_composename(
+						    &abspath, dev, ino, path);
+						if(rc < 0){
+							return rc;
 						}
 						filenames[file_index] = path;
+						abspaths[file_index]  = abspath;
 						file_index++;
 					}
 				}
@@ -1567,16 +1591,18 @@ pgcli_commit(uint64_t pgid, const char* file)
 		filelist = transaction->msg;
 	}
 	filenames[file_index] = 0;
+	abspaths[file_index] = 0;
 
 	/* initiate the actual commit procedure */
 	rc = pgcli_commit_file(client, pgid, expand_dev(stats.st_dev),
-	    stats.st_ino, (const char**)filenames);
+	    stats.st_ino, (const char**)filenames, (const char**)abspaths);
 
 	/* cleanup */
 	anoubis_transaction_destroy(transaction);
 	PGCLI_CONNECTION_WIPE(channel, client);
 	free(filenames);
-	free(pg_path);
+	free(abspaths);
+	free(abspath);
 
 	return rc;
 }
