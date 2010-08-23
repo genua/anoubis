@@ -45,6 +45,7 @@ class SuitePlayground : public CPPUNIT_NS::TestFixture
 		wxString getListValue(AnListCtrl* list, long id, int col);
 		void checkPlaygroundInfo(void);
 		void checkPlaygroundFiles(void);
+		void commitPlaygroundFiles(void);
 };
 
 #endif	/* _SUITEPLAYGROUND_H_ */

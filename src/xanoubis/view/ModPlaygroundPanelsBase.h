@@ -62,6 +62,7 @@ class AnListCtrl;
 #define PG_VIEW_REFRESHBUTTON 8503
 #define PG_VIEW_COMMITBUTTON 8504
 #define PG_COMMIT_LIST 8505
+#define PG_FILE_COMMITBUTTON 8506
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class ModPlaygroundMainPanelBase

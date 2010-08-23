@@ -36,6 +36,7 @@
 #include <ModPlaygroundPanelsBase.h>
 #include <ModAnoubisPanelsBase.h>
 
+#include "JobCtrl.h"
 #include "SuitePlayground.h"
 
 /* Register test suite. */
@@ -49,6 +50,7 @@ SuitePlayground::do_playground_testsuite(void)
 	startPlayground();
 	checkPlaygroundInfo();
 	checkPlaygroundFiles();
+	commitPlaygroundFiles();
 }
 
 void
@@ -140,7 +142,7 @@ SuitePlayground::checkPlaygroundInfo(void) {
 	wxTst::WxGuiTestHelper::FlushEventQueue();
 	sleep(1);
 
-	/* get the grid */
+	/* get the list */
 	fprintf(stderr, "now getting view\n");
 	wxListCtrl *pg_info_wx = dynamic_cast<wxListCtrl*>
 	    (wxWindow::FindWindowById(PG_VIEW_LIST));
@@ -164,9 +166,9 @@ SuitePlayground::checkPlaygroundInfo(void) {
 	CPPUNIT_ASSERT_MESSAGE("column 'Benutzer' contains wrong value",
 	    getListValue(pg_info, 0, 5).Cmp(wxT("u2000")) == 0);
 	CPPUNIT_ASSERT_MESSAGE("column 'Status' contains wrong value",
-	    getListValue(pg_info, 0, 3).Cmp(wxT("active")) == 0);
+	    getListValue(pg_info, 0, 3).Cmp(wxT("terminated")) == 0);
 	CPPUNIT_ASSERT_MESSAGE("column 'Dateien' contains wrong value",
-	    getListValue(pg_info, 0, 4).Cmp(wxT("1")) == 0);
+	    getListValue(pg_info, 0, 4).Cmp(wxT("5")) == 0);
 	CPPUNIT_ASSERT_MESSAGE("column 'Command' contains wrong value",
 	    getListValue(pg_info, 0, 2).Cmp(wxT("/tmp/2000.test.sh")) == 0);
 
@@ -195,21 +197,92 @@ SuitePlayground::checkPlaygroundFiles(void) {
 
 	/* get newly opened window */
 	fprintf(stderr, "now getting playground file list\n");
-	wxGrid *file_list = dynamic_cast<wxGrid*>
+	AnListCtrl *file_list = dynamic_cast<AnListCtrl*>
 	    (wxWindow::FindWindowById(PG_COMMIT_LIST));
 	CPPUNIT_ASSERT_MESSAGE("Can't find playground file list",
 	    file_list != NULL);
 
 	/* dump rows for debugging */
 	fprintf(stderr, "playground file list:\n");
-	for (int row=0; row<file_list->GetNumberRows(); row++) {
+	long item_id = -1;
+	while ((item_id = file_list->GetNextItem(item_id)) != -1) {
 		fprintf(stderr, "%ls\n", (const wchar_t*)
-		    file_list->GetCellValue(row, 0).c_str());
+		    getListValue(file_list, item_id, 0).c_str());
 	}
 
 	/* check content */
 	CPPUNIT_ASSERT_MESSAGE("column 'File name' contains wrong value",
-	    file_list->GetCellValue(0, 0).Cmp(wxT("/tmp/.plgr.1.foo")) == 0);
+	    getListValue(file_list, 0, 0).Cmp(wxT("/tmp/subdir")) == 0);
+	CPPUNIT_ASSERT_MESSAGE("column 'File name' contains wrong value",
+	    getListValue(file_list, 1, 0).Cmp(wxT("/tmp/foo")) == 0);
+	CPPUNIT_ASSERT_MESSAGE("column 'File name' contains wrong value",
+	    getListValue(file_list, 2, 0).Cmp(wxT("/tmp/subdir/foo")) == 0);
+	CPPUNIT_ASSERT_MESSAGE("column 'File name' contains wrong value",
+	    getListValue(file_list, 3, 0).Cmp(wxT("/tmp/bar, /tmp/baz")) == 0);
+	CPPUNIT_ASSERT_MESSAGE("column 'File name' contains wrong value",
+	    getListValue(file_list, 4, 0).Cmp(
+	    wxT("/tmp/subdir/bar, /tmp/subdir/baz")) == 0);
+
+	fprintf(stderr, "playground file list is ok\n");
+}
+
+void
+SuitePlayground::commitPlaygroundFiles(void) {
+	/* Select the 1st row in the playground info list */
+	fprintf(stderr, "now getting playground file list\n");
+	AnListCtrl *flist = dynamic_cast<AnListCtrl*>
+	    (wxWindow::FindWindowById(PG_COMMIT_LIST));
+	CPPUNIT_ASSERT_MESSAGE("Can't find playground file list",
+	    flist != NULL);
+	flist->SetItemState(0, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
+	flist->SetItemState(1, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
+	flist->SetItemState(2, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
+	flist->SetItemState(3, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
+	flist->SetItemState(4, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
+
+	/* click commit files button */
+	fprintf(stderr, "now clicking commit button\n");
+	wxWindow *commit_button =
+	    wxWindow::FindWindowById(PG_FILE_COMMITBUTTON);
+	CPPUNIT_ASSERT_MESSAGE("Can't find commit button",
+	    commit_button != NULL);
+	wxTst::EventSimulationHelper::ClickButton(
+	    commit_button->GetId(), commit_button);
+	wxTst::WxGuiTestHelper::FlushEventQueue();
+
+	/* wait until job is done */
+	/* Note: better wait for an event here that the list is updated */
+	for (int i=0; i<5; i++) {
+		sleep(1);
+		wxTst::WxGuiTestHelper::FlushEventQueue();
+	}
+
+	/* dump rows for debugging */
+	long item_id = -1;
+	fprintf(stderr, "new playground file list:\n");
+	while ((item_id = flist->GetNextItem(item_id)) != -1) {
+		fprintf(stderr, "%ls\n", (const wchar_t*)
+		    getListValue(flist, item_id, 0).c_str());
+	}
+
+	/* check content */
+	item_id = -1;
+	CPPUNIT_ASSERT_MESSAGE("list is not empty",
+	    flist->GetNextItem(item_id) == -1);
+
+	/* check that files exist in production system */
+	struct stat stats;
+
+	#define ASSERT_FILEEXISTS(file) \
+	    CPPUNIT_ASSERT_MESSAGE("file " file " does not exist", \
+	    stat(file, &stats) == 0)
+	ASSERT_FILEEXISTS("/tmp/subdir");
+	ASSERT_FILEEXISTS("/tmp/foo");
+	ASSERT_FILEEXISTS("/tmp/subdir/foo");
+	ASSERT_FILEEXISTS("/tmp/bar");
+	ASSERT_FILEEXISTS("/tmp/baz");
+	ASSERT_FILEEXISTS("/tmp/subdir/bar");
+	ASSERT_FILEEXISTS("/tmp/subdir/baz");
 
 	fprintf(stderr, "playground file list is ok\n");
 }

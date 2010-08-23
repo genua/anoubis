@@ -212,7 +212,7 @@ DlgPlaygroundCommitFileListBase::DlgPlaygroundCommitFileListBase( wxWindow* pare
 	
 	footerSizer->Add( delButton, 0, wxALL, 5 );
 	
-	commitButton = new wxButton( this, wxID_ANY, _("Commit"), wxDefaultPosition, wxDefaultSize, 0 );
+	commitButton = new wxButton( this, PG_FILE_COMMITBUTTON, _("Commit"), wxDefaultPosition, wxDefaultSize, 0 );
 	commitButton->SetToolTip( _("Commit selected Files to the production system.") );
 	
 	footerSizer->Add( commitButton, 0, wxALL, 5 );
