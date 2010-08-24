@@ -198,10 +198,13 @@ PlaygroundCtrl::getCommitErrorMessage(int state, int err)
 	case EXDEV:
 		return _("The device is not mounted.");
 	case EBUSY:
-		return _("Cannot find all hard links to the file");
+		return _("Cannot find all hard links to the file.");
 	}
 	switch (state) {
 	case PlaygroundCommitTask::STATE_TODO:
+		if (err == ENOTEMPTY) {
+			return _("Parent directory must be committed first.");
+		}
 		return _("Did not try to commit the file.");
 	case PlaygroundCommitTask::STATE_NEED_OVERWRITE:
 		switch (err) {
@@ -216,7 +219,7 @@ PlaygroundCtrl::getCommitErrorMessage(int state, int err)
 		return _("File scanners reported a problem with the file.");
 	case PlaygroundCommitTask::STATE_RENAME_FAILED:
 		return wxString::Format(_("File was removed from the "
-		    "playground but could not be renamed (%hs)"),
+		    "playground but could not be renamed (%hs)."),
 		    anoubis_strerror(err));
 	}
 	return wxString::Format(wxT("%hs"), anoubis_strerror(err));
@@ -253,8 +256,8 @@ PlaygroundCtrl::OnPlaygroundFilesCommitted(TaskEvent &event)
 		msg = getCommitErrorMessage(s, task->getFileError(i));
 		file = fileIdentification(task->getDevice(i),
 		    task->getInode(i));
-		fullmsg = wxString::Format(_("Commit for file(s) %ls "
-		    "failed. %ls"), file.c_str(), msg.c_str());
+		fullmsg = wxString::Format(_("Commit for file(s) '%ls' "
+		    "failed.\n\n%ls"), file.c_str(), msg.c_str());
 		if (s == PlaygroundCommitTask::STATE_NEED_OVERWRITE) {
 			fullmsg += _(" Commit anyway?");
 			if (wxMessageBox(fullmsg, _("Playground Commit"),

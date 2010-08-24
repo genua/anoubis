@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: anoubis 0.9.3.26.8.120\n"
+"Project-Id-Version: anoubis 0.9.3.26.12.124\n"
 "Report-Msgid-Bugs-To: anoubis@lists.anoubis.org\n"
-"POT-Creation-Date: 2010-08-19 14:03+0200\n"
+"POT-Creation-Date: 2010-08-24 13:49+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -544,7 +544,7 @@ msgstr ""
 msgid "Log Viewer"
 msgstr ""
 
-#: src/xanoubis/view/DlgPlaygroundCommitFileListImpl.cpp:125
+#: src/xanoubis/view/DlgPlaygroundCommitFileListImpl.cpp:130
 #: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:175
 msgid "Multiple errors occured while processing the Playground request"
 msgstr ""
@@ -2118,7 +2118,7 @@ msgstr ""
 msgid "Close this Window"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.h:152
+#: src/xanoubis/view/ModPlaygroundPanelsBase.h:153
 msgid "Commit Files"
 msgstr ""
 
@@ -3493,44 +3493,51 @@ msgid "The device is not mounted."
 msgstr ""
 
 #: src/xanoubis/control/PlaygroundCtrl.cpp:201
-msgid "Cannot find all hard links to the file"
+msgid "Cannot find all hard links to the file."
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:205
+#: src/xanoubis/control/PlaygroundCtrl.cpp:206
+msgid "Parent directory must be committed first."
+msgstr ""
+
+#: src/xanoubis/control/PlaygroundCtrl.cpp:208
 msgid "Did not try to commit the file."
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:209
+#: src/xanoubis/control/PlaygroundCtrl.cpp:212
 msgid "Target file exists and has multiple hard links."
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:212
+#: src/xanoubis/control/PlaygroundCtrl.cpp:215
 msgid "Target file exists."
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:216
+#: src/xanoubis/control/PlaygroundCtrl.cpp:219
 msgid "File scanners reported a problem with the file."
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:218
+#: src/xanoubis/control/PlaygroundCtrl.cpp:221
 #, c-format
-msgid "File was removed from the playground but could not be renamed (%hs)"
-msgstr ""
-
-#: src/xanoubis/control/PlaygroundCtrl.cpp:256
-#, c-format
-msgid "Commit for file(s) %ls failed. %ls"
+msgid "File was removed from the playground but could not be renamed (%hs)."
 msgstr ""
 
 #: src/xanoubis/control/PlaygroundCtrl.cpp:259
+#, c-format
+msgid ""
+"Commit for file(s) '%ls' failed.\n"
+"\n"
+"%ls"
+msgstr ""
+
+#: src/xanoubis/control/PlaygroundCtrl.cpp:262
 msgid " Commit anyway?"
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:260
+#: src/xanoubis/control/PlaygroundCtrl.cpp:263
 msgid "Playground Commit"
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:376
+#: src/xanoubis/control/PlaygroundCtrl.cpp:379
 #, c-format
 msgid "Could not determine filename for playground-file: %hs"
 msgstr ""
@@ -3839,11 +3846,11 @@ msgstr ""
 msgid "hide"
 msgstr ""
 
-#: src/xanoubis/widgets/AnGrid.cpp:97
+#: src/xanoubis/widgets/AnGrid.cpp:97 src/xanoubis/widgets/AnListCtrl.cpp:409
 msgid "Table columns"
 msgstr ""
 
-#: src/xanoubis/widgets/AnGrid.cpp:98
+#: src/xanoubis/widgets/AnGrid.cpp:98 src/xanoubis/widgets/AnListCtrl.cpp:410
 msgid "Please select the columns to be shown"
 msgstr ""
 

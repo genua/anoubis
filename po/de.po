@@ -33,7 +33,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: anoubis. 10.972.C388\n"
 "Report-Msgid-Bugs-To: anoubis@lists.anoubis.org\n"
-"POT-Creation-Date: 2010-08-19 14:03+0200\n"
+"POT-Creation-Date: 2010-08-24 13:49+0200\n"
 "PO-Revision-Date: 2010-07-29 10:30+0100\n"
 "Last-Translator: Robin <robin_doer@genua.de>\n"
 "Language-Team: German <translation-team-de@lists.sourceforge.net>\n"
@@ -574,7 +574,7 @@ msgstr "Nachricht"
 msgid "Log Viewer"
 msgstr "LogViewer"
 
-#: src/xanoubis/view/DlgPlaygroundCommitFileListImpl.cpp:125
+#: src/xanoubis/view/DlgPlaygroundCommitFileListImpl.cpp:130
 #: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:175
 msgid "Multiple errors occured while processing the Playground request"
 msgstr ""
@@ -2196,7 +2196,7 @@ msgstr "Übernahme der ausgewählten Dateien ins Produktivsystem."
 msgid "Close this Window"
 msgstr "Fenster schließen"
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.h:152
+#: src/xanoubis/view/ModPlaygroundPanelsBase.h:153
 msgid "Commit Files"
 msgstr "Dateien übernehmen"
 
@@ -3659,10 +3659,9 @@ msgstr ""
 msgid "Warning"
 msgstr "Warnung"
 
-# c-format
 #: src/xanoubis/control/MainUtils.cpp:289
 #: src/xanoubis/control/MainUtils.cpp:297
-# c-format
+#, c-format
 msgid "Couldn't remove Autostart file: %ls"
 msgstr "Kann Autostart Datei nicht entfernen: %ls"
 
@@ -3671,12 +3670,12 @@ msgid "Communication error in playground request."
 msgstr "Kommunikationsfehler bei der Playgroundanfrage."
 
 #: src/xanoubis/control/PlaygroundCtrl.cpp:132
-# c-format
+#, c-format
 msgid "The daemon returned an error for the playground request: %hs"
 msgstr "Fehler bei der Playgroundanfrage: %hs"
 
 #: src/xanoubis/control/PlaygroundCtrl.cpp:141
-# c-format
+#, c-format
 msgid "Got unexpected result (%d) for playground request"
 msgstr "Unerwartetes Ergebnis (%d) beim der Playgroundanfrage"
 
@@ -3685,44 +3684,56 @@ msgid "The device is not mounted."
 msgstr "Das Device ist nicht eingebunden."
 
 #: src/xanoubis/control/PlaygroundCtrl.cpp:201
-msgid "Cannot find all hard links to the file"
-msgstr "Konnte nicht alle Verweise auf die Datei finden"
+msgid "Cannot find all hard links to the file."
+msgstr "Konnte nicht alle Verweise auf die Datei finden."
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:205
+#: src/xanoubis/control/PlaygroundCtrl.cpp:206
+msgid "Parent directory must be committed first."
+msgstr "Das übergeordnete Verzeichnis muss zuerst übernommen werden."
+
+#: src/xanoubis/control/PlaygroundCtrl.cpp:208
 msgid "Did not try to commit the file."
 msgstr "Es wurde nicht versucht, die Datei zu übernehmen."
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:209
+#: src/xanoubis/control/PlaygroundCtrl.cpp:212
 msgid "Target file exists and has multiple hard links."
 msgstr "Die Zieldatei existiert und hat mehr als einen Hardlink."
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:212
+#: src/xanoubis/control/PlaygroundCtrl.cpp:215
 msgid "Target file exists."
 msgstr "Die Zieldatei existiert bereits."
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:216
+#: src/xanoubis/control/PlaygroundCtrl.cpp:219
 msgid "File scanners reported a problem with the file."
 msgstr "Bei der Überprüfung des Dateiinhalts wurde ein Problem entdeckt."
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:218
+#: src/xanoubis/control/PlaygroundCtrl.cpp:221
 #, c-format
-msgid "File was removed from the playground but could not be renamed (%hs)"
-msgstr "Die Datei wurde aus dem Playground entfernt, konnte dann aber nicht umbenannt werden (%hs)"
-
-#: src/xanoubis/control/PlaygroundCtrl.cpp:256
-#, c-format
-msgid "Commit for file(s) %ls failed. %ls"
-msgstr "Die Übernahme der Datei(en) %ls is fehlgeschlagen. %ls"
+msgid "File was removed from the playground but could not be renamed (%hs)."
+msgstr ""
+"Die Datei wurde aus dem Playground entfernt, konnte dann aber nicht "
+"umbenannt werden (%hs)"
 
 #: src/xanoubis/control/PlaygroundCtrl.cpp:259
+#, c-format
+msgid ""
+"Commit for file(s) '%ls' failed.\n"
+"\n"
+"%ls"
+msgstr ""
+"Die Übernahme der Datei(en) %ls is fehlgeschlagen.\n"
+"\n"
+"%ls"
+
+#: src/xanoubis/control/PlaygroundCtrl.cpp:262
 msgid " Commit anyway?"
 msgstr "Dennoch übernehmen?"
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:260
+#: src/xanoubis/control/PlaygroundCtrl.cpp:263
 msgid "Playground Commit"
 msgstr "Playground Übernahme"
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:376
+#: src/xanoubis/control/PlaygroundCtrl.cpp:379
 #, c-format
 msgid "Could not determine filename for playground-file: %hs"
 msgstr "Der Pfad für die Playground-Datei %hs konnte nicht ermittelt werden."
@@ -4067,11 +4078,11 @@ msgstr "Eine SFS Operation wird bearbeitet. Bitte warten ..."
 msgid "hide"
 msgstr "Verbergen"
 
-#: src/xanoubis/widgets/AnGrid.cpp:97
+#: src/xanoubis/widgets/AnGrid.cpp:97 src/xanoubis/widgets/AnListCtrl.cpp:409
 msgid "Table columns"
 msgstr "Tabellenspalten"
 
-#: src/xanoubis/widgets/AnGrid.cpp:98
+#: src/xanoubis/widgets/AnGrid.cpp:98 src/xanoubis/widgets/AnListCtrl.cpp:410
 msgid "Please select the columns to be shown"
 msgstr "Bitte die anzuzeigenden Spalten auswählen"
 
