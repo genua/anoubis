@@ -933,6 +933,7 @@ pgcli_remove(anoubis_cookie_t pgid)
 	struct achat_channel		*channel = NULL;
 	struct anoubis_client		*client = NULL;
 	struct anoubis_transaction	*transaction = NULL;
+	int				 noprogress;
 
 	rc = pgcli_ui_init();
 	if (rc != 0)
@@ -954,7 +955,8 @@ pgcli_remove(anoubis_cookie_t pgid)
 		return rc;
 
 	/* delete files until the playground is gone */
-	while (1) {
+	noprogress = 0;
+	while (noprogress < 2) {
 		transaction = anoubis_client_pglist_start(client,
 		    ANOUBIS_PGREC_FILELIST, pgid);
 		rc = anoubis_transaction_complete(client, transaction);
@@ -969,14 +971,22 @@ pgcli_remove(anoubis_cookie_t pgid)
 			rc = 1;
 			break;
 		}
-		if (!pgcli_delete_filelist(transaction->msg)) {
-			fprintf(stderr, "Could not remove all files in "
-			    "the playground\n");
-			anoubis_transaction_destroy(transaction);
-			rc = 1;
-			break;
+		if (pgcli_delete_filelist(transaction->msg)) {
+			noprogress = 0;
+		} else {
+			/*
+			 * Try to get the file list once more. We have seen
+			 * cases where the daemon does not catch up with the
+			 * CLI fast enough.
+			 */
+			noprogress++;
 		}
 		anoubis_transaction_destroy(transaction);
+	}
+	if (noprogress == 2) {
+		fprintf(stderr, "Could not remove all files in "
+		    "the playground\n");
+		rc = 1;
 	}
 
 	/* Cleanup. */
