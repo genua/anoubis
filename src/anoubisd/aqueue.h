@@ -31,9 +31,7 @@
 #include <sys/time.h>
 #include <event.h>
 
-#include "anoubisd.h"
 #include "amsg.h"
-
 
 struct queue_entry {
 	/*@dependent@*/ /*@null@*/

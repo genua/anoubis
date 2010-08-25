@@ -74,6 +74,7 @@ lint_sources = \
 	sfs.c \
 	cfg.c \
 	anoubis_alloc.c \
+	scanner.c \
 	upgrade.c
 
 nolint_sources = amsg_verify.c

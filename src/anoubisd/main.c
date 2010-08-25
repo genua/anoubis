@@ -133,17 +133,6 @@ static Queue eventq_m2s;
 static Queue eventq_m2u;
 static Queue eventq_m2dev;
 
-struct event_info_main {
-	/*@dependent@*/
-	struct event	*ev_s2m, *ev_p2m, *ev_u2m, *ev_dev2m;
-	struct event	*ev_sigs[10];
-	/*@dependent@*/
-	struct event	*ev_timer;
-	/*@null@*/
-	struct timeval	*tv;
-	int anoubisfd;
-};
-
 static void	reconfigure(void);
 static void	init_root_key(char *);
 int main(int argc, char *argv[]);
@@ -236,14 +225,12 @@ segvhandler(int sig, siginfo_t *info, void *uc)
  * context, thus any C-function can be used.
  */
 static void
-sighandler(int sig, short event __used, void *arg __used)
+sighandler(int sig, short event __used, void *arg)
 {
 	int			 die = 0;
-	struct event_info_main	*info;
+	struct event_info_main	*info = arg;
 
 	DEBUG(DBG_TRACE, ">sighandler: %d", sig);
-
-	info = arg;
 
 	switch (sig) {
 	case SIGTERM:
@@ -297,12 +284,13 @@ sighandler(int sig, short event __used, void *arg __used)
 		}
 		if (check_child(upgrade_pid, "anoubis upgrade")) {
 			upgrade_pid = 0;
-			/* XXX ch: shall we really terminate or die? */
 			if (!terminate)
 				die = 1;
 		}
-		if (terminate && sig == SIGCHLD && arg)
-			signal_del(arg);
+		if (info && anoubisd_scanner_exit(info, &eventq_m2p))
+			break;
+		if (terminate && sig == SIGCHLD && info)
+			signal_del(info->ev_sigchld);
 		if (die) {
 			main_shutdown(0);
 			/*NOTREACHED*/
@@ -714,7 +702,7 @@ main(int argc, char *argv[])
 	signal_set(&ev_sigint, SIGINT, sighandler, &ev_info);
 	signal_set(&ev_sigquit, SIGQUIT, sighandler, NULL);
 	signal_set(&ev_sighup, SIGHUP, sighandler, &ev_info);
-	signal_set(&ev_sigchld, SIGCHLD, sighandler, &ev_sigchld);
+	signal_set(&ev_sigchld, SIGCHLD, sighandler, &ev_info);
 	signal_add(&ev_sigterm, NULL);
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigquit, NULL);
@@ -725,6 +713,7 @@ main(int argc, char *argv[])
 	ev_info.ev_sigs[2] = &ev_sigquit;
 	ev_info.ev_sigs[3] = &ev_sighup;
 	ev_info.ev_sigs[4] = NULL;
+	ev_info.ev_sigchld = &ev_sigchld;
 
 	anoubisd_defaultsigset(&mask);
 	sigdelset(&mask, SIGCHLD);
@@ -916,25 +905,32 @@ master_terminate(int error)
 static int
 check_child(pid_t pid, const char *pname)
 {
-	int	status;
+	int	status, ret;
 
 	DEBUG(DBG_TRACE, ">check_child");
 
-	if (waitpid(pid, &status, WNOHANG) > 0) {
+	ret = waitpid(pid, &status, WNOHANG);
+	if  (ret > 0) {
 		if (WIFEXITED(status)) {
 			log_warnx("Lost child: %s exited", pname);
-			return (1);
+			return 1;
 		}
 		if (WIFSIGNALED(status)) {
 			log_warnx("Lost child: %s terminated; signal %d",
 			    pname, WTERMSIG(status));
-			return (1);
+			return 1;
 		}
+	} else if (ret < 0 && errno == ECHILD) {
+		/*
+		 * This can happen if a real child exits and the
+		 * scanner wait call picks up its exit status.
+		 */
+		log_warnx("Lost child: %s vanished", pname);
+		return 1;
 	}
 
 	DEBUG(DBG_TRACE, "<check_child");
-
-	return (0);
+	return 0;
 }
 
 #ifdef LINUX
@@ -1778,36 +1774,28 @@ dispatch_pgcommit(struct anoubisd_msg *msg,
 	fd = open(pgmsg->path, O_RDONLY | O_NOFOLLOW | O_NONBLOCK);
 	if (fd < 0) {
 		err = errno;
-		goto out;
+		goto error;
 	}
 	if (fstat(fd, &statbuf) < 0) {
 		err = errno;
-		goto out;
+		goto error;
 	}
 #ifdef LINUX
 	err = EPERM;
 	if (expand_dev(statbuf.st_dev) != pgmsg->dev
 	    || statbuf.st_ino != pgmsg->ino)
-		goto out;
+		goto error;
 	if (ioctl(evinfo->anoubisfd, ANOUBIS_SCAN_STARTED, fd) < 0) {
 		err = errno;
-		goto out;
+		goto error;
 	}
-	/* Do the actual scan here ... */
-	log_info("scanning of file %" PRIx64 ":%" PRIx64 " (%s) in playground "
-	    "%" PRIx64 " successful", pgmsg->dev, pgmsg->ino, pgmsg->path,
-	    pgmsg->pgid);
-	if (ioctl(evinfo->anoubisfd, ANOUBIS_SCAN_SUCCESS, fd) < 0) {
-		err = errno;
-		goto out;
-	}
-	if (fremovexattr(fd, "security.anoubis_pg") < 0) {
-		err = errno;
-		goto out;
-	}
-	err = 0;
+	err = -anoubisd_scan_start(pgmsg->token, fd, pgmsg->auth_uid,
+	    0 /* flags */);
+	if (err)
+		goto error;
+	return;
 #endif
-out:
+error:
 	if (fd >= 0)
 		close(fd);
 	rmsg = msg_factory(ANOUBISD_MSG_PGCOMMIT_REPLY,

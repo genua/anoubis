@@ -29,7 +29,6 @@
 #define _AMSG_H
 
 #include <anoubis_msg.h>
-#include "anoubisd.h"
 
 #ifdef LINUX
 #include <linux/eventdev.h>
@@ -62,21 +61,25 @@ extern void msg_init(int, /*@dependent@*/ char *);
 extern void msg_release(int);
 
 /*@null@*/
-extern anoubisd_msg_t *get_msg(int);
+struct anoubisd_msg;
+extern struct anoubisd_msg	*get_msg(int);
 
 /*@null@*/
-extern anoubisd_msg_t	*get_event(int);
-extern anoubisd_msg_t	*compat_get_event(anoubisd_msg_t *,
-			     unsigned long version);
-extern int		 get_client_msg(int, struct anoubis_msg **);
-extern int		 send_msg(int, anoubisd_msg_t *);
-extern int		 msg_pending(int);
-extern int		 msg_eof(int);
-extern void		 amsg_verify(struct anoubisd_msg *);
-extern int		 eventdev_hdr_size(const char *buf, int buflen);
-extern int		 verify_polrequest(const char *, int, unsigned int);
-extern int		 amsg_sfs_checksumop_size(const char *buf, int maxlen);
-extern anoubisd_msg_t	*msg_factory(int, int);
-extern void		 msg_shrink(struct anoubisd_msg *, int);
+extern struct anoubisd_msg	*get_event(int);
+extern struct anoubisd_msg	*compat_get_event(struct anoubisd_msg *,
+				    unsigned long version);
+extern int			 get_client_msg(int, struct anoubis_msg **);
+extern int			 send_msg(int, struct anoubisd_msg *);
+extern int			 msg_pending(int);
+extern int			 msg_eof(int);
+extern void			 amsg_verify(struct anoubisd_msg *);
+extern int			 amsg_verify_nonfatal(struct anoubisd_msg *);
+extern int			 eventdev_hdr_size(const char *buf, int buflen);
+extern int			 verify_polrequest(const char *, int,
+				     unsigned int);
+extern int			 amsg_sfs_checksumop_size(const char *buf,
+				     int maxlen);
+extern struct anoubisd_msg	*msg_factory(int, int);
+extern void			 msg_shrink(struct anoubisd_msg *, int);
 
 #endif /* !_AMSG_H */

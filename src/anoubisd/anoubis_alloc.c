@@ -86,6 +86,8 @@ abuf_realloc(struct abuf_buffer src, size_t newlen)
 {
 	struct abuf_buffer_internal	*intbufp, *newbufp;
 
+	if (src.length == 0)
+		return abuf_alloc(newlen);
 	if (newlen <= src.length)
 		return src;
 	intbufp = ((struct abuf_buffer_internal *)(src.data)) - 1;

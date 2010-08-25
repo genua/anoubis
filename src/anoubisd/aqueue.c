@@ -40,6 +40,7 @@
 
 #include "amsg.h"
 #include "aqueue.h"
+#include "anoubisd.h"
 
 /*
  * Unit Test:

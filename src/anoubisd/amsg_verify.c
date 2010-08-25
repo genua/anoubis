@@ -842,8 +842,8 @@ anoubisd_msg_size(const char *buf, int buflen)
 	RETURN_SIZE();
 }
 
-void
-amsg_verify(struct anoubisd_msg *msg)
+static int
+__amsg_verify(struct anoubisd_msg *msg, int fatal)
 {
 	int		 buflen, tmp;
 	char		*buf = (void *)msg;
@@ -873,7 +873,10 @@ amsg_verify(struct anoubisd_msg *msg)
 		}
 		msgfmt[pos] = 0;
 		log_warnx("MSG DATA: %s", msgfmt);
-		master_terminate(EINVAL);
+		if (fatal)
+			master_terminate(EINVAL);
+		else
+			return 0;
 	} else if (tmp < buflen) {
 		/*
 		 * Fill space in messages that are smaller than the surrounding
@@ -885,8 +888,23 @@ amsg_verify(struct anoubisd_msg *msg)
 		int	i;
 		for (i=tmp; i<buflen; ++i)
 			buf[i] = fill[i%4];
-		if (tmp < buflen - 8)
-			log_warnx("Oversized message: buf=%d, real=%d, type=%d",
+		if (tmp < buflen - 8) {
+			log_warnx("Oversized message: buf=%d, real=%d,type=%d",
 			    buflen, tmp, msg->mtype);
+			return  0;
+		}
 	}
+	return 1;
+}
+
+void
+amsg_verify(struct anoubisd_msg *msg)
+{
+	(void)__amsg_verify(msg, 1);
+}
+
+int
+amsg_verify_nonfatal(struct anoubisd_msg *msg)
+{
+	return __amsg_verify(msg, 0);
 }

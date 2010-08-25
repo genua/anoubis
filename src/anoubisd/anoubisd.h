@@ -57,6 +57,7 @@
 #include <assert.h>
 
 #include <sys/queue.h>
+#include <aqueue.h>
 
 #ifdef LINUX
 #define ANOUBISCORE_MIN_VERSION	0x00010002UL
@@ -156,6 +157,16 @@ extern struct anoubisd_config anoubisd_config;
 struct session_reg {
 	u_int32_t	session_id;
 	int		flag;
+};
+
+struct event_info_main {
+	struct event	*ev_s2m, *ev_p2m, *ev_u2m, *ev_dev2m;
+	struct event	*ev_sigchld;
+	struct event	*ev_m2p;
+	struct event	*ev_sigs[10];
+	struct event	*ev_timer;
+	struct timeval	*tv;
+	int anoubisfd;
 };
 
 struct anoubisd_msg {
@@ -440,6 +451,11 @@ void	send_policychange(u_int32_t uid, u_int32_t prio);
 void	flush_log_queue(void);
 
 void send_upgrade_start(void);
+
+/* Scanner functions */
+int	anoubisd_scan_start(uint64_t token, int fd, uint64_t auth_uid,
+	    int flags);
+int	anoubisd_scanner_exit(struct event_info_main *, Queue *queue);
 
 extern char *logname;
 
