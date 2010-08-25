@@ -659,7 +659,7 @@ int
 pgfile_process(uint64_t dev, uint64_t ino, const char *namearr[])
 {
 	struct pgmount		*mnt = pgmounts_find(dev);
-	int			 totallinks = 0, renamedok = 0;
+	int			 totallinks = 0, renamedok = 0, reason = 0;
 	int			 i;
 	struct pgfile_list	 list;
 
@@ -724,15 +724,22 @@ pgfile_process(uint64_t dev, uint64_t ino, const char *namearr[])
 			int		ret;
 
 			ret = unlinkat(dir2, newname, 0);
-			if (ret < 0 && errno == EISDIR)
+			if (ret < 0 && errno == EISDIR) {
 				ret = unlinkat(dir2, newname, AT_REMOVEDIR);
+			}
 			if ((ret != 0 && errno != ENOENT)
-			    || unlinkat(dir2, oldname, 0) != 0)
+			    || unlinkat(dir2, oldname, 0) != 0) {
 				renamedok--;
+				if (reason == 0)
+					reason = -errno;
+			}
 			goto next;
 		}
-		if (renameat(dir2, oldname, dir2, newname) < 0)
+		if (renameat(dir2, oldname, dir2, newname) < 0) {
 			renamedok--;
+			if (reason == 0)
+				reason = -errno;
+		}
 		/* Remove a whiteout if it exists. */
 		oldname[5] = 'D';
 		unlinkat(dir2, oldname, 0);
@@ -742,10 +749,10 @@ next:
 	}
 	pgfile_free_list(&list);
 	if (totallinks == 0)
-		return -ENOENT;
-	if (renamedok < totallinks)
-		return -EBUSY;
-	return 0;
+		reason = -ENOENT;
+	if (reason == 0 && renamedok < totallinks)
+		reason = -EBUSY;
+	return reason;
 }
 
 /**
