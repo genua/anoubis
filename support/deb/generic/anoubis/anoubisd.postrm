@@ -9,11 +9,14 @@ case "$1" in
 		dpkg-statoverride --remove $POLICY_DIR       || true
 		dpkg-statoverride --remove $POLICY_DIR/user  || true
 		dpkg-statoverride --remove $POLICY_DIR/admin || true
+		dpkg-statoverride --remove /var/spool/anoubis|| true
 
 		echo Purging policy directory $POLICY_DIR
 		rm -rf $POLICY_DIR
 		echo Purging profile directory /etc/anoubis/profiles
 		rm -rf /etc/anoubis/profiles
+		echo Purging content scan spool directory /var/spool/anoubis
+		rm -rf /var/spool/anoubis
 		;;
 esac
 

@@ -1,6 +1,7 @@
 var/lib/anoubis/policy/admin
 var/lib/anoubis/policy/user
 var/lib/anoubis/policy/pubkeys
+var/spool/anoubis
 etc/anoubis/profiles
 usr/share/anoubisd/policy_templates/admin
 usr/share/anoubisd/policy_templates/user

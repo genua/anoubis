@@ -41,6 +41,8 @@ BuildRequires:	wxGTK-devel >= 2.8
 %define sbindir	/sbin
 %define policydir	/var/lib/%{name}
 %define rundir	/var/run/%{daemon}
+%define scanuser	_%{name}scan
+%define scanhome	/var/spool/%{name}
 
 # long descpritive part of the packaged software goes here
 %description
@@ -57,7 +59,7 @@ Requires:	cvs
 Central daemon of the Anoubis Security Suite.
 
 ### subpackage xanoubis ####################################
-%package -n %{gui} 
+%package -n %{gui}
 Summary:	GUI of the Anoubis Security Suite
 Group:		User Interface/X
 Requires:	%{daemon} >= 0.9.1
@@ -116,6 +118,7 @@ mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/%{name}/profiles/wizard
 # install symlink in /etc/anoubis
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/%{name}
 mkdir -p $RPM_BUILD_ROOT/%{policydir}/policy
+mkdir -p $RPM_BUILD_ROOT/%{scanhome}
 ln -s %{policydir}/policy $RPM_BUILD_ROOT/%{_sysconfdir}/%{name}/policy
 
 # install udev rules of anoubis devices
@@ -150,6 +153,11 @@ if ! getent passwd %{user} >/dev/null; then
 	groupadd -r %{user} 2>/dev/null || :
 	useradd -M -r -s /sbin/nologin -d %{rundir} \
 	    -g %{user} %{user}
+fi
+if ! getent passwd %{scanuser} >/dev/null; then
+	groupadd -r %{scanuser} 2>/dev/null || :
+	useradd -M -r -s /sbin/nologin -d %{scanhome} \
+	    -g %{scanuser} %{scanuser}
 fi
 if ! getent group _nosfs >/dev/null; then
 	groupadd -r _nosfs 2>/dev/null || :
@@ -275,6 +283,7 @@ exit 0
 %{_bindir}/playground
 %{_datadir}/%{daemon}/*
 %attr(0750,root,%{user}) %dir %{policydir}
+%attr(0700,%{scanuser},%{scanuser}) %dir %{scanhome}
 %{policydir}/*
 %{_mandir}/man1/anoubis-keygen.1.gz
 %{_mandir}/man1/anoubis-keyinstall.1.gz

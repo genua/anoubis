@@ -42,6 +42,8 @@ BuildRequires:	wxGTK-devel >= 2.8
 %define sbindir	/sbin
 %define policydir	/var/lib/%{name}
 %define rundir	/var/run/%{daemon}
+%define scanuser	_%{name}scan
+%define scanhome	/var/spool/%{name}
 
 # long descpritive part of the packaged software goes here
 %description
@@ -114,6 +116,7 @@ mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/%{name}/profiles/wizard
 # install symlink in /etc/anoubis
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/%{name}
 mkdir -p $RPM_BUILD_ROOT/%{policydir}/policy
+mkdir -p $RPM_BUILD_ROOT/%{scanhome}
 ln -s %{policydir}/policy $RPM_BUILD_ROOT/%{_sysconfdir}/%{name}/policy
 
 # install udev rules of anoubis devices
@@ -141,7 +144,7 @@ install -p $RPM_BUILD_ROOT%{_datadir}/%{gui}/%{gui}.desktop \
   && rm -rf $RPM_BUILD_ROOT
 
 ### package scripts ########################################
-%pre -n %{daemon} 
+%pre -n %{daemon}
 # Do not stop anoubisd during an upgrade,
 # instead restart it after the upgrade
 if ! getent passwd %{user} >/dev/null; then
@@ -149,12 +152,17 @@ if ! getent passwd %{user} >/dev/null; then
 	useradd -M -r -s /sbin/nologin -d %{rundir} \
 	    -g %{user} %{user}
 fi
+if ! getent passwd %{scanuser} >/dev/null; then
+	groupadd -f -r %{scanuser}
+	useradd -M -r -s /sbin/nologin -d %{scanhome} \
+	    -g %{scanuser} %{scanuser}
+fi
 if ! getent group _nosfs >/dev/null; then
 	groupadd -f -r _nosfs
 fi
 exit 0
 
-%pre -n %{gui} 
+%pre -n %{gui}
 if ! getent group _nosfs >/dev/null; then
 	groupadd -f -r _nosfs
 fi
@@ -272,6 +280,7 @@ exit 0
 %{_bindir}/playground
 %{_datadir}/%{daemon}/*
 %attr(0750,root,%{user}) %dir %{policydir}
+%attr(0700,%{scanuser},%{scanuser}) %dir %{scanhome}
 %{policydir}/*
 %{_mandir}/man1/anoubis-keygen.1.gz
 %{_mandir}/man1/anoubis-keyinstall.1.gz

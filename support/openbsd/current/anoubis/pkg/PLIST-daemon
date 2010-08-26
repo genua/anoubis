@@ -1,7 +1,9 @@
 @comment $OpenBSD$
 @newgroup _anoubisd:593
 @newgroup _nosfs:594
+@newgroup _anoubisscan:595
 @newuser _anoubisd:593:_anoubisd:daemon:anoubisd user:/var/empty:/sbin/nologin
+@newuser _anoubisscan:595:_anoubisscan:daemon:anoubis scan user:/var/spool/anoubis:/sbin/nologin
 @mode 0755
 @bin sbin/anoubisd
 @sample /sbin/anoubisd
@@ -58,8 +60,10 @@ share/locale/de/LC_MESSAGES/anoubis.mo
 @exec mkdir -p /var/lib/anoubis/policy/admin
 @exec mkdir -p /var/lib/anoubis/policy/user
 @exec mkdir -p /var/lib/anoubis/policy/pubkeys
+@exec mkdir -p /var/spool/anoubis
 @exec ln -sf /var/lib/anoubis/policy /etc/anoubis/policy
 @exec chown -R _anoubisd:_anoubisd /var/lib/anoubis/policy
+@exec chown -R _anoubisscan:_anoubisscan /var/spool/anoubis
 @exec perl %D/share/anoubisd/install_policy -q %D/share/anoubisd/policy_templates/admin /etc/anoubis/policy/admin
 @exec perl %D/share/anoubisd/install_policy -q %D/share/anoubisd/policy_templates/user /etc/anoubis/policy/user
 @exec perl %D/share/anoubisd/install_policy -q -n -o %D/share/anoubisd/policy_templates/profiles /etc/anoubis/profiles

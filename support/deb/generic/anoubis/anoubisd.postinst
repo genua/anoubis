@@ -7,6 +7,7 @@ if [ "$1" != configure ]
 fi
 
 ANOUBIS_USER=_anoubisd
+SCAN_USER=_anoubisscan
 NOSFS_GROUP=_nosfs
 POLICY_DIR=/var/lib/anoubis/policy
 
@@ -15,8 +16,13 @@ if ! getent passwd $ANOUBIS_USER >/dev/null; then
 	    --disabled-login --group --force-badname $ANOUBIS_USER
 fi
 
+if ! getent passwd $SCAN_USER >/dev/null; then
+	adduser --quiet --system --no-create-home --home /var/spool/anoubis \
+	    --disabled-login --group --force-badname $SCAN_USER
+fi
+
 if ! getent group $NOSFS_GROUP >/dev/null; then
-	addgroup --force-badname $NOSFS_GROUP
+	addgroup --quiet --force-badname $NOSFS_GROUP
 fi
 
 setperms () {
@@ -42,6 +48,7 @@ for bin in /sbin/anoubisctl /sbin/sfssig; do
 done
 
 setperms root $ANOUBIS_USER 0750 /var/lib/anoubis
+setperms $SCAN_USER $SCAN_USER 0700 /var/spool/anoubis
 
 # remove overrides from older packages
 rmoverride /etc/anoubis/policy/admin/default
