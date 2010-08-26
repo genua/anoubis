@@ -33,7 +33,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: anoubis. 10.972.C388\n"
 "Report-Msgid-Bugs-To: anoubis@lists.anoubis.org\n"
-"POT-Creation-Date: 2010-08-24 13:49+0200\n"
+"POT-Creation-Date: 2010-08-26 11:41+0200\n"
 "PO-Revision-Date: 2010-07-29 10:30+0100\n"
 "Last-Translator: Robin <robin_doer@genua.de>\n"
 "Language-Team: German <translation-team-de@lists.sourceforge.net>\n"
@@ -587,7 +587,7 @@ msgid "Delete rule %ld?"
 msgstr "Soll die Regel %ld gelöscht werden?"
 
 #: src/xanoubis/view/DlgRuleEditor.cpp:658
-#: src/xanoubis/view/DlgRuleEditor.cpp:703 src/xanoubis/view/MainFrame.cpp:624
+#: src/xanoubis/view/DlgRuleEditor.cpp:703 src/xanoubis/view/MainFrame.cpp:625
 msgid "Confirm"
 msgstr "Bestätigen"
 
@@ -633,7 +633,7 @@ msgid "Couldn't import policy file: it has errors."
 msgstr "Konnte Regeldatei nicht importieren: Sie enthält Fehler."
 
 #: src/xanoubis/view/DlgRuleEditor.cpp:948 src/xanoubis/view/MainFrame.cpp:536
-#: src/xanoubis/view/MainFrame.cpp:802
+#: src/xanoubis/view/MainFrame.cpp:803
 #: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1597
 #: src/xanoubis/view/ModSfsGenerateKeyDlg.cpp:192
 #: src/xanoubis/control/MainUtils.cpp:291
@@ -1397,23 +1397,23 @@ msgid "Choose a file to write the policies to:"
 msgstr "Wähle eine Datei um Regeln dort hinein zu schreiben:"
 
 #: src/xanoubis/view/MainFrame.cpp:624
-msgid "xanoubis is going to be closed."
-msgstr "xanoubis wird geschlossen werden."
+msgid "Do you really want to close xanoubis?"
+msgstr "Wollen sie xanoubis wirklich schließen?"
 
-#: src/xanoubis/view/MainFrame.cpp:789
+#: src/xanoubis/view/MainFrame.cpp:790
 msgid "Communication error while fetching list of upgraded files."
 msgstr ""
 "Kommunikationsfehler bei der Abfrage der Liste von Dateien, die durch ein "
 "Upgrade veränderten wurden."
 
-#: src/xanoubis/view/MainFrame.cpp:793
+#: src/xanoubis/view/MainFrame.cpp:794
 #, c-format
 msgid "Got error (%hs) from daemon while fetching list of upgraded files."
 msgstr ""
 "Fehler vom Daemon (%hs) beim Abfrage der Liste von Dateien, die durch ein "
 "Upgrade veränderten wurden."
 
-#: src/xanoubis/view/MainFrame.cpp:798
+#: src/xanoubis/view/MainFrame.cpp:799
 #, c-format
 msgid ""
 "An unexpected error (%i) occured while while fetching list of upgraded files."
@@ -4222,6 +4222,12 @@ msgstr ""
 "Das eingegebene Passwort war falsch!\n"
 "Eingabe des Passwortes für:\n"
 "%ls"
+
+#~ msgid "Close xanoubis"
+#~ msgstr "xanoubis schliessen"
+
+#~ msgid "xanoubis is going to be closed."
+#~ msgstr "xanoubis wird geschlossen werden."
 
 #~ msgid "Scan files"
 #~ msgstr "Dateien überprüfen"

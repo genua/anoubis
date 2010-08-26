@@ -621,7 +621,7 @@ MainFrame::OnClose(wxCloseEvent &event)
 	if (exit_) {
 		/* Really close the window */
 		uint8_t answer = anMessageBox(
-		    _("xanoubis is going to be closed."), _("Confirm"),
+		    _("Do you really want to close xanoubis?"), _("Confirm"),
 		    wxYES_NO, this);
 
 		if (answer == wxYES) {
