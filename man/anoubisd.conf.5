@@ -181,7 +181,30 @@ Policies larger than this value are rejected by the daemon.
 If 0 is configured the check is turned off.
 .Pp
 The default is 20971520 (20MB).
+.Pp
+.It \fBcommit   \fP
+Specifies one playground content scanner that is applied during commit of
+playground files. Multiple commit options can be specified in the same
+configuration file to configure a number of content scanners that will
+be applied independently.
+
+The value for each commit option must have the following syntax:
+\fIrequired|recommended scanner-path scanner-description\fP
+
+\fIrequired|recommended\fP - Each scanner must be either required or
+recommended. Recommended scanners are optional. They may be ignored if the
+user requests it. Required scanners are mandatory and cannot be ignored. A
+negative result from a required scanner always prevents the file from being
+committed.
+
+\fIscanner-path\fP - Specifies the absolute path to the scanner binary. No
+command line options can be given.
+
+\fIscanner-description\fP - A human readable short description or title of
+the scanner. This description will be displayed in the GUI or the CLI to
+refer to this scanner.
 .El
+.Pp
 .Sh SEE ALSO
 .Xr anoubisd 8
 .Sh AUTHORS
