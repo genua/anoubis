@@ -92,15 +92,11 @@
 #include "cfg.h"
 #include <anoubis_alloc.h>
 
-static int	terminate = 0;
-static int	eventfds[2];
-static void	main_cleanup(void);
-/*@noreturn@*/
+/* Prototypes. */
 static void	main_shutdown(int) __dead;
 static void	sanitise_stdfd(void);
 
 static void	sighandler(int, short, void *);
-static int	check_child(pid_t, const char *);
 static void	dispatch_m2s(int, short, void *);
 static void	dispatch_s2m(int, short, void *);
 static void	dispatch_m2p(int, short, void *);
@@ -109,47 +105,143 @@ static void	dispatch_m2dev(int, short, void *);
 static void	dispatch_dev2m(int, short, void *);
 static void	dispatch_m2u(int, short, void *);
 static void	dispatch_u2m(int, short, void *);
-
-struct anoubisd_config	anoubisd_config;
-
-pid_t		master_pid = 0;
-pid_t		se_pid = 0;
-pid_t		logger_pid = 0;
-pid_t		policy_pid = 0;
-pid_t		upgrade_pid = 0;
-
-u_int32_t	debug_flags = 0;
-u_int32_t	debug_stderr = 0;
-gid_t		anoubisd_gid;
-
-extern char	*__progname;
-char		*logname;
-unsigned long	 version;
-
-static unsigned long	upgraded_files = 0;
-
-static Queue eventq_m2p;
-static Queue eventq_m2s;
-static Queue eventq_m2u;
-static Queue eventq_m2dev;
-
 static void	reconfigure(void);
 static void	init_root_key(char *);
-int main(int argc, char *argv[]);
 
+/**
+ * This variable identifies the anoubisd daemon process.
+ */
+enum anoubisd_process_type	anoubisd_process;
+
+/**
+ * The current state of the termination. Things to do during termination
+ * are:
+ * - Tell the kernel that no more events events should be sent.
+ * - Remove all signal handlers from the event loop.
+ * - Send signals to the child process (all except logger).
+ * - Set terminate to 1.
+ * Once terminate is set to 1:
+ * - Read remaining events from the kernel and dispatch them to child
+ *   processes.
+ * - Set terminate to 2 once EOF is received from the kernel event device.
+ * Once terminate is set to 2:
+ * - Close write ends of pipes to child processes once the queue for
+ *   these processes is empty and remove associated events.
+ * - Wait for the peer processes to close their ends of the pipes. Once
+ *   EOF is received while reading from one of these pipes, close them
+ *   and remove the remaining events.
+ * The process terminates when there is no remaining event in the event
+ * loop.
+ */
+static int	terminate = 0;
+
+/**
+ * File descriptors for the anoubis devices.
+ * Index zero is a handle to our eventdev queue.
+ * Index one is a handle to the anoubis device.
+ */
+static int	eventfds[2];
+
+/**
+ * The anoubis daemon configuration.
+ */
+struct anoubisd_config	anoubisd_config;
+
+pid_t		master_pid = 0;		/** The pid of the daemon master */
+pid_t		se_pid = 0;		/** The pid of the session engine */
+pid_t		logger_pid = 0;		/** The pid of the logger process */
+pid_t		policy_pid = 0;		/** The pid of the policy engine */
+pid_t		upgrade_pid = 0;	/** The pid of the upgrade process */
+
+u_int32_t	debug_flags = 0;	/** Current debug flags */
+u_int32_t	debug_stderr = 0;	/** True if debugging is on stderr */
+gid_t		anoubisd_gid;		/** Group ID of the anoubisd user */
+
+/**
+ * The name of the binary executed by the current process.
+ */
+extern char	*__progname;
+
+/**
+ * The string that is stored here will be prepended to log and debug
+ * messages. It identifies the process that sends a paricular message.
+ */
+char		*logname;
+
+/**
+ * The interface version of the anoubis kernel module as returned by
+ * the ANOUBIS_GETVERSION ioctl.
+ */
+unsigned long	 version;
+
+/**
+ * The total number of files that were upgraded in the current
+ * upgrade run.
+ */
+static unsigned long	upgraded_files = 0;
+
+/**
+ * Message queue for writes of the master to the policy engine.
+ */
+static Queue eventq_m2p;
+
+/**
+ * Message queue for writes of from the master to the session engine.
+ */
+static Queue eventq_m2s;
+
+/**
+ * Message queue for writes of the master to the upgrade process.
+ */
+static Queue eventq_m2u;
+
+/**
+ * Message queue for write of the master to the eventdev device.
+ */
+static Queue eventq_m2dev;
+
+
+/**
+ * A file handle to the PID file. This file handle remains open
+ * while the process runs and it holds a lock on the pid file. This
+ * allows a subsequent anoubisd process to determine if the lock file
+ * is stale.
+ */
 FILE	    *pidfp;
-static char *pid_file_name = PACKAGE_PIDFILE;
+
 #ifdef LINUX
+
+/**
+ * Candidate files for the omit pid logic of killall5. A process can
+ * use these files to tell killall5 that certain processes should not
+ * be killed during shutdown. Each of these locations is tried in turn
+ * and the first location that is valid is actually used.
+ */
 static char *omit_pid_files[] = {
 	"/lib/init/rw/sendsigs.omit.d/" PACKAGE_DAEMON,
 	"/var/run/sendsigs.omit.d/" PACKAGE_DAEMON,
 	NULL
 };
+
+/**
+ * The actual omit pid file for killall5.
+ */
 static char *omit_pid_file = NULL;
+
 #endif
 
-/*
- * SEGV-Handler: Send some useful information to syslog.
+/**
+ * Signal handler for segmentation faults. As opposed to other "signal"
+ * handlers, this handler is not called from normal process context by
+ * libevent but directly as a signal handler.
+ * It sends some useful information to syslog and tries to write a
+ * crash log and exits.
+ *
+ * @param sig The signal number.
+ * @param info The signal info if any.
+ * @param uc The context of the call. This can be used to generate a
+ *     readable backtrace.
+ * @return None.
  */
 void
 segvhandler(int sig, siginfo_t *info, void *uc)
@@ -208,10 +300,6 @@ segvhandler(int sig, siginfo_t *info, void *uc)
 		if (fd)
 		    c = write(fd, buf, c);
 	}
-	c = snprintf(buf, sizeof(buf), "anoubisd main(): %p\n", main);
-	syslog(LOG_ALERT, "%s", buf);
-	if (fd)
-	    c = write(fd, buf, c);
 #endif
 
 	if (fd)
@@ -220,9 +308,20 @@ segvhandler(int sig, siginfo_t *info, void *uc)
 }
 
 
-/*
- * Note:  Signal-handler managed by libevent are _not_ run in signal
- * context, thus any C-function can be used.
+/**
+ * This is the signal handler for all signals except SIGSEGV which
+ * has its own handler. This is not a real signal handler. Instead
+ * libevent catches signals and generates libevent events for each
+ * signal received. This handler is called in normal process context
+ * from libevent as a response to these events.
+ *
+ * @param sig The signal.
+ * @param event The event type (see libevent).
+ * @param The callback argument of for the event handler. This is either
+ *     NULL or a struct event_info_main.
+ * @return None.
+ *
+ * NOTE: This handler is sometimes called manually with arg == NULL.
  */
 static void
 sighandler(int sig, short event __used, void *arg)
@@ -266,29 +365,49 @@ sighandler(int sig, short event __used, void *arg)
 	}
 	case SIGQUIT:
 		die = 1;
-	case SIGCHLD:
-		if (check_child(se_pid, "session engine")) {
-			se_pid = 0;
+	case SIGCHLD: {
+		pid_t			 pid;
+		int			 status;
+		const char		*childname = NULL;
+
+		while (1) {
+			childname = NULL;
+			pid = waitpid(-1, &status, WNOHANG);
+			if (pid < 0 && errno == EINTR)
+				continue;
+			if (pid <= 0)
+				break;
+			if (se_pid == pid) {
+				se_pid = 0;
+				childname = "session engine";
+			}
+			if (pid == policy_pid) {
+				policy_pid = 0;
+				childname = "policy engine";
+			}
+			if (pid == upgrade_pid) {
+				upgrade_pid = 0;
+				childname = "anoubis upgrade";
+			}
+			if (pid == logger_pid) {
+				logger_pid = 0;
+				childname = "anoubis logger";
+			}
+			if (childname == NULL) {
+				if (info == NULL)
+					continue;
+				anoubisd_scanproc_exit(pid, status, info,
+				    &eventq_m2p);
+				continue;
+			}
+			if (WIFEXITED(status))
+				log_warnx("Lost child: %s exited", childname);
+			if (WIFSIGNALED(status))
+				log_warnx("Lost child: %s terminated with "
+				    "signal %d", childname, WTERMSIG(status));
 			if (!terminate)
 				die = 1;
 		}
-		if (check_child(policy_pid, "policy engine")) {
-			policy_pid = 0;
-			if (!terminate)
-				die = 1;
-		}
-		if (check_child(logger_pid, "anoubis logger")) {
-			logger_pid = 0;
-			if (!terminate)
-				die = 1;
-		}
-		if (check_child(upgrade_pid, "anoubis upgrade")) {
-			upgrade_pid = 0;
-			if (!terminate)
-				die = 1;
-		}
-		if (info && anoubisd_scanner_exit(info, &eventq_m2p))
-			break;
 		if (terminate && sig == SIGCHLD && info)
 			signal_del(info->ev_sigchld);
 		if (die) {
@@ -296,6 +415,7 @@ sighandler(int sig, short event __used, void *arg)
 			/*NOTREACHED*/
 		}
 		break;
+	}
 	case SIGHUP:
 		reconfigure();
 		break;
@@ -304,6 +424,13 @@ sighandler(int sig, short event __used, void *arg)
 	DEBUG(DBG_TRACE, "<sighandler: %d", sig);
 }
 
+/**
+ * Initialize a singal set for sigation with all signals blocked exepct
+ * for a few fatal one that we can handle.
+ *
+ * @param A pointer to the signal set that should be initialized.
+ * @return None.
+ */
 void anoubisd_defaultsigset(sigset_t *mask)
 {
 	sigfillset(mask);
@@ -317,14 +444,23 @@ void anoubisd_defaultsigset(sigset_t *mask)
 	sigdelset(mask, SIGBUS);
 }
 
+/**
+ * Create and flock the pid file. If this fails the daemon is probably
+ * already running.
+ *
+ * @param None.
+ * @return A file handle to the pid file. The caller should write its
+ *     pid to the file and keep the file handle open. The flock  lock will
+ *     be dropped at exit time.
+ */
 FILE *
 check_pid(void)
 {
 	FILE *fp;
 
-	fp = fopen(pid_file_name, "a+");
+	fp = fopen(PACKAGE_PIDFILE, "a+");
 	if (fp == NULL) {
-		log_warn("%s", pid_file_name);
+		log_warn("%s", PACKAGE_PIDFILE);
 		return NULL;
 	}
 
@@ -337,12 +473,20 @@ check_pid(void)
 	return fp;
 }
 
+/**
+ * Write the given pid to the the file. The file is truncated in the process.
+ *
+ * @param fp The file handle.
+ * @param pid The pid to write. It is formated as a decimal number followed
+ *     by a newline.
+ * @return None.
+ */
 static void
 save_pid(FILE *fp, pid_t pid)
 {
 	rewind(fp);
 	if (ftruncate(fileno(fp), 0) != 0) {
-		log_warn("%s", pid_file_name);
+		log_warn("%s", PACKAGE_PIDFILE);
 		fatal("cannot clear pid file");
 	}
 
@@ -350,32 +494,51 @@ save_pid(FILE *fp, pid_t pid)
 	fflush(fp);
 }
 
+/**
+ * This is the event handler for the timer event. The timer fires every
+ * five seconds and reuquest a statistics message from the kernel.
+ *
+ * @param sig The signal number (see libevent).
+ * @param event The type of event that occured (see libevent).
+ * @param The event callback data. This is a pointer to struct event_info_main.
+ * @return None.
+ */
 static void
-dispatch_timer(int sig __used, short event __used, /*@dependent@*/ void * arg)
+dispatch_timer(int sig __used, short event __used, void * arg)
 {
 	struct event_info_main	*ev_info = arg;
 	static int		 first = 1;
+	static int		 warned = 0;
 
 	DEBUG(DBG_TRACE, ">dispatch_timer");
 
 	/*
 	 * Simulate a SIGCHLD at the first timer event. This will catch
-	 * cases where one of the child process exists before we hit enter
+	 * cases where one of the child process exits before we enter
 	 * the event loop in main.
 	 */
 	if (first) {
 		first = 0;
 		sighandler(SIGCHLD, 0, NULL);
 	}
-	/* ioctls cannot be sensibly annotated because of varadic args */
-	/*@i@*/ioctl(ev_info->anoubisfd, ANOUBIS_REQUEST_STATS, 0);
+	if (ioctl(ev_info->anoubisfd, ANOUBIS_REQUEST_STATS, 0) < 0) {
+		if (!warned)
+			log_warn("Failed to request stats from the kernel");
+		warned = 1;
+	} else {
+		warned = 0;
+	}
 	event_add(ev_info->ev_timer, ev_info->tv);
 
 	DEBUG(DBG_TRACE, "<dispatch_timer");
 }
 
-enum anoubisd_process_type	anoubisd_process;
-
+/**
+ * Read the version number of the sfs tree's on disk file format.
+ *
+ * @param  None.
+ * @return The version number (positive) or an error code (negative).
+ */
 static int
 read_sfsversion(void)
 {
@@ -405,6 +568,15 @@ read_sfsversion(void)
 	return version;
 }
 
+/**
+ * Check if the on disk sfs tree is empty.
+ *
+ * @param None.
+ * @return Possible return values are:
+ *     Positive: The sfs tree does not contain any files.
+ *     Zero: The sfs tree exists and contains at least one file.
+ *     Negative: An error occured, the return value is a negative error code.
+ */
 static int
 is_sfstree_empty()
 {
@@ -428,33 +600,52 @@ is_sfstree_empty()
 	return empty;
 }
 
+/**
+ * Write the sfs tree version currently supported by this implementation
+ * of the anoubis daemon to the version file. This function overwrites
+ * previous contents of the file.
+ *
+ * @param None.
+ * @return The sfs tree version (positive) or a negative error code.
+ */
 static int
 write_sfsversion()
 {
-	FILE *fp = fopen(ANOUBISD_SFS_TREE_VERSIONFILE, "w");
-	if (!fp ||
-	    fprintf(fp, "%d\n", ANOUBISD_SFS_TREE_FORMAT_VERSION) < 0 ||
-	    fclose(fp) == EOF) {
+	FILE	*fp = fopen(ANOUBISD_SFS_TREE_VERSIONFILE, "w");
+
+	if (fp == NULL)
 		return -errno;
-	}
+	fprintf(fp, "%d\n", ANOUBISD_SFS_TREE_FORMAT_VERSION);
+	fflush(fp);
 	/* The policy engine needs access to this file. */
 	if (fchown(fileno(fp), 0, anoubisd_gid) < 0
 	    || fchmod(fileno(fp), 0640) < 0) {
 		log_warn("Cannot modify owner/permissions on "
 		    ANOUBISD_SFS_TREE_VERSIONFILE);
 	}
+	fclose(fp);
 	return ANOUBISD_SFS_TREE_FORMAT_VERSION;
 }
 
 #ifdef LINUX
+
+/**
+ * Tell the kernel's out of memory killer that this processes should never
+ * be a victim of out of memory killing.
+ *
+ * @param pid The pid of the process.
+ * @return None. This is a best effort function.
+ */
 static void
 deactivate_oom_kill(int pid)
 {
-	FILE *fp;
-	char filename[40];
+	FILE			*fp;
+	char			*filename;
 
-	snprintf(filename, sizeof(filename), "/proc/%d/oom_adj", pid);
+	if (asprintf(&filename, "/proc/%d/oom_adj", pid) < 0)
+		return;
 	fp = fopen(filename, "w");
+	free(filename);
 	if (!fp)
 		return;
 
@@ -462,11 +653,23 @@ deactivate_oom_kill(int pid)
 	fprintf(fp, "-17");
 	fclose(fp);
 }
+
 #endif
 
+/**
+ * This is the anoubis daemon main entry point. This function handles
+ * startup of the anoubis daemon and then enters the master's main event loop.
+ * Anoubis daemon terminates once the main event loop exists. Depending
+ * on the command line options this function daemonizes and runs the
+ * main loop in a child process.
+ *
+ * @param argc the number of command line arguments given.
+ * @param argv The command line arguments.
+ * @return The exit code. Successful exit only indicates that the
+ *     process demonized successfully.
+ */
 int
 main(int argc, char *argv[])
-/*@globals undef eventq_m2p, undef eventq_m2s, undef eventq_m2dev@*/
 {
 
 	int			pipes[PIPE_MAX * 2];
@@ -477,7 +680,6 @@ main(int argc, char *argv[])
 	struct event		ev_s2m, ev_p2m, ev_u2m, ev_dev2m;
 	struct event		ev_m2s, ev_m2p, ev_m2u, ev_m2dev;
 	struct event		ev_timer;
-	/*@observer@*/
 	struct event_info_main	ev_info;
 	int			p;
 	sigset_t		mask;
@@ -490,9 +692,7 @@ main(int argc, char *argv[])
 	FILE			*omitfp;
 #endif
 
-	/* Ensure that fds 0, 1 and 2 are open or directed to null */
 	sanitise_stdfd();
-
 	anoubisd_process = PROC_MAIN;
 
 	if (!cfg_initialize(argc, argv) || !cfg_read())
@@ -553,9 +753,8 @@ main(int argc, char *argv[])
 		 * needs to run.
 		 */
 		int empty = is_sfstree_empty();
-		if (empty < 0) {
+		if (empty < 0)
 			early_err(5, "Could not read " SFS_CHECKSUMROOT);
-		}
 		if (empty) {
 			if (anoubisd_config.opts & ANOUBISD_OPT_NOACTION) {
 				/* No further action required */
@@ -602,9 +801,7 @@ main(int argc, char *argv[])
 		int ret = setrlimit(RLIMIT_CORE, &limits);
 		if (ret < 0)
 			early_err(1, "setrlmit RLIMIT_CORE failed");
-	}
-	else
-	{
+	} else {
 		act.sa_flags = SA_SIGINFO;
 		act.sa_sigaction = segvhandler;
 		sigemptyset(&act.sa_mask);
@@ -818,7 +1015,7 @@ main(int argc, char *argv[])
 	 * not wait for our children: session and policy already exited
 	 * and logger will terminate after us.
 	 */
-	unlink(pid_file_name);
+	unlink(PACKAGE_PIDFILE);
 #ifdef LINUX
 	if (omit_pid_file)
 		unlink(omit_pid_file);
@@ -829,8 +1026,17 @@ main(int argc, char *argv[])
 	exit(0);
 }
 
-static void
-main_cleanup(void)
+/**
+ * Force a shutdown of the anoubis daemon master. This is not the
+ * regular shutdown process it is only used during emergencies. It
+ * forcefully terminates child processes (except for the logger process)
+ * using SIGQUIT, cleans up open files and exits.
+ *
+ * @param error The exit code to use.
+ * @return This function never returns.
+ */
+__dead static void
+main_shutdown(int error)
 {
 	pid_t			pid;
 
@@ -868,32 +1074,30 @@ main_cleanup(void)
 
 	log_warnx(PACKAGE_DAEMON " is terminating");
 	flush_log_queue();
-	unlink(pid_file_name);
+	unlink(PACKAGE_PIDFILE);
 #ifdef LINUX
 	if (omit_pid_file)
 		unlink(omit_pid_file);
 #endif
-}
-
-/*@noreturn@*/
-__dead static void
-main_shutdown(int error)
-{
-	main_cleanup();
 	log_info("shutting down");
 	exit(error);
 }
 
-/*@noreturn@*/
+/**
+ * This function can be used by all permantly active anoubis daemon processes
+ * it initiate a forceful termination of the anoubis daemon. Non master
+ * processes do this simply by exiting. The master process calls main_shutdown.
+ *
+ * @param The exit code to use for the calling process.
+ * @return This function never returns.
+ */
 __dead void
 master_terminate(int error)
 {
-	DEBUG(DBG_TRACE, ">master_terminate");
+	DEBUG(DBG_TRACE, ">master_terminate: error=%d", error);
 
-	if (master_pid) {
-		if (getpid() == master_pid)
-			main_shutdown(error);
-	}
+	if (master_pid && getpid() == master_pid)
+		main_shutdown(error);
 	/*
 	 * This will send a SIGCHLD to the master which will then terminate.
 	 * It is not possible to just kill(2) the master because we switched
@@ -902,38 +1106,18 @@ master_terminate(int error)
 	_exit(error);
 }
 
-static int
-check_child(pid_t pid, const char *pname)
-{
-	int	status, ret;
-
-	DEBUG(DBG_TRACE, ">check_child");
-
-	ret = waitpid(pid, &status, WNOHANG);
-	if  (ret > 0) {
-		if (WIFEXITED(status)) {
-			log_warnx("Lost child: %s exited", pname);
-			return 1;
-		}
-		if (WIFSIGNALED(status)) {
-			log_warnx("Lost child: %s terminated; signal %d",
-			    pname, WTERMSIG(status));
-			return 1;
-		}
-	} else if (ret < 0 && errno == ECHILD) {
-		/*
-		 * This can happen if a real child exits and the
-		 * scanner wait call picks up its exit status.
-		 */
-		log_warnx("Lost child: %s vanished", pname);
-		return 1;
-	}
-
-	DEBUG(DBG_TRACE, "<check_child");
-	return 0;
-}
-
 #ifdef LINUX
+
+/**
+ * Tell dazukofs that it should not try to check file system accesses
+ * done by the anoubis daemon master.
+ *
+ * @param None.
+ * @return An open file descriptior. The caller must keep this file
+ *     descriptor open as long as it wants to dazukofs to ignore us.
+ *     If something goes wrong (usually because dazukofs is not active)
+ *     -1 is returned.
+ */
 int
 dazukofs_ignore(void)
 {
@@ -945,8 +1129,17 @@ dazukofs_ignore(void)
 				anoubis_strerror(errno));
 	return(fd);
 }
+
 #endif
 
+/**
+ * Ensure that fds 0, 1 and 2 are open or redirected to /dev/null.
+ * If this function fails to setup fd in this way it will exit with an
+ * early error.
+ *
+ * @param None.
+ * @return None.
+ */
 static void
 sanitise_stdfd(void)
 {
@@ -967,6 +1160,16 @@ sanitise_stdfd(void)
 		close(nullfd);
 }
 
+/**
+ * Close all file descriptors in the pipes and loggers array. The
+ * caller should set file descriptors that it wants to keep opern to -1.
+ * Additionally, all processes except the master also close the anoubis
+ * daemon pid file.
+ *
+ * @param The pipes array with PIPE_MAX elements.
+ * @param loggers The loggers array with PROC_LOGGER elements.
+ * @return None.
+ */
 void
 cleanup_fds(int pipes[], int loggers[])
 {
@@ -992,6 +1195,15 @@ cleanup_fds(int pipes[], int loggers[])
 	}
 }
 
+/**
+ * Reconfigure the anoubis daemon master process (i.e. re-read its config
+ * file). Config options that are relevant for child processes are stored
+ * in a configuration message and sent to the child processes for their
+ * reconfiguration.
+ *
+ * @param None.
+ * @return None.
+ */
 static void
 reconfigure(void)
 {
@@ -1001,7 +1213,7 @@ reconfigure(void)
 	cert_reconfigure(0);
 
 	if (!cfg_reread()) {
-		log_warn("re-read of configuration failed.");
+		log_warnx("re-read of configuration failed.");
 	} else {
 		msg = cfg_msg_create();
 
@@ -1015,6 +1227,17 @@ reconfigure(void)
 	}
 }
 
+/**
+ * This is the event handler for messages that are sent from the master to
+ * the session process. It is called when the master to session queue is not
+ * empty and the master to session pipe is ready for writing. The handler
+ * must make sure that it re-adds the write event as long as the queue is
+ * not empty. This is handled by dispatch_write_queue.
+ *
+ * @param fd The file descriptor of the pipe to the session engine.
+ * @param event The event type (see libevent, unused).
+ * @param arg The callback argument (see libevent, unused).
+ */
 static void
 dispatch_m2s(int fd, short event __used, void *arg __used)
 {
@@ -1030,11 +1253,21 @@ dispatch_m2s(int fd, short event __used, void *arg __used)
 	DEBUG(DBG_TRACE, "<dispatch_m2s");
 }
 
+/**
+ * Tell the policy engine that it should invalidate any cached sfs tree
+ * entries for the given path name and user ID. This must be called after the
+ * master modifies the sfs tree entry on disk.
+ *
+ * @param path The path name of the entry to invalidate.
+ * @param uid The user ID of the entry to invalidate.
+ * @return None.
+ */
 static void
 send_sfscache_invalidate_uid(const char *path, uid_t uid)
 {
 	struct anoubisd_msg			*msg;
 	struct anoubisd_sfscache_invalidate	*invmsg;
+
 	msg = msg_factory(ANOUBISD_MSG_SFSCACHE_INVALIDATE,
 	    sizeof(struct anoubisd_sfscache_invalidate) + strlen(path) + 1);
 	if (!msg) {
@@ -1049,7 +1282,15 @@ send_sfscache_invalidate_uid(const char *path, uid_t uid)
 	enqueue(&eventq_m2p, msg);
 }
 
-
+/**
+ * Tell the policy engine that it should invalidate any cached sfs tree
+ * entries for the given path name and key ID. This must be called after
+ * the master modifies the sfs tree entry on disk.
+ *
+ * @param path The path name of the entry to invalidate.
+ * @param uid The key ID of the entry to invalidate.
+ * @return None.
+ */
 static void
 send_sfscache_invalidate_key(const char *path, const struct abuf_buffer keyid)
 {
@@ -1080,6 +1321,36 @@ send_sfscache_invalidate_key(const char *path, const struct abuf_buffer keyid)
 	enqueue(&eventq_m2p, msg);
 }
 
+/**
+ * Tell the policy engine that it should invalidate any cached sfs tree
+ * entries for the entry that was just modified by the checksum request.
+ * This function extracts path name and user or key ID from the checksum op
+ * and calls the appropriate invalidate function.
+ *
+ * @param The checksum operation.
+ * @return None.
+ */
+static void
+send_sfscache_invalidate(struct sfs_checksumop *csop)
+{
+	switch (csop->op) {
+	case ANOUBIS_CHECKSUM_OP_ADDSUM:
+	case ANOUBIS_CHECKSUM_OP_DEL:
+		send_sfscache_invalidate_uid(csop->path, csop->uid);
+		break;
+	case ANOUBIS_CHECKSUM_OP_ADDSIG:
+	case ANOUBIS_CHECKSUM_OP_DELSIG:
+		send_sfscache_invalidate_key(csop->path, csop->keyid);
+	}
+}
+
+/**
+ * Send a message to the policy engine that tells the policy engine
+ * if it is ok to track upgrades.
+ *
+ * @param True if it is ok to track update, false otherwise.
+ * @return None.
+ */
 static void
 send_upgrade_ok(int value)
 {
@@ -1099,6 +1370,13 @@ send_upgrade_ok(int value)
 	enqueue(&eventq_m2p, msg);
 }
 
+/**
+ * Notfiy the session engine about a finished upgrade. The message
+ * contains the number of upgraaded files in chunksize.
+ *
+ * @param None.
+ * @return None.
+ */
 static void
 send_upgrade_notification(void)
 {
@@ -1117,6 +1395,15 @@ send_upgrade_notification(void)
 	enqueue(&eventq_m2s, msg);
 }
 
+/**
+ * Initialize root's private key for signature updates during upgrade.
+ * This function reads the root private key as specified in the configuration
+ * file and loads it. If a valid root key is present, it will be used to
+ * update signatures of root during an upgrade.
+ *
+ * @param passphrase The passphrase required to unlock the key.
+ * return None.
+ */
 static void
 init_root_key(char *passphrase)
 {
@@ -1178,6 +1465,17 @@ init_root_key(char *passphrase)
 	    cert?cert->privkey:NULL);
 }
 
+/**
+ * Create a checksum reply message and initialize it. The memory for the
+ * message is allocated via msg_factory and must be freed by the caller.
+ *
+ * @param type The message type of the new message.
+ * @param token The token of the new message is initialized to this
+ *     value.
+ * @param payloadlen This is the amout of memory that is reserved for
+ *     message payload. This memory is allocated but remains uninitialized.
+ * @return The message or NULL if memory allocation failed.
+ */
 static anoubisd_msg_t *
 create_checksumreply_msg(int type, u_int64_t token, int payloadlen)
 {
@@ -1199,6 +1497,16 @@ create_checksumreply_msg(int type, u_int64_t token, int payloadlen)
 	return msg;
 }
 
+/**
+ * Process a checksum list request. The details of the request are given
+ * by the csop parameter. As a result of this function one or more
+ * checksum reply message are sent to the session engine. These messages
+ * contain the result of the list request.
+ *
+ * @param csop The details of the checksum list operation.
+ * @param token The token to use for the reply message.
+ * @return None.
+ */
 static void
 sfs_checksumop_list(struct sfs_checksumop *csop, u_int64_t token)
 {
@@ -1292,20 +1600,23 @@ out:
 	enqueue(&eventq_m2s, msg);
 }
 
-static void
-send_sfscache_invalidate(struct sfs_checksumop *csop)
-{
-	switch (csop->op) {
-	case ANOUBIS_CHECKSUM_OP_ADDSUM:
-	case ANOUBIS_CHECKSUM_OP_DEL:
-		send_sfscache_invalidate_uid(csop->path, csop->uid);
-		break;
-	case ANOUBIS_CHECKSUM_OP_ADDSIG:
-	case ANOUBIS_CHECKSUM_OP_DELSIG:
-		send_sfscache_invalidate_key(csop->path, csop->keyid);
-	}
-}
-
+/**
+ * Process a CSMULTI style checksum request. The core property of a
+ * CSMULTI request is that it can contain serveral path names in a single
+ * request message. This function sends one ore more checksum reply message
+ * with the result of the checksum operation to the session engine.
+ * Individual checksum operations in the CSMULTI request are handled by
+ * sfs_checksumop.
+ *
+ * @param csop The checksum operation.
+ * @param token The token to use for the reply messages.
+ * @return Zero if the request was processed and no further action of the
+ *     caller is neccessary. A negative error code if an error occured.
+ *     In case of an error the caller must notify the session engine
+ *     of the error.
+ *
+ * NOTE: This function cannot be used to process list requests.
+ */
 static int
 sfs_process_csmulti(struct sfs_checksumop *csop, u_int64_t token)
 {
@@ -1444,6 +1755,17 @@ nomem:
 	return -ENOMEM;
 }
 
+/**
+ * Handle a checksum request received from the session engine. This
+ * function parses the request message into a checksum operation structure
+ * and calls the appropriate function (either sfs_checksumop_list or
+ * sfs_checksumop directly) to handle the request. CSMULTI style requests
+ * are not handled by this function.
+ *
+ * @param msg The checksum request message. The message ist not freed by
+ *     this function.
+ * @return None.
+ */
 static void
 dispatch_checksumop(anoubisd_msg_t *msg)
 {
@@ -1495,6 +1817,14 @@ out:
 	DEBUG(DBG_QUEUE, " >eventq_m2s: %" PRIx64, reply->token);
 }
 
+/**
+ * Handle a CSMULTI checksum request message received from the session
+ * engine. This function parses the request message into a checksum
+ * operation structure and calls sfs_process_csmulti to handle the request.
+ *
+ * @param msg The request message.
+ * @return None.
+ */
 static void
 dispatch_csmulti_request(anoubisd_msg_t *msg)
 {
@@ -1528,6 +1858,16 @@ err:
 	DEBUG(DBG_TRACE, " <dispatch_csmulti_request (error)");
 }
 
+/**
+ * Handle a message from the session engine that contains the passphrase
+ * of root's private key. The function init_root_key is called with the
+ * passphrase to unlock roots private key.
+ * NOTE: See the anoubisctl manual page for security considerations
+ * regarding this feature.
+ *
+ * @param msg The request message.
+ * @return None.
+ */
 static void
 dispatch_passphrase(anoubisd_msg_t *msg)
 {
@@ -1542,7 +1882,24 @@ dispatch_passphrase(anoubisd_msg_t *msg)
 	init_root_key(pass->payload);
 }
 
+/**
+ * The number of random bytes used for the authentiation challenge.
+ */
 #define		RANDOM_CHALLENGE_BYTES	16
+
+/**
+ * Handle a user request for authentication. Depending on the authentication
+ * mode this function sends an authentication challenge or a success report
+ * (an empty challenge) to the session engine. The callenge (if any) must be
+ * signed by the user interface with the user's key and sent back to the
+ * master for verification.
+ *
+ * @param The authentication request message.
+ * @return None.
+ *
+ * NOTE: The master process does not keep track of the authentication
+ * challenges it generated. The session engine is responsible for this.
+ */
 static void
 dispatch_auth_request(struct anoubisd_msg *msg)
 {
@@ -1652,6 +2009,16 @@ dispatch_auth_request(struct anoubisd_msg *msg)
 	return;
 }
 
+/**
+ * Process a request from the session engine to verify an authentication
+ * request. The message contains an authentication challenge and the
+ * signature. The result is an authenticaton result message that infroms
+ * the session engine whether the signature was correct.
+ *
+ * @param imsg The message with the authentication request received from
+ *     the session engine.
+ * @return None.
+ */
 static void
 dispatch_auth_verify(struct anoubisd_msg *imsg)
 {
@@ -1687,11 +2054,24 @@ dispatch_auth_verify(struct anoubisd_msg *imsg)
 	    authresult->token, authresult->error);
 }
 
+/**
+ * This is the event handler for incoming messages from the session engine.
+ * The corrensponding libevent event is always active. This function is
+ * called as soon as data becomes ready on the file descriptor. Note that
+ * there may be incomplete messages, get_msg will return NULL in this case.
+ * Additionally, there may be multiple messages.
+ *
+ * @param fd The file descriptor to read from.
+ * @param event The type of the event (see libevent, unused)
+ * @param arg The event callback data. This is an event_info_main
+ *     structure.
+ * @return None.
+ */
 static void
 dispatch_s2m(int fd, short event __used, void *arg)
 {
 	anoubisd_msg_t *msg;
-	struct event_info_main *ev_info = (struct event_info_main*)arg;
+	struct event_info_main *ev_info = arg;
 
 	DEBUG(DBG_TRACE, ">dispatch_s2m");
 
@@ -1727,6 +2107,17 @@ dispatch_s2m(int fd, short event __used, void *arg)
 	DEBUG(DBG_TRACE, "<dispatch_s2m");
 }
 
+/**
+ * This is the event handler for messages that are sent from the master to
+ * the policy process. It is called when the master to policy queue is not
+ * empty and the master to policy pipe is ready for writing. The handler
+ * must make sure that it re-adds the write event as long as the queue is
+ * not empty. This is handled by dispatch_write_queue.
+ *
+ * @param fd The file descriptor of the pipe to the session engine.
+ * @param event The event type (see libevent, unused).
+ * @param arg The callback argument (see libevent, unused).
+ */
 static void
 dispatch_m2p(int fd, short event __used, void *arg __used)
 {
@@ -1743,6 +2134,14 @@ dispatch_m2p(int fd, short event __used, void *arg __used)
 }
 
 #ifdef LINUX
+
+/**
+ * Convert a device number as received from stat to the format that
+ * is reported by the kernel.
+ *
+ * @param dev The stat style device number.
+ * @return The kernel style device number.
+ */
 static inline uint64_t
 expand_dev(dev_t dev)
 {
@@ -1751,12 +2150,27 @@ expand_dev(dev_t dev)
 
 	return (major << 20) | minor;
 }
+
+#else
+
+static inline uint64_t
+expand_dev(dev_t dev)
+{
+	return dev;
+}
+
 #endif
 
-/*
- * NOTE: This must move into a child process. We should not try to open
- * NOTE: arbitrary user provided files in the master process. This can
- * NOTE: lead to denial of service.
+/**
+ * Handle a playground commit request received from the policy engine.
+ * This function opens the file to scan and calls anoubisd_scan_start
+ * to start a scanner child process. In case of an error the error is
+ * reported directly. Otherwise the result of the scanner child process
+ * will be reported.
+ *
+ * @param msg The request message from the policy engine.
+ * @param evinfo The event information of the main thread.
+ * @return None.
  */
 static void
 dispatch_pgcommit(struct anoubisd_msg *msg,
@@ -1771,6 +2185,11 @@ dispatch_pgcommit(struct anoubisd_msg *msg,
 
 	pgmsg = (struct anoubisd_msg_pgcommit *)msg->msg;
 	DEBUG(DBG_TRACE, ">dispatch_pgcommit token %" PRId64, pgmsg->token);
+	/*
+	 * XXX CEH: We should not try to open arbitrary user provided files
+	 * XXX CEH: in the master process. This can lead to denial of
+	 * XXX CEH: service. We should try to move the open to a child process.
+	 */
 	fd = open(pgmsg->path, O_RDONLY | O_NOFOLLOW | O_NONBLOCK);
 	if (fd < 0) {
 		err = errno;
@@ -1780,21 +2199,24 @@ dispatch_pgcommit(struct anoubisd_msg *msg,
 		err = errno;
 		goto error;
 	}
-#ifdef LINUX
 	err = EPERM;
 	if (expand_dev(statbuf.st_dev) != pgmsg->dev
 	    || statbuf.st_ino != pgmsg->ino)
 		goto error;
+#ifdef LINUX
 	if (ioctl(evinfo->anoubisfd, ANOUBIS_SCAN_STARTED, fd) < 0) {
 		err = errno;
 		goto error;
 	}
+#else
+	err = -ENOSYS;
+	goto error;
+#endif
 	err = -anoubisd_scan_start(pgmsg->token, fd, pgmsg->auth_uid,
 	    0 /* flags */);
 	if (err)
 		goto error;
 	return;
-#endif
 error:
 	if (fd >= 0)
 		close(fd);
@@ -1810,6 +2232,19 @@ error:
 	DEBUG(DBG_TRACE, "<dispatch_pgcommit token %" PRId64, pgmsg->token);
 }
 
+/**
+ * This is the event handler for incoming messages from the policy engine.
+ * The corrensponding libevent event is always active. This function is
+ * called as soon as data becomes ready on the file descriptor. Note that
+ * there may be incomplete messages. This is handled by the get_msg code.
+ * Additionally, there may be multiple messages.
+ *
+ * @param fd The file descriptor to read from.
+ * @param event The type of the event (see libevent, unused)
+ * @param arg The event callback data. This is an event_info_main
+ *     structure.
+ * @return None.
+ */
 static void
 dispatch_p2m(int fd, short event __used, /*@dependent@*/ void *arg)
 {
@@ -1852,6 +2287,17 @@ dispatch_p2m(int fd, short event __used, /*@dependent@*/ void *arg)
 	DEBUG(DBG_TRACE, "<dispatch_p2m");
 }
 
+/**
+ * This is the event handler for messages that are sent from the master to
+ * the kernel device. It is called when the master to kernel queue is not
+ * empty and the eventdev device is ready for writing. The handler
+ * must make sure that it re-adds the write event as long as the queue is
+ * not empty.
+ *
+ * @param fd The file descriptor of the pipe to the session engine.
+ * @param event The event type (see libevent, unused).
+ * @param arg The callback argument (see libevent, unused).
+ */
 static void
 dispatch_m2dev(int fd, short event __used, void *arg __used)
 {
@@ -1902,6 +2348,20 @@ dispatch_m2dev(int fd, short event __used, void *arg __used)
 	DEBUG(DBG_TRACE, "<dispatch_m2dev");
 }
 
+/**
+ * This is the event handler for kernel events. The corresponding libevent
+ * event is always active. This function is called as soon as data becomes
+ * ready on the file descriptor. Kernel events received from the eventdev
+ * queue are dispatched to the policy engine or directly to the session
+ * engine depending on the message's source and the value of the NEED_REPLY
+ * flag in the event.
+ *
+ * @param fd The file descriptor to read from.
+ * @param event The type of the event (see libevent, unused)
+ * @param arg The event callback data. This is an event_info_main
+ *     structure.
+ * @return None.
+ */
 static void
 dispatch_dev2m(int fd, short event __used, void *arg)
 {
@@ -1986,6 +2446,17 @@ dispatch_dev2m(int fd, short event __used, void *arg)
 	DEBUG(DBG_TRACE, "<dispatch_dev2m");
 }
 
+/**
+ * This is the event handler for messages that are sent from the master to
+ * the upgrade process. It is called when the master to upgrade queue is not
+ * empty and the master to upgrade pipe is ready for writing. The handler
+ * must make sure that it re-adds the write event as long as the queue is
+ * not empty. This is handled by dispatch_write_queue.
+ *
+ * @param fd The file descriptor of the pipe to the session engine.
+ * @param event The event type (see libevent, unused).
+ * @param arg The callback argument (see libevent, unused).
+ */
 static void
 dispatch_m2u(int fd, short event __used, void *arg __used)
 {
@@ -2001,6 +2472,18 @@ dispatch_m2u(int fd, short event __used, void *arg __used)
 	DEBUG(DBG_TRACE, "<dispatch_m2u");
 }
 
+/**
+ * Update everyones checksums and signatures (where possible) on a
+ * particular file. This is called after an upgrade completes.
+ *
+ * @param The request message received from the upgrade process that
+ *     contains the path name.
+ * @return None.
+ *
+ * NOTE: This function does not invalidate the sfs tree cache in the
+ * policy engine. The entire cache will be dropped at the end of the
+ * upgrade.
+ */
 static void
 dispatch_sfs_update_all(anoubisd_msg_t *msg)
 {
@@ -2059,6 +2542,15 @@ bad:
 	return;
 }
 
+/**
+ * Event handler function for events coming from the update daemon.
+ * This function is called from libevent's main event handling loop.
+ *
+ * @param fd The file descriptor to read data from.
+ * @param event The type of event the occured (not useded).
+ * @arg The callback argument. This is a pointer to a struct event_info_main.
+ * @return None.
+ */
 static void
 dispatch_u2m(int fd, short event __used, void *arg)
 {

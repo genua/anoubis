@@ -46,6 +46,31 @@
 #include <amsg.h>
 #include <aqueue.h>
 
+/**
+ * This structure is used to describe one active scanner child.
+ * All active scanner children are maintained in a linked list. Fields are:
+ *
+ * next: The link to the next structure in the global scanner list
+ *     (only used in the master process).
+ * token: The token of the scan request that is handled by this scanner
+ *     child.
+ * scanfile: An open file descriptor of the file that is being scanned.
+ * pipe: The pipe between the scanner child and the anoubis daemon master.
+ *     The read end is held open by the master, the write end by the scanner
+ *     child.
+ * uid: The user ID of the user requesting the scan. There can be at most
+ *     one active scanner per user.
+ * childpid: The process ID of the scanner child process (only valid in the
+ *     master process).
+ * event: The libevent read event used to read messages from the scanner
+ *     child in in the master process (only valid in the master process).
+ * msgbuf: The scanner reply message is stored in this message buffer.
+ *     The buffer contains at most one anoubisd_msg (only used in the
+ *     master process).
+ * msgoff: The offset into the msgbuf buffer where the next byte received
+ *     from the scanner child must be stored (only used in the master
+ *     process).
+ */
 struct scanproc {
 	LIST_ENTRY(scanproc)		 next;
 	uint64_t			 token;
@@ -58,8 +83,19 @@ struct scanproc {
 	unsigned int			 msgoff;
 };
 
+/**
+ * The global list of active scanner child processes.
+ */
 LIST_HEAD(, scanproc)	scanprocs = LIST_HEAD_INITIALIZER(scanproc);
 
+/**
+ * Search the scanner list for an entry with the given user ID and return
+ * this entry.
+ *
+ * @param uid The used ID to look for.
+ * @return NULL if there is no active scanner of this user, a pointer to
+ *     the scanproc structure if there is.
+ */
 static struct scanproc *
 scanproc_by_uid(uid_t uid)
 {
@@ -72,6 +108,25 @@ scanproc_by_uid(uid_t uid)
 	return NULL;
 }
 
+/**
+ * This is the read event handler that reads data received from the
+ * scanner child into the appropriate buffer. This function will read
+ * up to one result message from the file descriptor and store it in
+ * the message buffer of the scanproc structure. Once the message is
+ * complete the event is removed from the event loop and the pipe is
+ * closed. At this point sp->pipe[0] in the scanproc structure will be
+ * set to -1.
+ *
+ * @param fd The file descriptor to read from.
+ * @param event The event type (see libevent, unused).
+ * @param arg The callback data of the event. This is a pointer to
+ *     the scanproc structure for this child.
+ * @return None.
+ *
+ * NOTE: This function is called implicitly from the libevent event loop
+ * if data becomes ready on the file descriptor. However, it is called
+ * explicitly if the scanner process exits, too.
+ */
 static void
 dispatch_scand2m(int fd, short event __used, void *arg)
 {
@@ -126,9 +181,22 @@ dispatch_scand2m(int fd, short event __used, void *arg)
 	DEBUG(DBG_TRACE, "<dispatch_scand2m: done");
 }
 
-static int
-scanproc_exit(pid_t pid, int status, struct event_info_main *evinfo __used,
-    Queue *queue)
+/**
+ * This function handles the exit of a scanner child. It first calls
+ * the read event handler until EOF is received or the reply message is
+ * complete. It then processes the scan result and sends an appropriate
+ * message to the policy engine. If the scan was successful, the security
+ * label is removed, too.
+ *
+ * @param pid The pid of the process that exited.
+ * @param status The exit status of the child.
+ * @param evinfo The event information of the master process.
+ * @param queue The event queue that the reply message should be sent to.
+ * @return True if the pid matched a scanner child.
+ */
+int
+anoubisd_scanproc_exit(pid_t pid, int status,
+    struct event_info_main *evinfo __used, Queue *queue)
 {
 	struct scanproc				*sp;
 	int					 err = -EFAULT, extra;
@@ -214,11 +282,12 @@ out:
 	return 1;
 }
 
-/*
- * NOTE: Currently we cannot use log_* functions or DEBUG in scanner main!
- * XXX CEH: This is a dummy implementation that always returns success.
+/**
+ * The main loop of the scanner. This is a dummy implementation.
+ *
+ * @return This function never returns. It must call _exit instead.
  */
-static void
+__dead static void
 scanner_main(struct scanproc *sp)
 {
 	int					 i, off;
@@ -227,6 +296,7 @@ scanner_main(struct scanproc *sp)
 	void					*buf;
 	int					 err = 0;
 
+	/* XXX CEH: How do we find out the upper limit here? */
 	for (i=0; i<1024;  ++i) {
 		if (i == sp->pipe[1])
 			continue;
@@ -253,6 +323,20 @@ scanner_main(struct scanproc *sp)
 	_exit(0);
 }
 
+/**
+ * Start a new scanner child for a given file that is alread open.
+ * This function spawns a scanner child and allocates and fills the
+ * scanproc structure.
+ *
+ * @param token The token to use for the reply to this scan requst.
+ * @param fd The file to scan.
+ * @param auth_uid The user ID of the user requesting this scan.
+ * @param flags Request flags. Currently unused. This will be used to
+ *     tell the scanner child if recommended scanners should be run.
+ * @return Zero if the scanner child was started, a negative error code
+ *     otherwise. The caller should create an answer for the scan request
+ *     if the function returns an error.
+ */
 int
 anoubisd_scan_start(uint64_t token, int fd, uint64_t auth_uid,
     int flags __attribute__((unused)))
@@ -298,27 +382,4 @@ anoubisd_scan_start(uint64_t token, int fd, uint64_t auth_uid,
 	event_add(&sp->event, NULL);
 	LIST_INSERT_HEAD(&scanprocs, sp, next);
 	return 0;
-}
-
-int
-anoubisd_scanner_exit(struct event_info_main *evinfo, Queue *queue)
-{
-	int	handled = 0;
-
-	while (1) {
-		int	status;
-		pid_t	ret = waitpid(-1, &status, WNOHANG);
-
-		if (ret == 0)
-			break;
-		if (ret < 0) {
-			if (errno == EINTR)
-				continue;
-			break;
-		}
-		/* We got a process.  */
-		if (scanproc_exit(ret, status, evinfo, queue))
-			handled = 1;
-	}
-	return handled;
 }

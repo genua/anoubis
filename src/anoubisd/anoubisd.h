@@ -467,7 +467,8 @@ void send_upgrade_start(void);
 /* Scanner functions */
 int	anoubisd_scan_start(uint64_t token, int fd, uint64_t auth_uid,
 	    int flags);
-int	anoubisd_scanner_exit(struct event_info_main *, Queue *queue);
+int	anoubisd_scanproc_exit(pid_t pid, int status,
+	    struct event_info_main *, Queue *queue);
 
 extern char *logname;
 

@@ -91,6 +91,7 @@ int main()
 	create_channel(&channel, &client, NULL);
 	for (i=0; i<10000; ++i) {
 		printf("Iterations: %d\n", i);
+		fflush(stdout);
 		create_policy_get_request();
 		usleep(10000);
 	}
