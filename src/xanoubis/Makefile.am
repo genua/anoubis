@@ -460,6 +460,8 @@ xanoubis_SOURCES= \
 	control/AnEvents.h \
 	control/Debug.cpp \
 	control/Debug.h \
+	control/GenericCtrl.cpp \
+	control/GenericCtrl.h \
 	control/KeyCtrl.cpp \
 	control/KeyCtrl.h \
 	control/MainUtils.cpp \
