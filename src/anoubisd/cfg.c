@@ -70,7 +70,8 @@ typedef enum {
 	key_rootkey_required,
 	key_auth_mode,
 	key_coredumps,
-	key_policysize
+	key_policysize,
+	key_commit
 } cfg_key;
 
 
@@ -100,6 +101,7 @@ static const struct stringkey		keywords[] = {
 	{ "auth_mode", key_auth_mode } ,
 	{ "allow_coredumps", key_coredumps } ,
 	{ "policysize", key_policysize },
+	{ "commit", key_commit },
 	{ NULL, key_bad }
 };
 
@@ -418,6 +420,117 @@ cfg_parse_upgrade_trigger(struct abuf_buffer valuebuf, int lineno)
 }
 
 /**
+ * Adds the specified playground content scanner to the
+ * anoubisd_config.pg_scanner.
+ *
+ * @param valuebuf The buffer that contains the string with the config value.
+ * @param lineno The line number for error message.
+ * @return True in case of success, false if an error occured. An
+ *     error message is logged in case of an error.
+ */
+static int
+cfg_parse_commit(struct abuf_buffer valuebuf, int lineno)
+{
+	struct anoubisd_pg_scanner  *scanner;
+	const char		    *v;
+	char			    *value = NULL;
+	char			    *cur = NULL, *next;
+	int			     param;
+	int			    ret = 1;
+	const char		    *err_msg = NULL;
+	static const char	    *err_oom = "Out of memory";
+	static const char	    *err_syntax = "Syntax error, expected: "
+	    "(required|recommended) <path_to_scanner> <description>";
+
+	/* get working copy of value */
+	v = abuf_tostr(valuebuf, 0);
+	if (v) {
+		value = strdup(v);
+	}
+	if (value == NULL) {
+		log_warnx("line %d: Out of memory", lineno);
+		return 0;
+	}
+
+	/* now process the value */
+	scanner = malloc(sizeof(struct anoubisd_pg_scanner));
+	bzero(scanner, sizeof(struct anoubisd_pg_scanner));
+
+	/* parse three paras: required|recommended <path> <description> */
+	next = value;
+	param = 0;
+	while (param<3) {
+		if (next == NULL) {
+			err_msg = err_syntax;
+			ret = 0;
+			break;
+		}
+
+		/* Note: 3rd param is the remaining string */
+		if (param != 2) {
+			/* terminate current parameter, find next parameter */
+			cur = strsep(&next, " \t");
+
+			if (*cur == 0) {
+				/* empty token, ignore */
+				continue;
+			}
+		}
+
+		if (param == 0) {
+			if (strcmp(cur, "required") == 0) {
+				scanner->required = 1;
+			} else if (strcmp(cur, "recommended") == 0) {
+				scanner->required = 0;
+			} else {
+				err_msg = err_syntax;
+				ret = 0;
+				break;
+			}
+			param++;
+		} else if (param == 1) {
+			scanner->path = strdup(cur);
+			if (!scanner->path) {
+				err_msg = err_oom;
+				ret = 0;
+				break;
+			}
+			param++;
+		} else if (param == 2) {
+			scanner->description = strdup(strip_whitespaces(next));
+			if (!scanner->description) {
+				err_msg = err_oom;
+				ret = 0;
+				break;
+			}
+			if (*(scanner->description) == 0) {
+				err_msg = err_syntax;
+				ret = 0;
+				break;
+			}
+			param++;
+		}
+	}
+
+	if (ret) {
+		/* success */
+		CIRCLEQ_INSERT_TAIL(&anoubisd_config.pg_scanner,
+		    scanner, link);
+	} else {
+		log_warnx("line %d: %s", lineno, err_msg);
+
+		if (scanner->path)
+			free(scanner->path);
+		if (scanner->description)
+			free(scanner->description);
+		free(scanner);
+	}
+
+	free(value);
+	return ret;
+}
+
+/**
  * Convert the string in the argument buffer to an integer value.
  * The value must be in the range between min and max (inclusive).
  *
@@ -551,6 +664,10 @@ cfg_param_process(struct cfg_param *param, int lineno)
 		case key_policysize:
 			if (!cfg_parse_int(param->value, lineno,
 			    0, INT_MAX, &anoubisd_config.policysize))
+				return 0;
+			break;
+		case key_commit:
+			if (!cfg_parse_commit(param->value, lineno))
 				return 0;
 			break;
 		default:
@@ -837,6 +954,7 @@ cfg_initialize(int argc, char * const *argv)
 	if (!cfg_defaults())
 		return 0;
 	LIST_INIT(&anoubisd_config.upgrade_trigger);
+	CIRCLEQ_INIT(&anoubisd_config.pg_scanner);
 	cfg_read_cmdline(argc, argv);
 
 	return 1;
@@ -866,6 +984,17 @@ cfg_clear(void)
 	anoubisd_config.rootkey = NULL;
 	anoubisd_config.rootkey_required = 0;
 	anoubisd_config.allow_coredumps = 1;
+
+	while (!CIRCLEQ_EMPTY(&anoubisd_config.pg_scanner)) {
+		struct anoubisd_pg_scanner *scanner;
+
+		scanner = CIRCLEQ_FIRST(&anoubisd_config.pg_scanner);
+		CIRCLEQ_REMOVE(&anoubisd_config.pg_scanner, scanner, link);
+
+		free(scanner->path);
+		free(scanner->description);
+		free(scanner);
+	}
 }
 
 /**
@@ -953,6 +1082,7 @@ void
 cfg_dump(FILE *f)
 {
 	struct anoubisd_upgrade_trigger *trigger;
+	struct anoubisd_pg_scanner *scanner;
 
 	fprintf(f, "conffile: %s\n", data_store.conffile);
 	fprintf(f, "unixsocket: %s\n", anoubisd_config.unixsocket);
@@ -978,6 +1108,18 @@ cfg_dump(FILE *f)
 	fprintf(f, "auth_mode: %s\n",
 	    value_to_name(authmodes, anoubisd_config.auth_mode));
 	fprintf(f, "policysize: %i\n", anoubisd_config.policysize);
+
+	/* playground scanners */
+	CIRCLEQ_FOREACH(scanner, &anoubisd_config.pg_scanner, link) {
+		char * required_str = NULL;
+		if (scanner->required) {
+			required_str = "required";
+		} else {
+			required_str = "recommended";
+		}
+		fprintf(f, "commit = %s %s %s\n", required_str,
+		    scanner->path, scanner->description);
+	}
 }
 
 /**
@@ -1043,6 +1185,8 @@ cfg_msg_create(void)
 		memcpy(confmsg->chunk + currlen, trigger->arg, len);
 		currlen += len;
 	}
+
+	/* Note: playground scanners are not distributed */
 
 	return (msg);
 }
@@ -1110,6 +1254,8 @@ cfg_msg_parse(anoubisd_msg_t *msg)
 		offset += strlen(trigger->arg) + 1;
 		count--;
 	}
+
+	/* Note: playground scanners are not distributed */
 
 	return (0);
 }

@@ -131,6 +131,15 @@ struct anoubisd_upgrade_trigger {
 	LIST_ENTRY(anoubisd_upgrade_trigger) entries;
 };
 
+CIRCLEQ_HEAD(anoubisd_pg_scanner_list, anoubisd_pg_scanner);
+
+struct anoubisd_pg_scanner {
+	int   required;
+	char *path;
+	char *description;
+	CIRCLEQ_ENTRY(anoubisd_pg_scanner) link;
+};
+
 struct anoubisd_config {
 	int	opts;
 	char * unixsocket;        /* defaults to ANOUBISD_SOCKETNAME */
@@ -150,6 +159,9 @@ struct anoubisd_config {
 
 	/* Maximum size of a policy-file */
 	int	policysize;
+
+	/* playground content scanner definitions */
+	struct anoubisd_pg_scanner_list		pg_scanner;
 };
 
 extern struct anoubisd_config anoubisd_config;
