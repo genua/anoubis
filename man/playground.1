@@ -35,7 +35,7 @@
 .Sh SYNOPSIS
 .\" For a program:  program [-abc] file ...
 .Nm playground
-.Op Fl hf
+.Op Fl hfF
 .Op Fl k Ar keyfile
 .Op Fl c Ar certificate
 .Ar command
@@ -56,6 +56,9 @@ Force.
 Continue certain operations even when encountering errors.
 This option is intended for debugging purposes.
 Its use is not recommended.
+.It Fl F, Fl Fl ignore-recommended
+Ignore recommended scanners.
+This option is only valid for the commit-operation.
 .It Fl k Ar keyfile
 Specify the private key (default ~/.xanoubis/default.key)
 .It Fl c Ar certfile
@@ -118,6 +121,9 @@ filesystem. The playground is specified by its id in hexadecimal, the files
 are specified with their full path as shown in the
 .Ar list
 command.
+If the option
+.Fl Fl ignore-recommended
+is set, recommended scanners are skipped.
 .El
 .El
 .El

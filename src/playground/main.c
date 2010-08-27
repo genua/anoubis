@@ -51,6 +51,7 @@
 #include <anoubis_transaction.h>
 #include <linux/anoubis_playground.h>
 #include <errno.h>
+#include <getopt.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -83,6 +84,11 @@
  * Generate verbose output.
  */
 #define PGCLI_OPT_VERBOSE 0x0008
+
+/**
+ * CLI option flag: Ignore recommended scanner during commit
+ */
+#define PGCLI_OPT_IGNRECOMM 0x0010
 
 /**
  * Field width for playground id.
@@ -353,18 +359,21 @@ extern char	*__progname;
 __dead void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-fh] [-k key] [-c cert] <command> "
+	fprintf(stderr, "usage: %s [-fFh] [-k key] [-c cert] <command> "
 	    "[<program>]\n\n", __progname);
-	fprintf(stderr, "    -f:\tforce\n");
-	fprintf(stderr, "    -h:\tthis help\n");
-	fprintf(stderr, "    -k key:\tprivate key file\n");
-	fprintf(stderr, "    -c cert:\tcertificate file\n\n");
+	fprintf(stderr, "    -f                        force\n");
+	fprintf(stderr, "    -F, --ignore-recommended  "
+	    "ignore recommended scanners during commit\n");
+	fprintf(stderr, "    -h                        this help\n");
+	fprintf(stderr, "    -k key                    private key file\n");
+	fprintf(stderr, "    -c cert                   certificate file\n\n");
 	fprintf(stderr, "    <command>:\n");
 	fprintf(stderr, "	start <program>\n");
 	fprintf(stderr, "	list\n");
 	fprintf(stderr, "	files <playground id>\n");
 	fprintf(stderr, "	remove <playground id>\n");
-	fprintf(stderr, "	commit <playground id> file ...\n");
+	fprintf(stderr,
+	    "	commit [--ignore-recommended] <playground id> file ...\n");
 	fprintf(stderr, "	delete <playground id> file ...\n");
 
 	exit(1);
@@ -392,11 +401,20 @@ main(int argc, char *argv[])
 		/* NOTREACHED */
 	}
 
+	struct option options [] = {
+		{ "ignore-recommended", no_argument, NULL, 'F' },
+		{ 0, 0, 0, 0 }
+	};
+
 	/* Get command line arguments. */
-	while ((ch = getopt(argc, argv, "+vfhc:k:")) != -1) {
+	while ((ch = getopt_long(argc, argv, "+vfhc:k:F",
+	    options, NULL)) != -1) {
 		switch (ch) {
 		case 'f':
 			opts |= PGCLI_OPT_FORCE;
+			break;
+		case 'F':
+			opts |= PGCLI_OPT_IGNRECOMM;
 			break;
 		case 'v':
 			opts |= PGCLI_OPT_VERBOSE;
@@ -435,6 +453,13 @@ main(int argc, char *argv[])
 
 	command = *argv++;
 	argc--;
+
+	if (strcmp(command, "commit") && (opts & PGCLI_OPT_IGNRECOMM)) {
+		/* ignore-recommended option only allowed
+		 * for the commit-command */
+		usage();
+		/* NOTREACHED */
+	}
 
 	openlog(__progname, LOG_ODELAY|LOG_PERROR, LOG_USER);
 
