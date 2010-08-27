@@ -78,6 +78,7 @@
 #define ANOUBISD_OPT_NOACTION		0x0004
 
 #define ANOUBISD_USER			"_anoubisd"
+#define SCAN_USER			"_anoubisscan"
 
 #define ANOUBISD_POLICYCHROOT		"/policy"
 #define ANOUBISD_USERDIR		"user"

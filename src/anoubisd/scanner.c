@@ -32,6 +32,8 @@
 #include <inttypes.h>
 #include <sys/ioctl.h>
 #include <event.h>
+#include <pwd.h>
+#include <syslog.h>
 
 #ifdef LINUX
 #include "linux/anoubis.h"
@@ -574,6 +576,22 @@ anoubisd_scan_start(uint64_t token, int fd, uint64_t auth_uid, int flags)
 		return ret;
 	}
 	if (sp->childpid == 0) {
+		struct passwd	*pw;
+
+		/* Drop privileges */
+		if ((pw = getpwnam(SCAN_USER)) == NULL) {
+			syslog(LOG_CRIT, "getpwnam failed for %s: %s",
+			    SCAN_USER, strerror(errno));
+			_exit(1);
+		}
+		if (setgroups(1, &pw->pw_gid) ||
+		    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
+		    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid)) {
+			syslog(LOG_CRIT, "can't drop privileges: %s",
+			    strerror(errno));
+			_exit(1);
+		}
+
 		close(sp->pipe[0]);
 		scanner_main(sp, flags);
 		_exit(126);
