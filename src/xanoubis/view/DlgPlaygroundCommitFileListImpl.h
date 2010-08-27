@@ -96,6 +96,16 @@ class DlgPlaygroundCommitFileListImpl : public DlgPlaygroundCommitFileListBase
 		 * @return None.
 		 */
 		void onPlaygroundCompleted(wxCommandEvent &event);
+
+		/**
+		 * Begin activity.
+		 * Things we want to do wenn an activity has begun. This is:
+		 *	- disable buttons
+		 *	- show busy cursor
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void beginActivity(void);
 };
 
 #endif	/* _DLGPLAYGROUNDCOMMITFILELISTIMPL_H_ */

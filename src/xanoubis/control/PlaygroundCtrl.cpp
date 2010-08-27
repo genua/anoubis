@@ -38,10 +38,10 @@
 #include "PlaygroundFileEntry.h"
 #include "PlaygroundInfoEntry.h"
 #include "PlaygroundCommitTask.h"
+#include "PlaygroundUnlinkTask.h"
 #include "anoubis_errno.h"
 
 #include "Singleton.cpp"
-
 template class Singleton<PlaygroundCtrl>;
 
 PlaygroundCtrl::~PlaygroundCtrl(void)
@@ -49,15 +49,15 @@ PlaygroundCtrl::~PlaygroundCtrl(void)
 	JobCtrl::instance()->Disconnect(anTASKEVT_PG_LIST,
 	    wxTaskEventHandler(PlaygroundCtrl::OnPlaygroundListArrived),
 	    NULL, this);
-
 	JobCtrl::instance()->Disconnect(anTASKEVT_PG_FILES,
 	    wxTaskEventHandler(PlaygroundCtrl::OnPlaygroundFilesArrived),
 	    NULL, this);
-
 	JobCtrl::instance()->Disconnect(anTASKEVT_PG_COMMIT,
 	    wxTaskEventHandler(PlaygroundCtrl::OnPlaygroundFilesCommitted),
 	    NULL, this);
-
+	JobCtrl::instance()->Disconnect(anTASKEVT_PG_UNLINK,
+	    wxTaskEventHandler(PlaygroundCtrl::OnPlaygroundUnlinkDone),
+	    NULL, this);
 	clearPlaygroundInfo();
 	clearPlaygroundFiles();
 }
@@ -89,9 +89,41 @@ PlaygroundCtrl::updatePlaygroundFiles(uint64_t pgid, bool reportESRCH)
 bool
 PlaygroundCtrl::removePlayground(uint64_t pgid)
 {
-	/* to be implemented ... */
-	(void)pgid;
-	return true;
+	return createUnlinkTask(pgid);
+}
+
+bool
+PlaygroundCtrl::removeFiles(const std::vector<int> &indexes)
+{
+	std::vector<PlaygroundFileEntry *>	 files;
+	uint64_t				 pgid = 0;
+	AnListClass				*item = NULL;
+	AnRowProvider				*provider = NULL;
+	PlaygroundFileEntry			*entry;
+
+	provider = getFileProvider();
+	for (unsigned int i=0; i<indexes.size(); ++i) {
+		item = provider->getRow(indexes[i]);
+		if (item == NULL) {
+			continue;
+		}
+
+		entry = dynamic_cast<PlaygroundFileEntry *>(item);
+		if (entry == NULL) {
+			continue;
+		}
+
+		files.push_back(entry);
+		if (pgid == 0) {
+			pgid = entry->getPgid();
+		}
+	}
+
+	if (pgid == 0 || files.size() == 0) {
+		return (false);
+	}
+
+	return createUnlinkTask(pgid, files);
 }
 
 const wxArrayString &
@@ -117,6 +149,9 @@ PlaygroundCtrl::PlaygroundCtrl(void) : Singleton<PlaygroundCtrl>()
 	JobCtrl::instance()->Connect(anTASKEVT_PG_COMMIT,
 	    wxTaskEventHandler(PlaygroundCtrl::OnPlaygroundFilesCommitted),
 	    NULL, this);
+	JobCtrl::instance()->Connect(anTASKEVT_PG_UNLINK,
+	    wxTaskEventHandler(PlaygroundCtrl::OnPlaygroundUnlinkDone),
+	    NULL, this);
 }
 
 void
@@ -126,13 +161,18 @@ PlaygroundCtrl::handleComTaskResult(ComTask *task)
 	case ComTask::RESULT_COM_ERROR:
 		errorList_.Add(wxString::Format(_("Communication error in "
 		    "playground request.")));
-		sendErrorEvent();
+		sendEvent(anEVT_PLAYGROUND_ERROR);
 		break;
 	case ComTask::RESULT_REMOTE_ERROR:
 		errorList_.Add(wxString::Format(_("The daemon returned an "
 		    "error for the playground request: %hs"),
 		    anoubis_strerror(task->getResultDetails())));
-		sendErrorEvent();
+		sendEvent(anEVT_PLAYGROUND_ERROR);
+		break;
+	case ComTask::RESULT_LOCAL_ERROR:
+		errorList_.Add(wxString::Format(_("Error during unlink: %hs"),
+		    anoubis_strerror(task->getResultDetails())));
+		sendEvent(anEVT_PLAYGROUND_ERROR);
 		break;
 	case ComTask::RESULT_SUCCESS:
 		errorList_.Clear();
@@ -140,7 +180,7 @@ PlaygroundCtrl::handleComTaskResult(ComTask *task)
 	default:
 		errorList_.Add(wxString::Format(_("Got unexpected result (%d) "
 		    "for playground request"), task->getComTaskResult()));
-		sendErrorEvent();
+		sendEvent(anEVT_PLAYGROUND_ERROR);
 		break;
 	}
 }
@@ -151,7 +191,7 @@ PlaygroundCtrl::OnPlaygroundListArrived(TaskEvent &event)
 	PlaygroundListTask *task = NULL;
 
 	task = dynamic_cast<PlaygroundListTask *>(event.getTask());
-	if (task == NULL) {
+	if (!isValidTask(task)) {
 		event.Skip();
 		return;
 	}
@@ -165,6 +205,7 @@ PlaygroundCtrl::OnPlaygroundListArrived(TaskEvent &event)
 	} else {
 		extractListTask(task);
 	}
+	removeTask(task);
 	delete task;
 }
 
@@ -174,7 +215,7 @@ PlaygroundCtrl::OnPlaygroundFilesArrived(TaskEvent & event)
 	PlaygroundFilesTask *task = NULL;
 
 	task = dynamic_cast<PlaygroundFilesTask *>(event.getTask());
-	if (task == NULL) {
+	if (!isValidTask(task)) {
 		event.Skip();
 		return;
 	}
@@ -188,6 +229,7 @@ PlaygroundCtrl::OnPlaygroundFilesArrived(TaskEvent & event)
 	} else {
 		extractFilesTask(task);
 	}
+	removeTask(task);
 	delete task;
 }
 
@@ -233,7 +275,7 @@ PlaygroundCtrl::OnPlaygroundFilesCommitted(TaskEvent &event)
 	std::vector<uint64_t>	 devs, inos;
 
 	task = dynamic_cast<PlaygroundCommitTask *>(event.getTask());
-	if (task == NULL) {
+	if (!isValidTask(task)) {
 		event.Skip();
 		return;
 	}
@@ -241,8 +283,9 @@ PlaygroundCtrl::OnPlaygroundFilesCommitted(TaskEvent &event)
 	event.Skip(false);
 	if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
 		handleComTaskResult(task);
-		sendCompletedEvent();
+		sendEvent(anEVT_PLAYGROUND_COMPLETED);
 		updatePlaygroundFiles(task->getPgid(), false);
+		removeTask(task);
 		delete task;
 		return;
 	}
@@ -272,13 +315,39 @@ PlaygroundCtrl::OnPlaygroundFilesCommitted(TaskEvent &event)
 		errors = true;
 	}
 	if (errors)
-		sendErrorEvent();
+		sendEvent(anEVT_PLAYGROUND_ERROR);
 	if (devs.size() == 0) {
-		sendCompletedEvent();
+		sendEvent(anEVT_PLAYGROUND_COMPLETED);
 		updatePlaygroundFiles(task->getPgid(), false);
 	} else {
 		commitFiles(task->getPgid(), devs, inos, true);
 	}
+	removeTask(task);
+	delete task;
+}
+
+void
+PlaygroundCtrl::OnPlaygroundUnlinkDone(TaskEvent &event)
+{
+	PlaygroundUnlinkTask *task = NULL;
+
+	task = dynamic_cast<PlaygroundUnlinkTask *>(event.getTask());
+	if (!isValidTask(task)) {
+		event.Skip();
+		return;
+	}
+
+	event.Skip(false); /* "My" task -> stop propagating */
+
+	/* Progress for the finished task. */
+	clearPlaygroundInfo();
+	if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
+		handleComTaskResult(task);
+	}
+	updatePlaygroundInfo();
+	updatePlaygroundFiles(task->getPgId(), false);
+	sendEvent(anEVT_PLAYGROUND_COMPLETED);
+	removeTask(task);
 	delete task;
 }
 
@@ -290,6 +359,13 @@ PlaygroundCtrl::createListTask(void)
 	task = new PlaygroundListTask();
 	if (task == NULL)
 		return false;
+
+	/*
+	 * In theory we don't need task accounting, because we shall be the
+	 * only one who starts playground tasks. But in case of unit-tests
+	 * this assumption is not longer true.
+	 */
+	addTask(task);
 	JobCtrl::instance()->addTask(task);
 
 	return true;
@@ -303,6 +379,55 @@ PlaygroundCtrl::createFileTask(uint64_t pgid, bool reportESRCH)
 	task = new PlaygroundFilesTask(pgid, reportESRCH);
 	if (task == NULL)
 		return false;
+
+	/*
+	 * In theory we don't need task accounting, because we shall be the
+	 * only one who starts playground tasks. But in case of unit-tests
+	 * this assumption is not longer true.
+	 */
+	addTask(task);
+	JobCtrl::instance()->addTask(task);
+
+	return true;
+}
+
+bool
+PlaygroundCtrl::createUnlinkTask(uint64_t pgId)
+{
+	PlaygroundUnlinkTask *task = NULL;
+
+	task = new PlaygroundUnlinkTask(pgId);
+	if (task == NULL)
+		return false;
+
+	/*
+	 * In theory we don't need task accounting, because we shall be the
+	 * only one who starts playground tasks. But in case of unit-tests
+	 * this assumption is not longer true.
+	 */
+	addTask(task);
+	JobCtrl::instance()->addTask(task);
+
+	return true;
+}
+
+bool
+PlaygroundCtrl::createUnlinkTask(uint64_t pgId,
+    std::vector<PlaygroundFileEntry *> &list)
+{
+	PlaygroundUnlinkTask *task = NULL;
+
+	task = new PlaygroundUnlinkTask(pgId);
+	if (task == NULL)
+		return false;
+
+	task->addMatchList(list);
+	/*
+	 * In theory we don't need task accounting, because we shall be the
+	 * only one who starts playground tasks. But in case of unit-tests
+	 * this assumption is not longer true.
+	 */
+	addTask(task);
 	JobCtrl::instance()->addTask(task);
 
 	return true;
@@ -378,7 +503,7 @@ PlaygroundCtrl::extractFilesTask(PlaygroundFilesTask *task)
 			errorList_.Add(wxString::Format(_(
 			    "Could not determine filename for playground-file: "
 			    "%hs"), anoubis_strerror(res)));
-			sendErrorEvent();
+			sendEvent(anEVT_PLAYGROUND_ERROR);
 		}
 	}
 
@@ -450,24 +575,6 @@ PlaygroundCtrl::fileIdentification(uint64_t dev, uint64_t ino)
 		ret += paths[j];
 	}
 	return ret;
-}
-
-void
-PlaygroundCtrl::sendErrorEvent(void)
-{
-	wxCommandEvent event(anEVT_PLAYGROUND_ERROR);
-	event.SetEventObject(this);
-
-	ProcessEvent(event);
-}
-
-void
-PlaygroundCtrl::sendCompletedEvent(void)
-{
-	wxCommandEvent	event(anEVT_PLAYGROUND_COMPLETED);
-	event.SetEventObject(this);
-
-	ProcessEvent(event);
 }
 
 bool

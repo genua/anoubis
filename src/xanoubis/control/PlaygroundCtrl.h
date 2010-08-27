@@ -32,8 +32,11 @@
 #include <wx/arrstr.h>
 
 #include "AnGenericRowProvider.h"
+#include "GenericCtrl.h"
 #include "PlaygroundListTask.h"
 #include "PlaygroundFilesTask.h"
+#include "PlaygroundUnlinkTask.h"
+#include "PlaygroundFileEntry.h"
 #include "Singleton.h"
 #include "Task.h"
 #include "TaskEvent.h"
@@ -41,7 +44,7 @@
 /**
  * Controller class to do all aspects about playgrounds.
  */
-class PlaygroundCtrl : public Singleton<PlaygroundCtrl> , public wxEvtHandler
+class PlaygroundCtrl : public GenericCtrl, public Singleton<PlaygroundCtrl>
 {
 	public:
 		/**
@@ -99,6 +102,13 @@ class PlaygroundCtrl : public Singleton<PlaygroundCtrl> , public wxEvtHandler
 		 * @return True on success.
 		 */
 		bool removePlayground(uint64_t pgid);
+
+		/**
+		 * Command: Remove files of a playground.
+		 * @param[in] 1st List of indexes of row provider.
+		 * @return True on success.
+		 */
+		bool removeFiles(const std::vector<int> &files);
 
 		/**
 		 * Returns a list of errors, which occured during the execution
@@ -213,6 +223,13 @@ class PlaygroundCtrl : public Singleton<PlaygroundCtrl> , public wxEvtHandler
 		void OnPlaygroundFilesCommitted(TaskEvent &);
 
 		/**
+		 * Event handler for completed PlaygroundUnlinkTasks.
+		 * @param[in] 1st The event for PlaygroundUnlinkTask.
+		 * @return Nothing.
+		 */
+		void OnPlaygroundUnlinkDone(TaskEvent &);
+
+		/**
 		 * Create Playground list task.
 		 * This method creates and starts the task to fetch the
 		 * playground list.
@@ -231,6 +248,25 @@ class PlaygroundCtrl : public Singleton<PlaygroundCtrl> , public wxEvtHandler
 		 * @return True on success.
 		 */
 		bool createFileTask(uint64_t pgid, bool = true);
+
+		/**
+		 * Create playground delete task.
+		 * This method creates and starts the task to delete all files
+		 * of a playground.
+		 * @param[in] 1st The id of playground in question.
+		 * @return True on success.
+		 */
+		bool createUnlinkTask(uint64_t);
+
+		/**
+		 * Create playground file delete task.
+		 * This method creates and starts the task to delete given files
+		 * of a playground.
+		 * @param[in] 1st The id of playground in question.
+		 * @return True on success.
+		 */
+		bool createUnlinkTask(uint64_t,
+		    std::vector<PlaygroundFileEntry *> &);
 
 		/**
 		 * Extract list task.
@@ -264,25 +300,6 @@ class PlaygroundCtrl : public Singleton<PlaygroundCtrl> , public wxEvtHandler
 		 * instances.
 		 */
 		void clearPlaygroundFiles(void);
-
-		/**
-		 * Send error event.
-		 * This method will send a anEVT_PLAYGROUND_ERROR event,
-		 * to inform all interested parties about an occured error.
-		 * @param None.
-		 * @return Nothing.
-		 */
-		void sendErrorEvent(void);
-
-		/**
-		 * Send a completed event.
-		 * This method will send an anEVT_PLAYGROUND_COMPLETED event,
-		 * to inform all interested paties about a playground
-		 * operation that completed (successfully or not).
-		 * @param None.
-		 * @return Nothing.
-		 */
-		void sendCompletedEvent(void);
 
 		/**
 		 * Handle errors of a ComTask by sending an appropriate

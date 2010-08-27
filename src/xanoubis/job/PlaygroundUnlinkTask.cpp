@@ -25,18 +25,47 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <anoubis_client.h>
+#include <anoubis_playground.h>
+#include <anoubis_transaction.h>
+
 #include "anoubis_errno.h"
 #include "PlaygroundUnlinkTask.h"
 
-PlaygroundUnlinkTask::PlaygroundUnlinkTask(void) : Task(Task::TYPE_FS)
+PlaygroundUnlinkTask::PlaygroundUnlinkTask(uint64_t pgId)
+{
+	reset();
+	pgId_ = pgId;
+	state_ = INFO;
+	considerMatchList_ = false;
+}
+
+PlaygroundUnlinkTask::~PlaygroundUnlinkTask(void)
 {
 	reset();
 }
 
 void
+PlaygroundUnlinkTask::addMatchList(std::vector<PlaygroundFileEntry *> & list)
+{
+	std::vector<PlaygroundFileEntry *>::iterator	eIt;
+
+	considerMatchList_ = true;
+	for (eIt=list.begin(); eIt!=list.end(); eIt++) {
+		addFile(*eIt);
+	}
+}
+
+bool
 PlaygroundUnlinkTask::addFile(PlaygroundFileEntry *entry)
 {
-	fileList_.insert(entry);
+	devInodePair dip;
+
+	dip = devInodePair(entry->getDevice(), entry->getInode());
+	matchList_[dip] = NULL;
+	considerMatchList_ = true;
+
+	return (true);
 }
 
 wxEventType
@@ -48,47 +77,226 @@ PlaygroundUnlinkTask::getEventType(void) const
 void
 PlaygroundUnlinkTask::exec(void)
 {
-	std::vector<wxString> pathList;
+	switch (getType()) {
+	case Task::TYPE_COM:
+		execCom();
+		break;
+	case Task::TYPE_FS:
+		execFs();
+		break;
+	}
+}
 
-	std::vector<wxString>::iterator		 pIt;
-	std::set<PlaygroundFileEntry*>::iterator eIt;
+bool
+PlaygroundUnlinkTask::done(void)
+{
+	struct anoubis_msg *message = NULL;
 
-	for (eIt=fileList_.begin(); eIt!=fileList_.end(); eIt++) {
-		pathList = (*eIt)->getPaths();
-		if (pathList.size() == 0) {
-			result_ = -EINVAL;
-			return;
+	if (getComTaskResult() != RESULT_INIT) {
+		/* An error occured. We are done. */
+		return true;
+	}
+
+	if (transaction_ && (transaction_->flags & ANOUBIS_T_DONE) == 0) {
+		/* Not finished yet */
+		return false;
+	} else if (transaction_ && transaction_->result) {
+		/* Finished with an error */
+		setComTaskResult(RESULT_REMOTE_ERROR);
+		setResultDetails(transaction_->result);
+		anoubis_transaction_destroy(transaction_);
+		transaction_ = NULL;
+		return true;
+	} else if (transaction_ && (transaction_->msg == NULL ||
+	    !VERIFY_LENGTH(transaction_->msg, sizeof(Anoubis_PgReplyMessage)) ||
+	    get_value(transaction_->msg->u.pgreply->error) != 0)) {
+		/* Message verification failed */
+		setComTaskResult(RESULT_REMOTE_ERROR);
+		setResultDetails(get_value(
+		    transaction_->msg->u.pgreply->error));
+		anoubis_transaction_destroy(transaction_);
+		transaction_ = NULL;
+		return true;
+	}
+
+	/* Success */
+	message = transaction_->msg;
+	transaction_->msg = 0;
+
+	anoubis_transaction_destroy(transaction_);
+	transaction_ = NULL;
+
+	switch (state_) {
+	case INFO:
+		if (isPlaygroundActive(message)) {
+			setComTaskResult(RESULT_REMOTE_ERROR);
+			setResultDetails(EINPROGRESS);
+			anoubis_msg_free(message);
+			return true;
 		}
-		for (pIt=pathList.begin(); pIt!=pathList.end(); pIt++) {
-			if (unlink((*pIt).fn_str()) == 0 ||
-			    (errno == EISDIR && rmdir((*pIt).fn_str()) == 0)) {
-				result_ = 0;
+
+		anoubis_msg_free(message);
+		state_ = FILEFETCH;
+
+		transaction_ = anoubis_client_pglist_start(getClient(),
+		    ANOUBIS_PGREC_FILELIST, pgId_);
+		if (transaction_ == NULL) {
+			setComTaskResult(RESULT_LOCAL_ERROR);
+			setResultDetails(ENOMEM);
+			return true;
+		}
+		return false;
+		break;
+	case FILEFETCH:
+		extractFileList(message);
+		type_ = Task::TYPE_FS;
+		break;
+	}
+
+	anoubis_msg_free(message);
+	return true;
+}
+
+uint64_t
+PlaygroundUnlinkTask::getPgId(void) const
+{
+	return pgId_;
+}
+
+void
+PlaygroundUnlinkTask::reset(void)
+{
+	cleanFileMap(unlinkList_);
+	cleanFileMap(matchList_);
+	setComTaskResult(RESULT_INIT);
+}
+
+void
+PlaygroundUnlinkTask::execCom(void)
+{
+	transaction_ = anoubis_client_pglist_start(getClient(),
+	    ANOUBIS_PGREC_PGLIST, pgId_);
+
+	if (transaction_ == NULL) {
+		setComTaskResult(RESULT_LOCAL_ERROR);
+		setResultDetails(ENOMEM);
+	}
+}
+
+void
+PlaygroundUnlinkTask::execFs(void)
+{
+	unsigned int count = 0;
+
+	count = unlinkLoop();
+	if (count != 0 && count != unlinkList_.size()) {
+		/* We deleted something but not all. Do another loop. */
+		type_ = Task::TYPE_COM;
+		state_ = INFO;
+	} else if (count == 0) {
+		/* We deleted nothing. */
+		setComTaskResult(RESULT_LOCAL_ERROR);
+		setResultDetails(EBUSY);
+	} else {
+		setComTaskResult(RESULT_SUCCESS);
+	}
+}
+
+void
+PlaygroundUnlinkTask::extractFileList(struct anoubis_msg *message)
+{
+	int			 i = 0;
+	int			 offset = 0;
+	Anoubis_PgFileRecord	*record = NULL;
+	char			*path = NULL;
+	uint64_t		 dev = 0;
+	uint64_t		 ino = 0;
+	devInodePair		 dip;
+
+	cleanFileMap(unlinkList_);
+	for(; message; message = message->next) {
+		for (i=offset=0; i<get_value(message->u.pgreply->nrec); ++i) {
+			record = (Anoubis_PgFileRecord *)
+			    (message->u.pgreply->payload + offset);
+			offset += get_value(record->reclen);
+
+			dev = get_value(record->dev);
+			ino = get_value(record->ino);
+			if (record->path[0] == 0 || pgfile_composename(&path,
+			    dev, ino, record->path) < 0) {
+				continue;
+			}
+
+			dip = devInodePair(dev,ino);
+			if (considerMatchList_) {
+				if (matchList_.find(dip) != matchList_.end()) {
+					unlinkList_[dip] = path;
+				}
 			} else {
-				result_ = -errno;
-				return;
+				unlinkList_[dip] = path;
 			}
 		}
 	}
 }
 
 int
-PlaygroundUnlinkTask::getResult(void) const
+PlaygroundUnlinkTask::unlinkLoop(void)
 {
-	return (result_);
+	int	 count = 0;
+	char	*path = NULL;
+
+	fileMap::iterator it;
+
+	setResultDetails(0);
+	for (it=unlinkList_.begin(); it!=unlinkList_.end(); it++) {
+		path = it->second;
+		if (unlink(path) == 0 ||
+		    (errno == EISDIR && rmdir(path) == 0)) {
+			count++;
+		} else {
+			setResultDetails(errno);
+		}
+	}
+
+	return (count);
+}
+
+bool
+PlaygroundUnlinkTask::isPlaygroundActive(struct anoubis_msg *message)
+{
+	int			 i = 0;
+	int			 offset = 0;
+	Anoubis_PgInfoRecord	*record = NULL;
+
+	for(; message; message = message->next) {
+		for (i=offset=0; i<get_value(message->u.pgreply->nrec); ++i) {
+			record = (Anoubis_PgInfoRecord *)
+			    (message->u.pgreply->payload + offset);
+			offset += get_value(record->reclen);
+			if (get_value(record->pgid) != pgId_) {
+				continue;
+			}
+			if (get_value(record->nrprocs) == 0) {
+				return false;
+			} else {
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 void
-PlaygroundUnlinkTask::reset(void)
+PlaygroundUnlinkTask::cleanFileMap(fileMap & list)
 {
-	PlaygroundFileEntry			 *entry;
-	std::set<PlaygroundFileEntry*>::iterator  it;
+	fileMap::iterator it;
 
-	for (it=fileList_.begin(); it!=fileList_.end(); it++) {
-		entry = *it;
-		fileList_.erase(it);
-		delete entry;
+	while (!list.empty()) {
+		it = list.begin();
+		if (it->second != NULL) {
+			free(it->second);
+		}
+		list.erase(it);
 	}
-
-	result_ = -EINVAL;
-
 }

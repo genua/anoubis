@@ -89,14 +89,24 @@ DlgPlaygroundCommitFileListImpl::onColumnButtonClick(wxCommandEvent &event)
 }
 
 void
-DlgPlaygroundCommitFileListImpl::onDeleteClicked(wxCommandEvent &)
+DlgPlaygroundCommitFileListImpl::onDeleteClicked(wxCommandEvent &event)
 {
+	std::vector<int> selection;
+
+	event.Skip();
+	for (int i=fileList->getFirstSelection(); i>=0;
+	    i=fileList->getNextSelection(i)) {
+		selection.push_back(i);
+	}
+	if (PlaygroundCtrl::instance()->removeFiles(selection)) {
+		beginActivity();
+	}
 }
 
 void
 DlgPlaygroundCommitFileListImpl::onCommitClicked(wxCommandEvent &event)
 {
-	std::vector<int>		 sel;
+	std::vector<int> sel;
 
 	event.Skip();
 	for (int i=fileList->getFirstSelection(); i>=0;
@@ -104,10 +114,7 @@ DlgPlaygroundCommitFileListImpl::onCommitClicked(wxCommandEvent &event)
 		sel.push_back(i);
 	}
 	if (PlaygroundCtrl::instance()->commitFiles(sel)) {
-		commitButton->Disable();
-		delButton->Disable();
-		closeButton->Disable();
-		wxBeginBusyCursor();
+		beginActivity();
 	}
 }
 
@@ -148,4 +155,13 @@ DlgPlaygroundCommitFileListImpl::onPlaygroundCompleted(wxCommandEvent &)
 	delButton->Enable();
 	closeButton->Enable();
 	wxEndBusyCursor();
+}
+
+void
+DlgPlaygroundCommitFileListImpl::beginActivity(void)
+{
+	commitButton->Disable();
+	delButton->Disable();
+	closeButton->Disable();
+	wxBeginBusyCursor();
 }

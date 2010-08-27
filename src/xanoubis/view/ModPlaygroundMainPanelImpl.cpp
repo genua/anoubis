@@ -202,11 +202,11 @@ ModPlaygroundMainPanelImpl::onCommitFiles(wxCommandEvent &)
 void
 ModPlaygroundMainPanelImpl::onDeleteFiles(wxCommandEvent &)
 {
-	PlaygroundCtrl      *playgroundCtrl;
-	AnRowProvider       *rowProvider;
-	AnListClass         *item;
-	PlaygroundInfoEntry *entry;
-	uint64_t            pgId;
+	PlaygroundCtrl		*playgroundCtrl;
+	AnRowProvider		*rowProvider;
+	AnListClass		*item;
+	PlaygroundInfoEntry	*entry;
+	uint64_t		 pgId;
 
 	/* basic validation */
 	if (!pgList->hasSelection()) {
@@ -224,7 +224,9 @@ ModPlaygroundMainPanelImpl::onDeleteFiles(wxCommandEvent &)
 	if (entry != NULL) {
 		pgId = entry->getPgid();
 	} else {
-		pgId = 0;
+		anMessageBox(_("Cannot get data of selected entry."),
+		    _("Playground error"), wxOK | wxICON_ERROR, this);
+		return;
 	}
 
 	/* start delete task */

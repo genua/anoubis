@@ -32,31 +32,57 @@
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 
+#include <anoubis_msg.h>
 #include <set>
+#include <map>
 
 #include "PlaygroundFileEntry.h"
 #include "Task.h"
+#include "ComTask.h"
 #include "TaskEvent.h"
+
+typedef std::pair<uint64_t, uint64_t>	devInodePair;
+typedef std::map<devInodePair, char *>	fileMap;
 
 /**
  * Task to unlink list of (playground) files.
  *
  * You need to setup the file list (setPath()) before the tasks gets scheduled!
  */
-class PlaygroundUnlinkTask : public Task
+class PlaygroundUnlinkTask : public ComTask
 {
 	public:
 		/**
-		 * Constructor.
+		 * Constructor whole playground.
+		 * If this constructor is used all files of the given playground
+		 * will be removed.
+		 * @param[in] 1st Id of playground in question.
 		 */
-		PlaygroundUnlinkTask(void);
+		PlaygroundUnlinkTask(uint64_t);
+
+		/**
+		 * Destructor.
+		 */
+		~PlaygroundUnlinkTask(void);
+
+		/**
+		 * Add match list.
+		 * Only file in match list will be unlinked.
+		 * @param[in] 1st List of file entries.
+		 * @return Nothing.
+		 * @see addFile()
+		 */
+		void addMatchList(std::vector<PlaygroundFileEntry *> &);
 
 		/**
 		 * Add file to this task.
+		 * This will add a single file to the list of files this
+		 * task will unlink.
 		 * @param[in] 1st The PlaygroundFileEntry to add.
-		 * @return Nothing.
+		 * @return True on success.
+		 * @see addMatchList()
 		 */
-		void addFile(PlaygroundFileEntry *);
+		bool addFile(PlaygroundFileEntry *);
 
 		/**
 		 * Implementation of Task::getEventType().
@@ -69,16 +95,36 @@ class PlaygroundUnlinkTask : public Task
 		void exec(void);
 
 		/**
-		 * Returns the state of the latest unlink.
-		 * @param None.
-		 * @return 0 on success, an errno in case of error.
+		 * Implementation of ComTask::done().
 		 */
-		int getResult(void) const;
+		bool done(void);
+
+		/**
+		 * Get playground id of this task.
+		 * @param None.
+		 * @return Playground id.
+		 */
+		uint64_t getPgId(void) const;
 
 	private:
 		/**
+		 * These states this task traverse.
+		 */
+		enum State {
+			/**
+			 * Update playground information.
+			 */
+			INFO,
+
+			/**
+			 * Fetch file list.
+			 */
+			FILEFETCH,
+		};
+
+		/**
 		 * Resets the task.
-		 * This means cleaning the fileList_ and setting the result
+		 * This means cleaning the unlinkList_ and setting the result
 		 * to EINVAL.
 		 * @param None.
 		 * @return Notinig.
@@ -86,14 +132,78 @@ class PlaygroundUnlinkTask : public Task
 		void reset(void);
 
 		/**
-		 * Store latest unlink result.
+		 * Execute communication part of task.
+		 * @param None.
+		 * @return Nothing.
 		 */
-		int result_;
+		void execCom(void);
+
+		/**
+		 * Execute filesystem part of task.
+		 * @param None.
+		 * @return Nothing.
+		 */
+		void execFs(void);
+
+		/**
+		 * Extract files from mesage (list of files) and filles
+		 * unlinkList_ with wxString.
+		 * @param[in] 1st The message of current files.
+		 */
+		void extractFileList(struct anoubis_msg *);
+
+		/**
+		 * Do unlink loop
+		 * @param None.
+		 * @return The number of unlinked items.
+		 */
+		int unlinkLoop(void);
+
+		/**
+		 * Is playground still active.
+		 * @param[in] 1st The current list of playgrounds from daemon.
+		 * @return True if playground is active (aka # of procs != 0).
+		 */
+		bool isPlaygroundActive(struct anoubis_msg *);
+
+		/**
+		 * Clean map list.
+		 * This method iterates over the given list and deletes every
+		 * element until the list is empty.
+		 * @param[in] 1st The list in question.
+		 * @return Nothing.
+		 */
+		void cleanFileMap(fileMap &);
+
+		/**
+		 * Store id of playground.
+		 */
+		uint64_t pgId_;
+
+		/**
+		 * The current state.
+		 */
+		enum State state_;
+
+		/**
+		 * The current transaction.
+		 */
+		struct anoubis_transaction *transaction_;
+
+		/**
+		 * Do we have to consider the matchList?
+		 */
+		bool considerMatchList_;
 
 		/**
 		 * These files will be deleted.
 		 */
-		std::set<PlaygroundFileEntry *> fileList_;
+		fileMap unlinkList_;
+
+		/**
+		 * Mask list: only unlink these files.
+		 */
+		fileMap matchList_;
 };
 
 #endif	/* _PLAYGROUNDUNLINKTASK_H_ */

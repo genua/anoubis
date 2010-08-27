@@ -38,9 +38,14 @@
 #include <wx/filename.h>
 #include <wx/module.h>
 
-#include <PlaygroundFilesTask.h>
-#include <PlaygroundListTask.h>
+#include <AnRowProvider.h>
 #include <JobCtrl.h>
+#include <PlaygroundCtrl.h>
+#include <PlaygroundFileEntry.h>
+#include <PlaygroundFilesTask.h>
+#include <PlaygroundInfoEntry.h>
+#include <PlaygroundListTask.h>
+#include <PlaygroundUnlinkTask.h>
 
 #include "dummyDaemon.h"
 #include "JobCtrlEventSpy.h"
@@ -49,6 +54,38 @@
 
 #include <anoubis_errno.h>
 #include <anoubis_playground.h>
+
+#define CHECK_REGENT(name) \
+	do { \
+		struct stat _sb; \
+		if (stat(name, &_sb) != 0 || !S_ISREG(_sb.st_mode)) { \
+			fail("stat(%s) failed or it's not a file.", name); \
+		} \
+	} while (0)
+
+#define CHECK_DIRENT(name) \
+	do { \
+		struct stat _sb; \
+		if (stat(name, &_sb) != 0 || !S_ISDIR(_sb.st_mode)) { \
+			fail("stat(%s) failed or it's not a directory.", \
+			    name); \
+		} \
+	} while (0)
+
+#define CHECK_NOENT(name) \
+	do { \
+		struct stat _sb; \
+		if (stat(name, &_sb) == 0 || errno != ENOENT) { \
+			fail("Unlink failed: file [%s] still exists.", name); \
+		} \
+	} while (0)
+
+#undef DEBUG_DUMP
+#ifdef DEBUG_DUMP
+#  define DUMP_PLAYGROUND	dump_playground()
+#else
+#  define DUMP_PLAYGROUND
+#endif /* DEBUG_DUMP */
 
 static void
 setup(void)
@@ -66,6 +103,24 @@ setup(void)
 		    -pid, strerror(-pid));
 		waitpid(pid, NULL, 0);
 	}
+
+	const char *playground3[] = {
+		"/bin/bash", "-c", "echo h1 > h1; mkdir pgTest; cd pgTest;"
+			" for i in 1 2 3 4; do echo h$i > h$i; done;"
+	};
+	int pid = playground_start_fork((char**)playground3);
+	fail_unless(pid > 0, "Failed to fork playground-process: %d (%s)",
+	    -pid, strerror(-pid));
+	waitpid(pid, NULL, 0);
+
+	const char *playground4[] = {
+		"/bin/bash", "-c", "echo h > xxx; sleep 80 &"
+	};
+	pid = playground_start_fork((char**)playground4);
+
+	fail_unless(pid > 0, "Failed to fork playground-process: %d (%s)",
+	    -pid, strerror(-pid));
+	/* Note: we do not wait for this shell to finish, no cleanup is done */
 }
 
 static void
@@ -73,6 +128,45 @@ teardown(void)
 {
 	teardown_dummyDaemon();
 }
+
+#ifdef DEBUG_DUMP
+static AnRowProvider*
+getPlaygroundInfos(void)
+{
+	JobCtrl *jobctl = JobCtrl::instance();
+	PlaygroundCtrl *pgctl = PlaygroundCtrl::instance();
+
+	/* get all playgrounds */
+	AnRowProvider *pg_info = (AnRowProvider*)pgctl->getInfoProvider();
+
+	pgctl->updatePlaygroundInfo();
+
+	while (pg_info->getSize() < 1) {
+		jobctl->ProcessPendingEvents();
+		pg_info->ProcessPendingEvents();
+	}
+
+	return pg_info;
+}
+
+static void
+dump_playground(void)
+{
+	/* get all playgrounds */
+	AnRowProvider *pg_info = getPlaygroundInfos();
+
+	for (int i=0; i<pg_info->getSize(); i++) {
+		AnListClass *row = pg_info->getRow(i);
+		PlaygroundInfoEntry *entry =
+		    dynamic_cast<PlaygroundInfoEntry *>(row);
+
+		fprintf(stderr, "playground: '%ls' pgid=%llx"
+		    " uid=%u files=%d active=%d\n",
+		    (const wchar_t*)entry->getPath().c_str(), entry->getPgid(),
+		    entry->getUid(), entry->getNumFiles(), entry->isActive());
+	}
+}
+#endif /* DEBUG_DUMP */
 
 START_TEST(fetch_list)
 {
@@ -91,6 +185,9 @@ START_TEST(fetch_list)
 	listTask.resetRecordIterator();
 	int numRecords = 0;
 	while (listTask.readNextRecord()) {
+		if (listTask.getPGID() > 2) {
+			continue;
+		}
 		fail_unless(listTask.getCommand() == wxT("/bin/bash"),
 		    "Wrong command: %hs", listTask.getCommand().c_str());
 		fail_unless(listTask.getUID() == (int)getuid(),
@@ -122,6 +219,170 @@ START_TEST(fetch_list)
 }
 END_TEST
 
+START_TEST(unlink_activePg)
+{
+	JobCtrl *jobCtrl = JobCtrl::instance();
+	TaskEventSpy eventSpy(jobCtrl, anTASKEVT_PG_UNLINK);
+	PlaygroundUnlinkTask unlinkTask(8);
+
+	DUMP_PLAYGROUND;
+	jobCtrl->addTask(&unlinkTask);
+	eventSpy.waitForInvocation(1);
+	mark_point();
+
+	if (unlinkTask.getComTaskResult() != ComTask::RESULT_REMOTE_ERROR ||
+	    unlinkTask.getResultDetails() != EINPROGRESS) {
+		fail("UnlinkTask returned with %d/%s - but %d/%s expected",
+		    unlinkTask.getResultDetails(),
+		    anoubis_strerror(unlinkTask.getResultDetails()),
+		    EINPROGRESS, strerror(EINPROGRESS));
+	}
+}
+END_TEST
+
+START_TEST(unlink_noentPg)
+{
+	JobCtrl *jobCtrl = JobCtrl::instance();
+	TaskEventSpy eventSpy(jobCtrl, anTASKEVT_PG_UNLINK);
+	PlaygroundUnlinkTask unlinkTask(888);
+
+	DUMP_PLAYGROUND;
+	jobCtrl->addTask(&unlinkTask);
+	eventSpy.waitForInvocation(1);
+	mark_point();
+
+	if (unlinkTask.getComTaskResult() != ComTask::RESULT_REMOTE_ERROR ||
+	    unlinkTask.getResultDetails() != ESRCH) {
+		fail("UnlinkTask returned with %d/%s - but %d/%s expected",
+		    unlinkTask.getResultDetails(),
+		    anoubis_strerror(unlinkTask.getResultDetails()),
+		    ESRCH, strerror(ESRCH));
+	}
+}
+END_TEST
+
+START_TEST(unlink_completeSimple)
+{
+	JobCtrl *jobCtrl = JobCtrl::instance();
+	TaskEventSpy eventSpy(jobCtrl, anTASKEVT_PG_UNLINK);
+	PlaygroundUnlinkTask unlinkTask(1);
+
+	DUMP_PLAYGROUND;
+	jobCtrl->addTask(&unlinkTask);
+	eventSpy.waitForInvocation(1);
+	mark_point();
+
+	fail_unless(unlinkTask.getComTaskResult() == ComTask::RESULT_SUCCESS,
+	    "UnlinkTask failed with %d/%s", unlinkTask.getResultDetails(),
+	    anoubis_strerror(unlinkTask.getResultDetails()));
+
+	CHECK_NOENT("/home/u2000/.plgr.1.xxx");
+}
+END_TEST
+
+START_TEST(unlink_completeComplex)
+{
+	JobCtrl *jobCtrl = JobCtrl::instance();
+	TaskEventSpy eventSpy(jobCtrl, anTASKEVT_PG_UNLINK);
+	PlaygroundUnlinkTask unlinkTask(15);
+
+	DUMP_PLAYGROUND;
+	jobCtrl->addTask(&unlinkTask);
+	eventSpy.waitForInvocation(1);
+	mark_point();
+
+	fail_unless(unlinkTask.getComTaskResult() == ComTask::RESULT_SUCCESS,
+	    "UnlinkTask failed with %d/%s", unlinkTask.getResultDetails(),
+	    anoubis_strerror(unlinkTask.getResultDetails()));
+
+	CHECK_NOENT("/home/u2000/.plgr.f.h1");
+	CHECK_NOENT("/home/u2000/.plgr.f.pgTest");
+	CHECK_NOENT("/home/u2000/.plgr.f.pgTest/.plgr.f.h1");
+	CHECK_NOENT("/home/u2000/.plgr.f.pgTest/.plgr.f.h2");
+	CHECK_NOENT("/home/u2000/.plgr.f.pgTest/.plgr.f.h3");
+	CHECK_NOENT("/home/u2000/.plgr.f.pgTest/.plgr.f.h4");
+}
+END_TEST
+
+START_TEST(unlink_listEmpty)
+{
+	std::vector<PlaygroundFileEntry *> list;
+	JobCtrl *jobCtrl = JobCtrl::instance();
+	TaskEventSpy eventSpy(jobCtrl, anTASKEVT_PG_UNLINK);
+	PlaygroundUnlinkTask unlinkTask(0x13);
+
+	DUMP_PLAYGROUND;
+	list.clear();
+	unlinkTask.addMatchList(list);
+	jobCtrl->addTask(&unlinkTask);
+	eventSpy.waitForInvocation(1);
+	mark_point();
+
+	if (unlinkTask.getComTaskResult() != ComTask::RESULT_LOCAL_ERROR ||
+	    unlinkTask.getResultDetails() != EBUSY) {
+		fail("UnlinkTask returned with %d/%s - but %d/%s expected",
+		    unlinkTask.getResultDetails(),
+		    anoubis_strerror(unlinkTask.getResultDetails()),
+		    EBUSY, strerror(EBUSY));
+	}
+	CHECK_REGENT("/home/u2000/.plgr.13.h1");
+	CHECK_DIRENT("/home/u2000/.plgr.13.pgTest");
+	CHECK_REGENT("/home/u2000/.plgr.13.pgTest/.plgr.13.h1");
+	CHECK_REGENT("/home/u2000/.plgr.13.pgTest/.plgr.13.h2");
+	CHECK_REGENT("/home/u2000/.plgr.13.pgTest/.plgr.13.h3");
+	CHECK_REGENT("/home/u2000/.plgr.13.pgTest/.plgr.13.h4");
+}
+END_TEST
+
+START_TEST(unlink_listComplex)
+{
+	std::vector<PlaygroundFileEntry *> list;
+	PlaygroundFileEntry *entry = NULL;
+	AnRowProvider *pg_files = NULL;
+	JobCtrl *jobCtrl = JobCtrl::instance();
+	PlaygroundCtrl *playgroundCtrl = PlaygroundCtrl::instance();
+	TaskEventSpy eventSpy(jobCtrl, anTASKEVT_PG_UNLINK);
+	PlaygroundUnlinkTask unlinkTask(0xb);
+
+	DUMP_PLAYGROUND;
+	pg_files = (AnRowProvider*)playgroundCtrl->getFileProvider();
+	playgroundCtrl->updatePlaygroundFiles(0xb);
+	while (pg_files->getSize() < 6) {
+		jobCtrl->ProcessPendingEvents();
+		pg_files->ProcessPendingEvents();
+	}
+	mark_point();
+
+	for (int i=0; i<=6; i++) {
+		entry = dynamic_cast<PlaygroundFileEntry *>(
+		    pg_files->getRow(i));
+		if (entry == NULL) {
+			continue;
+		}
+		if (entry->getPaths()[0] != wxT("/home/u2000/h1")) {
+			list.push_back(entry);
+		}
+	}
+	mark_point();
+
+	unlinkTask.addMatchList(list);
+	jobCtrl->addTask(&unlinkTask);
+	eventSpy.waitForInvocation(1);
+	mark_point();
+
+	fail_unless(unlinkTask.getComTaskResult() == ComTask::RESULT_SUCCESS,
+	    "UnlinkTask failed with %d/%s", unlinkTask.getResultDetails(),
+	    anoubis_strerror(unlinkTask.getResultDetails()));
+
+	CHECK_REGENT("/home/u2000/.plgr.b.h1");
+	CHECK_NOENT("/home/u2000/.plgr.b.pgTest");
+	CHECK_NOENT("/home/u2000/.plgr.b.pgTest/.plgr.b.h1");
+	CHECK_NOENT("/home/u2000/.plgr.b.pgTest/.plgr.b.h2");
+	CHECK_NOENT("/home/u2000/.plgr.b.pgTest/.plgr.b.h3");
+	CHECK_NOENT("/home/u2000/.plgr.b.pgTest/.plgr.b.h4");
+}
+END_TEST
+
 TCase *
 getTc_JobCtrlPlayground(void)
 {
@@ -131,6 +392,13 @@ getTc_JobCtrlPlayground(void)
 	tcase_add_checked_fixture(tcase, setup, teardown);
 
 	tcase_add_test(tcase, fetch_list);
+
+	tcase_add_test(tcase, unlink_activePg);
+	tcase_add_test(tcase, unlink_noentPg);
+	tcase_add_test(tcase, unlink_completeSimple);
+	tcase_add_test(tcase, unlink_completeComplex);
+	tcase_add_test(tcase, unlink_listEmpty);
+	tcase_add_test(tcase, unlink_listComplex);
 
 	return (tcase);
 }

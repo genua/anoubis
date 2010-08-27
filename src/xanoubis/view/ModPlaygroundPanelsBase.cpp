@@ -204,18 +204,15 @@ DlgPlaygroundCommitFileListBase::DlgPlaygroundCommitFileListBase( wxWindow* pare
 	wxBoxSizer* footerSizer;
 	footerSizer = new wxBoxSizer( wxHORIZONTAL );
 	
+	commitButton = new wxButton( this, PG_FILE_COMMITBUTTON, _("Commit"), wxDefaultPosition, wxDefaultSize, 0 );
+	commitButton->SetToolTip( _("Commit selected Files to the production system.") );
 	
-	footerSizer->Add( 0, 0, 5, wxEXPAND, 5 );
+	footerSizer->Add( commitButton, 0, wxALL, 5 );
 	
 	delButton = new wxButton( this, wxID_ANY, _("Delete"), wxDefaultPosition, wxDefaultSize, 0 );
 	delButton->SetToolTip( _("Delete selected playground Files.") );
 	
 	footerSizer->Add( delButton, 0, wxALL, 5 );
-	
-	commitButton = new wxButton( this, PG_FILE_COMMITBUTTON, _("Commit"), wxDefaultPosition, wxDefaultSize, 0 );
-	commitButton->SetToolTip( _("Commit selected Files to the production system.") );
-	
-	footerSizer->Add( commitButton, 0, wxALL, 5 );
 	
 	
 	footerSizer->Add( 0, 0, 1, wxEXPAND, 5 );
@@ -235,7 +232,7 @@ DlgPlaygroundCommitFileListBase::DlgPlaygroundCommitFileListBase( wxWindow* pare
 	
 	// Connect Events
 	columnButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgPlaygroundCommitFileListBase::onColumnButtonClick ), NULL, this );
-	delButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgPlaygroundCommitFileListBase::onDeleteClicked ), NULL, this );
 	commitButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgPlaygroundCommitFileListBase::onCommitClicked ), NULL, this );
+	delButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgPlaygroundCommitFileListBase::onDeleteClicked ), NULL, this );
 	closeButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgPlaygroundCommitFileListBase::onCloseClicked ), NULL, this );
 }
