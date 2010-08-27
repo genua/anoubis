@@ -353,9 +353,12 @@ sighandler(int sig, short event __used, void *arg)
 			sigprocmask(SIG_SETMASK, &mask, NULL);
 			if (upgrade_pid)
 				kill(upgrade_pid, SIGTERM);
-			kill(se_pid, SIGTERM);
-			kill(policy_pid, SIGTERM);
-			kill(logger_pid, SIGTERM);
+			if (se_pid)
+				kill(se_pid, SIGTERM);
+			if (policy_pid)
+				kill(policy_pid, SIGTERM);
+			if (logger_pid)
+				kill(logger_pid, SIGTERM);
 			for (i=0; info->ev_sigs[i]; ++i)
 				signal_del(info->ev_sigs[i]);
 			break;
@@ -1288,7 +1291,7 @@ send_sfscache_invalidate_uid(const char *path, uid_t uid)
  * the master modifies the sfs tree entry on disk.
  *
  * @param path The path name of the entry to invalidate.
- * @param uid The key ID of the entry to invalidate.
+ * @param keyid The key ID of the entry to invalidate.
  * @return None.
  */
 static void
@@ -1372,7 +1375,7 @@ send_upgrade_ok(int value)
 
 /**
  * Notfiy the session engine about a finished upgrade. The message
- * contains the number of upgraaded files in chunksize.
+ * contains the number of upgraded files in chunksize.
  *
  * @param None.
  * @return None.
@@ -1883,7 +1886,7 @@ dispatch_passphrase(anoubisd_msg_t *msg)
 }
 
 /**
- * The number of random bytes used for the authentiation challenge.
+ * The number of random bytes used for the authentication challenge.
  */
 #define		RANDOM_CHALLENGE_BYTES	16
 
@@ -2012,7 +2015,7 @@ dispatch_auth_request(struct anoubisd_msg *msg)
 /**
  * Process a request from the session engine to verify an authentication
  * request. The message contains an authentication challenge and the
- * signature. The result is an authenticaton result message that infroms
+ * signature. The result is an authenticaton result message that informs
  * the session engine whether the signature was correct.
  *
  * @param imsg The message with the authentication request received from

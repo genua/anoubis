@@ -89,6 +89,25 @@ struct scanproc {
 LIST_HEAD(, scanproc)	scanprocs = LIST_HEAD_INITIALIZER(scanproc);
 
 /**
+ * This structure encapsulates the result of a single scanner. It is
+ * only used internally in scanner_run and scanner_main. Fields:
+ *
+ * next: The next element in the scanner result list.
+ * test: A buffer that contains the error text of this scanner.
+ * exitcode: The exit code of the scanner sub process.
+ * scanner: A pointer back to the scanner structure. This is ok because
+ *     the scanner list is read only in the scanner sub-process. Only
+ *     the parent process (anoubisd master) reconfigures the scanner list.
+ */
+struct scanresult {
+	CIRCLEQ_ENTRY(scanresult)	 next;
+	struct abuf_buffer		 text;
+	int				 off;
+	int				 exitcode;
+	struct anoubisd_pg_scanner	*scanner;
+};
+
+/**
  * Search the scanner list for an entry with the given user ID and return
  * this entry.
  *
@@ -211,6 +230,8 @@ anoubisd_scanproc_exit(pid_t pid, int status,
 		return 0;
 	/* Handle negative exist status. */
 	if (!WIFEXITED(status) || WEXITSTATUS(status)) {
+		log_warnx("Scanner sub processes exited with code %d\n",
+		    status);
 		event_del(&sp->event);
 		close(sp->pipe[0]);
 		sp->pipe[0] = -1;
@@ -283,35 +304,218 @@ out:
 }
 
 /**
- * The main loop of the scanner. This is a dummy implementation.
+ * Run a single scanner in synchronously in a sub process and report the
+ * result of the scan. The output of the scanner is limited to 1000 bytes,
+ * the rest of the output will be ignored.
  *
+ * The file to scan is provided to the scanner on stdin, the output
+ * of the scanner is collected on stdout and stderr. All of the standard
+ * file descriptors must be open before this function is called.
+ *
+ * NOTE: Memory management is not important here because this all
+ * happens in sub-processes that will exit after the scan.
+ *
+ * @param scanner The description of the scanner to run.
+ * @param fd The file descriptor to scan.
+ * @param toclose A list of file desciptors (terminated by -1) that will
+ *     be closed in the child process. The child process always closes
+ * @return  The result of the scan.
+ */
+static struct scanresult *
+scanner_run(struct anoubisd_pg_scanner *scanner, int fd, int toclose[])
+{
+	struct scanresult	*result;
+	pid_t			 pid;
+	int			 fds[2];
+	int			 status;
+
+	if (lseek(fd, 0, SEEK_SET) < 0)
+		return NULL;
+	result = abuf_alloc_type(struct scanresult);
+	if (result == NULL)
+		return NULL;
+	result->exitcode = 2;
+	result->off = 0;
+	result->text = abuf_alloc(1000);
+	result->scanner = scanner;
+	if (pipe(fds) < 0) {
+		free(result);
+		return NULL;
+	}
+
+	pid = fork();
+	if (pid < 0)
+		return NULL;
+	if (pid == 0) {
+		int		 i;
+		char		*argv[2];
+
+		for (i=0; toclose[i] >= 0; ++i)
+			close(toclose[i]);
+		close(0);
+		if (dup(fd) != 0)
+			_exit(2);
+		close(fd);
+		close(1);
+		close(2);
+		if (dup(fds[1]) != 1)
+			_exit(2);
+		if (dup(fds[1]) != 2)
+			_exit(2);
+		close(fds[0]);
+		close(fds[1]);
+
+		argv[0] = scanner->path;
+		argv[1] = NULL;
+		execv(scanner->path, argv);
+		_exit(2);
+	}
+	close(fds[1]);
+	while (1) {
+		int		ret, len;
+
+		len = abuf_length(result->text) - result->off;
+		if (len <= 0)
+			break;
+		ret = read(fds[0], abuf_toptr(result->text, result->off, len),
+		    len);
+		if (ret == 0)
+			break;
+		if (ret < 0 && errno != EAGAIN && errno != EINTR)
+			break;
+		if (ret >= 0)
+			result->off += ret;
+	}
+	close(fds[0]);
+	abuf_limit(&result->text, result->off);
+	while (wait(&status) != pid)
+		;
+	if (WIFEXITED(status))
+		result->exitcode = WEXITSTATUS(status);
+	return result;
+}
+
+/**
+ * The main loop of the scanner. This function spawns a child process
+ * for each scanner that is configured and collects all scanner results.
+ * The scanner results are then combined into a single reply message with
+ * a payload of at most 8000 bytes. Each scanner that wants to report an
+ * error can contribute proportionally to these 8000 bytes.
+ *
+ * The format of the result is a sequence of strings. There are two
+ * strings per scanner, the first is the scanner's description from the
+ * config file and the second is the error output of the scanner. Only
+ * outpt of failed scanners is reported.
+ *
+ * Scanners that are not required (i.e. recommended) are only run if flags
+ * is zero.
+ *
+ * NOTE: This function runs in a sub process of the anoubis daemon master
+ * that exits immediately after the scan. This means that we need not care
+ * about freeing of memory. We allocate only a few kilobytes per scanner.
+ *
+ * @param sp The description of this scanner process.
+ * @param flags If flags is non-zero only recommended scanners are run.
  * @return This function never returns. It must call _exit instead.
+ *
+ * NOTE: It is not allowed to use functions that use the anoubis daemon
+ * NOTE: internal logger process from within scanner_main. Use syslog
+ * NOTE: directly instead. The list of forbidden functions includes
+ * DEBUG(...), log_* and fatal.
  */
 __dead static void
-scanner_main(struct scanproc *sp)
+scanner_main(struct scanproc *sp, int flags)
 {
 	int					 i, off;
 	struct anoubisd_msg			*msg;
 	struct anoubisd_msg_pgcommit_reply	*pgrep;
 	void					*buf;
 	int					 err = 0;
+	CIRCLEQ_HEAD(, scanresult)		 results;
+	struct scanresult			*result;
+	struct anoubisd_pg_scanner		*scanner;
+	int					 toclose[2];
+	struct abuf_buffer			 resbuf = ABUF_EMPTY;
+	int					 nresults = 0, limit = 0;
 
+	CIRCLEQ_INIT(&results);
 	/* XXX CEH: How do we find out the upper limit here? */
-	for (i=0; i<1024;  ++i) {
+	for (i=3; i<1024;  ++i) {
 		if (i == sp->pipe[1])
 			continue;
 		if (i == sp->scanfile)
 			continue;
 		close(i);
 	}
+	toclose[0] = sp->pipe[1];
+	toclose[1] = -1;
+
+	err = -ENOMEM;
+	CIRCLEQ_FOREACH(scanner, &anoubisd_config.pg_scanner, link) {
+		/* Skip non-recommended scanners if flags are non-zero. */
+		if (flags && !scanner->required)
+			continue;
+		result = scanner_run(scanner, sp->scanfile, toclose);
+		if (result == NULL)
+			goto out;
+		CIRCLEQ_INSERT_TAIL(&results, result, next);
+		if (result->exitcode != 0)
+			nresults++;
+	}
+	/*
+	 * XXX CEH: Handle empty list properly. According to the concept,
+	 * XXX CEH: the default should be deny. The default scanners
+	 * XXX CEH: "allow" and "deny" are not yet supported.
+	 */
+	err = -EFAULT;
+	if (nresults) {
+		resbuf = abuf_alloc(8000);
+		limit = abuf_length(resbuf) / nresults;
+	}
+	if (nresults && limit < 100)
+		goto out;
+	err = 0;
+	off = 0;
+	CIRCLEQ_FOREACH(result, &results, next) {
+		int		 dlen;
+		char		*ptr;
+
+		scanner = result->scanner;
+		if (result->exitcode == 0)
+			continue;
+		if (scanner->required) {
+			err = -EPERM;
+		} else {
+			if (err == 0)
+				err = -EAGAIN;
+		}
+		dlen = strlen(scanner->description) + 1;
+		if (dlen > limit/2)
+			dlen = limit/2;
+		ptr = abuf_toptr(resbuf, off, dlen);
+		memcpy(ptr, scanner->description, dlen);
+		ptr[dlen-1] = 0;
+		off += dlen;
+		dlen = limit - dlen - 1;
+		if (dlen > (int)abuf_length(result->text))
+			dlen = abuf_length(result->text);
+		abuf_copy_part(resbuf, off, result->text, 0, dlen);
+		off += dlen;
+		/* Append a NUL byte. */
+		abuf_copy_tobuf(abuf_open(resbuf, off), "", 1);
+	}
+	abuf_limit(&resbuf, off);
+
+out:
 	msg = msg_factory(ANOUBISD_MSG_PGCOMMIT_REPLY,
-	    sizeof(struct anoubisd_msg_pgcommit_reply));
+	    sizeof(struct anoubisd_msg_pgcommit_reply) + abuf_length(resbuf));
 	if (msg == NULL)
 		exit(2);
 	pgrep = (struct anoubisd_msg_pgcommit_reply *)msg->msg;
 	pgrep->error = -err;
-	pgrep->len = 0;
+	pgrep->len = abuf_length(resbuf);
 	pgrep->token = 0;
+	abuf_copy_frombuf(pgrep->payload, resbuf, abuf_length(resbuf));
 	buf = msg;
 	off = 0;
 	while (off < msg->size) {
@@ -338,8 +542,7 @@ scanner_main(struct scanproc *sp)
  *     if the function returns an error.
  */
 int
-anoubisd_scan_start(uint64_t token, int fd, uint64_t auth_uid,
-    int flags __attribute__((unused)))
+anoubisd_scan_start(uint64_t token, int fd, uint64_t auth_uid, int flags)
 {
 	struct scanproc		*sp = scanproc_by_uid(auth_uid);
 	int			 ret;
@@ -372,9 +575,8 @@ anoubisd_scan_start(uint64_t token, int fd, uint64_t auth_uid,
 	}
 	if (sp->childpid == 0) {
 		close(sp->pipe[0]);
-		scanner_main(sp);
-		log_warnx("scanner_main returned!");
-		_exit(1);
+		scanner_main(sp, flags);
+		_exit(126);
 	}
 	close(sp->pipe[1]);
 	event_set(&sp->event, sp->scanfile, EV_READ|EV_PERSIST,
