@@ -996,19 +996,23 @@ anoubis_client_compat_checksum_msg(const char *path, int op, uid_t uid,
 	unsigned int		 flags = 0;
 
 	/* At first we check if the minimal conditions are met */
+	if (keyid == NULL && kidlen != 0)
+		return NULL;
+	if (csdata == NULL && cslen != 0)
+		return NULL;
 	switch (op) {
 	case ANOUBIS_CHECKSUM_OP_ADDSIG:
 		/* Need a key and checksum data */
-		if (keyid == NULL || kidlen == 0)
+		if (kidlen == 0)
 			return NULL;
-		if (csdata == NULL || cslen == 0)
+		if (cslen == 0)
 			return NULL;
 		add = 1;
 		break;
 	case ANOUBIS_CHECKSUM_OP_DELSIG:
 	case ANOUBIS_CHECKSUM_OP_GETSIG2:
 		/* Need a key but no checksum data */
-		if (keyid == NULL || kidlen == 0)
+		if (kidlen == 0)
 			return NULL;
 		if (csdata != NULL || cslen != 0)
 			return 0;
@@ -1017,7 +1021,7 @@ anoubis_client_compat_checksum_msg(const char *path, int op, uid_t uid,
 		/* Need checksum data but no key. */
 		if (keyid != NULL || kidlen != 0)
 			return 0;
-		if (csdata == NULL || cslen == 0)
+		if (cslen == 0)
 			return NULL;
 		add = 1;
 		break;
@@ -1155,8 +1159,10 @@ anoubis_client_csumrequest_start(struct anoubis_client *client,
 		return NULL;
 	if (!path || !strlen(path))
 		return NULL;
+	if ((idlen || cslen) && payload == NULL)
+		return NULL;
 	/* Everything seems fine, lets start the operation */
-	if (payload && cslen) {
+	if (cslen) {
 		if ((op != ANOUBIS_CHECKSUM_OP_ADDSUM) &&
 		    (op != ANOUBIS_CHECKSUM_OP_ADDSIG))
 			return NULL;

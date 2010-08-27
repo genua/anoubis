@@ -745,7 +745,7 @@ void pe_proc_exec(anoubis_cookie_t cookie, uid_t uid, pid_t pid,
 		upgrade_trigger = &anoubisd_config.upgrade_trigger;
 
 		LIST_FOREACH(trigger, upgrade_trigger, entries) {
-			if (strcmp(pathhint, trigger->arg) == 0) {
+			if (pathhint && strcmp(pathhint, trigger->arg) == 0) {
 				DEBUG(DBG_UPGRADE, "Enabling upgrade for %s",
 				    pathhint);
 

@@ -348,7 +348,7 @@ apnvm *
 apnvm_init(const char *repository, const char *user, apnvm_pidcallback_t cb)
 {
 	struct _apnvm *vm;
-	char *tmpdir, *workdir;
+	char *tmpdir, *workdir = NULL;
 
 	APNVM_CHECKSTR(repository, NULL);
 	APNVM_CHECKSTR(user, NULL);
