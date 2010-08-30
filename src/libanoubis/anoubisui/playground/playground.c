@@ -131,7 +131,7 @@ playground_start_fork(char **argv)
 				close(i);
 			}
 			i++;
-		} while (i < FOPEN_MAX);
+		} while (i < sysconf(_SC_OPEN_MAX));
 
 		execvp(argv[0], argv);
 		/*
