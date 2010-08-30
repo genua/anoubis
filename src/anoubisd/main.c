@@ -339,6 +339,7 @@ sighandler(int sig, short event __used, void *arg)
 
 		if (terminate < 1)
 			terminate = 1;
+		anoubisd_scanners_detach();
 		log_warnx(PACKAGE_DAEMON ": Shutdown requested by signal");
 		if (ioctl(eventfds[1], ANOUBIS_UNDECLARE_FD,
 		    eventfds[0]) == 0) {
@@ -397,10 +398,9 @@ sighandler(int sig, short event __used, void *arg)
 				childname = "anoubis logger";
 			}
 			if (childname == NULL) {
-				if (info == NULL)
-					continue;
-				anoubisd_scanproc_exit(pid, status, info,
-				    &eventq_m2p);
+				if (info)
+					anoubisd_scanproc_exit(pid, status,
+					    info, &eventq_m2p);
 				continue;
 			}
 			if (WIFEXITED(status))
@@ -918,6 +918,8 @@ main(int argc, char *argv[])
 	anoubisd_defaultsigset(&mask);
 	sigdelset(&mask, SIGCHLD);
 	sigdelset(&mask, SIGHUP);
+	/* Unblock SIGALRM. This is required by the scanner children. */
+	sigdelset(&mask, SIGALRM);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 
 	/* init msg_bufs - keep track of outgoing ev_info */
@@ -1048,6 +1050,7 @@ main_shutdown(int error)
 	close(eventfds[1]);
 	close(eventfds[0]);
 
+	anoubisd_scanners_detach();
 	if (upgrade_pid)
 		kill(upgrade_pid, SIGQUIT);
 	if (se_pid)

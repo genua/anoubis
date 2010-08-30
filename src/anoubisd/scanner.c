@@ -29,16 +29,22 @@
 
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <inttypes.h>
 #include <sys/ioctl.h>
+#include <signal.h>
+#include <time.h>
+#include <unistd.h>
+
+#include <stdlib.h>
 #include <event.h>
 #include <pwd.h>
 #include <syslog.h>
+#include <inttypes.h>
 
 #ifdef LINUX
 #include "linux/anoubis.h"
 #include "linux/anoubis_playground.h"
 #include <attr/xattr.h>
+#include <bsdcompat.h>
 #else
 #include "dev/anoubis.h"
 #endif
@@ -127,6 +133,24 @@ scanproc_by_uid(uid_t uid)
 			return sp;
 	}
 	return NULL;
+}
+
+/**
+ * Set to one if the parent requested the termination of this process
+ * by sending SIGTERM or SIGINT.
+ */
+static volatile sig_atomic_t		terminate;
+
+/**
+ * Dummy handler for signals. The handler does nothing. It is used here
+ * instead of SIG_IGN to make sure that the signal interrupts system calls.
+ * The interrupt is used to check for timeouts.
+ */
+static void
+sighandler(int sig)
+{
+	if (sig == SIGTERM || sig == SIGINT)
+		terminate = 1;
 }
 
 /**
@@ -224,12 +248,14 @@ anoubisd_scanproc_exit(pid_t pid, int status,
 	struct anoubisd_msg			*msg;
 	struct anoubisd_msg_pgcommit_reply	*pgrep, *scanreply = NULL;
 
+	DEBUG(DBG_PG, " scanproc exit: pid=%d status=%x", pid, status);
 	LIST_FOREACH(sp, &scanprocs, next) {
 		if (sp->childpid && sp->childpid == pid)
 			break;
 	}
 	if (sp == NULL)
 		return 0;
+	DEBUG(DBG_PG, " scanproc exit: pid=%d status=%x found", pid, status);
 	/* Handle negative exist status. */
 	if (!WIFEXITED(status) || WEXITSTATUS(status)) {
 		log_warnx("Scanner sub processes exited with code %d\n",
@@ -262,12 +288,10 @@ anoubisd_scanproc_exit(pid_t pid, int status,
 	log_info("scanning request of user %" PRId64 " successful", sp->uid);
 #ifdef LINUX
 	if (ioctl(evinfo->anoubisfd, ANOUBIS_SCAN_SUCCESS, sp->scanfile) < 0) {
-		DEBUG(DBG_PG, " XXX %d %d", evinfo->anoubisfd, sp->scanfile);
 		err = -errno;
 		goto out;
 	}
 	if (fremovexattr(sp->scanfile, "security.anoubis_pg") < 0) {
-		DEBUG(DBG_PG, " XXX YYY %dd", sp->scanfile);
 		err = -errno;
 		goto out;
 	}
@@ -306,13 +330,17 @@ out:
 }
 
 /**
- * Run a single scanner in synchronously in a sub process and report the
+ * Run a single scanner synchronously in a sub process and report the
  * result of the scan. The output of the scanner is limited to 1000 bytes,
  * the rest of the output will be ignored.
  *
  * The file to scan is provided to the scanner on stdin, the output
  * of the scanner is collected on stdout and stderr. All of the standard
  * file descriptors must be open before this function is called.
+ *
+ * Two special scanners are supported: "allow" and "deny". These scanners
+ * return success and failure, respectively. They do not spwan another child
+ * process.
  *
  * NOTE: Memory management is not important here because this all
  * happens in sub-processes that will exit after the scan.
@@ -330,7 +358,11 @@ scanner_run(struct anoubisd_pg_scanner *scanner, int fd, int toclose[])
 	pid_t			 pid;
 	int			 fds[2];
 	int			 status;
+	time_t			 starttime, now;
+	time_t			 timeout = anoubisd_config.scanner_timeout;
 
+	if (time(&starttime) < 0)
+		return NULL;
 	if (lseek(fd, 0, SEEK_SET) < 0)
 		return NULL;
 	result = abuf_alloc_type(struct scanresult);
@@ -338,20 +370,39 @@ scanner_run(struct anoubisd_pg_scanner *scanner, int fd, int toclose[])
 		return NULL;
 	result->exitcode = 2;
 	result->off = 0;
-	result->text = abuf_alloc(1000);
+	result->text = ABUF_EMPTY;
 	result->scanner = scanner;
+
+	/* Handle special scanners "allow" and "deny". */
+	if (strcasecmp(scanner->path, "allow") == 0) {
+		result->exitcode = 0;
+		return result;
+	}
+	if (strcasecmp(scanner->path, "deny") == 0) {
+		result->exitcode = 1;
+		return result;
+	}
+
+	result->text = abuf_alloc(1000);
+	/*
+	 * Create the pipe for the scanner output. The write end
+	 * will be mapped to stdout and stderr of the scanner.
+	 */
 	if (pipe(fds) < 0) {
 		free(result);
 		return NULL;
 	}
 
 	pid = fork();
-	if (pid < 0)
+	if (pid < 0) {
+		free(result);
 		return NULL;
+	}
 	if (pid == 0) {
 		int		 i;
 		char		*argv[2];
 
+		/* Child process that runs the actual scanner. */
 		for (i=0; toclose[i] >= 0; ++i)
 			close(toclose[i]);
 		close(0);
@@ -372,6 +423,13 @@ scanner_run(struct anoubisd_pg_scanner *scanner, int fd, int toclose[])
 		execv(scanner->path, argv);
 		_exit(2);
 	}
+	/*
+	 * Parent process:
+	 * Read scanner output and store it in the result. This is done
+	 * synchronously. Note that this is one of the very few instances
+	 * in the anoubis daemon where the file descriptor that we read from
+	 * is delibarately set to be blocking.
+	 */
 	close(fds[1]);
 	while (1) {
 		int		ret, len;
@@ -383,17 +441,38 @@ scanner_run(struct anoubisd_pg_scanner *scanner, int fd, int toclose[])
 		    len);
 		if (ret == 0)
 			break;
-		if (ret < 0 && errno != EAGAIN && errno != EINTR)
+		if (ret < 0 && errno != EAGAIN && errno != EINTR) {
+			terminate = 1;
 			break;
+		}
 		if (ret >= 0)
 			result->off += ret;
+		/* Zero means: No timeout. */
+		if (timeout && (time(&now) < 0 || now - starttime > timeout))
+			terminate = 1;
+		/* Can be set by the signal handler, too. */
+		if (terminate)
+			break;
 	}
 	close(fds[0]);
+	if (terminate)
+		kill(pid, SIGTERM);
 	abuf_limit(&result->text, result->off);
-	while (wait(&status) != pid)
-		;
+	while (wait(&status) != pid) {
+		if (terminate) {
+			kill(pid, SIGKILL);
+		} else if (timeout) {
+			if (time(&now) < 0 || now - starttime > timeout) {
+				kill(pid, SIGTERM);
+				terminate = 1;
+			}
+		}
+	}
 	if (WIFEXITED(status))
 		result->exitcode = WEXITSTATUS(status);
+	/* Forceful termination can  never result in a successful scan. */
+	if (terminate && result->exitcode == 0)
+		result->exitcode = 2;
 	return result;
 }
 
@@ -410,7 +489,8 @@ scanner_run(struct anoubisd_pg_scanner *scanner, int fd, int toclose[])
  * outpt of failed scanners is reported.
  *
  * Scanners that are not required (i.e. recommended) are only run if flags
- * is zero.
+ * is zero. An empty list of scanners means that the file must not be
+ * committed.
  *
  * NOTE: This function runs in a sub process of the anoubis daemon master
  * that exits immediately after the scan. This means that we need not care
@@ -439,22 +519,50 @@ scanner_main(struct scanproc *sp, int flags)
 	int					 toclose[2];
 	struct abuf_buffer			 resbuf = ABUF_EMPTY;
 	int					 nresults = 0, limit = 0;
+	struct sigaction			 action;
+	struct itimerval			 timer;
 
+	setproctitle("scanner uid=%d", (int)sp->uid);
 	CIRCLEQ_INIT(&results);
-	/* XXX CEH: How do we find out the upper limit here? */
-	for (i=3; i<1024;  ++i) {
+	/*
+	 * NOTE: _SC_OPEN_MAX is the maximum number of open _files_ not
+	 * NOTE: file descriptors. However, file descriptors are handed
+	 * NOTE: out sequentially except for the dup2 case. As we do not
+	 * NOTE: use dup2 with larger numbers we should be safe here.
+	 */
+	for (i=3; i<sysconf(_SC_OPEN_MAX); ++i) {
 		if (i == sp->pipe[1])
 			continue;
 		if (i == sp->scanfile)
 			continue;
 		close(i);
 	}
+
+	/* Setup signals and timeouts. */
+	action.sa_flags = 0;		/* No SA_RESTART! */
+	action.sa_handler = sighandler;
+	sigemptyset(&action.sa_mask);
+	if (sigaction(SIGINT, &action, NULL) < 0
+	    || sigaction(SIGTERM, &action, NULL) < 0
+	    || sigaction(SIGALRM, &action, NULL) < 0)
+		_exit(2);
+
+	/* Fire every ten seconds. */
+	timer.it_interval.tv_sec = 10;
+	timer.it_interval.tv_usec = 0;
+	timer.it_value = timer.it_interval;
+	if (setitimer(ITIMER_REAL, &timer, NULL) < 0)
+		_exit(2);
+
 	toclose[0] = sp->pipe[1];
 	toclose[1] = -1;
 
+	err = -EPERM;
+	if (CIRCLEQ_EMPTY(&anoubisd_config.pg_scanner))
+		goto out;
 	err = -ENOMEM;
 	CIRCLEQ_FOREACH(scanner, &anoubisd_config.pg_scanner, link) {
-		/* Skip non-recommended scanners if flags are non-zero. */
+		/* Skip non-required scanners if flags are non-zero. */
 		if (flags && !scanner->required)
 			continue;
 		result = scanner_run(scanner, sp->scanfile, toclose);
@@ -463,12 +571,11 @@ scanner_main(struct scanproc *sp, int flags)
 		CIRCLEQ_INSERT_TAIL(&results, result, next);
 		if (result->exitcode != 0)
 			nresults++;
+		if (terminate) {
+			err = -EINTR;
+			goto out;
+		}
 	}
-	/*
-	 * XXX CEH: Handle empty list properly. According to the concept,
-	 * XXX CEH: the default should be deny. The default scanners
-	 * XXX CEH: "allow" and "deny" are not yet supported.
-	 */
 	err = -EFAULT;
 	if (nresults) {
 		resbuf = abuf_alloc(8000);
@@ -505,6 +612,7 @@ scanner_main(struct scanproc *sp, int flags)
 		off += dlen;
 		/* Append a NUL byte. */
 		abuf_copy_tobuf(abuf_open(resbuf, off), "", 1);
+		off++;
 	}
 	abuf_limit(&resbuf, off);
 
@@ -593,6 +701,7 @@ anoubisd_scan_start(uint64_t token, int fd, uint64_t auth_uid, int flags)
 		}
 
 		close(sp->pipe[0]);
+		terminate = 0;
 		scanner_main(sp, flags);
 		_exit(126);
 	}
@@ -601,5 +710,35 @@ anoubisd_scan_start(uint64_t token, int fd, uint64_t auth_uid, int flags)
 	    dispatch_scand2m, sp);
 	event_add(&sp->event, NULL);
 	LIST_INSERT_HEAD(&scanprocs, sp, next);
+	DEBUG(DBG_PG, " scanproc stared: pid=%d", sp->childpid);
 	return 0;
+}
+
+/**
+ * Detach from all scanner children and send them a SIGTERM. This
+ * should case the children to terminate in time. As this is only called
+ * during daemon termination, we do not wait for the termination of the
+ * scanner children. This is left to the child process run by scanner_main.
+ *
+ * @param None.
+ * @return None.
+ */
+void
+anoubisd_scanners_detach(void)
+{
+	struct scanproc		*sp;
+
+	while (!LIST_EMPTY(&scanprocs)) {
+		sp = LIST_FIRST(&scanprocs);
+		LIST_REMOVE(sp, next);
+		if (sp->pipe[0] >= 0) {
+			event_del(&sp->event);
+			close(sp->pipe[0]);
+			sp->pipe[0] = -1;
+		}
+		kill(sp->childpid, SIGTERM);
+		close(sp->scanfile);
+		abuf_free(sp->msgbuf);
+		abuf_free_type(sp, struct scanproc);
+	}
 }

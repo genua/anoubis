@@ -71,7 +71,8 @@ typedef enum {
 	key_auth_mode,
 	key_coredumps,
 	key_policysize,
-	key_commit
+	key_commit,
+	key_scantimeout,
 } cfg_key;
 
 
@@ -102,6 +103,7 @@ static const struct stringkey		keywords[] = {
 	{ "allow_coredumps", key_coredumps } ,
 	{ "policysize", key_policysize },
 	{ "commit", key_commit },
+	{ "scanner_timeout", key_scantimeout },
 	{ NULL, key_bad }
 };
 
@@ -670,6 +672,12 @@ cfg_param_process(struct cfg_param *param, int lineno)
 			if (!cfg_parse_commit(param->value, lineno))
 				return 0;
 			break;
+
+		case key_scantimeout:
+			if (!cfg_parse_int(param->value, lineno, 0, INT_MAX,
+			    &anoubisd_config.scanner_timeout))
+				return 0;
+			break;
 		default:
 			log_warnx("line %d: Internal error: "
 			    "Bad key value %d", lineno, param->key);
@@ -932,6 +940,7 @@ cfg_defaults(void)
 	anoubisd_config.upgrade_mode = ANOUBISD_UPGRADE_MODE_OFF;
 	anoubisd_config.auth_mode = ANOUBISD_AUTH_MODE_OPTIONAL;
 	anoubisd_config.policysize = ANOUBISD_MAX_POLICYSIZE;
+	anoubisd_config.scanner_timeout = 5*60; /* Five minutes */
 
 	return 1;
 }

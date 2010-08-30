@@ -163,6 +163,8 @@ struct anoubisd_config {
 
 	/* playground content scanner definitions */
 	struct anoubisd_pg_scanner_list		pg_scanner;
+	/* Timeout for each scanner in seconds. Zero for no timeout. */
+	int					scanner_timeout;
 };
 
 extern struct anoubisd_config anoubisd_config;
@@ -470,6 +472,7 @@ int	anoubisd_scan_start(uint64_t token, int fd, uint64_t auth_uid,
 	    int flags);
 int	anoubisd_scanproc_exit(pid_t pid, int status,
 	    struct event_info_main *, Queue *queue);
+void	anoubisd_scanners_detach(void);
 
 extern char *logname;
 

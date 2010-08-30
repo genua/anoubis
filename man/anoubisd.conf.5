@@ -182,7 +182,7 @@ If 0 is configured the check is turned off.
 .Pp
 The default is 20971520 (20MB).
 .Pp
-.It \fBcommit   \fP
+.It \fBcommit\fP
 Specifies one playground content scanner that is applied during commit of
 playground files. Multiple commit options can be specified in the same
 configuration file to configure a number of content scanners that will
@@ -199,10 +199,22 @@ committed.
 
 \fIscanner-path\fP - Specifies the absolute path to the scanner binary. No
 command line options can be given.
+Two special sanners \fBallow\fP and \fBdeny\fP are supported to simplify
+configuration. These scanners always accept or reject a file.
+These scanners still need a \fIscanner-description\fP.
 
 \fIscanner-description\fP - A human readable short description or title of
 the scanner. This description will be displayed in the GUI or the CLI to
 refer to this scanner.
+
+\fBNote:\fP The \fBdefault\fP if no scanner is given is to \fBdeny\fP
+commits from a playground to the production system.
+.Pp
+.It \fBscanner_timeout\fP
+Specifies the amount of time (in seconds) that each scanner is allowed
+to run before it is terminated. Note that the timer granularity is only
+about 10 seconds. The default for this value is a five minutes timeout
+for each scanner.
 .El
 .Pp
 .Sh SEE ALSO
