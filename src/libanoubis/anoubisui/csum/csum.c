@@ -369,7 +369,8 @@ err:
 		free(result);
 	}
 
-	*listcnt = error;
+	if (listcnt)
+		*listcnt = error;
 	return NULL;
 }
 

@@ -939,7 +939,7 @@ anoubis_client_policyrequest_start(struct anoubis_client * client,
 		return NULL;
 	if (client->state != ANOUBIS_STATE_CONNECTED)
 		return NULL;
-	if (!data)
+	if (!data || datalen == 0)
 		return NULL;
 	if (client->flags & FLAG_POLICY_PENDING)
 		return NULL;
@@ -1070,7 +1070,7 @@ anoubis_client_compat_checksum_msg(const char *path, int op, uid_t uid,
 		dstid = m->u.checksumrequest->payload;
 		dstpath = m->u.checksumrequest->payload + kidlen;
 	}
-	if (dstid)
+	if (dstid && kidlen)
 		memcpy(dstid, keyid, kidlen);
 	strlcpy(dstpath, path, strlen(path) + 1);
 	return m;
@@ -1629,7 +1629,8 @@ out:
 	/* Do not free the message because of ANOUBIS_T_WANTMESSAGE */
 	anoubis_transaction_done(t, -ret);
 	LIST_REMOVE(t, next);
-	client->flags &= ~FLAG_POLICY_PENDING;
+	if (client)
+		client->flags &= ~FLAG_POLICY_PENDING;
 }
 
 static struct anoubis_msg *

@@ -38,6 +38,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <anoubischeck.h>
 #ifdef NEEDBSDCOMPAT
 #include <bsdcompat.h>
 #endif

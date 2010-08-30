@@ -40,6 +40,7 @@
 
 #include <apn.h>
 #include <anoubis_protocol.h>
+#include <anoubischeck.h>
 
 FILE	*output = NULL;
 
@@ -325,7 +326,7 @@ static int
 parse_subject(char *args, struct apn_subject *subject)
 {
 	int	ret = -1;
-	int 	uid;
+	int	uid;
 	char	keyid[200];
 
 	while(isspace(*args))

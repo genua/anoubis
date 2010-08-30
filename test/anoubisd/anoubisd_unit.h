@@ -30,4 +30,13 @@
 
 extern int	(*sfs_haschecksum_chroot_p)(const char *);
 
+#if __clang__
+/* help clang static analyzer with the test macros */
+void _clang_fail(void) __attribute__((analyzer_noreturn));
+#undef	fail_if
+#undef	fail_unless
+#define	fail_if(expr, ...)	do { if (expr) _clang_fail(1) } while (0)
+#define	fail_unless(expr, ...)	do { if (!expr) _clang_fail(1) } while (0)
+#endif
+
 #endif	/* _ANOUBISD_UNIT_H_ */

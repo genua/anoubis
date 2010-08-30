@@ -41,6 +41,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <anoubis_errno.h>
+#include <anoubischeck.h>
 
 char *tmpdir;
 

@@ -231,7 +231,8 @@ anoubis_sign_policy_buf(struct anoubis_sig *as, char *buf, unsigned int *len)
 	EVP_PKEY	*pkey;
 
 	if (as == NULL || len == NULL || buf == NULL) {
-		*len = -EINVAL;
+		if (len)
+			*len = -EINVAL;
 		return NULL;
 	}
 
@@ -474,7 +475,7 @@ anoubis_sig_create(struct anoubis_sig **asp, const char *keyfile,
 		if (pkey)
 			EVP_PKEY_free(pkey);
 		if (cert)
-			X509_free(as->cert);
+			X509_free(cert);
 		return -ENOMEM;
 	}
 	as->type = ANOUBIS_SIG_HASH_DEFAULT;

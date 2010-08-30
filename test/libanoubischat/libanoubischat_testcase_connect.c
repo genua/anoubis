@@ -41,6 +41,7 @@
 
 #include "anoubis_chat.h"
 #include <anoubis_errno.h>
+#include <anoubischeck.h>
 #include "config.h"
 #ifdef NEEDBSDCOMPAT
 #include <bsdcompat.h>

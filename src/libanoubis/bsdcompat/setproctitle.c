@@ -84,7 +84,7 @@ compat_init_setproctitle(int argc, char *argv[])
 		return;
 
 	/* Fail if we can't allocate room for the new environment */
-	for (i = 0; envp[i] != NULL; i++)
+	for (i = 0; envp && envp[i] != NULL; i++)
 		;
 	if ((environ = calloc(i + 1, sizeof(*environ))) == NULL) {
 		environ = envp;	/* put it back */
@@ -99,7 +99,7 @@ compat_init_setproctitle(int argc, char *argv[])
 		if (lastargv == NULL || lastargv + 1 == argv[i])
 			lastargv = argv[i] + strlen(argv[i]);
 	}
-	for (i = 0; envp[i] != NULL; i++) {
+	for (i = 0; envp && envp[i] != NULL; i++) {
 		if (lastargv + 1 == envp[i])
 			lastargv = envp[i] + strlen(envp[i]);
 	}
@@ -112,7 +112,7 @@ compat_init_setproctitle(int argc, char *argv[])
 	 * Copy environment 
 	 * XXX - will truncate env on strdup fail
 	 */
-	for (i = 0; envp[i] != NULL; i++)
+	for (i = 0; envp && envp[i] != NULL; i++)
 		environ[i] = strdup(envp[i]);
 	environ[i] = NULL;
 #endif /* SPT_REUSEARGV */

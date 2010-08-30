@@ -52,6 +52,7 @@
 #include <anoubis_dump.h>
 
 #include <anoubis_chat.h>
+#include <anoubischeck.h>
 #ifdef NEEDBSDCOMPAT
 #include <bsdcompat.h>
 #endif

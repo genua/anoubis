@@ -40,6 +40,7 @@
 #include <unistd.h>
 
 #include <anoubis_apnvm_cvs.h>
+#include <anoubischeck.h>
 
 #define TEST_TIMEOUT	20
 

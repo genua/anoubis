@@ -37,6 +37,7 @@
 #include <unistd.h>
 
 #include "apnvm_tc_fixtures.h"
+#include <anoubischeck.h>
 
 #define XXX_V "head	1.2;\n\
 access;\n\

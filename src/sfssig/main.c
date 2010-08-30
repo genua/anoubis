@@ -433,6 +433,7 @@ main(int argc, char *argv[])
 		tmp_argv = file_input(&sfs_argc, sfs_infile);
 		if (tmp_argv == NULL) {
 			fprintf(stderr, "Cannot open %s\n", sfs_infile);
+			return 1;
 		}
 	} else {
 		tmp_argv = argv;
