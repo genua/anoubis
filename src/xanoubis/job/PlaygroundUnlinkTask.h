@@ -204,6 +204,11 @@ class PlaygroundUnlinkTask : public ComTask
 		 * Mask list: only unlink these files.
 		 */
 		fileMap matchList_;
+
+		/**
+		 * Counts the delete attempts without any progress.
+		 */
+		int no_progress_;
 };
 
 #endif	/* _PLAYGROUNDUNLINKTASK_H_ */

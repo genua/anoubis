@@ -38,6 +38,7 @@ PlaygroundUnlinkTask::PlaygroundUnlinkTask(uint64_t pgId)
 	pgId_ = pgId;
 	state_ = INFO;
 	considerMatchList_ = false;
+	no_progress_ = 0;
 }
 
 PlaygroundUnlinkTask::~PlaygroundUnlinkTask(void)
@@ -191,13 +192,23 @@ PlaygroundUnlinkTask::execFs(void)
 	count = unlinkLoop();
 	if (count != 0 && count != unlinkList_.size()) {
 		/* We deleted something but not all. Do another loop. */
+		no_progress_ = 0;
 		type_ = Task::TYPE_COM;
 		state_ = INFO;
 	} else if (count == 0) {
 		/* We deleted nothing. */
-		setComTaskResult(RESULT_LOCAL_ERROR);
-		setResultDetails(EBUSY);
+		no_progress_++;
+
+		if (no_progress_ == 2) {
+			setComTaskResult(RESULT_LOCAL_ERROR);
+			setResultDetails(EBUSY);
+		} else {
+			/* try once more, daemon might not have catched up */
+			type_ = Task::TYPE_COM;
+			state_ = INFO;
+		}
 	} else {
+		/* everything deleted */
 		setComTaskResult(RESULT_SUCCESS);
 	}
 }
