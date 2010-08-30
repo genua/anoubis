@@ -54,6 +54,7 @@ struct msg_buf {
 	void		*rbufp, *rheadp, *rtailp;
 	anoubisd_msg_t	*rmsg;
 	anoubisd_msg_t	*wmsg;
+	int		 iseof;
 };
 
 /*@reldef@*/
@@ -94,6 +95,7 @@ msg_init(int fd, char *name)
 
 			fds[idx].fd = fd;
 			fds[idx].name = name;
+			fds[idx].iseof = 0;
 			DEBUG(DBG_MSG_FD, "msg_init: name=%s fd:%d idx:%d",
 			    name, fd, idx);
 
@@ -137,6 +139,7 @@ msg_release(int fd)
 	buf->rbufp = NULL;
 	buf->fd = -1;
 	buf->name = NULL;
+	buf->iseof = 0;
 }
 
 /*
@@ -157,6 +160,8 @@ _fill_buf(struct msg_buf *mbp)
 			return 1;
 		size = read(mbp->fd, (void*)(mbp->rmsg) + mbp->rmsgoff,
 		    mbp->rmsg->size - mbp->rmsgoff);
+		if (size == 0)
+			mbp->iseof = 1;
 		if (size <= 0)
 			goto err;
 		mbp->rmsgoff += size;
@@ -177,6 +182,8 @@ _fill_buf(struct msg_buf *mbp)
 	if (space <= 0)
 		return 1;
 	size = read(mbp->fd, mbp->rtailp, space);
+	if (size == 0)
+		mbp->iseof = 1;
 	if (size <= 0)
 		goto err;
 	mbp->rtailp += size;
@@ -191,6 +198,14 @@ err:
 	return 0;
 }
 
+/*
+ * NOTE: This function used to call _fill_buf which is bogus because
+ * NOTE: it can cause the file descriptor to become blocking with a
+ * NOTE: complete message in the receive buffer. Depending on the time
+ * NOTE: that msg_eof is called in the receive handler this might cause
+ * NOTE: the message to get stuck in the receive buffer until more data
+ * NOTE: is received from the other end.
+ */
 int msg_eof(int fd)
 {
 	struct msg_buf		*mbp;
@@ -201,9 +216,7 @@ int msg_eof(int fd)
 	}
 	if (mbp->rmsg || (mbp->rheadp != mbp->rtailp))
 		return 0;
-	if (_fill_buf(mbp))
-		return 0;
-	return 1;
+	return mbp->iseof;
 }
 
 static void
@@ -333,6 +346,8 @@ get_event(int fd)
 	}
 	size = read(fd, mbp->rbufp, 2*MSG_BUF_SIZE);
 	if (size <= 0) {
+		if (size == 0)
+			mbp->iseof = 1;
 		if (size < 0 && errno != EAGAIN)
 			log_warn(" get_event: read error");
 		return NULL;
