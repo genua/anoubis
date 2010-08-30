@@ -199,9 +199,12 @@ committed.
 
 \fIscanner-path\fP - Specifies the absolute path to the scanner binary. No
 command line options can be given.
-Two special sanners \fBallow\fP and \fBdeny\fP are supported to simplify
-configuration. These scanners always accept or reject a file.
+Two special scanners \fBallow\fP and \fBdeny\fP are supported to simplify
+configuration.
+These scanners always accept or reject a file.
 These scanners still need a \fIscanner-description\fP.
+See the section titled \fBPLAYGOURND SCANNER INTERFACE\fP for more
+information on the interface to other scanners.
 
 \fIscanner-description\fP - A human readable short description or title of
 the scanner. This description will be displayed in the GUI or the CLI to
@@ -216,6 +219,45 @@ to run before it is terminated. Note that the timer granularity is only
 about 10 seconds. The default for this value is a five minutes timeout
 for each scanner.
 .El
+.Pp
+.Sh PLAYGROUND SCANNER INTERFACE
+A playground scanner can be configured by the administrator to prevent
+users from committing files from a playground environment to the
+production system.
+Each time a file is about to be committed to the production system, all
+configured content scanners are called and each of them can veto the
+action.
+The user can instruct the anoubisd daemon to skip scanners that are
+marked as \fIrecommended\fP in the config file.
+
+All scanners run with the privileges of a special user called _anoubisscan.
+The current working directory of the scanners is the home directory of the
+_anoubisscan user.
+Scanning will fail if this directory does not exist.
+
+The file to scan is available read only on stdin.
+The file descriptor of this file references the inode on disk
+directly, i.e. it can be used as an argument to
+.Xr lseek 2
+or
+.Xr fstat 2 .
+If an existing third party scanner insists on file name instead of a
+file descriptor to scan, a wrapper script should spool the file in a
+designated spool directory.
+The recommended path for this is spool directory is /var/spool/anoubis
+and the spool directory should only be accessible by the _anoubisscan
+user.
+
+The scanner should exit with a zero exit code if committing the file is
+allowed.
+If the scanner wants to veto the commit it should exit with a non-zero
+exit code.
+In the latter case the scanner should output the reason for the veto in
+a human readable form to stdout and/or stderr.
+This output will be reported to the user.
+Output of a single scanner must not exceed 1kb and total output of
+all scanners must not exceed 8kb.
+The latter limit includes the scanner descriptions given in the config file.
 .Pp
 .Sh SEE ALSO
 .Xr anoubisd 8
