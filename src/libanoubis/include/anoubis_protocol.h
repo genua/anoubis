@@ -627,10 +627,11 @@ typedef struct {
  * path The path name of the file.
  */
 typedef struct {
-	u32n	type;
-	u32n	_pad;
-	u64n	pgid;
-	char	payload[0];
+	u32n	    type;
+	u32n	    _pad;
+	u64n	    pgid;
+	u_int8_t    ignore_recommended_scanners;
+	char	    payload[0];
 } __attribute__((packed)) Anoubis_PgCommitMessage;
 
 /**

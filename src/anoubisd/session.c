@@ -681,6 +681,8 @@ dispatch_pgcommit(struct anoubis_server *server, struct anoubis_msg *m,
 
 	pgmsg = (struct anoubisd_msg_pgcommit *)msg->msg;
 	pgmsg->auth_uid = auth_uid;
+	pgmsg->ignore_recommended_scanners =
+	    m->u.pgcommit->ignore_recommended_scanners;
 	pgmsg->pgid = get_value(m->u.pgcommit->pgid);
 	pgmsg->dev = 0;
 	pgmsg->ino = 0;

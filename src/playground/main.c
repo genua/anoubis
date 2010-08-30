@@ -81,7 +81,7 @@
 #define PGCLI_OPT_SIGN 0x0004
 
 /**
- * Generate verbose output.
+ * CLI option flag: generate verbose output.
  */
 #define PGCLI_OPT_VERBOSE 0x0008
 
@@ -1488,10 +1488,27 @@ pgcli_commit_file(struct anoubis_client *client, uint64_t pgid, uint64_t dev,
 	}
 
 	/* send the commit request to the daemon */
-	transaction = anoubis_client_pgcommit_start(client, pgid, abspath);
+	transaction = anoubis_client_pgcommit_start(client, pgid, abspath,
+	    (opts & PGCLI_OPT_IGNRECOMM));
 	free(abspath);
 	rc = anoubis_transaction_complete(client, transaction);
 	if (rc < 0) {
+		if (rc == -EPERM) {
+			/* required content scanner returned negative result */
+			fprintf(stderr, "Could not commit file %s: "
+			    "at least one required content scanner returned "
+			    "a negative result.", abspaths[0]);
+			return 1;
+		} else if (rc == -EAGAIN) {
+			/* recommended content scanner failed, may ignore */
+			fprintf(stderr, "Could not commit file %s: "
+			    "one or more recommended content scanner returned "
+			    " a negative result.\n", abspaths[0]);
+			fprintf(stderr, "You can ignore the recommendation by "
+			    "specifying the --ignore-recommended option.\n");
+			return 1;
+		}
+
 		return rc;
 	}
 

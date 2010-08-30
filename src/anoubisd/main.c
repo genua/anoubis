@@ -2219,7 +2219,7 @@ dispatch_pgcommit(struct anoubisd_msg *msg,
 	goto error;
 #endif
 	err = -anoubisd_scan_start(pgmsg->token, fd, pgmsg->auth_uid,
-	    0 /* flags */);
+	    pgmsg->ignore_recommended_scanners);
 	if (err)
 		goto error;
 	return;

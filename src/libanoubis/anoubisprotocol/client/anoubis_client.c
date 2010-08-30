@@ -2070,7 +2070,7 @@ anoubis_client_pglist_start(struct anoubis_client *client,
 
 struct anoubis_transaction *
 anoubis_client_pgcommit_start(struct anoubis_client *client, uint64_t pgid,
-    const char *path)
+    const char *path, uint8_t ignore_recommended_scanners)
 {
 	static const uint32_t		 nextops[] = { ANOUBIS_REPLY, -1 };
 	struct anoubis_msg		*m;
@@ -2090,6 +2090,8 @@ anoubis_client_pgcommit_start(struct anoubis_client *client, uint64_t pgid,
 	if (!m)
 		return NULL;
 	set_value(m->u.pgcommit->type, ANOUBIS_P_PGCOMMIT);
+	m->u.pgcommit->ignore_recommended_scanners =
+	    ignore_recommended_scanners;
 	set_value(m->u.pgcommit->_pad, 0);
 	set_value(m->u.pgcommit->pgid, pgid);
 	memcpy(m->u.pgcommit->payload, path, slen);

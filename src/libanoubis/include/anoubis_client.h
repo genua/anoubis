@@ -222,10 +222,13 @@ struct anoubis_transaction *anoubis_client_pglist_start(
  * @param client The protocol client object for the request.
  * @param pgid The playground ID of the file.
  * @param path The full path name of the file.
+ * @param ignore_recommended_scanners A flag that can be set to ignore
+ *        content scanners marked as recommended for this commit request
  * @return A transaction or NULL if an error occured.
  */
 struct anoubis_transaction *anoubis_client_pgcommit_start(
-    struct anoubis_client *client, uint64_t pgid, const char *path);
+    struct anoubis_client *client, uint64_t pgid, const char *path,
+    uint8_t ignore_recommended_scanners);
 
 __END_DECLS
 

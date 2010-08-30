@@ -88,7 +88,7 @@ PlaygroundCommitTask::createCommitTransaction(void)
 	if (committa_)
 		anoubis_transaction_destroy(committa_);
 	committa_ = anoubis_client_pgcommit_start(getClient(),
-	    pgid_, fullname_);
+	    pgid_, fullname_, 0);
 	if (committa_ == NULL) {
 		setComTaskResult(RESULT_LOCAL_ERROR);
 		setResultDetails(ENOMEM);

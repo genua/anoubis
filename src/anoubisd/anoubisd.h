@@ -387,6 +387,7 @@ struct anoubisd_msg_pgcommit {
 	uint64_t	dev;
 	uint64_t	ino;
 	uint32_t	auth_uid;
+	u_int8_t	ignore_recommended_scanners;
 	char		path[0];
 };
 
