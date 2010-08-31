@@ -35,6 +35,7 @@
 #include <unistd.h>
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <event.h>
 #include <pwd.h>
 #include <syslog.h>
@@ -113,6 +114,12 @@ struct scanresult {
 	int				 off;
 	int				 exitcode;
 	struct anoubisd_pg_scanner	*scanner;
+};
+
+static char *envp[] = {
+	"PATH=/usr/local/bin:/bin:/usr/bin",
+	NULL, /* will be set to HOME */
+	NULL
 };
 
 /**
@@ -420,7 +427,7 @@ scanner_run(struct anoubisd_pg_scanner *scanner, int fd, int toclose[])
 
 		argv[0] = scanner->path;
 		argv[1] = NULL;
-		execv(scanner->path, argv);
+		execve(scanner->path, argv, envp);
 		_exit(2);
 	}
 	/*
@@ -702,6 +709,17 @@ anoubisd_scan_start(uint64_t token, int fd, uint64_t auth_uid, int flags)
 
 		close(sp->pipe[0]);
 		terminate = 0;
+
+		if (chdir(pw->pw_dir) != 0) {
+			syslog(LOG_CRIT, "can't change to new HOME %s: %s",
+			    pw->pw_dir, strerror(errno));
+			_exit(1);
+		}
+		if (asprintf(&envp[1], "HOME=%s", pw->pw_dir) == -1) {
+			syslog(LOG_CRIT, "out of memory");
+			_exit(1);
+		}
+
 		scanner_main(sp, flags);
 		_exit(126);
 	}
