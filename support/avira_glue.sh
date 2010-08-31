@@ -1,5 +1,7 @@
+#!/bin/sh
+
 ##########################################################################
-# Copyright (c) 2009 GeNUA mbH <info@genua.de>
+# Copyright (c) 2010 GeNUA mbH <info@genua.de>
 #
 # All rights reserved.
 #
@@ -25,11 +27,64 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##########################################################################
 
-utildir = $(datadir)/@PACKAGE_DAEMON@
+function leave {
+	rm -f $TMPFILE
+}
 
-dist_util_SCRIPTS = install_policy upgrade_sfs.pl avira_glue.sh
-dist_util_DATA = openssl.cnf
+trap leave EXIT
 
-EXTRA_DIST = udev.rules
+if [ -z "$HOME" ]; then
+	echo 'ERROR: $HOME is not set'
+	exit 1
+fi
 
-splint lint flawfinder:
+if [ ! -d "$HOME" ]; then
+	echo "ERROR: Home-directory $HOME does not exist"
+	exit 1
+fi
+
+AVSCAN=$(which avscan)
+if [ $? -ne 0 ]; then
+	echo "ERROR: Could not find avscan-binary"
+	exit 1
+fi
+
+TMPFILE=$(mktemp -p $HOME)
+if [ $? -ne 0 ]; then
+	echo "ERROR: Could not create temporary file"
+	exit 1
+fi
+
+# Copy content from stdin to temporary file
+cat <&0 > $TMPFILE
+
+# Scan temp. file
+out=$($AVSCAN --scan-mode=all --alert-action=ignore --batch $TMPFILE 2>&1)
+rc=$?
+
+if [ $rc -eq 0 ]; then
+	# Success
+	exit 0
+fi
+
+# Print basic error
+case $rc in
+	1) echo "ERROR: Found concerning file";;
+	3) echo "ERROR: Suspicious file found";;
+	4) echo "ERROR: Warnings were issued";;
+	255) echo "ERROR: Internal error";;
+	254) echo "ERROR: Configuration error";;
+	253) echo "ERROR: Error while preparing on-demand scan";;
+	252) echo "ERROR: The avguard daemon is not running";;
+	251) echo "ERROR: The avguard daemon is not accessible";;
+	250) echo "ERROR: Cannot initialize scan process";;
+	249) echo "ERROR: Scan process not completed";;
+	*) echo "ERROR: Unexpected return-code: $rc";;
+esac
+
+# Extract ALERT messages, this might be some useful information
+IFS=\n
+echo $out | grep ALERT | sed -e "s/^\s*//"
+
+# Exit with non-zero
+exit $rc

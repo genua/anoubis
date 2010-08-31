@@ -1499,7 +1499,7 @@ pgcli_commit_file(struct anoubis_client *client, uint64_t pgid, uint64_t dev,
 			/* required content scanner returned negative result */
 			fprintf(stderr, "Could not commit file %s: "
 			    "at least one required content scanner returned "
-			    "a negative result.", abspaths[0]);
+			    "a negative result.\n", abspaths[0]);
 			return 1;
 		} else if (rc == -EAGAIN) {
 			/* recommended content scanner failed, may ignore */
