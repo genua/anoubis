@@ -939,8 +939,10 @@ pgcli_delete_filelist(struct anoubis_msg *msg)
 			if (unlink(path) == 0
 			    || (errno == EISDIR && rmdir(path) == 0)) {
 				ret = 1;
+				pgfile_normalize_file(path);
 				printf(" UNLINKED %s\n", path);
 			} else if (opts & PGCLI_OPT_VERBOSE) {
+				pgfile_normalize_file(path);
 				printf(" ERROR for %s: %s\n", path,
 				    strerror(errno));
 			}
