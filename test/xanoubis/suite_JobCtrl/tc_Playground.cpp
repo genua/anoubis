@@ -383,6 +383,42 @@ START_TEST(unlink_listComplex)
 }
 END_TEST
 
+START_TEST(unlink_errorList)
+{
+	JobCtrl *jobCtrl = JobCtrl::instance();
+	TaskEventSpy eventSpy(jobCtrl, anTASKEVT_PG_UNLINK);
+	PlaygroundUnlinkTask unlinkTask(3);
+	std::map<std::pair<uint64_t, uint64_t>, int> list;
+
+	DUMP_PLAYGROUND;
+	chmod("/home/u2000/.plgr.3.pgTest", (S_IRUSR | S_IXUSR));
+	jobCtrl->addTask(&unlinkTask);
+	eventSpy.waitForInvocation(1);
+	mark_point();
+
+	fail_if(unlinkTask.hasErrorList() == 0, "List unexpectedly empty");
+	list = unlinkTask.getErrorList();
+	fail_if(list.size() != 5, "Unexpected size of error list.");
+	fail_if(list.begin()->second != ENOTEMPTY, "Unexpected errno");
+
+	if (unlinkTask.getComTaskResult() != ComTask::RESULT_LOCAL_ERROR ||
+	    unlinkTask.getResultDetails() != EBUSY) {
+		fail("UnlinkTask returned with %d/%s - but %d/%s expected",
+		    unlinkTask.getResultDetails(),
+		    anoubis_strerror(unlinkTask.getResultDetails()),
+		    EBUSY, strerror(EBUSY));
+	}
+
+	chmod("/home/u2000/.plgr.3.pgTest", (S_IRUSR|S_IWUSR|S_IXUSR));
+	CHECK_NOENT("/home/u2000/.plgr.3.h1");
+	CHECK_DIRENT("/home/u2000/.plgr.3.pgTest");
+	CHECK_REGENT("/home/u2000/.plgr.3.pgTest/.plgr.3.h1");
+	CHECK_REGENT("/home/u2000/.plgr.3.pgTest/.plgr.3.h2");
+	CHECK_REGENT("/home/u2000/.plgr.3.pgTest/.plgr.3.h3");
+	CHECK_REGENT("/home/u2000/.plgr.3.pgTest/.plgr.3.h4");
+}
+END_TEST
+
 TCase *
 getTc_JobCtrlPlayground(void)
 {
@@ -399,6 +435,7 @@ getTc_JobCtrlPlayground(void)
 	tcase_add_test(tcase, unlink_completeComplex);
 	tcase_add_test(tcase, unlink_listEmpty);
 	tcase_add_test(tcase, unlink_listComplex);
+	tcase_add_test(tcase, unlink_errorList);
 
 	return (tcase);
 }

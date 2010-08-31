@@ -33,7 +33,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: anoubis. 10.972.C388\n"
 "Report-Msgid-Bugs-To: anoubis@lists.anoubis.org\n"
-"POT-Creation-Date: 2010-08-27 10:43+0200\n"
+"POT-Creation-Date: 2010-08-31 09:29+0200\n"
 "PO-Revision-Date: 2010-07-29 10:30+0100\n"
 "Last-Translator: Robin <robin_doer@genua.de>\n"
 "Language-Team: German <translation-team-de@lists.sourceforge.net>\n"
@@ -3670,61 +3670,61 @@ msgstr "Warnung"
 msgid "Couldn't remove Autostart file: %ls"
 msgstr "Kann Autostart Datei nicht entfernen: %ls"
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:163
+#: src/xanoubis/control/PlaygroundCtrl.cpp:162
 msgid "Communication error in playground request."
 msgstr "Kommunikationsfehler bei der Playgroundanfrage."
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:168
+#: src/xanoubis/control/PlaygroundCtrl.cpp:167
 #, c-format
 msgid "The daemon returned an error for the playground request: %hs"
 msgstr "Fehler bei der Playgroundanfrage: %hs"
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:174
+#: src/xanoubis/control/PlaygroundCtrl.cpp:173
 #, c-format
-msgid "Error during unlink: %hs"
-msgstr "Fehler während des Löschens: %hs"
+msgid "Couldn't unlink all files: %hs"
+msgstr "Konnte nicht alle Dateien entfernen: %hs"
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:182
+#: src/xanoubis/control/PlaygroundCtrl.cpp:181
 #, c-format
 msgid "Got unexpected result (%d) for playground request"
 msgstr "Unerwartetes Ergebnis (%d) beim der Playgroundanfrage"
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:242
+#: src/xanoubis/control/PlaygroundCtrl.cpp:241
 msgid "The device is not mounted."
 msgstr "Das Device ist nicht eingebunden."
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:244
+#: src/xanoubis/control/PlaygroundCtrl.cpp:243
 msgid "Cannot find all hard links to the file."
 msgstr "Konnte nicht alle Verweise auf die Datei finden."
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:249
+#: src/xanoubis/control/PlaygroundCtrl.cpp:248
 msgid "Parent directory must be committed first."
 msgstr "Das übergeordnete Verzeichnis muss zuerst übernommen werden."
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:251
+#: src/xanoubis/control/PlaygroundCtrl.cpp:250
 msgid "Did not try to commit the file."
 msgstr "Es wurde nicht versucht, die Datei zu übernehmen."
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:255
+#: src/xanoubis/control/PlaygroundCtrl.cpp:254
 msgid "Target file exists and has multiple hard links."
 msgstr "Die Zieldatei existiert und hat mehr als einen Hardlink."
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:258
+#: src/xanoubis/control/PlaygroundCtrl.cpp:257
 msgid "Target file exists."
 msgstr "Die Zieldatei existiert bereits."
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:262
+#: src/xanoubis/control/PlaygroundCtrl.cpp:261
 msgid "File scanners reported a problem with the file."
 msgstr "Bei der Überprüfung des Dateiinhalts wurde ein Problem entdeckt."
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:264
+#: src/xanoubis/control/PlaygroundCtrl.cpp:263
 #, c-format
 msgid "File was removed from the playground but could not be renamed (%hs)."
 msgstr ""
 "Die Datei wurde aus dem Playground entfernt, konnte dann aber nicht "
 "umbenannt werden (%hs)"
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:303
+#: src/xanoubis/control/PlaygroundCtrl.cpp:302
 #, c-format
 msgid ""
 "Commit for file(s) '%ls' failed.\n"
@@ -3735,15 +3735,20 @@ msgstr ""
 "\n"
 "%ls"
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:306
+#: src/xanoubis/control/PlaygroundCtrl.cpp:305
 msgid " Commit anyway?"
 msgstr "Dennoch übernehmen?"
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:307
+#: src/xanoubis/control/PlaygroundCtrl.cpp:306
 msgid "Playground Commit"
 msgstr "Playground Übernahme"
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:505
+#: src/xanoubis/control/PlaygroundCtrl.cpp:357
+#, c-format
+msgid "Unlink '%ls' failed: %hs"
+msgstr "Fehler beim Entfernen von '%ls': %hs"
+
+#: src/xanoubis/control/PlaygroundCtrl.cpp:521
 #, c-format
 msgid "Could not determine filename for playground-file: %hs"
 msgstr "Der Pfad für die Playground-Datei %hs konnte nicht ermittelt werden."

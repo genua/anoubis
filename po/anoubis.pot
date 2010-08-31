@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: anoubis 0.9.3.26.24.113\n"
+"Project-Id-Version: anoubis 0.9.3.26.40.152\n"
 "Report-Msgid-Bugs-To: anoubis@lists.anoubis.org\n"
-"POT-Creation-Date: 2010-08-27 10:43+0200\n"
+"POT-Creation-Date: 2010-08-31 09:29+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3479,59 +3479,59 @@ msgstr ""
 msgid "Couldn't remove Autostart file: %ls"
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:163
+#: src/xanoubis/control/PlaygroundCtrl.cpp:162
 msgid "Communication error in playground request."
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:168
+#: src/xanoubis/control/PlaygroundCtrl.cpp:167
 #, c-format
 msgid "The daemon returned an error for the playground request: %hs"
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:174
+#: src/xanoubis/control/PlaygroundCtrl.cpp:173
 #, c-format
-msgid "Error during unlink: %hs"
+msgid "Couldn't unlink all files: %hs"
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:182
+#: src/xanoubis/control/PlaygroundCtrl.cpp:181
 #, c-format
 msgid "Got unexpected result (%d) for playground request"
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:242
+#: src/xanoubis/control/PlaygroundCtrl.cpp:241
 msgid "The device is not mounted."
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:244
+#: src/xanoubis/control/PlaygroundCtrl.cpp:243
 msgid "Cannot find all hard links to the file."
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:249
+#: src/xanoubis/control/PlaygroundCtrl.cpp:248
 msgid "Parent directory must be committed first."
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:251
+#: src/xanoubis/control/PlaygroundCtrl.cpp:250
 msgid "Did not try to commit the file."
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:255
+#: src/xanoubis/control/PlaygroundCtrl.cpp:254
 msgid "Target file exists and has multiple hard links."
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:258
+#: src/xanoubis/control/PlaygroundCtrl.cpp:257
 msgid "Target file exists."
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:262
+#: src/xanoubis/control/PlaygroundCtrl.cpp:261
 msgid "File scanners reported a problem with the file."
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:264
+#: src/xanoubis/control/PlaygroundCtrl.cpp:263
 #, c-format
 msgid "File was removed from the playground but could not be renamed (%hs)."
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:303
+#: src/xanoubis/control/PlaygroundCtrl.cpp:302
 #, c-format
 msgid ""
 "Commit for file(s) '%ls' failed.\n"
@@ -3539,15 +3539,20 @@ msgid ""
 "%ls"
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:306
+#: src/xanoubis/control/PlaygroundCtrl.cpp:305
 msgid " Commit anyway?"
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:307
+#: src/xanoubis/control/PlaygroundCtrl.cpp:306
 msgid "Playground Commit"
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:505
+#: src/xanoubis/control/PlaygroundCtrl.cpp:357
+#, c-format
+msgid "Unlink '%ls' failed: %hs"
+msgstr ""
+
+#: src/xanoubis/control/PlaygroundCtrl.cpp:521
 #, c-format
 msgid "Could not determine filename for playground-file: %hs"
 msgstr ""

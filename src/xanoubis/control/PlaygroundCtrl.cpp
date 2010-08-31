@@ -170,8 +170,8 @@ PlaygroundCtrl::handleComTaskResult(ComTask *task)
 		sendEvent(anEVT_PLAYGROUND_ERROR);
 		break;
 	case ComTask::RESULT_LOCAL_ERROR:
-		errorList_.Add(wxString::Format(_("Error during unlink: %hs"),
-		    anoubis_strerror(task->getResultDetails())));
+		errorList_.Add(wxString::Format(_("Couldn't unlink all files:"
+		    " %hs"), anoubis_strerror(task->getResultDetails())));
 		sendEvent(anEVT_PLAYGROUND_ERROR);
 		break;
 	case ComTask::RESULT_SUCCESS:
@@ -329,7 +329,12 @@ PlaygroundCtrl::OnPlaygroundFilesCommitted(TaskEvent &event)
 void
 PlaygroundCtrl::OnPlaygroundUnlinkDone(TaskEvent &event)
 {
-	PlaygroundUnlinkTask *task = NULL;
+	wxString		 file = wxEmptyString;
+	wxString		 msg  = wxEmptyString;
+	PlaygroundUnlinkTask	*task = NULL;
+
+	std::map<devInodePair, int>		list;
+	std::map<devInodePair, int>::iterator	it;
 
 	task = dynamic_cast<PlaygroundUnlinkTask *>(event.getTask());
 	if (!isValidTask(task)) {
@@ -342,6 +347,17 @@ PlaygroundCtrl::OnPlaygroundUnlinkDone(TaskEvent &event)
 	/* Progress for the finished task. */
 	clearPlaygroundInfo();
 	if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
+		if (task->hasMatchList() && task->hasErrorList()) {
+			list = task->getErrorList();
+			for (it=list.begin(); it!=list.end(); it++) {
+				file = fileIdentification(it->first.first,
+				    it->first.second);
+				msg = wxString::Format(
+				    _("Unlink '%ls' failed: %hs"), file.c_str(),
+				    anoubis_strerror(it->second));
+				errorList_.Add(msg);
+			}
+		}
 		handleComTaskResult(task);
 	}
 	updatePlaygroundInfo();

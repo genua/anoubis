@@ -164,6 +164,24 @@ PlaygroundUnlinkTask::getPgId(void) const
 	return pgId_;
 }
 
+bool
+PlaygroundUnlinkTask::hasMatchList(void) const
+{
+	return (considerMatchList_);
+}
+
+bool
+PlaygroundUnlinkTask::hasErrorList(void) const
+{
+	return (!errorList_.empty());
+}
+
+std::map<devInodePair, int> &
+PlaygroundUnlinkTask::getErrorList(void)
+{
+	return (errorList_);
+}
+
 void
 PlaygroundUnlinkTask::reset(void)
 {
@@ -253,10 +271,11 @@ PlaygroundUnlinkTask::extractFileList(struct anoubis_msg *message)
 int
 PlaygroundUnlinkTask::unlinkLoop(void)
 {
-	int	 count = 0;
-	char	*path = NULL;
+	int			 count = 0;
+	char			*path = NULL;
+	fileMap::iterator	 it;
 
-	fileMap::iterator it;
+	std::map<devInodePair, int>::iterator eIt;
 
 	setResultDetails(0);
 	for (it=unlinkList_.begin(); it!=unlinkList_.end(); it++) {
@@ -264,8 +283,14 @@ PlaygroundUnlinkTask::unlinkLoop(void)
 		if (unlink(path) == 0 ||
 		    (errno == EISDIR && rmdir(path) == 0)) {
 			count++;
+			/* Erase from errorList if prev. reported. */
+			eIt = errorList_.find(it->first);
+			if (eIt != errorList_.end()) {
+				errorList_.erase(eIt);
+			}
 		} else {
 			setResultDetails(errno);
+			errorList_[it->first] = errno;
 		}
 	}
 

@@ -106,6 +106,32 @@ class PlaygroundUnlinkTask : public ComTask
 		 */
 		uint64_t getPgId(void) const;
 
+		/**
+		 * Has a match list of files to unlink?
+		 * @param None.
+		 * @return True if list was set.
+		 * @see addMatchList()
+		 * @see addFile()
+		 */
+		bool hasMatchList(void) const;
+
+		/**
+		 * Has a list of errors?
+		 * @param None.
+		 * @return True if list of errors is not empty.
+		 * @see getErrorList()
+		 */
+		bool hasErrorList(void) const;
+
+		/**
+		 * Get error list.
+		 * This method returns a map of device inode pair to error code.
+		 * @param None.
+		 * @return List of errors.
+		 * @see hasErrorList()
+		 */
+		std::map<devInodePair, int> & getErrorList(void);
+
 	private:
 		/**
 		 * These states this task traverse.
@@ -209,6 +235,11 @@ class PlaygroundUnlinkTask : public ComTask
 		 * Counts the delete attempts without any progress.
 		 */
 		int no_progress_;
+
+		/**
+		 * These files couldn't be removed.
+		 */
+		std::map<devInodePair, int> errorList_;
 };
 
 #endif	/* _PLAYGROUNDUNLINKTASK_H_ */
