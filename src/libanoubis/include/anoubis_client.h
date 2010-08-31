@@ -230,6 +230,23 @@ struct anoubis_transaction *anoubis_client_pgcommit_start(
     struct anoubis_client *client, uint64_t pgid, const char *path,
     uint8_t ignore_recommended_scanners);
 
+/**
+ * Decompose the strings contained in the reply message to a commit request
+ * into a list of individual strings.
+ *
+ * The reply message contains pairs of NULL terminated strings. The first
+ * string of each pair is the scanner's description, the second string is
+ * the scanner output.
+ *
+ * @param The (single) reply message.
+ * @return A malloced array of pointers that point the the strings in the
+ *     message. The caller should free the pointer array but must not free
+ *     the strings as these point into the message. The list of pointers
+ *     is termianted by a NULL pointer. There is no guarantee that the
+ *     number of pointers in the list is even!
+ */
+const char **anoubis_client_parse_pgcommit_reply(struct anoubis_msg *m);
+
 __END_DECLS
 
 #endif

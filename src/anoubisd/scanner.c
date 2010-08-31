@@ -439,21 +439,27 @@ scanner_run(struct anoubisd_pg_scanner *scanner, int fd, int toclose[])
 	 */
 	close(fds[1]);
 	while (1) {
-		int		ret, len;
+		int		 ret, len;
+		char		*ptr;
 
 		len = abuf_length(result->text) - result->off;
 		if (len <= 0)
 			break;
-		ret = read(fds[0], abuf_toptr(result->text, result->off, len),
-		    len);
+		ptr = abuf_toptr(result->text, result->off, len);
+		ret = read(fds[0], ptr, len);
 		if (ret == 0)
 			break;
 		if (ret < 0 && errno != EAGAIN && errno != EINTR) {
 			terminate = 1;
 			break;
 		}
-		if (ret >= 0)
-			result->off += ret;
+		/* Stop at the first NUL byte in the scanner output. */
+		for (len=0; len<ret; ++len)
+			if (ptr[len] == 0)
+				break;
+		result->off += len;
+		if (len < ret)
+			break;
 		/* Zero means: No timeout. */
 		if (timeout && (time(&now) < 0 || now - starttime > timeout))
 			terminate = 1;

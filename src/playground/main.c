@@ -663,12 +663,15 @@ pgcli_create_client(struct achat_channel *channel)
  *
  * @param client The anoubis client connection.
  * @param ta The transaction the complete (NULL results in -ENOMEM).
+ * @param msgp If this pointer is not NULL it is used to store the
+ *     result message(s) of the transaction. In this case the result
+ *     messages are not freed even if an error occurs.
  * @return Zero if the transaction completed successfully, an anoubis
  *     error code that indicates the error.
  */
 static int
 anoubis_transaction_complete(struct anoubis_client *client,
-    struct anoubis_transaction *ta)
+    struct anoubis_transaction *ta, struct anoubis_msg **msgp)
 {
 	int		rc;
 
@@ -677,6 +680,10 @@ anoubis_transaction_complete(struct anoubis_client *client,
 	while (1) {
 		rc = anoubis_client_wait(client);
 		if (rc <= 0) {
+			if (msgp) {
+				(*msgp) = ta->msg;
+				ta->msg = NULL;
+			}
 			anoubis_transaction_destroy(ta);
 			if (rc == 0)
 				rc = -EPROTO;
@@ -686,6 +693,10 @@ anoubis_transaction_complete(struct anoubis_client *client,
 			break;
 	}
 	rc = -ta->result;
+	if (msgp) {
+		(*msgp) = ta->msg;
+		ta->msg = NULL;
+	}
 	if (rc < 0)
 		anoubis_transaction_destroy(ta);
 	return rc;
@@ -719,7 +730,7 @@ pgcli_list(void)
 	/* Connection established. Send message and wait for answer. */
 	transaction = anoubis_client_pglist_start(client,
 	    ANOUBIS_PGREC_PGLIST, 0);
-	rc = anoubis_transaction_complete(client, transaction);
+	rc = anoubis_transaction_complete(client, transaction, NULL);
 	if (rc < 0) {
 		PGCLI_CONNECTION_WIPE(channel, client);
 		return rc;
@@ -831,7 +842,7 @@ pgcli_files(anoubis_cookie_t pgid)
 	/* Connection established. Send message and wait for answer. */
 	transaction = anoubis_client_pglist_start(client,
 	    ANOUBIS_PGREC_FILELIST, pgid);
-	rc = anoubis_transaction_complete(client, transaction);
+	rc = anoubis_transaction_complete(client, transaction, NULL);
 	if (rc < 0) {
 		PGCLI_CONNECTION_WIPE(channel, client);
 		return rc;
@@ -866,7 +877,7 @@ pgcli_validate_playground(anoubis_cookie_t pgid, struct achat_channel *channel,
 	/* Retrieve information about the playground. */
 	transaction = anoubis_client_pglist_start(client,
 	    ANOUBIS_PGREC_PGLIST, pgid);
-	int rc = anoubis_transaction_complete(client, transaction);
+	int rc = anoubis_transaction_complete(client, transaction, NULL);
 	if (rc < 0) {
 		PGCLI_CONNECTION_WIPE(channel, client);
 		return rc;
@@ -986,7 +997,7 @@ pgcli_remove(anoubis_cookie_t pgid)
 	while (noprogress < 2) {
 		transaction = anoubis_client_pglist_start(client,
 		    ANOUBIS_PGREC_FILELIST, pgid);
-		rc = anoubis_transaction_complete(client, transaction);
+		rc = anoubis_transaction_complete(client, transaction, NULL);
 		if (rc < 0) {
 			if (rc == -ESRCH)
 				rc = 0;
@@ -1112,7 +1123,7 @@ pgcli_delete(anoubis_cookie_t pgid, int filecnt, char** filenames)
 
 	transaction = anoubis_client_pglist_start(client,
 	    ANOUBIS_PGREC_FILELIST, pgid);
-	rc = anoubis_transaction_complete(client, transaction);
+	rc = anoubis_transaction_complete(client, transaction, NULL);
 	if (rc < 0)
 		return rc;
 
@@ -1319,9 +1330,73 @@ pgcli_commit_file_prepare(struct anoubis_client *client) {
 	/* register for security label remove notifications */
 	transaction = anoubis_client_register_start(client, 1 /*token*/,
 	    geteuid(), 0 /*rule_id*/, ANOUBIS_SOURCE_PLAYGROUNDFILE);
-	rc = anoubis_transaction_complete(client, transaction);
+	rc = anoubis_transaction_complete(client, transaction, NULL);
 
 	return rc;
+}
+
+/**
+ * Print formatted playground scanner results to stderr. This assumes
+ * that the return code is either -EAGAIN (only recommended scanners
+ * failed) or -EPERM (at least one required scanner failed).
+ *
+ * @param file The file we are trying to commit (for error messages)
+ * @param m The result message of the commit transaction. This message
+ *     contains the scanner report text.
+ * @param rc The (negative!) return code of the commit transaction.
+ * @return A negative error code if the caller must still print an error
+ *     message or one if the error of the transaction was reported properly.
+ *     This function never returns zero as it should only be called if
+ *     an error occured and zero would mean success.
+ */
+static int
+pgcli_commit_show_scanresult(const char *file, struct anoubis_msg *m, int rc)
+{
+	const char	**str;
+	int		  i;
+
+	if (m == NULL)
+		return rc;
+	str = anoubis_client_parse_pgcommit_reply(m);
+	if (str == NULL)
+		return -ENOMEM;
+	for (i=0; str[i]; i+=2) {
+		char		*line, *next, *orig;
+
+		fprintf(stderr, "File %s: %s reports:\n", file, str[i]);
+		if (str[i+1] == NULL) {
+			fprintf(stderr, "| <nothing>\n");
+			break;
+		}
+		if (strlen(str[i+1]) == 0) {
+			fprintf(stderr, "| <nothing>\n");
+			continue;
+		}
+		orig = line = strdup(str[i+1]);
+		while((next = strsep(&line, "\n")) != NULL) {
+			/*
+			 * Avoid printing of trailing newline if the scanner
+			 * terminates its output with a newline.
+			 */
+			if (line == NULL && strlen(next) == 0)
+				continue;
+			fprintf(stderr, "| %s\n", next);
+		}
+		free(orig);
+	}
+	free(str);
+	switch (rc) {
+	case -EAGAIN:
+		fprintf(stderr, "File not committed. Use --ignore-recommended "
+		    "to override\n");
+		break;
+	case -EPERM:
+		fprintf(stderr, "File cannot be committed.\n");
+		break;
+	default:
+		return rc;
+	}
+	return 1;
 }
 
 /**
@@ -1351,6 +1426,7 @@ pgcli_commit_file(struct anoubis_client *client, uint64_t pgid, uint64_t dev,
 	int				 have_notification;
 	char				*abspath;
 	int				 filenamecnt;
+	struct anoubis_msg		*results = NULL;
 
 	/* some validations */
 	filenamecnt = 0;
@@ -1440,7 +1516,6 @@ pgcli_commit_file(struct anoubis_client *client, uint64_t pgid, uint64_t dev,
 		    "returned unexpected result (%d))\n", rc);
 		return 1;
 	}
-	free(errpath);
 
 	/* wait until the daemon sends us a notification that the file is
 	 * ready for scanning */
@@ -1448,6 +1523,7 @@ pgcli_commit_file(struct anoubis_client *client, uint64_t pgid, uint64_t dev,
 	while (!have_notification) {
 		rc = anoubis_client_wait(client);
 		if (rc < 0) {
+			free(errpath);
 			return rc;
 		}
 
@@ -1479,7 +1555,8 @@ pgcli_commit_file(struct anoubis_client *client, uint64_t pgid, uint64_t dev,
 			/* store the the verified path within the device */
 			rc = pgfile_composename(&abspath, dev, inode,
 			    filemsg->path);
-			if (rc < 0){
+			if (rc < 0) {
+				free(errpath);
 				return rc;
 			}
 
@@ -1493,32 +1570,18 @@ pgcli_commit_file(struct anoubis_client *client, uint64_t pgid, uint64_t dev,
 	transaction = anoubis_client_pgcommit_start(client, pgid, abspath,
 	    (opts & PGCLI_OPT_IGNRECOMM));
 	free(abspath);
-	rc = anoubis_transaction_complete(client, transaction);
+	rc = anoubis_transaction_complete(client, transaction, &results);
 	if (rc < 0) {
-		if (rc == -EPERM) {
-			/* required content scanner returned negative result */
-			fprintf(stderr, "Could not commit file %s: "
-			    "at least one required content scanner returned "
-			    "a negative result.\n", abspaths[0]);
-			return 1;
-		} else if (rc == -EAGAIN) {
-			/* recommended content scanner failed, may ignore */
-			fprintf(stderr, "Could not commit file %s: "
-			    "one or more recommended content scanner returned "
-			    " a negative result.\n", abspaths[0]);
-			fprintf(stderr, "You can ignore the recommendation by "
-			    "specifying the --ignore-recommended option.\n");
-			return 1;
-		}
-
+		if (rc == -EAGAIN || rc == -EPERM)
+			rc = pgcli_commit_show_scanresult(errpath, results, rc);
+		free(errpath);
 		return rc;
 	}
-
+	free(errpath);
 	/* rename the files */
 	rc = pgfile_process(dev, inode, filenames);
-	if (rc < 0) {
+	if (rc < 0)
 		return rc;
-	}
 
 	return 0;
 }
@@ -1560,7 +1623,7 @@ pgcli_commit(uint64_t pgid, const char* file)
 	transaction = anoubis_client_pglist_start(client,
 	    ANOUBIS_PGREC_FILELIST, pgid);
 
-	rc = anoubis_transaction_complete(client, transaction);
+	rc = anoubis_transaction_complete(client, transaction, NULL);
 	if (rc < 0) {
 		PGCLI_CONNECTION_WIPE(channel, client);
 		return rc;

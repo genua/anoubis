@@ -2109,3 +2109,33 @@ anoubis_client_pgcommit_start(struct anoubis_client *client, uint64_t pgid,
 
 	return t;
 }
+
+const char **
+anoubis_client_parse_pgcommit_reply(struct anoubis_msg *m)
+{
+	const char	**ret = NULL;
+	uint8_t		 *buf = m->u.ackpayload->payload;
+	int		  plen = PAYLOAD_LEN(m, ackpayload, payload);
+	int		  idx, cnt, cnt2;
+
+	/* First count the strings. */
+	for (idx=cnt=0; idx<plen; ++idx) {
+		if (buf[idx] == 0)
+			cnt++;
+	}
+	ret = malloc((cnt+1) * sizeof(char *));
+	if (ret == NULL)
+		return NULL;
+	ret[0] = (char *)buf;
+	for (idx=cnt2=0; idx < plen && cnt2 < cnt; ++idx) {
+		if (buf[idx] == 0) {
+			++cnt2;
+			if (idx + 1 < plen)
+				ret[cnt2] = (char *)(buf+idx+1);
+			else
+				ret[cnt2] = NULL;
+		}
+	}
+	ret[cnt2] = NULL;
+	return ret;
+}
