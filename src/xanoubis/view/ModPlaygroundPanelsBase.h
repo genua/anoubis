@@ -136,6 +136,7 @@ class DlgPlaygroundCommitFileListBase : public wxDialog
 		
 		wxButton* columnButton;
 		AnListCtrl* fileList;
+		wxStaticText* progressText;
 		wxButton* commitButton;
 		wxButton* delButton;
 		

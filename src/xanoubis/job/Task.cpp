@@ -26,6 +26,8 @@
  */
 
 #include "Task.h"
+#include "TaskEvent.h"
+#include "JobCtrl.h"
 
 #include <wx/listimpl.cpp>
 WX_DEFINE_LIST(TaskList);
@@ -56,4 +58,15 @@ bool
 Task::shallAbort(void) const
 {
 	return (abortRequest_);
+}
+
+void
+Task::progress(wxString msg)
+{
+	TaskEvent	 evt(this, wxID_ANY, anTASKEVT_PROGRESS);
+	JobCtrl		*jobctrl = JobCtrl::existingInstance();
+
+	progressText_ = msg;
+	if (jobctrl)
+		wxPostEvent(jobctrl, evt);
 }

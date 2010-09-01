@@ -104,15 +104,39 @@ class Task
 		 */
 		virtual void setTaskResultAbort(void) = 0;
 
+		/**
+		 * Return the current progress text.
+		 *
+		 * @param None.
+		 * @return The current progress text.
+		 */
+		wxString getProgressText(void) const {
+			return progressText_;
+		}
+
 	protected:
 		Task(Type);
 		Type type_;
 
+		/**
+		 * Called by a derived class to indicate progress.
+		 * This will send a task progress event and set the
+		 * progress string to its parameter.
+		 *
+		 * @param msg The new progress text.
+		 * @return None.
+		 */
+		void progress(wxString msg);
 	private:
 		/**
 		 * Store abort request.
 		 */
 		bool abortRequest_;
+
+		/**
+		 * The current progress text.
+		 */
+		wxString	progressText_;
 };
 
 /**

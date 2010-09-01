@@ -30,6 +30,7 @@
 
 #include "AnListCtrl.h"
 #include "ModPlaygroundPanelsBase.h"
+#include "TaskEvent.h"
 
 class DlgPlaygroundCommitFileListImpl : public DlgPlaygroundCommitFileListBase
 {
@@ -106,6 +107,14 @@ class DlgPlaygroundCommitFileListImpl : public DlgPlaygroundCommitFileListBase
 		 * @return Nothing.
 		 */
 		void beginActivity(void);
+
+		/**
+		 * Handle progress reports from a task.
+		 *
+		 * @param event The task event.
+		 * @return None.
+		 */
+		void onTaskProgress(TaskEvent &event);
 };
 
 #endif	/* _DLGPLAYGROUNDCOMMITFILELISTIMPL_H_ */

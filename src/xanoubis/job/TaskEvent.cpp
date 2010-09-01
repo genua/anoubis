@@ -28,6 +28,7 @@
 #include "Task.h"
 #include "TaskEvent.h"
 
+DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_PROGRESS)
 DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_DUMMY)
 DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_CSUMCALC)
 DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_REGISTER)
@@ -43,8 +44,13 @@ DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_PG_FILES)
 DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_PG_UNLINK)
 DEFINE_LOCAL_EVENT_TYPE(anTASKEVT_PG_COMMIT)
 
-TaskEvent::TaskEvent(Task *task, int id)
-    : wxEvent(id, task->getEventType())
+TaskEvent::TaskEvent(Task *task, int id, int type) : wxEvent(id, type)
+{
+	this->m_propagationLevel = wxEVENT_PROPAGATE_MAX;
+	this->task_ = task;
+}
+
+TaskEvent::TaskEvent(Task *task, int id) : wxEvent(id, task->getEventType())
 {
 	this->m_propagationLevel = wxEVENT_PROPAGATE_MAX;
 	this->task_ = task;

@@ -194,13 +194,14 @@ ModPlaygroundMainPanelImpl::onPgNotebookChanging(wxCommandEvent& event)
 }
 
 void
-ModPlaygroundMainPanelImpl::onCommitFiles(wxCommandEvent &)
+ModPlaygroundMainPanelImpl::onCommitFiles(wxCommandEvent &event)
 {
+	event.Skip();
 	openCommitDialog();
 }
 
 void
-ModPlaygroundMainPanelImpl::onDeleteFiles(wxCommandEvent &)
+ModPlaygroundMainPanelImpl::onDeleteFiles(wxCommandEvent &event)
 {
 	PlaygroundCtrl		*playgroundCtrl;
 	AnRowProvider		*rowProvider;
@@ -209,6 +210,7 @@ ModPlaygroundMainPanelImpl::onDeleteFiles(wxCommandEvent &)
 	uint64_t		 pgId;
 
 	/* basic validation */
+	event.Skip();
 	if (!pgList->hasSelection()) {
 		/* How did we get here if nothing is selected? */
 		pgCommitButton->Disable();
@@ -244,10 +246,10 @@ ModPlaygroundMainPanelImpl::onPgListItemSelect(wxListEvent &event)
 }
 
 void
-ModPlaygroundMainPanelImpl::onPgListItemDeselect(wxListEvent &)
+ModPlaygroundMainPanelImpl::onPgListItemDeselect(wxListEvent &event)
 {
-	pgCommitButton->Disable();
-	pgDeleteButton->Disable();
+	event.Skip();
+	updateButtonState();
 }
 
 void
@@ -259,6 +261,7 @@ ModPlaygroundMainPanelImpl::onPgListItemActivate(wxListEvent &event)
 	PlaygroundInfoEntry	*entry = NULL;
 	AnMessageDialog		*dlg = NULL;
 
+	event.Skip();
 	playgroundCtrl = PlaygroundCtrl::instance();
 	rowProvider = playgroundCtrl->getInfoProvider();
 	item = rowProvider->getRow(event.GetIndex());

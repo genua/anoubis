@@ -85,6 +85,8 @@ PlaygroundCommitTask::createFileListTransaction(void)
 void
 PlaygroundCommitTask::createCommitTransaction(void)
 {
+	char		*cleanname;
+
 	if (committa_)
 		anoubis_transaction_destroy(committa_);
 	committa_ = anoubis_client_pgcommit_start(getClient(),
@@ -94,6 +96,10 @@ PlaygroundCommitTask::createCommitTransaction(void)
 		setResultDetails(ENOMEM);
 		return;
 	}
+	cleanname = strdup(fullname_);
+	pgfile_normalize_file(cleanname);
+	progress(wxString::Format(_("Committing %hs"), cleanname));
+	free(cleanname);
 }
 
 void

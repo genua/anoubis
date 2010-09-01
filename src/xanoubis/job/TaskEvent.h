@@ -36,6 +36,11 @@
 //@{
 BEGIN_DECLARE_EVENT_TYPES()
 	/**
+	 * Sent by several tasks to indicate progress.
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anTASKEVT_PROGRESS, wxNewEventType())
+
+	/**
 	 * Sent by a dummy Task after execution.
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anTASKEVT_DUMMY, wxNewEventType())
@@ -134,7 +139,8 @@ class Task;
 class TaskEvent : public wxEvent
 {
 	public:
-		TaskEvent(Task *, int = 0);
+		TaskEvent(Task *, int);
+		TaskEvent(Task *, int, int);
 		TaskEvent(const TaskEvent &);
 
 		wxEvent *Clone(void) const;

@@ -170,7 +170,7 @@ PlaygroundCtrl::handleComTaskResult(ComTask *task)
 		sendEvent(anEVT_PLAYGROUND_ERROR);
 		break;
 	case ComTask::RESULT_LOCAL_ERROR:
-		errorList_.Add(wxString::Format(_("Couldn't unlink all files:"
+		errorList_.Add(wxString::Format(_("Error in playground request:"
 		    " %hs"), anoubis_strerror(task->getResultDetails())));
 		sendEvent(anEVT_PLAYGROUND_ERROR);
 		break;
@@ -631,5 +631,6 @@ PlaygroundCtrl::commitFiles(uint64_t pgid, std::vector<uint64_t> devs,
 	ct = new PlaygroundCommitTask(pgid, devs, inos);
 	if (force)
 		ct->setForceOverwrite();
+	addTask(ct);
 	JobCtrl::instance()->addTask(ct);
 }

@@ -201,6 +201,15 @@ DlgPlaygroundCommitFileListBase::DlgPlaygroundCommitFileListBase( wxWindow* pare
 	fileList = new AnListCtrl( this, PG_COMMIT_LIST, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_VIRTUAL|wxLC_VRULES );
 	listSizer->Add( fileList, 1, wxALL|wxEXPAND, 5 );
 	
+	wxBoxSizer* listFooterSizer;
+	listFooterSizer = new wxBoxSizer( wxVERTICAL );
+	
+	progressText = new wxStaticText( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	progressText->Wrap( -1 );
+	listFooterSizer->Add( progressText, 0, wxALL, 5 );
+	
+	listSizer->Add( listFooterSizer, 0, wxEXPAND, 5 );
+	
 	wxBoxSizer* footerSizer;
 	footerSizer = new wxBoxSizer( wxHORIZONTAL );
 	

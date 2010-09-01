@@ -35,6 +35,7 @@
 #include "AnListColumn.h"
 #include "DlgPlaygroundCommitFileListImpl.h"
 #include "PlaygroundCtrl.h"
+#include "JobCtrl.h"
 #include "PlaygroundListProperty.h"
 #include "PlaygroundFileEntry.h"
 
@@ -50,6 +51,7 @@ DlgPlaygroundCommitFileListImpl::DlgPlaygroundCommitFileListImpl(void)
     : DlgPlaygroundCommitFileListBase(NULL)
 {
 	PlaygroundCtrl	*playgroundCtrl = PlaygroundCtrl::instance();
+	JobCtrl		*jobctrl = JobCtrl::instance();
 
 	ADD_PROPERTY(fileList, PROPERTY_DEV, 80);
 	ADD_PROPERTY(fileList, PROPERTY_INODE, 80);
@@ -66,11 +68,14 @@ DlgPlaygroundCommitFileListImpl::DlgPlaygroundCommitFileListImpl(void)
 	    wxCommandEventHandler(
 	    DlgPlaygroundCommitFileListImpl::onPlaygroundCompleted), NULL,
 	    this);
+	jobctrl->Connect(anTASKEVT_PROGRESS, wxTaskEventHandler(
+	    DlgPlaygroundCommitFileListImpl::onTaskProgress), NULL, this);
 }
 
 DlgPlaygroundCommitFileListImpl::~DlgPlaygroundCommitFileListImpl(void)
 {
 	PlaygroundCtrl	*playgroundCtrl = PlaygroundCtrl::instance();
+	JobCtrl		*jobctrl = JobCtrl::instance();
 
 	playgroundCtrl->Disconnect(anEVT_PLAYGROUND_ERROR,
 	    wxCommandEventHandler(
@@ -79,6 +84,8 @@ DlgPlaygroundCommitFileListImpl::~DlgPlaygroundCommitFileListImpl(void)
 	    wxCommandEventHandler(
 	    DlgPlaygroundCommitFileListImpl::onPlaygroundCompleted), NULL,
 	    this);
+	jobctrl->Disconnect(anTASKEVT_PROGRESS, wxTaskEventHandler(
+	    DlgPlaygroundCommitFileListImpl::onTaskProgress), NULL, this);
 }
 
 void
@@ -154,6 +161,7 @@ DlgPlaygroundCommitFileListImpl::onPlaygroundCompleted(wxCommandEvent &)
 	commitButton->Enable();
 	delButton->Enable();
 	closeButton->Enable();
+	progressText->SetLabel(wxT(""));
 	wxEndBusyCursor();
 }
 
@@ -164,4 +172,13 @@ DlgPlaygroundCommitFileListImpl::beginActivity(void)
 	delButton->Disable();
 	closeButton->Disable();
 	wxBeginBusyCursor();
+}
+
+void
+DlgPlaygroundCommitFileListImpl::onTaskProgress(TaskEvent &event)
+{
+	Task		*task = event.getTask();
+
+	event.Skip();
+	progressText->SetLabel(task->getProgressText());
 }
