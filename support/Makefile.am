@@ -27,7 +27,7 @@
 
 utildir = $(datadir)/@PACKAGE_DAEMON@
 
-dist_util_SCRIPTS = install_policy upgrade_sfs.pl avira_glue.sh
+dist_util_SCRIPTS = install_policy upgrade_sfs.pl avira_glue.sh clamav_glue.sh
 dist_util_DATA = openssl.cnf
 
 EXTRA_DIST = udev.rules

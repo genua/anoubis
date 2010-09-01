@@ -33,6 +33,7 @@
 #include <signal.h>
 #include <time.h>
 #include <unistd.h>
+#include <paths.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -117,7 +118,7 @@ struct scanresult {
 };
 
 static char *envp[] = {
-	"PATH=/usr/local/bin:/bin:/usr/bin",
+	"PATH=" _PATH_STDPATH,
 	NULL, /* will be set to HOME */
 	NULL
 };

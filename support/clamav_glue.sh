@@ -1,6 +1,5 @@
 #!/bin/sh
-
-##########################################################################
+###########################################################################
 # Copyright (c) 2010 GeNUA mbH <info@genua.de>
 #
 # All rights reserved.
@@ -25,62 +24,27 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-##########################################################################
+###########################################################################
 
-function leave {
-	rm -f $TMPFILE
-}
+scanner="clamscan"
+#scanner="clamdscan"
 
-trap leave EXIT
-
-AVSCAN=$(which avscan)
-if [ $? -ne 0 ]; then
-	echo ERROR: Could not find avscan-binary
+CLAMSCAN=$(which $scanner)
+if [ $? -ne 0 ] ; then
+	echo ERROR: Could not find clamscan-binary
 	exit 1
 fi
-
-if [ -z "$HOME" ]; then
-	echo 'ERROR: $HOME is not set'
-	exit 1
-elif [ ! -d "$HOME" ]; then
-	echo "ERROR: Home-directory '$HOME' does not exist"
-	exit 1
-fi
-
-TMPFILE=$(mktemp -p $HOME)
-if [ $? -ne 0 ]; then
-	echo ERROR: Could not create temporary file
-	exit 1
-fi
-
-# copy stdin to a temporary file
-cat > $TMPFILE
 
 # perform the scan
-out=$($AVSCAN --scan-mode=all --alert-action=ignore --batch $TMPFILE 2>&1)
+out=$($CLAMSCAN --no-summary - 2>&1)
 rc=$?
 
-# success
-[ $rc -eq 0 ] && exit 0
-
-# print basic error
-case $rc in
-	1) echo "ERROR: Found concerning file";;
-	3) echo "ERROR: Suspicious file found";;
-	4) echo "ERROR: Warnings were issued";;
-	255) echo "ERROR: Internal error";;
-	254) echo "ERROR: Configuration error";;
-	253) echo "ERROR: Error while preparing on-demand scan";;
-	252) echo "ERROR: The avguard daemon is not running";;
-	251) echo "ERROR: The avguard daemon is not accessible";;
-	250) echo "ERROR: Cannot initialize scan process";;
-	249) echo "ERROR: Scan process not completed";;
-	*) echo "ERROR: Unexpected return-code: $rc";;
-esac
-
-# extract ALERT messages, they can contain useful information
-IFS=\n
-echo $out | grep ALERT | sed -e "s/^\s*//"
+if [ $rc -eq 2 ]; then
+	[ -n "$out" ] || $out="ERROR: Internal error"
+	echo $out
+elif [ $rc -eq 1 ]; then
+	echo "$out" | sed -nr -e 's/^(fd.+|stdin): //p'
+fi
 
 # exit with the scanner return
 exit $rc
