@@ -32,6 +32,7 @@
 #endif
 
 #include <sys/types.h>
+#include <sys/stat.h>
 #ifdef OPENBSD
 #include <sys/limits.h>
 #endif
@@ -755,6 +756,16 @@ pe_handle_playgroundask(struct eventdev_hdr *hdr)
 
 	if (!proc) {
 		reply->reply = EPERM;
+		reply->ask = 0;
+		reply->timeout = 0;
+		return reply;
+	}
+	/*
+	 * Suppress open ask events for sockets and fifos. There are too
+	 * many of them.
+	 */
+	if (S_ISSOCK(pgevent->mode) || S_ISFIFO(pgevent->mode)) {
+		reply->reply = 0;
 		reply->ask = 0;
 		reply->timeout = 0;
 		return reply;
