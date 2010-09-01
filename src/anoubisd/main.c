@@ -877,6 +877,10 @@ main(int argc, char *argv[])
 	/* Load Public Keys */
 	cert_init(0);
 
+	if (anoubisd_config.pg_scanners)
+		log_info("%d playground scanner(s) configured",
+		    anoubisd_config.pg_scanners);
+	
 	setproctitle("master");
 #ifdef LINUX
 	dazukofd = dazukofs_ignore();

@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include <anoubis_errno.h>
 #include "anoubisd.h"
@@ -439,6 +440,7 @@ cfg_parse_commit(struct abuf_buffer valuebuf, int lineno)
 	char			    *cur = NULL, *next;
 	int			     param;
 	int			    ret = 1;
+	struct stat		    sbuf;
 	const char		    *err_msg = NULL;
 	static const char	    *err_oom = "Out of memory";
 	static const char	    *err_syntax = "Syntax error, expected: "
@@ -497,6 +499,10 @@ cfg_parse_commit(struct abuf_buffer valuebuf, int lineno)
 				ret = 0;
 				break;
 			}
+			if (stat(scanner->path, &sbuf) != 0) {
+				log_warn("invalid scanner '%s' (line %d)",
+					scanner->path, lineno);
+			}
 			param++;
 		} else if (param == 2) {
 			scanner->description = strdup(strip_whitespaces(next));
@@ -518,6 +524,7 @@ cfg_parse_commit(struct abuf_buffer valuebuf, int lineno)
 		/* success */
 		CIRCLEQ_INSERT_TAIL(&anoubisd_config.pg_scanner,
 		    scanner, link);
+		anoubisd_config.pg_scanners++;
 	} else {
 		log_warnx("line %d: %s", lineno, err_msg);
 

@@ -165,6 +165,8 @@ struct anoubisd_config {
 	struct anoubisd_pg_scanner_list		pg_scanner;
 	/* Timeout for each scanner in seconds. Zero for no timeout. */
 	int					scanner_timeout;
+	/* The number of configured scanners. */
+	int					pg_scanners;	
 };
 
 extern struct anoubisd_config anoubisd_config;
