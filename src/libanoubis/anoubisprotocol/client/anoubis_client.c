@@ -133,8 +133,10 @@ static struct anoubis_msg * anoubis_client_rcv(struct anoubis_client * client)
 		if (rc != ACHAT_RC_NOSPACE)
 			break;
 		alloclen *= 2;
-		if (anoubis_msg_resize(m, alloclen) < 0)
+		if (anoubis_msg_resize(m, alloclen) < 0) {
 			rc = ACHAT_RC_ERROR;
+			break;
+		}
 	}
 	if (rc != ACHAT_RC_OK)
 		goto err;
@@ -285,7 +287,6 @@ static int anoubis_verify_authreply(struct anoubis_client * client,
 {
 	int ret;
 	u_int32_t opcode;
-	size_t slen;
 
 	ret = anoubis_client_verify(client, m);
 	if (ret < 0)
@@ -298,8 +299,6 @@ static int anoubis_verify_authreply(struct anoubis_client * client,
 	ret = -EPERM;
 	if (get_value(m->u.authreply->error))
 		goto err;
-	slen = m->length - sizeof(Anoubis_AuthReplyMessage);
-	ret = -ENOMEM;
 	client->auth_uid = get_value(m->u.authreply->uid);
 	ret = 0;
 err:
@@ -1331,7 +1330,7 @@ anoubis_csmulti_create(unsigned int op, uid_t uid, void *keyid, int idlen)
 struct anoubis_csmulti_record *
 anoubis_csmulti_find(struct anoubis_csmulti_request *req, unsigned int idx)
 {
-	struct anoubis_csmulti_record	*record = req->last;
+	struct anoubis_csmulti_record	*record;
 
 	for (record = csmulti_iterator_first(req); record;
 	     record = csmulti_iterator_next(req, record)) {

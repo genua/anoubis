@@ -623,7 +623,6 @@ fill_eventask_message(int type, int loglevel, struct eventdev_hdr *hdr,
 	do_copy_ident(eventask->payload, &off, reply->ctxident,
 	    &eventask->ctxcsumoff, &eventask->ctxcsumlen,
 	    &eventask->ctxpathoff, &eventask->ctxpathlen);
-	hdr = (struct eventdev_hdr *)eventask->payload;
 	return msg;
 }
 

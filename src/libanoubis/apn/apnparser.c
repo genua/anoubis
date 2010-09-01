@@ -956,7 +956,7 @@ char *
 apn_one_error(struct apn_ruleset *rs)
 {
 	struct apnerr_queue	*errq;
-	struct apn_errmsg	*msg, *nmsg;
+	struct apn_errmsg	*msg;
 
 	if (rs == NULL)
 		return NULL;
@@ -966,8 +966,6 @@ apn_one_error(struct apn_ruleset *rs)
 		return NULL;
 
 	if ((msg = TAILQ_FIRST(errq)) == NULL)
-		return NULL;
-	if ((nmsg = TAILQ_NEXT(msg, entry)) != NULL)
 		return NULL;
 
 	return(msg->msg);

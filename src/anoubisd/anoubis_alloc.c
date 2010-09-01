@@ -254,7 +254,7 @@ abuf_copy_part(struct abuf_buffer dst, unsigned int dstoff,
 const char *
 abuf_tostr(struct abuf_buffer buf, unsigned int off)
 {
-	unsigned int	 i = off;
+	unsigned int	 i;
 	const char	*data = buf.data;
 
 	for (i=off; i<buf.length; ++i)

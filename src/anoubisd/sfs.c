@@ -1438,6 +1438,7 @@ sfs_readsfsdata(const char *csum_file, struct sfs_data *sfsdata)
 		log_warnx("sfsdata %s: Format version %i not supported",
 		    csum_file, version);
 		ret = -EOPNOTSUPP;
+		goto err;
 	}
 
 	for (i = 0; i < NUM_SFSDATA_TYPES ; i++) {

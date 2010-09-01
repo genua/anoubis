@@ -1086,7 +1086,6 @@ pgcli_find_file(struct anoubis_msg *filelist, const char *filename)
 		}
 
 		filelist = filelist->next;
-		offset = 0;
 	}
 
 	return(NULL);
@@ -1702,7 +1701,6 @@ pgcli_commit(uint64_t pgid, const char* file)
 				}
 			}
 			filelist = filelist->next;
-			offset = 0;
 		}
 		/* rewind filelist */
 		filelist = transaction->msg;

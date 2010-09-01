@@ -359,7 +359,6 @@ int
 pgfile_normalize_file_list(struct pgfile_list *list, const char const *names[])
 {
 	int		 i, src, dst;
-	int		 ret;
 	char		*str;
 
 	if (list == NULL)
@@ -367,7 +366,6 @@ pgfile_normalize_file_list(struct pgfile_list *list, const char const *names[])
 	list->list = NULL;
 	list->alloclen = list->listlen = 0;
 	for (i=0; names[i]; ++i) {
-		ret = -ENOMEM;
 		str = strdup(names[i]);
 		if (str == NULL)
 			goto err;

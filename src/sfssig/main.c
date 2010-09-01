@@ -1698,7 +1698,6 @@ sfs_tree(char *path, int op, uid_t sfs_uid)
 			tmp = NULL;
 			continue;
 		}
-		ret = 0;
 
 		switch (op) {
 		case ANOUBIS_CHECKSUM_OP_DEL:
@@ -2349,7 +2348,7 @@ create_channel(void)
 	}
 	if (opts & SFSSIG_OPT_DEBUG2)
 		fprintf(stderr, "acc_settail\n");
-	if ((rc = acc_settail(channel, ACC_TAIL_CLIENT)) != ACHAT_RC_OK) {
+	if (acc_settail(channel, ACC_TAIL_CLIENT) != ACHAT_RC_OK) {
 		acc_destroy(channel);
 		channel = NULL;
 		fprintf(stderr, "client settail failed\n");
@@ -2358,7 +2357,7 @@ create_channel(void)
 	}
 	if (opts & SFSSIG_OPT_DEBUG2)
 		fprintf(stderr, "acc_setsslmode\n");
-	if ((rc = acc_setsslmode(channel, ACC_SSLMODE_CLEAR)) != ACHAT_RC_OK) {
+	if (acc_setsslmode(channel, ACC_SSLMODE_CLEAR) != ACHAT_RC_OK) {
 		acc_destroy(channel);
 		channel = NULL;
 		fprintf(stderr, "client setsslmode failed\n");

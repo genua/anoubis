@@ -101,7 +101,7 @@ int anoubis_auth_callback(struct anoubis_sig *privKey,
 		if ((pubKey->idlen != kidLen) || (kidLen == 0))
 			return -ANOUBIS_AUTHERR_CERT;
 
-		if ((rc = memcmp(pubKey->keyid, kidBuf, kidLen)) != 0)
+		if (memcmp(pubKey->keyid, kidBuf, kidLen) != 0)
 			return -ANOUBIS_AUTHERR_KEY_MISMATCH;
 	}
 

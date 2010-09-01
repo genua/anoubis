@@ -1408,7 +1408,7 @@ create_channel(unsigned int check_parser_version)
 	}
 	if (opts & ANOUBISCTL_OPT_VERBOSE2)
 		fprintf(stderr, "acc_settail\n");
-	if ((rc = acc_settail(channel, ACC_TAIL_CLIENT)) != ACHAT_RC_OK) {
+	if (acc_settail(channel, ACC_TAIL_CLIENT) != ACHAT_RC_OK) {
 		acc_destroy(channel);
 		channel = NULL;
 		fprintf(stderr, "client settail failed\n");
@@ -1417,7 +1417,7 @@ create_channel(unsigned int check_parser_version)
 	}
 	if (opts & ANOUBISCTL_OPT_VERBOSE2)
 		fprintf(stderr, "acc_setsslmode\n");
-	if ((rc = acc_setsslmode(channel, ACC_SSLMODE_CLEAR)) != ACHAT_RC_OK) {
+	if (acc_setsslmode(channel, ACC_SSLMODE_CLEAR) != ACHAT_RC_OK) {
 		acc_destroy(channel);
 		channel = NULL;
 		fprintf(stderr, "client setsslmode failed\n");

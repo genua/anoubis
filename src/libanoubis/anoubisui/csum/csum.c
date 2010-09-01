@@ -304,7 +304,7 @@ anoubis_csum_list(struct anoubis_msg *m, int *listcnt)
 		goto err;
 
 	/* Return Message from Daemon cannot return partial names */
-	end = cnt = 0;
+	cnt = 0;
 	while (m) {
 		if (!VERIFY_LENGTH(m, sizeof(Anoubis_ChecksumPayloadMessage))) {
 			error = -2;
@@ -316,7 +316,6 @@ anoubis_csum_list(struct anoubis_msg *m, int *listcnt)
 
 		/* Check if messeag is empty. Yes? We are done */
 		if (msg_end == 0) {
-			error = 0;
 			break;
 		}
 
