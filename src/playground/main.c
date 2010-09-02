@@ -359,8 +359,8 @@ extern char	*__progname;
 __dead void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-fFh] [-k key] [-c cert] <command> "
-	    "[<program>]\n\n", __progname);
+	fprintf(stderr, "usage: %s [-fFh] [--ignore-recommended] [-k key] "
+	    "[-c cert] <command> [<program>]\n\n", __progname);
 	fprintf(stderr, "    -f                        force\n");
 	fprintf(stderr, "    -F, --ignore-recommended  "
 	    "ignore recommended scanners during commit\n");
@@ -372,8 +372,7 @@ usage(void)
 	fprintf(stderr, "	list\n");
 	fprintf(stderr, "	files <playground id>\n");
 	fprintf(stderr, "	remove <playground id>\n");
-	fprintf(stderr,
-	    "	commit [--ignore-recommended] <playground id> file ...\n");
+	fprintf(stderr, "	commit <playground id> file ...\n");
 	fprintf(stderr, "	delete <playground id> file ...\n");
 
 	exit(1);
@@ -1362,7 +1361,7 @@ pgcli_commit_show_scanresult(const char *file, struct anoubis_msg *m, int rc)
 	for (i=0; str[i]; i+=2) {
 		char		*line, *next, *orig;
 
-		fprintf(stderr, "File %s: %s reports:\n", file, str[i]);
+		fprintf(stderr, "File %s: '%s' reports:\n", file, str[i]);
 		if (str[i+1] == NULL) {
 			fprintf(stderr, "| <nothing>\n");
 			break;
