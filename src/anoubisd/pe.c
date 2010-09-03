@@ -768,6 +768,7 @@ pe_handle_playgroundask(struct eventdev_hdr *hdr)
 		reply->reply = 0;
 		reply->ask = 0;
 		reply->timeout = 0;
+		pe_proc_put(proc);
 		return reply;
 	}
 	reply->ask = 1;
