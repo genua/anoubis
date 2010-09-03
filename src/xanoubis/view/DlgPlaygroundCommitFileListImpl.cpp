@@ -38,6 +38,7 @@
 #include "JobCtrl.h"
 #include "PlaygroundListProperty.h"
 #include "PlaygroundFileEntry.h"
+#include "PlaygroundInfoEntry.h"
 
 #define ADD_PROPERTY(list, type, width) \
 	do { \
@@ -47,8 +48,8 @@
 		_col->setWidth(width, true); \
 	} while(0);
 
-DlgPlaygroundCommitFileListImpl::DlgPlaygroundCommitFileListImpl(void)
-    : DlgPlaygroundCommitFileListBase(NULL)
+DlgPlaygroundCommitFileListImpl::DlgPlaygroundCommitFileListImpl(
+    PlaygroundInfoEntry *entry) : DlgPlaygroundCommitFileListBase(NULL)
 {
 	PlaygroundCtrl	*playgroundCtrl = PlaygroundCtrl::instance();
 	JobCtrl		*jobctrl = JobCtrl::instance();
@@ -61,6 +62,11 @@ DlgPlaygroundCommitFileListImpl::DlgPlaygroundCommitFileListImpl(void)
 	fileList->getColumn(1)->setVisible(false);
 
 	fileList->setRowProvider(playgroundCtrl->getFileProvider());
+
+	commitButton->Enable(
+	    jobctrl->isConnected() && entry && !entry->isActive());
+	delButton->Enable(
+	    jobctrl->isConnected() && entry && !entry->isActive());
 
 	playgroundCtrl->Connect(anEVT_PLAYGROUND_ERROR, wxCommandEventHandler(
 	    DlgPlaygroundCommitFileListImpl::onPlaygroundError), NULL, this);

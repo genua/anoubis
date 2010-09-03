@@ -413,7 +413,7 @@ ModPlaygroundMainPanelImpl::openCommitDialog(void)
 
 	playgroundCtrl->updatePlaygroundFiles(pgId);
 
-	dlg = new DlgPlaygroundCommitFileListImpl();
+	dlg = new DlgPlaygroundCommitFileListImpl(entry);
 	dlg->SetTitle(
 	    wxString::Format(_("Commit files for playground %"PRIx64), pgId));
 	#ifdef USE_WXGUITESTING

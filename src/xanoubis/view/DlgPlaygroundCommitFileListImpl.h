@@ -32,13 +32,16 @@
 #include "ModPlaygroundPanelsBase.h"
 #include "TaskEvent.h"
 
+class PlaygroundInfoEntry;
+
 class DlgPlaygroundCommitFileListImpl : public DlgPlaygroundCommitFileListBase
 {
 	public:
 		/**
 		 * Constructor
+		 * @param[in] Playground information for the displayed files
 		 */
-		DlgPlaygroundCommitFileListImpl(void);
+		DlgPlaygroundCommitFileListImpl(PlaygroundInfoEntry *);
 
 		/**
 		 * Destructor.
