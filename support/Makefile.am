@@ -32,4 +32,10 @@ dist_util_DATA = openssl.cnf
 
 EXTRA_DIST = udev.rules
 
+install-data-hook:
+	$(LN_S) -f clamav_glue.sh \
+		$(DESTDIR)/$(datadir)/@PACKAGE_DAEMON@/clamscan_glue.sh
+	$(LN_S) -f clamav_glue.sh \
+		$(DESTDIR)/$(datadir)/@PACKAGE_DAEMON@/clamdscan_glue.sh
+
 splint lint flawfinder:

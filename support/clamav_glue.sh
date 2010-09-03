@@ -26,8 +26,8 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ###########################################################################
 
-scanner="clamscan"
-#scanner="clamdscan"
+filename=$(basename $0)
+scanner=${filename%_glue.sh}
 
 CLAMSCAN=$(which $scanner)
 if [ $? -ne 0 ] ; then

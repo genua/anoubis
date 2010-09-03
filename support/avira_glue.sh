@@ -79,8 +79,7 @@ case $rc in
 esac
 
 # extract ALERT messages, they can contain useful information
-IFS=\n
-echo $out | grep ALERT | sed -e "s/^\s*//"
+echo "$out" | sed -n -e 's/^\s*//' -e '/ALERT/p'
 
 # exit with the scanner return
 exit $rc

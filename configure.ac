@@ -78,6 +78,7 @@ AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_RANLIB
 AC_PROG_LEX
+AC_PROG_LN_S
 dnl normal yacc does not know %destructor, use bison instead
 AC_CHECK_PROG(YACC, bison, [bison -y])
 
