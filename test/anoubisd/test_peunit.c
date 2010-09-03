@@ -191,13 +191,12 @@ send_upgrade_start(void)
 {
 }
 
-int
+void
 enqueue(Queue * q __used, void *msg __used)
 {
-	return 0;
 }
 
-anoubisd_msg_t *
+struct anoubisd_msg *
 msg_factory(int type __used, int size __used)
 {
 	return NULL;

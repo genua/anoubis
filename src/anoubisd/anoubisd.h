@@ -166,7 +166,7 @@ struct anoubisd_config {
 	/* Timeout for each scanner in seconds. Zero for no timeout. */
 	int					scanner_timeout;
 	/* The number of configured scanners. */
-	int					pg_scanners;	
+	int					pg_scanners;
 };
 
 extern struct anoubisd_config anoubisd_config;
@@ -191,7 +191,6 @@ struct anoubisd_msg {
 	int		mtype;
 	char		msg[0];
 };
-typedef struct anoubisd_msg anoubisd_msg_t;
 
 enum anoubisd_msg_type {
 	ANOUBISD_MSG_POLREQUEST,	/* anoubisd_msg_polrequest */

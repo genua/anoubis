@@ -104,7 +104,8 @@ struct event_info_session {
 };
 
 struct cbdata {
-	eventdev_token	ev_token;
+	TAILQ_ENTRY(cbdata)		 next;
+	eventdev_token			 ev_token;
 	struct event_info_session	*ev_info;
 	struct anoubis_notify_head	*ev_head;
 };
@@ -133,23 +134,23 @@ static void	dispatch_m2s(int, short, void *);
 static void	dispatch_s2m(int, short, void *);
 static void	dispatch_s2p(int, short, void *);
 static void	dispatch_p2s(int, short, void *);
-static void	dispatch_p2s_evt_request(anoubisd_msg_t *,
+static void	dispatch_p2s_evt_request(struct anoubisd_msg *,
 		    struct event_info_session *);
-static void	dispatch_p2s_log_request(anoubisd_msg_t *,
+static void	dispatch_p2s_log_request(struct anoubisd_msg *,
 		    struct event_info_session *);
-void		dispatch_p2s_policychange(anoubisd_msg_t *,
+void		dispatch_p2s_policychange(struct anoubisd_msg *,
 		    struct event_info_session *);
-static void	dispatch_p2s_evt_cancel(anoubisd_msg_t *,
+static void	dispatch_p2s_evt_cancel(struct anoubisd_msg *,
 		    struct event_info_session *);
-static void	dispatch_p2s_pol_reply(anoubisd_msg_t *,
+static void	dispatch_p2s_pol_reply(struct anoubisd_msg *,
 		    struct event_info_session *);
-static void	dispatch_p2s_pg_reply(anoubisd_msg_t *,
+static void	dispatch_p2s_pg_reply(struct anoubisd_msg *,
 		    struct event_info_session *);
 static void	dispatch_p2s_commit_reply(struct anoubisd_msg *msg,
 		    struct event_info_session *ev_info);
-static void	dispatch_m2s_checksum_reply(anoubisd_msg_t *msg,
+static void	dispatch_m2s_checksum_reply(struct anoubisd_msg *msg,
 		    struct event_info_session *ev_info);
-static void	dispatch_m2s_upgrade_notify(anoubisd_msg_t *msg,
+static void	dispatch_m2s_upgrade_notify(struct anoubisd_msg *msg,
 		    struct event_info_session *);
 static void	session_connect(int, short, void *);
 static void	session_rxclient(int, short, void *);
@@ -164,7 +165,7 @@ static void	dispatch_passphrase(struct anoubis_server *,
 static Queue eventq_s2p;
 static Queue eventq_s2m;
 
-static Queue headq;
+static TAILQ_HEAD(, cbdata)		headq;
 
 static void
 session_sighandler(int sig, short event __used, void *arg)
@@ -285,7 +286,7 @@ session_connect(int fd __used, short event __used, void *arg)
 	event_add(&(session->ev_rdata), NULL);
 	session->connfd = session->channel->fd;
 	session->channel->event = &session->ev_wdata;
-	msg_init(session->connfd, "session");
+	msg_init(session->connfd);
 
 	DEBUG(DBG_TRACE, "<session_connect");
 }
@@ -416,7 +417,7 @@ session_main(int pipes[], int loggers[])
 
 	/* From now on, this is an unprivileged child process. */
 	LIST_INIT(&(seg.sessionList));
-	queue_init(&headq, NULL);
+	TAILQ_INIT(&headq);
 
 	/* We catch or block signals rather than ignoring them. */
 	signal_set(&ev_sigterm, SIGTERM, session_sighandler, &ev_info);
@@ -434,8 +435,8 @@ session_main(int pipes[], int loggers[])
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 
 	/* init msg_bufs - keep track of outgoing ev_info */
-	msg_init(masterfd, "s2m");
-	msg_init(policyfd, "s2p");
+	msg_init(masterfd);
+	msg_init(policyfd);
 
 	/* master process */
 	event_set(&ev_m2s, masterfd, EV_READ | EV_PERSIST, dispatch_m2s,
@@ -488,10 +489,11 @@ session_main(int pipes[], int loggers[])
 
 /* Handle Notify and Alert Messages - coming from master */
 static void
-notify_callback(struct anoubis_notify_head *head, int verdict, void *cbdata)
+notify_callback(struct anoubis_notify_head *head, int verdict, void *_cbdata)
 {
-	anoubisd_msg_t *msg;
-	struct eventdev_reply *rep;
+	struct anoubisd_msg		*msg;
+	struct eventdev_reply		*rep;
+	struct cbdata			*cbdata = _cbdata;
 
 	DEBUG(DBG_TRACE, ">notify_callback");
 
@@ -508,7 +510,7 @@ notify_callback(struct anoubis_notify_head *head, int verdict, void *cbdata)
 		return;
 	}
 	rep = (struct eventdev_reply *)msg->msg;
-	rep->msg_token = ((struct cbdata *)cbdata)->ev_token;
+	rep->msg_token = cbdata->ev_token;
 	rep->reply = verdict;
 
 	enqueue(&eventq_s2p, msg);
@@ -519,7 +521,7 @@ notify_callback(struct anoubis_notify_head *head, int verdict, void *cbdata)
 		DEBUG(DBG_TRACE, " >anoubis_notify_destroy_head");
 		DEBUG(DBG_QUEUE, " <headq: %x reply=%d", rep->msg_token,
 		    rep->reply);
-		queue_delete(&headq, cbdata);
+		TAILQ_REMOVE(&headq, cbdata, next);
 	}
 	free(cbdata);
 
@@ -706,7 +708,7 @@ static void
 dispatch_checksum(struct anoubis_server *server, struct anoubis_msg *m,
     uid_t uid, void *arg)
 {
-	anoubisd_msg_t			*s2m_msg;
+	struct anoubisd_msg		*s2m_msg;
 	struct anoubisd_msg_csumop	*msg_csum;
 	struct achat_channel		*chan;
 	int				 err, opp = 0, reallen;
@@ -761,7 +763,7 @@ dispatch_passphrase(struct anoubis_server *server, struct anoubis_msg *m,
     uid_t auth_uid, void *arg __used)
 {
 	int				 plen;
-	anoubisd_msg_t			*msg;
+	struct anoubisd_msg		*msg;
 	anoubisd_msg_passphrase_t	*pass;
 
 	DEBUG(DBG_TRACE, ">dispatch_passphrase");
@@ -1178,7 +1180,7 @@ static int
 dispatch_policy(struct anoubis_policy_comm *comm __used, uint64_t token,
     uint32_t uid, void *buf, size_t len, void *arg __used, int flags)
 {
-	anoubisd_msg_t			*msg;
+	struct anoubisd_msg		*msg;
 	struct anoubisd_msg_polrequest	*polreq;
 
 	DEBUG(DBG_TRACE, ">dispatch_policy token = %" PRId64, token);
@@ -1229,7 +1231,7 @@ dispatch_m2s(int fd, short sig __used, void *arg)
 {
 	struct event_info_session	*ev_info = arg;
 	struct anoubis_msg		*m;
-	anoubisd_msg_t			*msg;
+	struct anoubisd_msg		*msg;
 	struct eventdev_hdr		*hdr;
 	unsigned int			 extra;
 
@@ -1358,7 +1360,7 @@ dispatch_p2s(int fd, short sig __used, void *arg)
 {
 	struct event_info_session	*ev_info = arg;
 	struct eventdev_hdr		*hdr;
-	anoubisd_msg_t			*msg;
+	struct anoubisd_msg		*msg;
 
 	DEBUG(DBG_TRACE, ">dispatch_p2s");
 
@@ -1421,7 +1423,7 @@ dispatch_p2s(int fd, short sig __used, void *arg)
 }
 
 void
-dispatch_p2s_policychange(anoubisd_msg_t *msg,
+dispatch_p2s_policychange(struct anoubisd_msg *msg,
     struct event_info_session *ev_info)
 {
 	struct anoubisd_msg_pchange	*pchange;
@@ -1515,7 +1517,7 @@ eventask_to_notify(int notifytype, struct anoubisd_msg_eventask *eventask)
 }
 
 void
-dispatch_p2s_log_request(anoubisd_msg_t *msg,
+dispatch_p2s_log_request(struct anoubisd_msg *msg,
     struct event_info_session *ev_info)
 {
 	struct anoubisd_msg_eventask	*eventask;
@@ -1534,7 +1536,7 @@ dispatch_p2s_log_request(anoubisd_msg_t *msg,
 }
 
 static void
-dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
+dispatch_p2s_evt_request(struct anoubisd_msg *msg,
     struct event_info_session *ev_info)
 {
 	struct anoubis_notify_head	*head;
@@ -1593,7 +1595,7 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 	}
 
 	if (sent) {
-		enqueue(&headq, cbdata);
+		TAILQ_INSERT_TAIL(&headq, cbdata, next);
 		DEBUG(DBG_TRACE, " >headq: %x", cbdata->ev_token);
 	} else {
 		anoubis_notify_destroy_head(head);
@@ -1604,33 +1606,22 @@ dispatch_p2s_evt_request(anoubisd_msg_t	*msg,
 	DEBUG(DBG_TRACE, "<dispatch_p2s_evt_request");
 }
 
-static int
-cbdata_cmp(void *msg1, void *msg2)
-{
-	if (msg1 == NULL || msg2 == NULL) {
-		DEBUG(DBG_TRACE, "cbdata_cmp: null msg pointer");
-		return 0;
-	}
-	if (((struct cbdata *)msg1)->ev_token ==
-	    ((struct cbdata *)msg2)->ev_token)
-		return 1;
-	return 0;
-}
-
 static void
-dispatch_p2s_evt_cancel(anoubisd_msg_t *msg,
+dispatch_p2s_evt_cancel(struct anoubisd_msg *msg,
     struct event_info_session *ev_info __used)
 {
-	struct anoubis_notify_head *head;
-	eventdev_token *token;
-	struct cbdata	*cbdata;
-	struct cbdata	cbdatatmp;
+	struct anoubis_notify_head	*head;
+	eventdev_token			*tokenp;
+	struct cbdata			*cbdata;
 
 	DEBUG(DBG_TRACE, ">dispatch_p2s_evt_cancel");
 
-	token = (eventdev_token*)msg->msg;
-	cbdatatmp.ev_token = *token;
-	if ((cbdata = queue_find(&headq, &cbdatatmp, cbdata_cmp))) {
+	tokenp = (eventdev_token*)msg->msg;
+	TAILQ_FOREACH(cbdata, &headq, next) {
+		if (cbdata->ev_token == *tokenp)
+			break;
+	}
+	if (cbdata) {
 		head = cbdata->ev_head;
 		anoubis_notify_sendreply(head, EPERM, NULL, 0);
 		DEBUG(DBG_TRACE, " >anoubis_notify_sendreply: %x",
@@ -1641,7 +1632,8 @@ dispatch_p2s_evt_cancel(anoubisd_msg_t *msg,
 }
 
 static void
-dispatch_p2s_pol_reply(anoubisd_msg_t *msg, struct event_info_session *ev_info)
+dispatch_p2s_pol_reply(struct anoubisd_msg *msg,
+    struct event_info_session *ev_info)
 {
 	struct anoubisd_msg_polreply *reply;
 	void *buf = NULL;
@@ -1711,7 +1703,7 @@ dispatch_p2s_commit_reply(struct anoubisd_msg *msg,
 
 /* Does not free the message */
 static void
-dispatch_m2s_checksum_reply(anoubisd_msg_t *msg,
+dispatch_m2s_checksum_reply(struct anoubisd_msg *msg,
     struct event_info_session *ev_info)
 {
 	struct anoubisd_msg_csumreply	*reply;
@@ -1731,7 +1723,7 @@ dispatch_m2s_checksum_reply(anoubisd_msg_t *msg,
 
 /* Does not free the message. */
 static void
-dispatch_m2s_upgrade_notify(anoubisd_msg_t *msg,
+dispatch_m2s_upgrade_notify(struct anoubisd_msg *msg,
     struct event_info_session *ev_info)
 {
 	struct anoubisd_msg_upgrade	*umsg;

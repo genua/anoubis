@@ -55,7 +55,7 @@ struct pe_pubkey_db;
 /*
  * Return type for the policy engine function. DO NOT use for anything else.
  * In particular, this structure must not be sent to other daemon processes
- * as an anoubisd_msg_t payload.
+ * as an struct anoubisd_msg payload.
  */
 struct anoubisd_reply {
 	char		ask;		/* flag - ask GUI */
@@ -75,7 +75,7 @@ struct anoubisd_reply {
 typedef struct anoubisd_reply anoubisd_reply_t;
 
 /* Policy Engine main entry point. */
-struct anoubisd_reply *policy_engine(anoubisd_msg_t *request);
+struct anoubisd_reply *policy_engine(struct anoubisd_msg *request);
 
 
 struct pe_proc_ident {
@@ -262,9 +262,9 @@ int			 pe_playground_file_scanrequest(anoubis_cookie_t,
 			     uid_t uid);
 void			 pe_playground_dump(void);
 void			 pe_playground_init(void);
-void			 pe_playground_dispatch_request(anoubisd_msg_t *,
+void			 pe_playground_dispatch_request(struct anoubisd_msg *,
 			     Queue *queue);
-void			 pe_playground_dispatch_commit(anoubisd_msg_t *,
+void			 pe_playground_dispatch_commit(struct anoubisd_msg *,
 			     Queue *session, Queue *master);
 void			 pe_playground_dispatch_commitreply(
 			     struct anoubisd_msg*);

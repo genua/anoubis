@@ -45,27 +45,76 @@
 #include "anoubisd.h"
 #include "amsg.h"
 
-#define MSG_BUFS 100
+/**
+ * The maximum number of message buffers. These buffers are used for
+ * client connections in session.c, too. Thus we use a rather large value.
+ */
+#define MSG_BUFS 1000
+
+/**
+ * This structure handles buffered reading of variable lenght messages
+ * from pipes that connect anoubis daemon process with each other and
+ * the kernel. Fields:
+ * fd: The file descriptor of this buffer.
+ * rmsgoff: The number of bytes that are already stored in the buffer
+ *     pointed to by rmsg. Should be zero if the rmsg field is NULL.
+ * woff: An offset into the message that is currently written to the pipe.
+ *     The first woff bytes of the message have been written the rest must
+ *     still be written.
+ * rbufp: Points to a buffer used for reading data. This is where input
+ *     data is first stored. It is only transfered to rmsg if the current
+ *     message turns out to be incomplete. This pointer always points to
+ *     the start of the buffer which need not be the start of valid data.
+ * rheadp: A pointer into the read buffer. This pointer points to the start
+ *     of the unprocessed data in the buffer.
+ * rtailp: A pointer into the read bufffer. This pointer points one byte
+ *     after the end of the unprocessed data in the buffer.
+ * rmsg: If an incomplete message is found at the end of the read buffer,
+ *     the new message is allocated and stored here. The partial data is
+ *     copied into the message and removed from the read buffer. Subsequent
+ *     data is read directly into this message until the message is complete.
+ *     Once complete the message is returned to the caller.
+ * wmsg: This is the message that is currently being written to the pipe.
+ *     The message will be freed after it is written, i.e. the caller
+ *     can forget about it.
+ * iseof: True if a previous call to read returned zero. This is used to
+ *     implement a side effect free end of file test.
+ */
 struct msg_buf {
-	int		 fd;
-	size_t		 rmsgoff;
-	size_t		 woff;
-	char		*name;
-	void		*rbufp, *rheadp, *rtailp;
-	anoubisd_msg_t	*rmsg;
-	anoubisd_msg_t	*wmsg;
-	int		 iseof;
+	int			 fd;
+	size_t			 rmsgoff;
+	size_t			 woff;
+	void			*rbufp, *rheadp, *rtailp;
+	struct anoubisd_msg	*rmsg;
+	struct anoubisd_msg	*wmsg;
+	int			 iseof;
 };
 
-/*@reldef@*/
+/**
+ * Message buffers for active file descriptors are stored here. This
+ * storage is local to this file. The callers only deal with the file
+ * descriptors themselves. A message buffer is in use iff its rbufp
+ * pointer is not zero.
+ */
 static struct msg_buf fds[MSG_BUFS];
 
-/* simple buffered file access, remember the event */
+/**
+ * Associate a message buffer with a file descriptor and initialize it.
+ * The file descriptor is set no non-blocking.
+ *
+ * @param fd The file descriptor.
+ * @return None.
+ */
 void
-msg_init(int fd, char *name)
+msg_init(int fd)
 {
 	int idx;
 
+	if (fd < 0) {
+		log_warnx("msg_init with negative fd");
+		master_terminate(EIO);
+		return;
+	}
 	/* already initialized? */
 	for (idx=0; idx < MSG_BUFS; idx++)
 		if (fds[idx].fd == fd)
@@ -74,53 +123,82 @@ msg_init(int fd, char *name)
 	if (fcntl(fd, F_SETFL, O_NONBLOCK))
 		log_warn("O_NONBLOCK not set");
 
-	for (idx=0; idx < MSG_BUFS; idx++) {
-		if (fds[idx].rbufp == NULL) {
-
-			/*
-			 * We use MSG_BUF_SIZE*2, so we can always read
-			 * up to MSG_BUF_SIZE bytes!
-			 */
-			if ((fds[idx].rbufp = malloc(MSG_BUF_SIZE*2)) == NULL) {
-				log_warn("msg_init: can't allocate memory");
-				master_terminate(ENOMEM);
-				return;
-			}
-			fds[idx].rheadp = fds[idx].rtailp = fds[idx].rbufp;
-			fds[idx].rmsg = NULL;
-			fds[idx].rmsgoff = 0;
-
-			fds[idx].wmsg = NULL;
-			fds[idx].woff = 0;
-
-			fds[idx].fd = fd;
-			fds[idx].name = name;
-			fds[idx].iseof = 0;
-			DEBUG(DBG_MSG_FD, "msg_init: name=%s fd:%d idx:%d",
-			    name, fd, idx);
-
-			return;
+	/*
+	 * Try to use idx=fd if possible. This is a heuristic that
+	 * will speed up the search for a message buffer.
+	 */
+	idx = fd;
+	if (idx >= MSG_BUFS || fds[idx].rbufp != NULL) {
+		for (idx=MSG_BUFS-1; idx >= 0; idx--) {
+			if (fds[idx].rbufp == NULL)
+				break;
 		}
 	}
-	log_warnx("msg_init: No unused msg_bufs found");
+	if (idx < 0) {
+		log_warnx("msg_init: No unused msg_bufs found");
+		return;
+	}
+
+
+	/*
+	 * We use MSG_BUF_SIZE*2, so we can always read
+	 * up to MSG_BUF_SIZE bytes!
+	 */
+	if ((fds[idx].rbufp = malloc(MSG_BUF_SIZE*2)) == NULL) {
+		log_warn("msg_init: can't allocate memory");
+		master_terminate(ENOMEM);
+		return;
+	}
+	fds[idx].rheadp = fds[idx].rtailp = fds[idx].rbufp;
+	fds[idx].rmsg = NULL;
+	fds[idx].rmsgoff = 0;
+
+	fds[idx].wmsg = NULL;
+	fds[idx].woff = 0;
+
+	fds[idx].fd = fd;
+	fds[idx].iseof = 0;
+	DEBUG(DBG_MSG_FD, "msg_init: fd:%d idx:%d", fd, idx);
 }
 
-/*@exposed@*/ /*@null@*/
+/**
+ * Return a pointer to the message buffer for a given file descriptor.
+ * We check the index that is equal to the file descriptor first. msg_init
+ * perferrably stores the buffer at this index.
+ *
+ * @param fd The file descriptor.
+ * @return The message buffer associated with the file descriptor.
+ */
 static struct msg_buf *
 _get_mbp(int fd)
 {
 	int idx;
 
-	for (idx=0; idx < MSG_BUFS; idx++)
-		if (fds[idx].fd == fd) {
-			DEBUG(DBG_MSG_FD, "_get_mbp: fd:%d idx:%d", fd, idx);
-			return &fds[idx];
+	if (fd < 0)
+		return NULL;
+	idx = fd;
+	if (idx >= MSG_BUFS || fds[idx].rbufp == NULL || fds[idx].fd != fd) {
+		for (idx=MSG_BUFS-1; idx >= 0; idx--) {
+			if (fds[idx].rbufp && fds[idx].fd == fd)
+				break;
 		}
-
-	DEBUG(DBG_MSG_FD, "buffer not found: %d", fd);
-	return NULL;
+	}
+	if (idx < 0) {
+		DEBUG(DBG_MSG_FD, "buffer not found: %d", fd);
+		return NULL;
+	}
+	DEBUG(DBG_MSG_FD, "_get_mbp: fd:%d idx:%d", fd, idx);
+	return &fds[idx];
 }
 
+/**
+ * Release a message buffer before closing a file descriptor. This is
+ * mainly useful in child processes of the master that want to get rid
+ * of message buffers for file desciptors that must be closed.
+ *
+ * @param fd The file descriptor.
+ * @return None.
+ */
 void
 msg_release(int fd)
 {
@@ -138,13 +216,20 @@ msg_release(int fd)
 	buf->woff = 0;
 	buf->rbufp = NULL;
 	buf->fd = -1;
-	buf->name = NULL;
 	buf->iseof = 0;
 }
 
-/*
- * Return true if more data can be expected from the fd, zero if
- * EOF was detected.
+/**
+ * This function reads data and stores it in the appropriate buffer.
+ * If there is an incomplete message, read data is stored in this
+ * message. Otherwise data is stored in the read buffer.
+ *
+ * @param mbp The message buffer.
+ * @return True if more data can be expected from the file descriptor.
+ *     Zero if end of file is returned.
+ * NOTE: Zero is only returned if the file descriptor will never have
+ * additional data ready. A temorary shortage of data (i.e. an empty pipe
+ * buffer) does not cause this function to return zero.
  */
 static int
 _fill_buf(struct msg_buf *mbp)
@@ -191,20 +276,33 @@ _fill_buf(struct msg_buf *mbp)
 	return 1;
 err:
 	DEBUG(DBG_MSG_RECV, "_fill_buf: fd:%d size:%d", mbp->fd, size);
-	if (size < 0 && errno == EAGAIN)
+	if (size < 0 && (errno == EAGAIN || errno == EINTR))
 		return 1;
 	if (size < 0)
 		log_warn("read error");
 	return 0;
 }
 
-/*
+/**
+ * Return true if end of file was detected on the file descriptor in
+ * a previous read and no more (complete) messages can be read from
+ * the file descriptor. This function is side effect free wrt. the
+ * file descriptor, i.e. it does not (try to) read from it. If end of
+ * file is reached on the file descriptor but there is still some data
+ * in the buffer, it is expecgted that the caller uses something like
+ * get_msg to read the data.
+ *
+ * @param fd The file descriptor.
+ * @return True if end of file is reached.
+ *
  * NOTE: This function used to call _fill_buf which is bogus because
- * NOTE: it can cause the file descriptor to become blocking with a
- * NOTE: complete message in the receive buffer. Depending on the time
- * NOTE: that msg_eof is called in the receive handler this might cause
- * NOTE: the message to get stuck in the receive buffer until more data
- * NOTE: is received from the other end.
+ *     it can cause the file descriptor to become blocking with a
+ *     complete message in the receive buffer. Depending on the time
+ *     that msg_eof is called in the receive handler this might cause
+ *     the message to get stuck in the receive buffer until more data
+ *     is received from the other end.
+ * NOTE2: The final incomplete message the will never be completed
+ *     will not prevent this function from returning true.
  */
 int msg_eof(int fd)
 {
@@ -214,11 +312,36 @@ int msg_eof(int fd)
 		log_warnx("msg_buf not initialized");
 		return 1;
 	}
-	if (mbp->rmsg || (mbp->rheadp != mbp->rtailp))
+	if (!mbp->iseof)
 		return 0;
-	return mbp->iseof;
+	/*
+	 * If mbp->rmsg is not NULL the read buffer must be empty.
+	 * As no more data can be read from the fd, return true (EOF)
+	 * if the message is incomplete, false if it is complete.
+	 */
+	if (mbp->rmsg) {
+		if (mbp->rmsg->size == (int)mbp->rmsgoff)
+			return 0;
+		return 1;
+	}
+	/*
+	 * If the message buffer does not contain enough data for at least
+	 * a message header, this is certainly not a complete message, i.e.
+	 * we return EOF. Otherwise the next call to get_msg will either
+	 * empty the buffer or move the (rest of the) buffer contents to
+	 * mbp->rmsg.
+	 */
+	if (mbp->rtailp - mbp->rheadp < (int)sizeof(struct anoubisd_msg))
+		return 1;
+	return 0;
 }
 
+/**
+ * Write pending data from current outgoing message to the file
+ * descriptor. This function tries to write data at most once.
+ *
+ * @param mbp The message buffer.
+ */
 static void
 _flush_buf(struct msg_buf *mbp)
 {
@@ -235,14 +358,13 @@ _flush_buf(struct msg_buf *mbp)
 	size = write(mbp->fd, ((void*)mbp->wmsg)+mbp->woff,
 	    mbp->wmsg->size - mbp->woff);
 	if (size < 0) {
-		if (errno != EAGAIN)
+		if (errno != EAGAIN && errno != EINTR)
 			log_warn("write error");
 		return;
 	}
 	mbp->woff += size;
 	DEBUG(DBG_MSG_SEND, "_flush_buf: fd:%d size:%d", mbp->fd, size);
 
-	/* if empty, point to start */
 	if ((int)mbp->woff == mbp->wmsg->size) {
 		free(mbp->wmsg);
 		mbp->woff = 0;
@@ -250,17 +372,26 @@ _flush_buf(struct msg_buf *mbp)
 	}
 }
 
-/*
- * This returns a 'malloc'ed msg on success.
+/**
+ * Try to retrieve data from the buffer associate with the file descriptor.
+ * The read buffer is filled if required. If a complete message is available
+ * it is returned. The message is passed through amsg_verify before it is
+ * returned.
+ *
+ * @param fd The file descriptor to read a message from.
+ * @return A complete message in malloced memory or NULL if there is no
+ *     data or only an incomplete message. If this function returns NULL,
+ *     it is guaranteed that data must be read from the file descriptor
+ *     before a complete message can be returned. It is not guaranteed
+ *     that all available data from the file descriptor was actuall read!
  */
-anoubisd_msg_t *
+struct anoubisd_msg *
 get_msg(int fd)
 {
-	struct msg_buf *mbp;
-	anoubisd_msg_t *msg;
-	anoubisd_msg_t *msg_r;
-	int		copy;
-
+	struct msg_buf		*mbp;
+	struct anoubisd_msg	*msg;
+	struct anoubisd_msg	*msg_r;
+	int			 copy;
 
 	if ((mbp = _get_mbp(fd)) == NULL) {
 		log_warnx("msg_buf not initialized");
@@ -279,17 +410,17 @@ get_msg(int fd)
 		}
 		return NULL;
 	}
-	/* we need at least the anoubisd_msg_t structure. */
-	if ((unsigned int)(mbp->rtailp - mbp->rheadp) < sizeof(anoubisd_msg_t))
+	/* we need at least the struct anoubisd_msg structure. */
+	if (mbp->rtailp - mbp->rheadp < (int)sizeof(struct anoubisd_msg))
 		if (!_fill_buf(mbp))
 			goto eof;
-	if ((unsigned int)(mbp->rtailp - mbp->rheadp) < sizeof(anoubisd_msg_t))
+	if (mbp->rtailp - mbp->rheadp < (int)sizeof(struct anoubisd_msg))
 		return NULL;
 
 	/* check for a complete message */
-	msg = (anoubisd_msg_t *)mbp->rheadp;
+	msg = (struct anoubisd_msg *)mbp->rheadp;
 	if (msg->size > MSG_SIZE_LIMIT
-	    || msg->size < (int)sizeof(anoubisd_msg_t)) {
+	    || msg->size < (int)sizeof(struct anoubisd_msg)) {
 		log_warnx("get_msg: Bad message size %d", msg->size);
 		master_terminate(EINVAL);
 		return NULL;
@@ -302,7 +433,7 @@ get_msg(int fd)
 	copy = mbp->rtailp - mbp->rheadp;
 	if (copy > msg->size)
 		copy = msg->size;
-	bcopy(msg, msg_r, copy);
+	memcpy(msg_r, msg, copy);
 	mbp->rheadp += copy;
 	if (msg_r->size != copy) {
 		mbp->rmsg = msg_r;
@@ -318,16 +449,31 @@ eof:
 }
 
 
-/*
- * This returns a 'malloc'ed msg on success.
+/**
+ * Try to read a kernel message (i.e. a struct eventdev_hdr followed by
+ * payload data) from the file descriptor (or from data in its associated
+ * buffer). This is similar to get_msg but takes into account that
+ * the kernel will not let us read partial messages from the eventdev
+ * device.
+ *
+ * @param fd The file descriptor to read from.
+ * @return A kernel event encapsulated in a malloced struct anoubis_msg
+ *     of type ANOUBISD_MSG_EVENTDEV or NULL if no message is available.
+ *     The message format of the mesage is converted if we are running
+ *     on an older kernel. The resulting message is passed through
+ *     amsg_verify before returning it.
+ *
+ * NOTE: The converted kernel event is checked for correctness and the
+ * whole message is dropped if this check fails. This happens before
+ * amsg_verify to prevent the daemon from crashing on bogus kernel messages.
  */
-anoubisd_msg_t *
+struct anoubisd_msg *
 get_event(int fd)
 {
-	struct msg_buf		*mbp;
-	struct eventdev_hdr	*evt;
-	anoubisd_msg_t		*msg_r;
-	int			 size;
+	struct msg_buf			*mbp;
+	struct eventdev_hdr		*evt;
+	struct anoubisd_msg		*msg_r;
+	int				 size;
 
 	if ((mbp = _get_mbp(fd)) == NULL) {
 		log_warnx("msg_buf not initialized");
@@ -348,12 +494,12 @@ get_event(int fd)
 	if (size <= 0) {
 		if (size == 0)
 			mbp->iseof = 1;
-		if (size < 0 && errno != EAGAIN)
+		if (size < 0 && errno != EAGAIN && errno != EINTR)
 			log_warn(" get_event: read error");
 		return NULL;
 	}
 	evt = (struct eventdev_hdr *)mbp->rbufp;
-	if (size < (int)sizeof(int) || evt->msg_size != size) {
+	if (size < (int)sizeof(struct eventdev_hdr) || evt->msg_size != size) {
 		log_warnx(" Bad eventdev message length %d", size);
 		return NULL;
 	}
@@ -363,7 +509,7 @@ get_event(int fd)
 		master_terminate(ENOMEM);
 		return NULL;
 	}
-	bcopy(evt, msg_r->msg, evt->msg_size);
+	memcpy(msg_r->msg, evt, evt->msg_size);
 	if (version < ANOUBISCORE_VERSION) {
 		msg_r = compat_get_event(msg_r, version);
 		if (!msg_r) {
@@ -384,11 +530,24 @@ get_event(int fd)
 	return msg_r;
 }
 
-/*
- * Returns:
- *  - negative errno number in case of error
- *  - Zero on EOF
- *  - One otherwise. *msgp is NULL if message is incomplete
+/**
+ * Read an anoubis protocol message from a client connected to the session
+ * engine. A client message on the wire consists of a 32 bit length in
+ * network byte order followed by the actual message data. The length
+ * given includes the 32 length itself and the 32 bit checksum at the
+ * end of the message.
+ *
+ * @param fd The file descriptor to read from.
+ * @param msgp A complete message (if any) is stored here. This value
+ *     must never be NULL. The pointer pointed to by msgp is either set
+ *     to NULL or is set to point to the result message. The result message
+ *     is allocated using anoubis_msg_new and must be freed by the caller
+ *     with anoubis_msg_free.
+ * @return Zero if EOF is encountered. A negative error code if an error
+ *     occured or a positive value in case of success.
+ *     NOTE: Success does not mean that there is a complete message
+ *     available. The message may still be incomplete. In this case
+ *     NULL is stored in *msgp.
  */
 int
 get_client_msg(int fd, struct anoubis_msg **msgp)
@@ -396,8 +555,8 @@ get_client_msg(int fd, struct anoubis_msg **msgp)
 	struct msg_buf		*mbp;
 	u_int32_t		 len;
 	struct anoubis_msg	*m;
-	*msgp = NULL;
 
+	*msgp = NULL;
 	if ((mbp = _get_mbp(fd)) == NULL)
 		return 0;
 	if (mbp->rmsg) {
@@ -415,18 +574,49 @@ get_client_msg(int fd, struct anoubis_msg **msgp)
 			return 0;
 	if ((unsigned int)(mbp->rtailp - mbp->rheadp) < len)
 		return 1;
+	/*
+	 * anoubis_msg_new expects the size of the message without
+	 * the message length and without the trainling checksum (i.e.
+	 * payload data only). However, m->length of the resulting
+	 * message includes the checksum but not the message length.
+	 * This is the reason for the somewhat surprising length calculations.
+	 */
 	m = anoubis_msg_new(len - sizeof(len) - CSUM_LEN);
 	if (!m)
 		return -ENOMEM;
-	bcopy(mbp->rheadp+sizeof(len), m->u.buf, m->length);
+	memcpy(m->u.buf, mbp->rheadp+sizeof(len), m->length);
 	mbp->rheadp += len;
 	*msgp = m;
 	return 1;
 }
 
-/* Just flush the buffer if msg == NULL. */
+/**
+ * Write a message to the file descriptor. The message is buffered
+ * if it cannot be written immediately. At most one message can be
+ * buffered at a time. If the function accepts the message it makes
+ * sure that the message is freed. Otherwise the caller is responsible
+ * for the message. Note that is quite possible that the function rejects
+ * a message. This happens in particular, if another message is still in
+ * the output buffer. The message is checked using amsg_verify before it
+ * is sent.
+ *
+ * @param The file descriptor.
+ * @param msg The message to send. Use NULL to just flush the message
+ *     buffer.
+ * @return Positive if the message was accepted, zero if the message
+ *     was not accepted due to a write buffer and negative if the
+ *     message cannot be sent permanently (e.g. because it exceeds the
+ *     message size limit or the buffer is not initialized). If the
+ *     message to send is NULL a positive return value implies that the
+ *     buffer was flushed completely.
+ *
+ * NOTE: This function adds the message to the output buffer and tries
+ *     to flush the output buffer. However, if the output buffer is
+ *     not empty after the function returns, it is the responsibility of
+ *     the caller to flush the output buffer at a later point in time.
+ */
 int
-send_msg(int fd, anoubisd_msg_t *msg)
+send_msg(int fd, struct anoubisd_msg *msg)
 {
 	struct msg_buf *mbp;
 
@@ -453,6 +643,13 @@ send_msg(int fd, anoubisd_msg_t *msg)
 	return 1;
 }
 
+/**
+ * Return true if there is data sitting in the output buffer for this
+ * file descriptor.
+ *
+ * @param The file descriptor.
+ * @return True iff there is data in the output buffer.
+ */
 int
 msg_pending(int fd)
 {
@@ -465,13 +662,24 @@ msg_pending(int fd)
 	return mbp->wmsg != NULL;
 }
 
+/**
+ * Allocate a new struct anoubis_msg with the given type and size.
+ * The message size does not include the space required for the
+ * struct anoubisd_msg. The total message size must not exceed MSG_SIZE_LIMIT.
+ *
+ * @param mtype The message type.
+ * @param size The size of the message payload, i.e. the message data
+ *     without the struct anoubisd_msg.
+ * @return A message allocated via malloc. The caller is responsible for
+ *     freeing it. NULL if we are out of memory.
+ */
 struct anoubisd_msg *
 msg_factory(int mtype, int size)
 {
 	struct anoubisd_msg *msg;
 
-	size += sizeof(anoubisd_msg_t);
-	if (size < (int)sizeof(anoubisd_msg_t) || size > MSG_SIZE_LIMIT) {
+	size += sizeof(struct anoubisd_msg);
+	if (size < (int)sizeof(struct anoubisd_msg) || size > MSG_SIZE_LIMIT) {
 		log_warnx("msg_factory: Bad message size %d", size);
 		return NULL;
 	}
@@ -486,11 +694,24 @@ msg_factory(int mtype, int size)
 	return msg;
 }
 
+/**
+ * Reduce the message payload size of a message. This function does not
+ * actually free memory and it never increases the message size. However,
+ * calling this function can be used to control which part of message is
+ * sent to other anoubis daemon processes.
+ *
+ * @param msg The message to shrink.
+ * @param nsize The new size of the message payload. The size of a
+ *     struct anoubisd_msg is automatically added to this value and the
+ *     message size only changes if the new size is smaller than the old
+ *     size.
+ */
 void
 msg_shrink(struct anoubisd_msg *msg, int nsize)
 {
-	nsize += sizeof(anoubisd_msg_t);
-	if (nsize < (int)sizeof(anoubisd_msg_t) || nsize > MSG_SIZE_LIMIT) {
+	nsize += sizeof(struct anoubisd_msg);
+	if (nsize < (int)sizeof(struct anoubisd_msg)
+	    || nsize > MSG_SIZE_LIMIT) {
 		log_warnx("msg_shrink: Bad message size %d", nsize);
 		return;
 	}

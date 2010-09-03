@@ -1152,7 +1152,7 @@ cfg_dump(FILE *f)
  * @return A pointer to the message structure or NULL in case of an error
  *     (out of memory).
  */
-anoubisd_msg_t *
+struct anoubisd_msg *
 cfg_msg_create(void)
 {
 	int	msgsize;
@@ -1160,9 +1160,9 @@ cfg_msg_create(void)
 	int	currlen;
 	int	len;
 
-	anoubisd_msg_t			*msg;
-	anoubisd_msg_config_t		*confmsg;
-	struct anoubisd_upgrade_trigger *trigger;
+	struct anoubisd_msg			*msg;
+	anoubisd_msg_config_t			*confmsg;
+	struct anoubisd_upgrade_trigger		*trigger;
 
 	/* Calculate needed message size. */
 	count = 0;
@@ -1220,7 +1220,7 @@ cfg_msg_create(void)
  *     error.
  */
 int
-cfg_msg_parse(anoubisd_msg_t *msg)
+cfg_msg_parse(struct anoubisd_msg *msg)
 {
 	int	count;
 	int	offset;

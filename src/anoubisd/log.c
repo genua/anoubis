@@ -69,7 +69,7 @@ dispatch_log_write(int fd __used, short event __used, void *arg __used)
 void
 flush_log_queue(void)
 {
-	anoubisd_msg_t		*msg;
+	struct anoubisd_msg		*msg;
 	openlog(logname, LOG_PID | LOG_NDELAY, LOG_DAEMON);
 	while ((msg = dequeue(&__eventq_log))) {
 		struct anoubisd_msg_logit	*lmsg;
@@ -82,7 +82,7 @@ flush_log_queue(void)
 void
 log_init(int fd)
 {
-	msg_init(fd, "logger");
+	msg_init(fd);
 	__log_fd = fd;
 	__logging = 0;
 	event_set(&__log_event, __log_fd, EV_WRITE, &dispatch_log_write, NULL);
@@ -119,7 +119,7 @@ vlog(int pri, const char *fmt, va_list ap)
 		fflush(stderr);
 	} else {
 		if (__log_fd >= 0) {
-			anoubisd_msg_t	*msg;
+			struct anoubisd_msg	*msg;
 			struct anoubisd_msg_logit	*lmsg;
 			if (vasprintf(&nfmt, fmt, ap) == -1) {
 				master_terminate(ENOMEM);
@@ -270,7 +270,7 @@ logger_sighandler(int sig __used, short event __used, void *arg __used)
 void
 dispatch_log_read(int fd, short sig __used, void *arg)
 {
-	anoubisd_msg_t * msg;
+	struct anoubisd_msg	*msg;
 	__logging = 1;
 	while(1) {
 		msg = get_msg(fd);
@@ -349,10 +349,10 @@ logger_main(int pipes[], int loggers[])
 	anoubisd_defaultsigset(&mask);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 
-	msg_init(loggers[PROC_MAIN + 1], "m2l");
-	msg_init(loggers[PROC_POLICY + 1], "p2l");
-	msg_init(loggers[PROC_SESSION + 1], "s2l");
-	msg_init(loggers[PROC_UPGRADE + 1], "u2l");
+	msg_init(loggers[PROC_MAIN + 1]);
+	msg_init(loggers[PROC_POLICY + 1]);
+	msg_init(loggers[PROC_SESSION + 1]);
+	msg_init(loggers[PROC_UPGRADE + 1]);
 
 	for (p = 0; p < PROC_LOGGER; p += 2) {
 		if ((ev_logger = malloc(sizeof(struct event))) == NULL)

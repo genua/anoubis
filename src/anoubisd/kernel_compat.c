@@ -50,19 +50,27 @@
 #include <dev/anoubis_sfs.h>
 #endif
 
+/**
+ * Layout of anoubis_event_common before kernel protocol version
+ * 10004.
+ */
 struct anoubis_event_common_10004 {
 	anoubis_cookie_t task_cookie;
 };
 
-/*
+/**
  * This function converts older kernel events to the structure layout
  * expected by the current ANOUBISCORE_VERSION. If the message must be
  * converted, a new message must be created and the memory allocated for
  * the old message must be freed.
  * NOTE: The old message has not yet been passed through amsg_verify!
+ *
+ * @param old The old message.
+ * @param verion The ANOUBISCORE_VERSION reported by the kernel.
+ * @return The converted message or NULL if an error occurs.
  */
-anoubisd_msg_t *
-compat_get_event(anoubisd_msg_t *old, unsigned long version)
+struct anoubisd_msg *
+compat_get_event(struct anoubisd_msg *old, unsigned long version)
 {
 	int					 pre, post, total;
 	struct anoubisd_msg			*n;

@@ -258,7 +258,7 @@ pe_upgrade_finish(void)
  * NOTE: Basic length verification has been done by amsg_verify.
  */
 anoubisd_reply_t *
-policy_engine(anoubisd_msg_t *request)
+policy_engine(struct anoubisd_msg *request)
 {
 	anoubisd_reply_t	*reply;
 	struct eventdev_hdr	*hdr;

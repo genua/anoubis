@@ -27,189 +27,130 @@
 
 #include "config.h"
 
-#include "anoubis_alloc.h"
-
-#include <stdlib.h>
-#ifdef UTEST
-#include <assert.h>
-#include <stdio.h>
-#define log_warn(x)
-#endif /* UTEST */
-
 #include <errno.h>
 
 #include "amsg.h"
 #include "aqueue.h"
 #include "anoubisd.h"
+#include "anoubis_alloc.h"
 
-/*
- * Unit Test:
- *   cc -DUTEST  -o aqueue aqueue.c
- *   ./aqueue
+/**
+ * An entry in a generic queue. The queue does not need to know
+ * about the type of its entries and the entries need not know that
+ * they are (or will be) part of a queue. Fields:
+ * next: The link to the next entry in the queue.
+ * data: An opaque pointer to the data stored in the queue.
  */
+struct queue_entry {
+	TAILQ_ENTRY(queue_entry)	 next;
+	void				*data;
+};
 
-int
-enqueue(Queue * queuep, void *msgp)
+/**
+ * Add en entry to the end of the queue.
+ *
+ * @param queue The queue.
+ * @param data The data to add to the queue.
+ * @return None.
+ */
+void
+enqueue(Queue * queue, void *data)
 {
-	Qentry *qep;
+	struct queue_entry	 *entry;
 
-	if (queuep == NULL) {
-		log_warnx("uninitialized queue");
-		free(msgp);
-		return 0;
-	}
-	if ((qep = abuf_alloc_type(Qentry)) == NULL) {
+	entry = abuf_alloc_type(struct queue_entry);
+	if (entry == NULL) {
 		log_warn("enqueue: can't allocate memory");
-		free(msgp);
 		master_terminate(ENOMEM);
-		/*
-		 * In case of OOM situation, we can live with potential
-		 * unfreed storage. We therefore ignore the splint warning
-		 * at this point
-		 */
-		/*@i@*/return 0;
 	}
-	qep->next = NULL;
-	qep->entry = msgp;
-
-	if (queuep->tail)
-		queuep->tail->next = qep;
-	/*@i@*/queuep->tail = qep;
-	if (queuep->head == NULL)
-		queuep->head = queuep->tail;
-	if (queuep->event)
-		event_add(queuep->event, NULL);
-	return 1;
+	entry->data = data;
+	TAILQ_INSERT_TAIL(&queue->list, entry, next);
+	if (queue->ev)
+		event_add(queue->ev, NULL);
 }
 
+/**
+ * Remove the first entry in the queue and return a pointer to the data.
+ *
+ * @param queue The queue.
+ * @return A pointer to the data stored in the first queue entry or
+ *     NULL if the queue is empty.
+ */
 void *
-dequeue(Queue *queuep)
+dequeue(Queue *queue)
 {
-	Qentry *qep;
-	void *msgp;
+	struct queue_entry	*entry;
+	void			*ret;
 
-	if (queuep == NULL) {
-		log_warnx("uninitialized queue");
-		return 0;
-	}
-	if (queuep->head == NULL)
+	entry = TAILQ_FIRST(&queue->list);
+	if (entry == NULL)
 		return NULL;
-	qep = queuep->head;
-	msgp = queuep->head->entry;
-	queuep->head = queuep->head->next;
-	abuf_free_type(qep, Qentry);
-	if (queuep->head == NULL)
-		queuep->tail = NULL;
-	return msgp;
+	TAILQ_REMOVE(&queue->list, entry, next);
+	ret = entry->data;
+	abuf_free_type(entry, struct queue_entry);
+	return ret;
 }
 
-Qentry *
-queue_head(Queue *queuep)
-{
-	if (queuep == NULL) {
-		log_warnx("uninitialized queue");
-		return 0;
-	}
-	return queuep->head;
-}
-
-Qentry *
-queue_walk(Queue *queuep, Qentry *qep)
-{
-	if (queuep == NULL) {
-		log_warnx("uninitialized queue");
-		return 0;
-	}
-	if (qep == NULL)
-		return NULL;
-	return qep->next;
-}
-
+/**
+ * Return the data stored in the first queue entry without modifying
+ * the queue.
+ *
+ * @param queue The queue.
+ * @return The data stored in the first queue entry or NULL if the queue
+ *     is empty.
+ */
 void *
-queue_peek(Queue *queuep)
+queue_peek(Queue *queue)
 {
-	if (queuep == NULL) {
-		log_warnx("uninitialized queue");
-		return 0;
-	}
-	if (queuep->head == NULL)
+	struct queue_entry	*entry = TAILQ_FIRST(&queue->list);
+
+	if (entry == NULL)
 		return NULL;
-	return queuep->head->entry;
+	return entry->data;
 }
 
-void *
-queue_find(Queue *queuep, void *msgp, int(*cmp)(void *, void *))
+/**
+ * Remove a particular data item from the queue. The data item
+ * is first searched in the queue and then removed.
+ *
+ * @param queue The queue.
+ * @param data The data item to remove.
+ * @return None.
+ */
+void
+queue_delete(Queue *queue, void *data)
 {
-	Qentry *qep;
+	struct queue_entry		*entry;
 
-	if (queuep == NULL) {
-		log_warnx("uninitialized queue");
-		return 0;
+	TAILQ_FOREACH(entry, &queue->list, next) {
+		if (entry->data == data)
+			break;
 	}
-	if (queuep->head == NULL)
-		return NULL;
-	qep = queuep->head;
-	while (qep) {
-		if ((*cmp)(msgp, qep->entry))
-			return qep->entry;
-		qep = qep->next;
-	}
-	return NULL;
+	if (entry == NULL)
+		return;
+	TAILQ_REMOVE(&queue->list, entry, next);
+	abuf_free_type(entry, struct queue_entry);
 }
 
-int
-queue_delete(Queue *queuep, void *msgp)
-{
-	Qentry *qep;
-	Qentry *lqep = NULL;
-
-	if (queuep == NULL) {
-		log_warnx("uninitialized queue");
-		return 0;
-	}
-	if (queuep->head == NULL)
-		return 0;
-	qep = queuep->head;
-	while (qep) {
-		if (msgp == qep->entry) {
-			if (qep == queuep->head) {
-				/* common queue operation, ignore splint here */
-				/*@i@*/queuep->head = qep->next;
-				if (queuep->head == NULL)
-					queuep->tail = NULL;
-				abuf_free_type(qep, Qentry);
-				return 1;
-			}
-			/*
-			 * no null pointer dereference possible here,
-			 * since the first loop run is always caught by
-			 * the if-branch directly above this comment. On
-			 * the 2nd loop-run lqep is always defined to
-			 * the previous queue element (read: nonnull).
-			 */
-			/*@i@*/lqep->next = qep->next;
-			if (queuep->tail == qep)
-				queuep->tail = lqep;
-			abuf_free_type(qep, Qentry);
-			/*
-			 * splint warns here that the parameter queuep
-			 * might indirectly point to deallocated storage
-			 * via queuep->head. However, this is no problem
-			 * here. Queue operations like this ARE
-			 * difficult to understand by splint.
-			 */
-			/*@i@*/return 1;
-		}
-		lqep = qep;
-		qep = qep->next;
-	}
-	return 0;
-}
-
+/**
+ * Assume that the given queue contains anoubid_msg structures that
+ * must be written to the given file descriptor in order. This function
+ * tries to use send_msg to send messages until the queue write blocks.
+ * Before returning this function adds the libevent event associated
+ * with the queue if the queue is not empty or the file descriptors
+ * buffer still has pending data.
+ *
+ * @param The queue with anoubisd_msg structures.
+ * @param The file descriptor to write the messages to.
+ * @return Negative if a permanent write error occured for a message.
+ *     The message with the error is removed from the queue and dropped.
+ *     Zero if some write is still pending. Positive if all messages
+ *     in the queue were sent and all buffers were flushed.
+ */
 int
 dispatch_write_queue(Queue *q, int fd)
 {
-	anoubisd_msg_t		*msg;
+	struct anoubisd_msg	*msg;
 	int			 ret = 0;
 
 	DEBUG(DBG_TRACE, ">dispatch_write_queue: %p", q);
@@ -226,8 +167,8 @@ dispatch_write_queue(Queue *q, int fd)
 		 * ret == 0: Buffers flushed but message not sent.
 		 * ret < 0:  Permanent error: Drop message (if any).
 		 */
-		if (ret == 0 && q->event) {
-			event_add(q->event, NULL);
+		if (ret == 0 && q->ev) {
+			event_add(q->ev, NULL);
 			break;
 		}
 		if (ret < 0) {
@@ -238,7 +179,7 @@ dispatch_write_queue(Queue *q, int fd)
 				    " Dropping unsent message: %p", msg);
 				free(msg);
 			}
-			event_add(q->event, NULL);
+			event_add(q->ev, NULL);
 			break;
 		}
 		/*
@@ -251,67 +192,3 @@ dispatch_write_queue(Queue *q, int fd)
 	DEBUG(DBG_TRACE, "<dispatch_write_queue: %p", q);
 	return ret;
 }
-
-#ifdef UTEST
-void
-queue_dump(Queue *q)
-{
-	Qentry *qep;
-
-	printf("q->head %x\n", q->head);
-	printf("q->tail %x\n", q->tail);
-	qep = q->head;
-	while (qep) {
-		printf("qep->entry %x\n", qep->entry);
-		printf("qep->next %x\n", qep->next);
-		qep = qep->next;
-	}
-	printf("\n");
-}
-
-int
-main(int ac, char *av[])
-{
-	Queue q;
-	void *mp;
-
-	printf("init\n");
-	queue_init(&q, NULL);
-	queue_dump(&q);
-
-	mp = malloc(sizeof(int));
-	printf("mp: %x\n", mp);
-	*(int *)mp = 1;
-	printf("enqueue: %d\n", enqueue(&q, mp));
-	queue_dump(&q);
-
-	mp = malloc(2 * sizeof(int));
-	printf("mp: %x\n", mp);
-	*(int *)mp = 2;
-	((int *)mp)[1] = 3;
-	printf("enqueue: %d\n", enqueue(&q, mp));
-	queue_dump(&q);
-
-	mp = dequeue(&q);
-	printf("dequeue: %d\n", *(int *)mp);
-	assert(*(int *)mp == 1);
-	free(mp);
-	queue_dump(&q);
-
-	mp = dequeue(&q);
-	printf("dequeue: %d %d\n",
-	    *(int *)mp,
-	    ((int *)mp)[1]);
-	assert(*(int *)mp == 2);
-	assert(((int *)mp)[1] == 3);
-	free(mp);
-	queue_dump(&q);
-
-	mp = dequeue(&q);
-	assert(mp == NULL);
-	printf("dequeue: empty\n");
-	queue_dump(&q);
-
-	return 0;
-}
-#endif /* UTEST */

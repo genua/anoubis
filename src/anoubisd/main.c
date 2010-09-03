@@ -880,7 +880,7 @@ main(int argc, char *argv[])
 	if (anoubisd_config.pg_scanners)
 		log_info("%d playground scanner(s) configured",
 		    anoubisd_config.pg_scanners);
-	
+
 	setproctitle("master");
 #ifdef LINUX
 	dazukofd = dazukofs_ignore();
@@ -927,9 +927,9 @@ main(int argc, char *argv[])
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 
 	/* init msg_bufs - keep track of outgoing ev_info */
-	msg_init(sessionfd, "m2s");
-	msg_init(policyfd, "m2p");
-	msg_init(upgradefd, "m2u");
+	msg_init(sessionfd);
+	msg_init(policyfd);
+	msg_init(upgradefd);
 
 	/*
 	 * Open eventdev to communicate with the kernel.
@@ -941,7 +941,7 @@ main(int argc, char *argv[])
 		log_warn("Could not open " _PATH_DEV "eventdev");
 		main_shutdown(1);
 	}
-	msg_init(eventfds[0], "m2dev");
+	msg_init(eventfds[0]);
 
 	/* session process */
 	event_set(&ev_m2s, sessionfd, EV_WRITE, dispatch_m2s, NULL);
@@ -1217,7 +1217,7 @@ cleanup_fds(int pipes[], int loggers[])
 static void
 reconfigure(void)
 {
-	anoubisd_msg_t	*msg;
+	struct anoubisd_msg	*msg;
 
 	/* Reload Public Keys */
 	cert_reconfigure(0);
@@ -1486,10 +1486,10 @@ init_root_key(char *passphrase)
  *     message payload. This memory is allocated but remains uninitialized.
  * @return The message or NULL if memory allocation failed.
  */
-static anoubisd_msg_t *
+static struct anoubisd_msg *
 create_checksumreply_msg(int type, u_int64_t token, int payloadlen)
 {
-	anoubisd_msg_t			*msg;
+	struct anoubisd_msg		*msg;
 	struct anoubisd_msg_csumreply	*reply;
 
 	msg = msg_factory(type, sizeof(struct anoubisd_msg_csumreply)
@@ -1522,7 +1522,7 @@ sfs_checksumop_list(struct sfs_checksumop *csop, u_int64_t token)
 {
 	char				*sfs_path = NULL;
 	int				 error = EINVAL;
-	anoubisd_msg_t			*msg = NULL;
+	struct anoubisd_msg		*msg = NULL;
 	struct anoubisd_msg_csumreply	*reply = NULL;
 	DIR				*sfs_dir = NULL;
 	struct dirent			*entry;
@@ -1777,7 +1777,7 @@ nomem:
  * @return None.
  */
 static void
-dispatch_checksumop(anoubisd_msg_t *msg)
+dispatch_checksumop(struct anoubisd_msg *msg)
 {
 	struct anoubis_msg		 rawmsg;
 	struct anoubisd_msg_csumop	*msg_csum;
@@ -1836,7 +1836,7 @@ out:
  * @return None.
  */
 static void
-dispatch_csmulti_request(anoubisd_msg_t *msg)
+dispatch_csmulti_request(struct anoubisd_msg *msg)
 {
 	struct anoubisd_msg_csumop	*msg_csum;
 	struct sfs_checksumop		 csop;
@@ -1879,13 +1879,13 @@ err:
  * @return None.
  */
 static void
-dispatch_passphrase(anoubisd_msg_t *msg)
+dispatch_passphrase(struct anoubisd_msg *msg)
 {
 	anoubisd_msg_passphrase_t	*pass;
 	int				 len;
 
 	pass = (anoubisd_msg_passphrase_t *)msg->msg;
-	len = msg->size - sizeof(anoubisd_msg_t);
+	len = msg->size - sizeof(struct anoubisd_msg);
 	if (len < (int)sizeof(anoubisd_msg_passphrase_t) + 1)
 		return;
 	pass->payload[len-1] = 0;
@@ -2080,8 +2080,8 @@ dispatch_auth_verify(struct anoubisd_msg *imsg)
 static void
 dispatch_s2m(int fd, short event __used, void *arg)
 {
-	anoubisd_msg_t *msg;
-	struct event_info_main *ev_info = arg;
+	struct anoubisd_msg		*msg;
+	struct event_info_main		*ev_info = arg;
 
 	DEBUG(DBG_TRACE, ">dispatch_s2m");
 
@@ -2258,10 +2258,9 @@ error:
 static void
 dispatch_p2m(int fd, short event __used, /*@dependent@*/ void *arg)
 {
-	/*@dependent@*/
-	struct event_info_main	*ev_info = arg;
-	struct eventdev_reply	*ev_rep;
-	anoubisd_msg_t		*msg;
+	struct event_info_main		*ev_info = arg;
+	struct eventdev_reply		*ev_rep;
+	struct anoubisd_msg		*msg;
 
 	DEBUG(DBG_TRACE, ">dispatch_p2m");
 
@@ -2311,9 +2310,9 @@ dispatch_p2m(int fd, short event __used, /*@dependent@*/ void *arg)
 static void
 dispatch_m2dev(int fd, short event __used, void *arg __used)
 {
-	anoubisd_msg_t		*msg;
-	struct eventdev_reply	*ev_rep;
-	ssize_t			 ret;
+	struct anoubisd_msg		*msg;
+	struct eventdev_reply		*ev_rep;
+	ssize_t				 ret;
 
 	DEBUG(DBG_TRACE, ">dispatch_m2dev");
 
@@ -2353,7 +2352,7 @@ dispatch_m2dev(int fd, short event __used, void *arg __used)
 	}
 
 	if (queue_peek(&eventq_m2dev) || msg_pending(fd))
-		event_add(eventq_m2dev.event, NULL);
+		event_add(eventq_m2dev.ev, NULL);
 
 	DEBUG(DBG_TRACE, "<dispatch_m2dev");
 }
@@ -2375,13 +2374,11 @@ dispatch_m2dev(int fd, short event __used, void *arg __used)
 static void
 dispatch_dev2m(int fd, short event __used, void *arg)
 {
-	struct eventdev_hdr * hdr;
-	struct eventdev_reply * rep;
-	/*@dependent@*/
-	anoubisd_msg_t *msg;
-	/*@dependent@*/
-	anoubisd_msg_t *msg_reply;
-	struct event_info_main *ev_info = (struct event_info_main*)arg;
+	struct eventdev_hdr		*hdr;
+	struct eventdev_reply		*rep;
+	struct anoubisd_msg		*msg;
+	struct anoubisd_msg		*msg_reply;
+	struct event_info_main		*ev_info = arg;
 
 	DEBUG(DBG_TRACE, ">dispatch_dev2m");
 
@@ -2449,9 +2446,9 @@ dispatch_dev2m(int fd, short event __used, void *arg)
 		ev_info->ev_dev2m = NULL;
 		if (terminate < 2)
 			terminate = 2;
-		event_add(eventq_m2p.event, NULL);
-		event_add(eventq_m2s.event, NULL);
-		event_add(eventq_m2u.event, NULL);
+		event_add(eventq_m2p.ev, NULL);
+		event_add(eventq_m2s.ev, NULL);
+		event_add(eventq_m2u.ev, NULL);
 	}
 	DEBUG(DBG_TRACE, "<dispatch_dev2m");
 }
@@ -2495,7 +2492,7 @@ dispatch_m2u(int fd, short event __used, void *arg __used)
  * upgrade.
  */
 static void
-dispatch_sfs_update_all(anoubisd_msg_t *msg)
+dispatch_sfs_update_all(struct anoubisd_msg *msg)
 {
 	anoubisd_sfs_update_all_t	*umsg;
 	size_t				 plen;
@@ -2564,7 +2561,7 @@ bad:
 static void
 dispatch_u2m(int fd, short event __used, void *arg)
 {
-	anoubisd_msg_t			*msg;
+	struct anoubisd_msg		*msg;
 	struct event_info_main		*ev_info = arg;
 
 	DEBUG(DBG_TRACE, ">dispatch_u2m");

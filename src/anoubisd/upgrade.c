@@ -142,7 +142,7 @@ upgrade_main(int pipes[], int loggers[])
 	anoubisd_defaultsigset(&mask);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 
-	msg_init(masterfd, "m2u");
+	msg_init(masterfd);
 
 	/* master process */
 	event_set(&ev_m2u, masterfd, EV_READ | EV_PERSIST, dispatch_m2u,
@@ -165,8 +165,8 @@ upgrade_main(int pipes[], int loggers[])
 static void
 send_upgrade_message(int type)
 {
-	anoubisd_msg_t		*msg;
-	anoubisd_msg_upgrade_t	*umsg;
+	struct anoubisd_msg		*msg;
+	anoubisd_msg_upgrade_t		*umsg;
 
 	msg = msg_factory(ANOUBISD_MSG_UPGRADE, sizeof(*umsg));
 	if (msg == NULL) {
@@ -185,7 +185,7 @@ static void
 send_checksum(const char *path)
 {
 	static int			 devanoubis = -2;
-	anoubisd_msg_t			*msg;
+	struct anoubisd_msg		*msg;
 	anoubisd_sfs_update_all_t	*umsg;
 	struct anoubis_ioctl_csum	 cs;
 	int				 fd, len, plen;
@@ -258,7 +258,7 @@ send_checksum(const char *path)
 }
 
 static void
-dispatch_upgrade(anoubisd_msg_t *msg)
+dispatch_upgrade(struct anoubisd_msg *msg)
 {
 	anoubisd_msg_upgrade_t		*umsg;
 	size_t				 pos;
@@ -300,14 +300,14 @@ static void
 dispatch_m2u(int fd, short sig __used, void *arg)
 {
 	struct event_info_upgrade	*ev_info = arg;
-	anoubisd_msg_t			*msg;
+	struct anoubisd_msg		*msg;
 
 	DEBUG(DBG_TRACE, ">dispatch_m2u");
 
 	for (;;) {
 		if ((msg = get_msg(fd)) == NULL)
 			break;
-		if (msg->size < (int)sizeof(anoubisd_msg_t)) {
+		if (msg->size < (int)sizeof(struct anoubisd_msg)) {
 			log_warnx(" dispatch_m2u: short message");
 			free(msg);
 			continue;

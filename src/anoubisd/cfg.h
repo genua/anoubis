@@ -31,11 +31,11 @@
 #include <stdio.h>
 #include "anoubisd.h"
 
-int		 cfg_initialize(int, char * const *);
-int		 cfg_read(void);
-int		 cfg_reread(void);
-void		 cfg_dump(FILE *);
-anoubisd_msg_t	*cfg_msg_create(void);
-int		 cfg_msg_parse(anoubisd_msg_t *);
+int			 cfg_initialize(int, char * const *);
+int			 cfg_read(void);
+int			 cfg_reread(void);
+void			 cfg_dump(FILE *);
+struct anoubisd_msg	*cfg_msg_create(void);
+int			 cfg_msg_parse(struct anoubisd_msg *);
 
 #endif	/* _CFG_H_ */

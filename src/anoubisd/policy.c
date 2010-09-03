@@ -31,6 +31,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/queue.h>
 
 #ifdef S_SPLINT_S
 #include "splint-includes.h"
@@ -88,20 +89,18 @@ static Queue	eventq_p2s;
  * timeout and a configured default reply will be generated.
  */
 struct reply_wait {
-	eventdev_token	token;
-	int	flags;
-	time_t	starttime;
-	time_t	timeout;
-	int	log;
+	TAILQ_ENTRY(reply_wait)	next;
+	eventdev_token		token;
+	int			flags;
+	time_t			starttime;
+	time_t			timeout;
+	int			log;
 };
-static Queue	replyq;
+static TAILQ_HEAD(, reply_wait)		replyq;
 
 struct event_info_policy {
-	/*@dependent@*/
 	struct event	*ev_s2p, *ev_m2p;
-	/*@dependent@*/
 	struct event	*ev_timer;
-	/*@null@*/ /*@temp@*/
 	struct timeval	*tv;
 	struct event	*ev_sigs[10];
 };
@@ -158,7 +157,6 @@ policy_sighandler(int sig, short event __used, void *arg)
 
 pid_t
 policy_main(int pipes[], int loggers[])
-/*@globals undef eventq_p2m, undef eventq_p2s, undef replyq@*/
 {
 	int		 masterfd, sessionfd, logfd, err;
 	struct event	 ev_sigterm, ev_sigint, ev_sigquit, ev_sigusr1;
@@ -249,11 +247,11 @@ policy_main(int pipes[], int loggers[])
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 
 	queue_init(&eventq_p2m_hold, NULL);
-	queue_init(&replyq, NULL);
+	TAILQ_INIT(&replyq);
 
 	/* init msg_bufs - keep track of outgoing ev_info */
-	msg_init(masterfd, "m2p");
-	msg_init(sessionfd, "s2p");
+	msg_init(masterfd);
+	msg_init(sessionfd);
 
 	/* master process */
 	event_set(&ev_m2p, masterfd, EV_READ | EV_PERSIST, dispatch_m2p,
@@ -300,63 +298,58 @@ policy_main(int pipes[], int loggers[])
 static void
 dispatch_timer(int sig __used, short event __used, void *arg)
 {
-	struct event_info_policy *ev_info = (struct event_info_policy*)arg;
-	struct reply_wait *msg_wait;
-	anoubisd_msg_t *msg;
-	eventdev_token *tk;
-	/*@dependent@*/
-	Qentry *qep_cur;
-	/*@dependent@*/
-	Qentry *qep_next;
-	struct eventdev_reply *rep;
-	time_t now = time(NULL);
+	struct event_info_policy	*ev_info = arg;
+	struct reply_wait		*msg_wait, *msg_next;
+	struct anoubisd_msg		*msg;
+	eventdev_token			*tk;
+	struct eventdev_reply		*rep;
+	time_t				 now = time(NULL);
 
 	DEBUG(DBG_TRACE, ">dispatch_timer");
 
-	for(qep_cur = queue_head(&replyq); qep_cur; qep_cur = qep_next) {
-		qep_next = queue_walk(&replyq, qep_cur);
-
-		msg_wait = qep_cur->entry;
-		if (now > (msg_wait->starttime + msg_wait->timeout)
-		    || terminate >= 3) {
-			msg = msg_factory(ANOUBISD_MSG_EVENTREPLY,
+	msg_next = TAILQ_FIRST(&replyq);
+	for (msg_wait = msg_next;  msg_wait; msg_wait = msg_next) {
+		msg_next = TAILQ_NEXT(msg_wait, next);
+		if (terminate < 3
+		    && now < (msg_wait->starttime + msg_wait->timeout))
+			continue;
+		msg = msg_factory(ANOUBISD_MSG_EVENTREPLY,
 			    sizeof(struct eventdev_reply));
-			if (!msg) {
-				master_terminate(ENOMEM);
-				return;
-			}
-			rep = (struct eventdev_reply *)msg->msg;
-			rep->msg_token = msg_wait->token;
-			rep->reply = EPERM;
-			enqueue(&eventq_p2m, msg);
-			DEBUG(DBG_QUEUE, " >eventq_p2m: %x", rep->msg_token);
-
-			msg = msg_factory(ANOUBISD_MSG_EVENTCANCEL,
-			    sizeof(eventdev_token));
-			if (!msg) {
-				master_terminate(ENOMEM);
-				return;
-			}
-			tk = (eventdev_token *)msg->msg;
-			*tk = msg_wait->token;
-			enqueue(&eventq_p2s, msg);
-			DEBUG(DBG_QUEUE, " >eventq_p2s: %x", msg_wait->token);
-
-			DEBUG(DBG_QUEUE, " <replyq: %x error=%d",
-			    msg_wait->token, rep->reply);
-			queue_delete(&replyq, msg_wait);
-			switch(msg_wait->log) {
-			case APN_LOG_NORMAL:
-				log_info("token %u: no  user reply (denied)",
-				    msg_wait->token);
-				break;
-			case APN_LOG_ALERT:
-				log_warnx("token %u: no user reply (denied)",
-				    msg_wait->token);
-				break;
-			}
-			abuf_free_type(msg_wait, struct reply_wait);
+		if (!msg) {
+			master_terminate(ENOMEM);
+			return;
 		}
+		rep = (struct eventdev_reply *)msg->msg;
+		rep->msg_token = msg_wait->token;
+		rep->reply = EPERM;
+		enqueue(&eventq_p2m, msg);
+		DEBUG(DBG_QUEUE, " >eventq_p2m: %x", rep->msg_token);
+
+		msg = msg_factory(ANOUBISD_MSG_EVENTCANCEL,
+		    sizeof(eventdev_token));
+		if (!msg) {
+			master_terminate(ENOMEM);
+			return;
+		}
+		tk = (eventdev_token *)msg->msg;
+		*tk = msg_wait->token;
+		enqueue(&eventq_p2s, msg);
+		DEBUG(DBG_QUEUE, " >eventq_p2s: %x", msg_wait->token);
+
+		DEBUG(DBG_QUEUE, " <replyq: %x error=%d", msg_wait->token,
+		    rep->reply);
+		TAILQ_REMOVE(&replyq, msg_wait, next);
+		switch(msg_wait->log) {
+		case APN_LOG_NORMAL:
+			log_info("token %u: no  user reply (denied)",
+			    msg_wait->token);
+			break;
+		case APN_LOG_ALERT:
+			log_warnx("token %u: no user reply (denied)",
+			    msg_wait->token);
+			break;
+		}
+		abuf_free_type(msg_wait, struct reply_wait);
 	}
 	if (terminate < 3)
 		event_add(ev_info->ev_timer, ev_info->tv);
@@ -366,7 +359,7 @@ dispatch_timer(int sig __used, short event __used, void *arg)
 
 /* Does not free the message */
 static void
-dispatch_sfscache_invalidate(anoubisd_msg_t *msg)
+dispatch_sfscache_invalidate(struct anoubisd_msg *msg)
 {
 	struct anoubisd_sfscache_invalidate	*invmsg;
 	int					 total;
@@ -400,8 +393,8 @@ dispatch_sfscache_invalidate(anoubisd_msg_t *msg)
 void
 send_upgrade_start(void)
 {
-	anoubisd_msg_t			*msg;
-	struct anoubisd_msg_upgrade	*upg;
+	struct anoubisd_msg			*msg;
+	struct anoubisd_msg_upgrade		*upg;
 
 	DEBUG(DBG_UPGRADE, ">send_upgrade_start");
 
@@ -429,7 +422,7 @@ send_upgrade_start(void)
 static void
 send_upgrade_chunk(void)
 {
-	anoubisd_msg_t			*msg;
+	struct anoubisd_msg		*msg;
 	struct anoubisd_msg_upgrade	*upg;
 	char				buf[PATH_MAX];
 	int				buf_size;
@@ -468,7 +461,7 @@ send_upgrade_chunk(void)
 
 /* Does not free the message */
 static void
-dispatch_upgrade(anoubisd_msg_t *msg)
+dispatch_upgrade(struct anoubisd_msg *msg)
 {
 	struct anoubisd_msg_upgrade	*upg;
 	struct eventdev_reply		*rep;
@@ -503,7 +496,9 @@ dispatch_upgrade(anoubisd_msg_t *msg)
 		pe_upgrade_finish();
 		pe_proc_release();
 		while (1) {
-			anoubisd_msg_t	*msg = dequeue(&eventq_p2m_hold);
+			struct anoubisd_msg		*msg;
+
+			msg = dequeue(&eventq_p2m_hold);
 			if (!msg)
 				break;
 			enqueue(&eventq_p2m, msg);
@@ -629,13 +624,13 @@ fill_eventask_message(int type, int loglevel, struct eventdev_hdr *hdr,
 static void
 dispatch_m2p(int fd, short sig __used, void *arg)
 {
-	struct reply_wait *msg_wait;
-	anoubisd_msg_t *msg, *msg_reply;
-	anoubisd_reply_t *reply;
-	struct event_info_policy *ev_info = (struct event_info_policy*)arg;
-	/*@dependent@*/
-	struct eventdev_hdr *hdr;
-	struct eventdev_reply *rep;
+	struct reply_wait			*msg_wait;
+	struct anoubisd_msg			*msg;
+	struct anoubisd_msg			*msg_reply;
+	anoubisd_reply_t			*reply;
+	struct event_info_policy		*ev_info = arg;
+	struct eventdev_hdr			*hdr;
+	struct eventdev_reply			*rep;
 
 	DEBUG(DBG_TRACE, ">dispatch_m2p");
 
@@ -702,7 +697,7 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 		}
 
 		if (reply->ask) {
-			anoubisd_msg_t		*nmsg;
+			struct anoubisd_msg	*nmsg;
 			eventdev_token		 token = hdr->msg_token;
 
 			nmsg = fill_eventask_message(ANOUBISD_MSG_EVENTASK,
@@ -738,7 +733,7 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 			msg_wait->timeout = reply->timeout;
 			msg_wait->log = reply->log;
 
-			enqueue(&replyq, msg_wait);
+			TAILQ_INSERT_TAIL(&replyq, msg_wait, next);
 			DEBUG(DBG_QUEUE, " >replyq: %x flags=%x",
 			    msg_wait->token, msg_wait->flags);
 
@@ -779,7 +774,7 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 	if (msg_eof(fd)) {
 		set_terminate(2, ev_info);
 		event_del(ev_info->ev_m2p);
-		event_add(eventq_p2s.event, NULL);
+		event_add(eventq_p2s.ev, NULL);
 	}
 	DEBUG(DBG_TRACE, "<dispatch_m2p (no msg)");
 }
@@ -853,7 +848,7 @@ send_lognotify(struct pe_proc *proc, struct eventdev_hdr *hdr,
 void
 send_policychange(u_int32_t uid, u_int32_t prio)
 {
-	anoubisd_msg_t			*msg;
+	struct anoubisd_msg		*msg;
 	struct anoubisd_msg_pchange	*pchange;
 
 	msg = msg_factory(ANOUBISD_MSG_POLICYCHANGE, sizeof(*pchange));
@@ -869,7 +864,7 @@ send_policychange(u_int32_t uid, u_int32_t prio)
 
 int send_policy_data(u_int64_t token, int fd)
 {
-	anoubisd_msg_t			*msg;
+	struct anoubisd_msg		*msg;
 	struct anoubisd_msg_polreply	*polreply;
 	int				 flags = POLICY_FLAG_START;
 	int				 size;
@@ -909,10 +904,11 @@ oom:
 static void
 dispatch_s2p(int fd, short sig __used, void *arg)
 {
-	struct event_info_policy *ev_info = (struct event_info_policy*)arg;
-	struct reply_wait rep_tmp, *rep_wait;
-	struct eventdev_reply * evrep;
-	anoubisd_msg_t *msg, *msg_rep;
+	struct event_info_policy		*ev_info = arg;
+	struct reply_wait			*rep_wait;
+	struct eventdev_reply			*evrep;
+	struct anoubisd_msg			*msg;
+	struct anoubisd_msg			*msg_rep;
 
 	DEBUG(DBG_TRACE, ">dispatch_s2p");
 
@@ -932,16 +928,18 @@ dispatch_s2p(int fd, short sig __used, void *arg)
 		case ANOUBISD_MSG_EVENTREPLY:
 
 			evrep = (struct eventdev_reply *)msg->msg;
-			rep_tmp.token = evrep->msg_token;
 
-			if ((rep_wait = queue_find(&replyq, &rep_tmp,
-			    token_cmp)) != 0) {
+			TAILQ_FOREACH(rep_wait, &replyq, next) {
+				if (rep_wait->token == evrep->msg_token)
+					break;
+			}
+			if (rep_wait != NULL) {
 				/*
 				 * Only send message if still in queue. It
 				 * might have already been replied to by a
 				 * timeout or other GUI
 				 */
-				queue_delete(&replyq, rep_wait);
+				TAILQ_REMOVE(&replyq, rep_wait, next);
 				DEBUG(DBG_QUEUE, " <replyq: %x error=%d",
 				    rep_wait->token, evrep->reply);
 				switch(rep_wait->log) {

@@ -644,7 +644,7 @@ out:
 	off = 0;
 	while (off < msg->size) {
 		int ret = write(sp->pipe[1], buf+off, msg->size-off);
-		if (ret < 0 && errno != EAGAIN)
+		if (ret < 0 && errno != EAGAIN && errno != EINTR)
 			_exit(2);
 		off += ret;
 	}
