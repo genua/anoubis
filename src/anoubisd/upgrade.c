@@ -123,7 +123,6 @@ upgrade_main(int pipes[], int loggers[])
 
 	log_info("upgrade started (pid %d)", getpid());
 
-	setproctitle("upgrade");
 #ifdef LINUX
 	dazukofd = dazukofs_ignore();
 #endif
@@ -154,6 +153,8 @@ upgrade_main(int pipes[], int loggers[])
 	queue_init(&eventq_u2m, &ev_u2m);
 
 	ev_info.ev_m2u = &ev_m2u;
+
+	setproctitle("upgrade");
 
 	if (event_dispatch() == -1) {
 		fatal("upgrade_main: event_dispatch");

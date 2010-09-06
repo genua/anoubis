@@ -320,7 +320,6 @@ logger_main(int pipes[], int loggers[])
 
 	anoubisd_process = PROC_LOGGER;
 
-	setproctitle("logger");
 #ifdef LINUX
 	dazukofd = dazukofs_ignore();
 #endif
@@ -367,6 +366,8 @@ logger_main(int pipes[], int loggers[])
 	loggers[PROC_SESSION + 1] = -1;
 	loggers[PROC_UPGRADE + 1] = -1;
 	cleanup_fds(pipes, loggers);
+
+	setproctitle("logger");
 
 	if (event_dispatch() == -1)
 		fatal("logger_main: event_dispatch");

@@ -407,8 +407,6 @@ session_main(int pipes[], int loggers[])
 		fatal("chdir");
 	log_info("session started (pid %d root %s)", getpid(), pw->pw_dir);
 
-	setproctitle("session engine");
-
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
@@ -468,6 +466,8 @@ session_main(int pipes[], int loggers[])
 		    EV_READ | EV_PERSIST, session_connect, &ev_info);
 		event_add(&(seg.ev_connect), NULL);
 	}
+
+	setproctitle("session engine");
 
 	DEBUG(DBG_TRACE, "session event loop");
 	if (event_dispatch() == -1)

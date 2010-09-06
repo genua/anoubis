@@ -216,8 +216,6 @@ policy_main(int pipes[], int loggers[])
 		solved by adding another setservent */
 	setservent(1);
 
-	setproctitle("policy engine");
-
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
@@ -285,6 +283,8 @@ policy_main(int pipes[], int loggers[])
 	cert_init(1);
 	pe_init();
 	pe_playground_init();
+
+	setproctitle("policy engine");
 
 	DEBUG(DBG_TRACE, "policy event loop");
 	if (event_dispatch() == -1)

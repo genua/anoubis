@@ -880,8 +880,6 @@ main(int argc, char *argv[])
 	if (anoubisd_config.pg_scanners)
 		log_info("%d playground scanner(s) configured",
 		    anoubisd_config.pg_scanners);
-
-	setproctitle("master");
 #ifdef LINUX
 	dazukofd = dazukofs_ignore();
 
@@ -1013,6 +1011,8 @@ main(int argc, char *argv[])
 	event_add(&ev_timer, &tv);
 
 	init_root_key(NULL);
+
+	setproctitle("master");
 
 	DEBUG(DBG_TRACE, "master event loop");
 	if (event_dispatch() == -1)

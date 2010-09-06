@@ -546,7 +546,6 @@ scanner_main(struct scanproc *sp, int flags)
 	struct sigaction			 action;
 	struct itimerval			 timer;
 
-	setproctitle("scanner uid=%d", (int)sp->uid);
 	CIRCLEQ_INIT(&results);
 	/*
 	 * NOTE: _SC_OPEN_MAX is the maximum number of open _files_ not
@@ -580,6 +579,8 @@ scanner_main(struct scanproc *sp, int flags)
 
 	toclose[0] = sp->pipe[1];
 	toclose[1] = -1;
+
+	setproctitle("scanner uid=%d", (int)sp->uid);
 
 	err = -EPERM;
 	if (CIRCLEQ_EMPTY(&anoubisd_config.pg_scanner))
