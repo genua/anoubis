@@ -215,7 +215,7 @@ START_TEST(fetch_file_list)
 	fail_unless(file_entry != 0);
 	fail_unless(file_entry->getPaths().size() == 1);
 	fail_unless(file_entry->getPaths()[0].Cmp(
-	    wxT("/home/u2000/.plgr.2.xxx")) == 0);
+	    wxT("/home/u2000/xxx")) == 0);
 
 
 	/** check 3rd playground */
@@ -233,9 +233,9 @@ START_TEST(fetch_file_list)
 	fail_unless(file_entry != 0);
 	fail_unless(file_entry->getPaths().size() == 2);
 	fail_unless(file_entry->getPaths()[0].Cmp(
-	    wxT("/home/u2000/.plgr.3.foo1")) == 0);
+	    wxT("/home/u2000/foo1")) == 0);
 	fail_unless(file_entry->getPaths()[1].Cmp(
-	    wxT("/home/u2000/.plgr.3.foo2")) == 0);
+	    wxT("/home/u2000/foo2")) == 0);
 
 	/* we did it ! */
 	printf("test done\n");
