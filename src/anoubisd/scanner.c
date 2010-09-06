@@ -368,11 +368,8 @@ scanner_run(struct anoubisd_pg_scanner *scanner, int fd, int toclose[])
 	int			 status;
 	time_t			 starttime, now;
 	time_t			 timeout = anoubisd_config.scanner_timeout;
+	const char		*str;
 
-	if (time(&starttime) < 0)
-		return NULL;
-	if (lseek(fd, 0, SEEK_SET) < 0)
-		return NULL;
 	result = abuf_alloc_type(struct scanresult);
 	if (result == NULL)
 		return NULL;
@@ -392,19 +389,23 @@ scanner_run(struct anoubisd_pg_scanner *scanner, int fd, int toclose[])
 	}
 
 	result->text = abuf_alloc(1000);
+	if (time(&starttime) < 0)
+		goto err;
+	if (lseek(fd, 0, SEEK_SET) < 0)
+		goto err;
+
 	/*
 	 * Create the pipe for the scanner output. The write end
 	 * will be mapped to stdout and stderr of the scanner.
 	 */
-	if (pipe(fds) < 0) {
-		free(result);
-		return NULL;
-	}
+	if (pipe(fds) < 0)
+		goto err;
 
 	pid = fork();
 	if (pid < 0) {
-		free(result);
-		return NULL;
+		close(fds[0]);
+		close(fds[1]);
+		goto err;
 	}
 	if (pid == 0) {
 		int		 i;
@@ -487,6 +488,15 @@ scanner_run(struct anoubisd_pg_scanner *scanner, int fd, int toclose[])
 	/* Forceful termination can  never result in a successful scan. */
 	if (terminate && result->exitcode == 0)
 		result->exitcode = 2;
+	return result;
+err:
+	result->exitcode = 2;
+	str = strerror(errno);
+	result->off = strlen(str);
+	if (result->off > (int)abuf_length(result->text))
+		result->off = abuf_length(result->text);
+	abuf_copy_tobuf(result->text, str, result->off);
+	abuf_limit(&result->text, result->off);
 	return result;
 }
 
