@@ -152,7 +152,7 @@ pe_playground_create(anoubis_cookie_t pgid, int do_mkdir)
 				log_warnx("Playground %" PRIx64
 				    " already exists", pgid);
 			else
-				log_warnx("Cannot create Playground "
+				log_warn("Cannot create Playground "
 				    "dir %" PRIx64, pgid);
 		}
 	}
@@ -244,14 +244,14 @@ pe_playground_readfile(struct playground *pg, const char *path, char *buf,
 	int ret;
 
 	if (fd < 0) {
-		log_warnx("pe_playground_readfile: Cannot open file %s "
+		log_warn("pe_playground_readfile: Cannot open file %s "
 		    "in playground directory %" PRIx64, path, pg->pgid);
 		return -1;
 	}
 	ret = read(fd, buf, bufsize-1);
 	close(fd);
 	if (ret < 0) {
-		log_warnx("pe_playground_readfile: Failed to read from "
+		log_warn("pe_playground_readfile: Failed to read from "
 		    "file %s in playground directory %" PRIx64, path, pg->pgid);
 		return -1;
 	}
@@ -277,24 +277,38 @@ pe_playground_writefile(struct playground *pg, const char *path, char *str)
 	int len, ret;
 
 	if (fd < 0) {
-		log_warnx("pe_playground_writefile: Cannot open file %s "
+		log_warn("pe_playground_writefile: Cannot open file %s "
 		    "in playground directory %" PRIx64, path, pg->pgid);
 		return;
 	}
 	if (!str) {
-		close(fd);
+		if (close(fd) < 0)
+			log_warn("pe_playground_writefile: Cannot truncate "
+			    "file %s in playground directory %" PRIx64, path,
+			    pg->pgid);
+
 		return;
 	}
 	len = strlen(str);
 	ret = write(fd, str, len);
-	close(fd);
 	if (ret < 0) {
-		log_warnx("pe_playground_writefile: Failed to write to "
+		log_warn("pe_playground_writefile: Failed to write to "
 		    "file %s in playground directory %" PRIx64, path, pg->pgid);
-	} else if (ret != len) {
-		log_warnx("pe_playground_writefile: Partial write to file "
-		    "%s in playground directory %" PRIx64, path, pg->pgid);
+		close(fd);
+		return;
 	}
+	else if (ret != len) {
+		log_warn("pe_playground_writefile: Partial write to file "
+		    "%s in playground directory %" PRIx64, path, pg->pgid);
+		close(fd);
+		return;
+	}
+	ret = close(fd);
+	if (ret < 0)
+		log_warn("pe_playground_writefile: Failed to write to "
+		    "file %s in playground directory %" PRIx64, path, pg->pgid);
+
+	return;
 }
 
 /**
@@ -445,7 +459,7 @@ pe_playground_file_instantiate(anoubis_cookie_t pgid, uint64_t dev,
 	pe_playground_devtoname(buf, sizeof(buf), dev, ino);
 	fd = atfd_openat(&pg->dirfd, buf, O_RDWR | O_CREAT, 0640);
 	if (fd < 0) {
-		log_warnx("pe_playground_file_instantiate: Cannot open %s "
+		log_warn("pe_playground_file_instantiate: Cannot open %s "
 		    "in playground %" PRIx64, buf, pgid);
 		return;
 	}
@@ -515,13 +529,15 @@ pe_playground_file_instantiate(anoubis_cookie_t pgid, uint64_t dev,
 	}
 	pathoff = strlen(path)+1;
 	if (write(fd, path, pathoff) != pathoff) {
-		log_warnx("pe_playground_file_instantiate: Failed to "
+		log_warn("pe_playground_file_instantiate: Failed to "
 		    "write path name");
 	}
 	if (newfile)
 		pg->nrfiles++;
 done:
-	close(fd);
+	if (close(fd) < 0)
+		log_warn("pe_playground_file_instantiate: Failed to "
+		    "write path name");
 }
 
 /**
