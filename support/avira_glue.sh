@@ -65,9 +65,9 @@ rc=$?
 
 # print basic error
 case $rc in
-	1) echo "ERROR: Found concerning file";;
-	3) echo "ERROR: Suspicious file found";;
-	4) echo "ERROR: Warnings were issued";;
+	1) [ -n "$out" ] || echo "ERROR: Found concerning file";;
+	3) [ -n "$out" ] || echo "ERROR: Suspicious file found";;
+	4) [ -n "$out" ] || echo "ERROR: Warnings were issued";;
 	255) echo "ERROR: Internal error";;
 	254) echo "ERROR: Configuration error";;
 	253) echo "ERROR: Error while preparing on-demand scan";;

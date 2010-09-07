@@ -27,15 +27,13 @@
 
 utildir = $(datadir)/@PACKAGE_DAEMON@
 
-dist_util_SCRIPTS = install_policy upgrade_sfs.pl avira_glue.sh clamav_glue.sh
+dist_util_SCRIPTS = install_policy upgrade_sfs.pl avira_glue.sh clamscan_glue.sh
 dist_util_DATA = openssl.cnf
 
 EXTRA_DIST = udev.rules
 
 install-data-hook:
-	$(LN_S) -f clamav_glue.sh \
-		$(DESTDIR)/$(datadir)/@PACKAGE_DAEMON@/clamscan_glue.sh
-	$(LN_S) -f clamav_glue.sh \
+	$(LN_S) -f clamscan_glue.sh \
 		$(DESTDIR)/$(datadir)/@PACKAGE_DAEMON@/clamdscan_glue.sh
 
 splint lint flawfinder:
