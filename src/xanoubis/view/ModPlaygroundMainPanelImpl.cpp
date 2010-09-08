@@ -363,7 +363,7 @@ ModPlaygroundMainPanelImpl::updateButtonState(void)
 		if (item)
 			entry = dynamic_cast<PlaygroundInfoEntry *>(item);
 		if ((entry != NULL) && (entry->getNumFiles() > 0) &&
-		    (entry->getUid() == geteuid()))
+		    (entry->getUid() == geteuid()) && !entry->isActive())
 			enable = true;
 	}
 	pgDeleteButton->Enable(enable);
