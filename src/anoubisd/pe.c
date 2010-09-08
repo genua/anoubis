@@ -847,7 +847,7 @@ pe_handle_playgroundfile(struct eventdev_hdr *hdr)
 		pe_playground_file_delete(pg->pgid, pg->dev, pg->ino);
 		break;
 	case ANOUBIS_PGFILE_SCAN: {
-		struct pe_proc	*proc = pe_proc_get(pg->common.task_cookie);
+		struct pe_proc	*proc;
 
 		if (pe_playground_file_scanrequest(pg->pgid, pg->dev,
 		    pg->ino, pg->path, hdr->msg_uid) < 0) {
@@ -857,11 +857,13 @@ pe_handle_playgroundfile(struct eventdev_hdr *hdr)
 			    pg->pgid, hdr->msg_uid);
 			break;
 		}
+		proc = pe_proc_get(pg->common.task_cookie);
 		log_info("scanning of file %" PRIx64 ":%" PRIx64 " (%s) in "
 		    "playground %" PRIx64 " requested by user %d",
 		    pg->dev, pg->ino, pg->path, pg->pgid, hdr->msg_uid);
 		send_lognotify(proc, hdr, 0 /* error */, APN_LOG_NORMAL,
 		    0 /* ruleid */, 0 /* prio */, 0 /* sfsmatch */);
+		pe_proc_put(proc);
 		break;
 	}
 	default:

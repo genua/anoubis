@@ -223,7 +223,7 @@ pe_proc_put(struct pe_proc *proc)
 		master_terminate(EINVAL);
 		return;
 	}
-	if (proc->pgid)
+	if (proc->pgid && proc->threads)
 		pe_playground_delete(proc->pgid, proc);
 	pe_proc_ident_put(&proc->ident);
 
@@ -247,10 +247,10 @@ void
 pe_proc_set_playgroundid(struct pe_proc *proc, anoubis_cookie_t pgid)
 {
 	if (proc && proc->pgid != pgid) {
-		if (proc->pgid)
+		if (proc->pgid && proc->threads)
 			pe_playground_delete(pgid, proc);
 		proc->pgid = pgid;
-		if (proc->pgid)
+		if (proc->pgid && proc->threads)
 			pe_playground_add(pgid, proc);
 	}
 }
@@ -653,6 +653,8 @@ pe_proc_add_thread(anoubis_cookie_t cookie)
 
 	have_task_tracking = 1;
 	if (proc) {
+		if (proc->threads == 0 && proc->pgid)
+			pe_playground_add(proc->pgid, proc);
 		proc->threads++;
 		pe_proc_put(proc);
 	}
@@ -674,8 +676,11 @@ pe_proc_remove_thread(anoubis_cookie_t cookie)
 	have_task_tracking = 1;
 	if (proc && proc->threads > 0) {
 		proc->threads--;
-		if (proc->threads == 0)
+		if (proc->threads == 0) {
+			if (proc->pgid)
+				pe_playground_delete(proc->pgid, proc);
 			pe_upgrade_end(proc);
+		}
 	}
 	pe_proc_put(proc);
 }
