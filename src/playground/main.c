@@ -768,7 +768,7 @@ pgcli_list_print_msg(struct anoubis_msg *message)
 	/* Print header */
 	printf("%*s ", PGCLI_OUTLEN_ID, "PGID");
 	printf("%*s ", PGCLI_OUTLEN_USER, "USER");
-	printf("%*s ", PGCLI_OUTLEN_STAT, "STAT");
+	printf("%*s ", PGCLI_OUTLEN_STAT, "STATUS");
 	printf("%*s ", PGCLI_OUTLEN_FILES, "FILES");
 	printf("%*s ", PGCLI_OUTLEN_TIME, "TIME");
 	printf("%-*s\n", PGCLI_OUTLEN_COMMAND, "COMMAND");
