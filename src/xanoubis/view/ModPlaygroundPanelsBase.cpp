@@ -245,3 +245,78 @@ DlgPlaygroundCommitFileListBase::DlgPlaygroundCommitFileListBase( wxWindow* pare
 	delButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgPlaygroundCommitFileListBase::onDeleteClicked ), NULL, this );
 	closeButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgPlaygroundCommitFileListBase::onCloseClicked ), NULL, this );
 }
+
+DlgPlaygroundScanResultBase::DlgPlaygroundScanResultBase( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+	
+	wxBoxSizer* mainSizer;
+	mainSizer = new wxBoxSizer( wxVERTICAL );
+	
+	
+	mainSizer->Add( 0, 10, 0, wxEXPAND, 5 );
+	
+	wxBoxSizer* headSizer;
+	headSizer = new wxBoxSizer( wxHORIZONTAL );
+	
+	alertIcon = new wxStaticBitmap( this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxDefaultSize, 0 );
+	headSizer->Add( alertIcon, 0, wxALIGN_CENTER_VERTICAL|wxRIGHT|wxLEFT, 10 );
+	
+	wxBoxSizer* textSizer;
+	textSizer = new wxBoxSizer( wxVERTICAL );
+	
+	descriptionLabel = new wxStaticText( this, wxID_ANY, _("One or more content scanners reported issues regarding the file(s) listed below:"), wxDefaultPosition, wxDefaultSize, 0 );
+	descriptionLabel->Wrap( 550 );
+	textSizer->Add( descriptionLabel, 0, wxALL, 5 );
+	
+	fileNameLabel = new wxStaticText( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	fileNameLabel->Wrap( -1 );
+	textSizer->Add( fileNameLabel, 0, wxALL, 5 );
+	
+	questionLabel = new wxStaticText( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	questionLabel->Wrap( -1 );
+	textSizer->Add( questionLabel, 0, wxALL, 5 );
+	
+	headSizer->Add( textSizer, 1, wxEXPAND, 5 );
+	
+	
+	headSizer->Add( 10, 0, 0, wxEXPAND, 5 );
+	
+	mainSizer->Add( headSizer, 0, wxEXPAND, 5 );
+	
+	wxBoxSizer* buttonSizer;
+	buttonSizer = new wxBoxSizer( wxHORIZONTAL );
+	
+	
+	buttonSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	okButton = new wxButton( this, wxID_ANY, _("Ok"), wxDefaultPosition, wxDefaultSize, 0 );
+	okButton->Enable( false );
+	okButton->Hide();
+	
+	buttonSizer->Add( okButton, 0, wxALL, 5 );
+	
+	skipButton = new wxButton( this, wxID_ANY, _("Skip"), wxDefaultPosition, wxDefaultSize, 0 );
+	skipButton->Enable( false );
+	skipButton->Hide();
+	
+	buttonSizer->Add( skipButton, 0, wxALL, 5 );
+	
+	commitButton = new wxButton( this, wxID_ANY, _("Commit"), wxDefaultPosition, wxDefaultSize, 0 );
+	commitButton->Enable( false );
+	commitButton->Hide();
+	
+	buttonSizer->Add( commitButton, 0, wxALL, 5 );
+	
+	mainSizer->Add( buttonSizer, 0, wxEXPAND, 5 );
+	
+	
+	mainSizer->Add( 0, 10, 0, 0, 5 );
+	
+	resultSizer = new wxBoxSizer( wxVERTICAL );
+	
+	mainSizer->Add( resultSizer, 1, wxEXPAND, 5 );
+	
+	this->SetSizer( mainSizer );
+	this->Layout();
+}

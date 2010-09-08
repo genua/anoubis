@@ -154,4 +154,30 @@ class DlgPlaygroundCommitFileListBase : public wxDialog
 	
 };
 
+///////////////////////////////////////////////////////////////////////////////
+/// Class DlgPlaygroundScanResultBase
+///////////////////////////////////////////////////////////////////////////////
+class DlgPlaygroundScanResultBase : public wxDialog 
+{
+	private:
+	
+	protected:
+		
+		wxStaticBitmap* alertIcon;
+		wxStaticText* descriptionLabel;
+		wxStaticText* fileNameLabel;
+		wxStaticText* questionLabel;
+		
+		
+		wxButton* okButton;
+		wxButton* skipButton;
+		wxButton* commitButton;
+		
+		wxBoxSizer* resultSizer;
+	
+	public:
+		DlgPlaygroundScanResultBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Scan results"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 640,-1 ), long style = wxCAPTION|wxCLOSE_BOX|wxMAXIMIZE_BOX|wxMINIMIZE_BOX|wxRESIZE_BORDER );
+	
+};
+
 #endif //__ModPlaygroundPanelsBase__

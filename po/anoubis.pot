@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: anoubis 0.9.3.26.40.152\n"
+"Project-Id-Version: anoubis 0.9.3.26.76.192\n"
 "Report-Msgid-Bugs-To: anoubis@lists.anoubis.org\n"
-"POT-Creation-Date: 2010-08-31 09:29+0200\n"
+"POT-Creation-Date: 2010-09-08 15:16+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -544,9 +544,17 @@ msgstr ""
 msgid "Log Viewer"
 msgstr ""
 
-#: src/xanoubis/view/DlgPlaygroundCommitFileListImpl.cpp:137
+#: src/xanoubis/view/DlgPlaygroundCommitFileListImpl.cpp:150
 #: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:175
 msgid "Multiple errors occured while processing the Playground request"
+msgstr ""
+
+#: src/xanoubis/view/DlgPlaygroundScanResultImpl.cpp:85
+msgid "The file(s) will not be commited."
+msgstr ""
+
+#: src/xanoubis/view/DlgPlaygroundScanResultImpl.cpp:87
+msgid "Do you really want to commit the file(s)?"
 msgstr ""
 
 #: src/xanoubis/view/DlgRuleEditor.cpp:657
@@ -711,7 +719,7 @@ msgstr ""
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:97
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:203
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:196
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:170
 #: src/xanoubis/view/ModSfsPanelsBase.cpp:553
 #: src/xanoubis/view/ModSfsPanelsBase.cpp:561
 msgid "..."
@@ -1368,7 +1376,7 @@ msgid "Export policy file..."
 msgstr ""
 
 #: src/xanoubis/view/MainFrameBase.cpp:52
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:220
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:203
 msgid "Close"
 msgstr ""
 
@@ -1423,7 +1431,7 @@ msgstr ""
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:156
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:164
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:172
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:162
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:136
 #: src/xanoubis/view/ModSbPanelsBase.cpp:136
 #: src/xanoubis/view/ModSfsPanelsBase.cpp:481
 msgid "0"
@@ -1477,7 +1485,7 @@ msgid "open requests (ALF):"
 msgstr ""
 
 #: src/xanoubis/view/ModAlfPanelsBase.cpp:136
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:158
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:132
 #: src/xanoubis/view/ModSbPanelsBase.cpp:132
 #: src/xanoubis/view/ModSfsPanelsBase.cpp:477
 msgid "everything OK"
@@ -1793,8 +1801,8 @@ msgid "Profile:"
 msgstr ""
 
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:442
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:94
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:212
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:68
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:195
 msgid "Delete"
 msgstr ""
 
@@ -2012,119 +2020,138 @@ msgstr ""
 msgid "Overview"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:227
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:229
 msgid "Cannot get data of selected entry."
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:228
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:235
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:273
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:295
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:310
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:375
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:230
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:237
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:276
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:298
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:313
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:378
 msgid "Playground error"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:234
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:236
 msgid "Could not delete playground.\n"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:272
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:275
 msgid "There are no files to commit!"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:293
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:296
 #, c-format
 msgid "Sytem error: %hs"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:307
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:310
 #, c-format
 msgid "Could not start program \"%ls\" within playground: %ls"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:374
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:377
 msgid "Could not refresh list of playgrounds."
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:415
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:418
 #, c-format
 msgid "Commit files for playground %<PRIx64>"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:44
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:18
 msgid "PG - Playground"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:56
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:30
 msgid "New Playground"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:58
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:32
 msgid "Application:"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:65
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:39
 msgid "Start Playground"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:73
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:47
 msgid "Playground Overview:"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:81
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:55
 msgid "Refresh view"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:89
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:63
 msgid "Commit files..."
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:106
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:80
 msgid "Playground"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:128
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:102
 msgid "Displays the status of the Playground (PG) while connected."
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:145
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:119
 msgid "status (PG):"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:149
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:123
 msgid "playgrounds (PG):"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:179
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:153
 msgid ""
 "This is a list of files that have been used or created within the current "
 "playground. All selected files will be committed to the file system. "
 "Existing files won't be replaced without further permission."
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:189
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:163
 msgid "Playground files:"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:207
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:190
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:279
 msgid "Commit"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:208
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:191
 msgid "Commit selected Files to the production system."
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:213
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:196
 msgid "Delete selected playground Files."
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:222
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:205
 msgid "Close this Window"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.h:152
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:242
+msgid ""
+"One or more content scanners reported issues regarding the file(s) listed "
+"below:"
+msgstr ""
+
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:267
+msgid "Ok"
+msgstr ""
+
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:273
+msgid "Skip"
+msgstr ""
+
+#: src/xanoubis/view/ModPlaygroundPanelsBase.h:127
 msgid "Commit Files"
+msgstr ""
+
+#: src/xanoubis/view/ModPlaygroundPanelsBase.h:153
+msgid "Scan results"
 msgstr ""
 
 #: src/xanoubis/view/ModSbPanelsBase.cpp:44
@@ -3490,7 +3517,7 @@ msgstr ""
 
 #: src/xanoubis/control/PlaygroundCtrl.cpp:173
 #, c-format
-msgid "Couldn't unlink all files: %hs"
+msgid "Error in playground request: %hs"
 msgstr ""
 
 #: src/xanoubis/control/PlaygroundCtrl.cpp:181
@@ -3547,12 +3574,12 @@ msgstr ""
 msgid "Playground Commit"
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:357
+#: src/xanoubis/control/PlaygroundCtrl.cpp:356
 #, c-format
 msgid "Unlink '%ls' failed: %hs"
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:521
+#: src/xanoubis/control/PlaygroundCtrl.cpp:520
 #, c-format
 msgid "Could not determine filename for playground-file: %hs"
 msgstr ""
@@ -3943,6 +3970,11 @@ msgstr ""
 #: src/xanoubis/job/ComThread.cpp:522
 #, c-format
 msgid "Unkown status message key=%x value=%d"
+msgstr ""
+
+#: src/xanoubis/job/PlaygroundCommitTask.cpp:101
+#, c-format
+msgid "Committing %hs"
 msgstr ""
 
 #: src/xanoubis/main.cpp:122

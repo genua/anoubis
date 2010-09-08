@@ -320,6 +320,8 @@ xanoubis_SOURCES= \
 	view/DlgLogViewerBase.h \
 	view/DlgPlaygroundCommitFileListImpl.cpp \
 	view/DlgPlaygroundCommitFileListImpl.h \
+	view/DlgPlaygroundScanResultImpl.cpp \
+	view/DlgPlaygroundScanResultImpl.h \
 	view/DlgProfileSelection.cpp \
 	view/DlgProfileSelection.h \
 	view/DlgRuleEditor.cpp \
