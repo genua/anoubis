@@ -258,7 +258,18 @@ PlaygroundCtrl::getCommitErrorMessage(int state, int err)
 		}
 		break;
 	case PlaygroundCommitTask::STATE_SCAN_FAILED:
-		return _("File scanners reported a problem with the file.");
+		switch(err) {
+		case EAGAIN:
+			return _("Recommended file scanners reported a "
+			    "problem with the file.");
+		case EPERM:
+			return _("Required file scanners reported a permanent "
+			    "problem with the file.");
+		default:
+			return wxString::Format(_("File scanners reported a "
+			    "problem with the file: %hs"),
+			    anoubis_strerror(err));
+		}
 	case PlaygroundCommitTask::STATE_RENAME_FAILED:
 		return wxString::Format(_("File was removed from the "
 		    "playground but could not be renamed (%hs)."),
@@ -272,7 +283,8 @@ PlaygroundCtrl::OnPlaygroundFilesCommitted(TaskEvent &event)
 {
 	PlaygroundCommitTask	*task = NULL;
 	bool			 errors = false;
-	std::vector<uint64_t>	 devs, inos;
+	std::vector<uint64_t>	 cpdevs, cpinos, noscandevs, noscaninos;
+	uint64_t		 pgid;
 
 	task = dynamic_cast<PlaygroundCommitTask *>(event.getTask());
 	if (!isValidTask(task)) {
@@ -281,22 +293,26 @@ PlaygroundCtrl::OnPlaygroundFilesCommitted(TaskEvent &event)
 	}
 	/* Our task. Stop propagating. */
 	event.Skip(false);
+	pgid = task->getPgid();
 	if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
 		handleComTaskResult(task);
-		sendEvent(anEVT_PLAYGROUND_COMPLETED);
-		updatePlaygroundFiles(task->getPgid(), false);
 		removeTask(task);
 		delete task;
+		if (taskListEmpty()) {
+			sendEvent(anEVT_PLAYGROUND_COMPLETED);
+			updatePlaygroundFiles(pgid, false);
+		}
 		return;
 	}
 
 	for (int i=0; i<task->getFileCount(); ++i) {
 		int		s = task->getFileState(i);
+		int		err = task->getFileError(i);
 		wxString	msg, fullmsg, file;
 
 		if (s == PlaygroundCommitTask::STATE_COMPLETE)
 			continue;
-		msg = getCommitErrorMessage(s, task->getFileError(i));
+		msg = getCommitErrorMessage(s, err);
 		file = fileIdentification(task->getDevice(i),
 		    task->getInode(i));
 		fullmsg = wxString::Format(_("Commit for file(s) '%ls' "
@@ -305,9 +321,39 @@ PlaygroundCtrl::OnPlaygroundFilesCommitted(TaskEvent &event)
 			fullmsg += _(" Commit anyway?");
 			if (wxMessageBox(fullmsg, _("Playground Commit"),
 			    wxYES_NO) == wxYES) {
-				devs.push_back(task->getDevice(i));
-				inos.push_back(task->getInode(i));
+				cpdevs.push_back(task->getDevice(i));
+				cpinos.push_back(task->getInode(i));
 				continue;
+			}
+		} else if (s == PlaygroundCommitTask::STATE_SCAN_FAILED) {
+			const std::vector<wxString>	&res =
+			    task->getScanResults(i);
+			int				 action = wxNO;
+
+			/*
+			 * XXX CEH: This is a temporary hack until we have
+			 * XXX CEH: the scanresult widget
+			 */
+			if (err == EAGAIN || err == EPERM) {
+				fullmsg += wxT("\n");
+				for (unsigned int j=0; j<res.size(); ++j) {
+					fullmsg += res[j];
+					fullmsg += wxT("\n");
+				}
+			}
+			if (err == EAGAIN) {
+				fullmsg += _("Commit anyway?");
+				/* XXX CEH: Use scanresult dialog box */
+				action = wxMessageBox(fullmsg,
+				    _("Playground Commit"), wxYES_NO);
+			} else {
+				/* XXX CEH: Use scanresult dialog box */
+				wxMessageBox(fullmsg, _("Playground Commit"),
+				    wxOK);
+			}
+			if (action == wxYES) {
+				noscandevs.push_back(task->getDevice(i));
+				noscaninos.push_back(task->getInode(i));
 			}
 		} else {
 			errorList_.Add(fullmsg);
@@ -316,14 +362,20 @@ PlaygroundCtrl::OnPlaygroundFilesCommitted(TaskEvent &event)
 	}
 	if (errors)
 		sendEvent(anEVT_PLAYGROUND_ERROR);
-	if (devs.size() == 0) {
-		sendEvent(anEVT_PLAYGROUND_COMPLETED);
-		updatePlaygroundFiles(task->getPgid(), false);
-	} else {
-		commitFiles(task->getPgid(), devs, inos, true);
+	if (cpdevs.size()) {
+		commitFiles(task->getPgid(), cpdevs, cpinos, true,
+		    task->getNoScan());
+	}
+	if (noscandevs.size()) {
+		commitFiles(task->getPgid(), noscandevs, noscaninos,
+		    task->getForceOverwrite(), true);
 	}
 	removeTask(task);
 	delete task;
+	if (taskListEmpty()) {
+		sendEvent(anEVT_PLAYGROUND_COMPLETED);
+		updatePlaygroundFiles(pgid, false);
+	}
 }
 
 void
@@ -360,10 +412,12 @@ PlaygroundCtrl::OnPlaygroundUnlinkDone(TaskEvent &event)
 		}
 		handleComTaskResult(task);
 	}
-	updatePlaygroundInfo();
-	updatePlaygroundFiles(task->getPgId(), false);
-	sendEvent(anEVT_PLAYGROUND_COMPLETED);
 	removeTask(task);
+	if (taskListEmpty()) {
+		updatePlaygroundInfo();
+		updatePlaygroundFiles(task->getPgId(), false);
+		sendEvent(anEVT_PLAYGROUND_COMPLETED);
+	}
 	delete task;
 }
 
@@ -618,19 +672,21 @@ PlaygroundCtrl::commitFiles(const std::vector<int> &files)
 	}
 	if (pgid == 0 || inos.size() == 0)
 		return false;
-	commitFiles(pgid, devs, inos, false);
+	commitFiles(pgid, devs, inos, false, false);
 	return true;
 }
 
 void
 PlaygroundCtrl::commitFiles(uint64_t pgid, std::vector<uint64_t> devs,
-    std::vector<uint64_t> inos, bool force)
+    std::vector<uint64_t> inos, bool force, bool noscan)
 {
 	PlaygroundCommitTask		*ct;
 
 	ct = new PlaygroundCommitTask(pgid, devs, inos);
 	if (force)
 		ct->setForceOverwrite();
+	if (noscan)
+		ct->setNoScan();
 	addTask(ct);
 	JobCtrl::instance()->addTask(ct);
 }

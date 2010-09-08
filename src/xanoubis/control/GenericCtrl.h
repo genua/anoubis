@@ -142,6 +142,16 @@ class GenericCtrl : public wxEvtHandler
 		 */
 		void sendEvent(WXTYPE);
 
+		/**
+		 * Return true if the task list is currently empty.
+		 *
+		 * @param None.
+		 * @return True if the task list is empty.
+		 */
+		bool taskListEmpty(void) const {
+			return (taskList_.size() == 0);
+		}
+
 	private:
 		/**
 		 * Store multiple error descriptions.

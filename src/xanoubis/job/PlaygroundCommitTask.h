@@ -33,6 +33,7 @@
 #include <ComTask.h>
 #include <TaskEvent.h>
 #include <anoubis_transaction.h>
+#include <wx/string.h>
 
 /**
  * This task is used to commit file from a playground to the production
@@ -175,9 +176,61 @@ public:
 	/**
 	 * Set the force overwrite flag to true. If this is set the
 	 * task will commit files even if the target file exists.
+	 *
+	 * @param None.
+	 * @return None.
 	 */
 	void setForceOverwrite(void) {
 		forceOverwrite_ = true;
+	}
+
+	/**
+	 * Return the value of the force overwrite flag.
+	 *
+	 * @param None.
+	 * @return The value of the force overwrite flag.
+	 */
+	bool getForceOverwrite(void) const {
+		return forceOverwrite_;
+	}
+
+	/**
+	 * Set the noscan flag to true. If this is set the task will
+	 * instruct the anoubis daemon to skip content scanners that
+	 * are not mandatory.
+	 *
+	 * @param None.
+	 * @return None.
+	 */
+	void setNoScan(void) {
+		noscan_ = true;
+	}
+
+	/**
+	 * Return the value of the noscan flag.
+	 *
+	 * @param None.
+	 * @return True if the noscan flag is set for the task.
+	 */
+	bool getNoScan(void) const {
+		return noscan_;
+	}
+
+	/**
+	 * Return the scan results for a file where scanning failed.
+	 * The result is an array of char pointers. Each scan result
+	 * consists of an array of wxStrings. Each scan result consists
+	 * of two strings where the first is the name of the scanner and
+	 * the second is the output of the scanner.
+	 *
+	 * @param idx The index of the file.
+	 * @return The scan results.
+	 */
+	const std::vector<wxString> &getScanResults(unsigned int idx) {
+		static const std::vector<wxString>	empty;
+		if (idx >= scanresults_.size())
+			return empty;
+		return scanresults_[idx];
 	}
 
 private:
@@ -257,62 +310,77 @@ private:
 	wxEventType	getEventType(void) const;
 
 	/**
+	 * Parse the result of message of the current scan (stored in
+	 * the committa_ transaction.
+	 *
+	 * @param None.
+	 * @return None.
+	 */
+	void parseScanResults(void);
+
+	/**
 	 * The playground ID of this task. Set by teh constructor, read only.
 	 */
-	uint64_t			  pgid_;
+	uint64_t				  pgid_;
 
 	/**
 	 * The device numbers of the files. Set by the constructor, read only.
 	 */
-	std::vector<uint64_t>		  devs_;
+	std::vector<uint64_t>			  devs_;
 
 	/**
 	 * The inode numbers of the files. Set by the constructor, read only.
 	 */
-	std::vector<uint64_t>		  inos_;
+	std::vector<uint64_t>			  inos_;
 
 	/**
 	 * The current state of each file. Can be retrieved by getFileState().
 	 */
-	std::vector<int>		  states_;
+	std::vector<int>			  states_;
 
 	/**
 	 * The detailed error codes. Can be retrieved by getFileError().
 	 */
-	std::vector<int>		  errs_;
+	std::vector<int>			  errs_;
+
+	/**
+	 * The parsed scan results for each  file where scanning failed.
+	 * Can be retrieved by getScanResult().
+	 */
+	std::vector<std::vector<wxString> >	  scanresults_;
 
 	/**
 	 * The transaction for the current/last file list request.
 	 */
-	struct anoubis_transaction	 *listta_;
+	struct anoubis_transaction		 *listta_;
 
 	/**
 	 * The transaction for the current/last commit request.
 	 */
-	struct anoubis_transaction	 *committa_;
+	struct anoubis_transaction		 *committa_;
 
 	/**
 	 * In index of the current file.
 	 */
-	int				  idx_;
+	int					  idx_;
 
 	/**
 	 * Potential file names of the current file (device relative).
 	 */
-	const char			**names_;
+	const char				**names_;
 
 	/**
 	 * The complete file name of the current file. This is passed to
 	 * the daemon in a commit request.
 	 */
-	char				 *fullname_;
+	char					 *fullname_;
 
 	/**
 	 * True if we received a commit request from the daemon for the
 	 * current file. This request is triggered by the call to
 	 * lremovexattr.
 	 */
-	bool				  gotCommitNotify_;
+	bool					  gotCommitNotify_;
 
 	/**
 	 * True if some progress was made in the current iteration over
@@ -321,13 +389,18 @@ private:
 	 * in the initial link count check. This catches directories, that
 	 * are not empty, too.
 	 */
-	bool				  progress_;
+	bool					  progress_;
 
 	/**
 	 * True if the commit should be done in force mode, i.e.
 	 * overwriting production system files is allowed.
 	 */
-	bool				  forceOverwrite_;
+	bool					  forceOverwrite_;
+
+	/**
+	 * True if the commit should skip recommended content scanners.
+	 */
+	bool					  noscan_;
 };
 
 #endif	/* _PLAYGROUNDCOMMITTASK_H_ */

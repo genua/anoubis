@@ -156,10 +156,12 @@ class PlaygroundCtrl : public GenericCtrl, public Singleton<PlaygroundCtrl>
 		 * @param inos The list of inode numbers.
 		 * @param force True if the force overwrite flag should be
 		 *     set on the commit task.
+		 * @param noscan True if the noscan flag should be set on
+		 *     the commit task.
 		 * @return None.
 		 */
 		void commitFiles(uint64_t pgid, std::vector<uint64_t> devs,
-		    std::vector<uint64_t> inos, bool force);
+		    std::vector<uint64_t> inos, bool force, bool noscan);
 
 		/**
 		 * Construct a user readable error message from a file

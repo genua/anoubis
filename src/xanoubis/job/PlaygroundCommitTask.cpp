@@ -49,11 +49,13 @@ PlaygroundCommitTask::PlaygroundCommitTask(uint64_t pgid,
 	pgid_ = pgid;
 	states_.resize(inos.size(), STATE_TODO);
 	errs_.resize(inos.size(), EPERM);
+	scanresults_.resize(inos.size());
 	idx_ = -1;
 	names_ = NULL;
 	fullname_ = NULL;
 	progress_ = false;
 	forceOverwrite_ = false;
+	noscan_ = false;
 }
 
 PlaygroundCommitTask::~PlaygroundCommitTask(void)
@@ -90,7 +92,7 @@ PlaygroundCommitTask::createCommitTransaction(void)
 	if (committa_)
 		anoubis_transaction_destroy(committa_);
 	committa_ = anoubis_client_pgcommit_start(getClient(),
-	    pgid_, fullname_, 0);
+	    pgid_, fullname_, noscan_);
 	if (committa_ == NULL) {
 		setComTaskResult(RESULT_LOCAL_ERROR);
 		setResultDetails(ENOMEM);
@@ -115,6 +117,32 @@ PlaygroundCommitTask::execCom(void)
 	if (states_[idx_] != STATE_DO_COMMIT)
 		return;
 	gotCommitNotify_ = false;
+}
+
+void
+PlaygroundCommitTask::parseScanResults(void)
+{
+	const char		**str;
+
+	str = anoubis_client_parse_pgcommit_reply(committa_->msg);
+	if (str == NULL) {
+		errs_[idx_] = ENOMEM;
+		return;
+	}
+	scanresults_[idx_].clear();
+	for (int i=0; str[i]; i+= 2) {
+		scanresults_[idx_].push_back(
+		    wxString::Format(wxT("%hs"), str[i]));
+		if (str[i+1] == NULL) {
+			scanresults_[idx_].push_back(
+			    _("No scanner output available!"));
+			break;
+		} else {
+			scanresults_[idx_].push_back(
+			    wxString::Format(wxT("%hs"), str[i+1]));
+		}
+	}
+	free(str);
 }
 
 bool
@@ -167,6 +195,8 @@ PlaygroundCommitTask::done(void)
 		return false;
 	if (committa_->result) {
 		states_[idx_] = STATE_SCAN_FAILED;
+		errs_[idx_] = committa_->result;
+		parseScanResults();
 	} else {
 		states_[idx_] = STATE_LABEL_REMOVED;
 	}
