@@ -127,18 +127,6 @@ PlaygroundCtrl::removeFiles(const std::vector<int> &indexes)
 	return createUnlinkTask(pgid, files);
 }
 
-const wxArrayString &
-PlaygroundCtrl::getErrors(void) const
-{
-	return (errorList_);
-}
-
-void
-PlaygroundCtrl::clearErrors(void)
-{
-	errorList_.Clear();
-}
-
 PlaygroundCtrl::PlaygroundCtrl(void) : Singleton<PlaygroundCtrl>()
 {
 	JobCtrl::instance()->Connect(anTASKEVT_PG_LIST,
@@ -160,26 +148,25 @@ PlaygroundCtrl::handleComTaskResult(ComTask *task)
 {
 	switch (task->getComTaskResult()) {
 	case ComTask::RESULT_COM_ERROR:
-		errorList_.Add(wxString::Format(_("Communication error in "
+		addError(wxString::Format(_("Communication error in "
 		    "playground request.")));
 		sendEvent(anEVT_PLAYGROUND_ERROR);
 		break;
 	case ComTask::RESULT_REMOTE_ERROR:
-		errorList_.Add(wxString::Format(_("The daemon returned an "
+		addError(wxString::Format(_("The daemon returned an "
 		    "error for the playground request: %hs"),
 		    anoubis_strerror(task->getResultDetails())));
 		sendEvent(anEVT_PLAYGROUND_ERROR);
 		break;
 	case ComTask::RESULT_LOCAL_ERROR:
-		errorList_.Add(wxString::Format(_("Error in playground request:"
+		addError(wxString::Format(_("Error in playground request:"
 		    " %hs"), anoubis_strerror(task->getResultDetails())));
 		sendEvent(anEVT_PLAYGROUND_ERROR);
 		break;
 	case ComTask::RESULT_SUCCESS:
-		errorList_.Clear();
 		break;
 	default:
-		errorList_.Add(wxString::Format(_("Got unexpected result (%d) "
+		addError(wxString::Format(_("Got unexpected result (%d) "
 		    "for playground request"), task->getComTaskResult()));
 		sendEvent(anEVT_PLAYGROUND_ERROR);
 		break;
@@ -331,7 +318,7 @@ PlaygroundCtrl::OnPlaygroundFilesCommitted(TaskEvent &event)
 			    task->getScanResults(i);
 
 			if ((err != EAGAIN && err != EPERM) || res.empty()) {
-				errorList_.Add(fullmsg);
+				addError(fullmsg);
 				continue;
 			}
 
@@ -360,10 +347,10 @@ PlaygroundCtrl::OnPlaygroundFilesCommitted(TaskEvent &event)
 
 			dlg->Destroy();
 		} else {
-			errorList_.Add(fullmsg);
+			addError(fullmsg);
 		}
 	}
-	if (!errorList_.empty())
+	if (hasErrors())
 		sendEvent(anEVT_PLAYGROUND_ERROR);
 	if (cpdevs.size()) {
 		commitFiles(task->getPgid(), cpdevs, cpinos, true,
@@ -410,7 +397,7 @@ PlaygroundCtrl::OnPlaygroundUnlinkDone(TaskEvent &event)
 				msg = wxString::Format(
 				    _("Unlink '%ls' failed: %hs"), file.c_str(),
 				    anoubis_strerror(it->second));
-				errorList_.Add(msg);
+				addError(msg);
 			}
 		}
 		handleComTaskResult(task);
@@ -573,7 +560,7 @@ PlaygroundCtrl::extractFilesTask(PlaygroundFilesTask *task)
 			 * memory to add strings. simply do not add the file */
 			break;
 		default:
-			errorList_.Add(wxString::Format(_(
+			addError(wxString::Format(_(
 			    "Could not determine filename for playground-file: "
 			    "%hs"), anoubis_strerror(res)));
 			sendEvent(anEVT_PLAYGROUND_ERROR);

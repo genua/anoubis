@@ -111,23 +111,6 @@ class PlaygroundCtrl : public GenericCtrl, public Singleton<PlaygroundCtrl>
 		bool removeFiles(const std::vector<int> &files);
 
 		/**
-		 * Returns a list of errors, which occured during the execution
-		 * of the last command. The errors are valid until the next
-		 * command is started.
-		 * @param None
-		 * @return Errors collected during execution of the last
-		 *         command.
-		 */
-		const wxArrayString &getErrors(void) const;
-
-		/**
-		 * Cleaer list of errors.
-		 * @param None.
-		 * @return Nothing.
-		 */
-		void clearErrors(void);
-
-		/**
 		 * Command: Commit a set of files.
 		 * Try to commit a set of files by creating an appropriate
 		 * task. Once the task is finished an event is sent.
@@ -195,11 +178,6 @@ class PlaygroundCtrl : public GenericCtrl, public Singleton<PlaygroundCtrl>
 		 * List of files in the previously requested playground.
 		 */
 		AnGenericRowProvider playgroundFiles_;
-
-		/**
-		 * List of errors.
-		 */
-		wxArrayString errorList_;
 
 		/**
 		 * Event handler for completed PlaygroundListTasks.

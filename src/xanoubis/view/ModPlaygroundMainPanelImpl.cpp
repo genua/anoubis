@@ -165,13 +165,14 @@ ModPlaygroundMainPanelImpl::onAppStart(wxCommandEvent &)
 void
 ModPlaygroundMainPanelImpl::onPlaygroundError(wxCommandEvent &)
 {
-	const wxArrayString &errors = PlaygroundCtrl::instance()->getErrors();
+	const std::vector<wxString>		&errors
+	    = PlaygroundCtrl::instance()->getErrors();
 
-	for (unsigned int i=0; i<errors.Count(); i++) {
+	for (unsigned int i=0; i<errors.size(); i++) {
 		wxLogError(errors[i]);
 	}
 
-	if (errors.Count() > 1) {
+	if (errors.size() > 1) {
 		wxLogError(_("Multiple errors occured while processing the "
 		    "Playground request"));
 	}
