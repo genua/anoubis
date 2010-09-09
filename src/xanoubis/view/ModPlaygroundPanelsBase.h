@@ -174,6 +174,12 @@ class DlgPlaygroundScanResultBase : public wxDialog
 		wxButton* commitButton;
 		
 		wxBoxSizer* resultSizer;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void onOkButtonClick( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onSkipButtonClick( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onCommitButtonClick( wxCommandEvent& event ){ event.Skip(); }
+		
 	
 	public:
 		DlgPlaygroundScanResultBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = _("Scan results"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 640,-1 ), long style = wxCAPTION|wxCLOSE_BOX|wxMAXIMIZE_BOX|wxMINIMIZE_BOX|wxRESIZE_BORDER );

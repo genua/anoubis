@@ -75,6 +75,27 @@ class DlgPlaygroundScanResultImpl : public DlgPlaygroundScanResultBase
 		 * @return Nothing.
 		 */
 		virtual void onSize(wxSizeEvent &);
+
+		/**
+		 * Handle Ok-Button click.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onOkButtonClick(wxCommandEvent &);
+
+		/**
+		 * Handle Skip-Button click.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onSkipButtonClick(wxCommandEvent &);
+
+		/**
+		 * Handle Commit-Button click.
+		 * @param[in] 1st The event.
+		 * @return Nothing.
+		 */
+		virtual void onCommitButtonClick(wxCommandEvent &);
 };
 
 #endif	/* _DLGPLAYGROUNDSCANRESULTIMPL_H_ */

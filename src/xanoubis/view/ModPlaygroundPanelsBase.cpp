@@ -319,4 +319,9 @@ DlgPlaygroundScanResultBase::DlgPlaygroundScanResultBase( wxWindow* parent, wxWi
 	
 	this->SetSizer( mainSizer );
 	this->Layout();
+	
+	// Connect Events
+	okButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgPlaygroundScanResultBase::onOkButtonClick ), NULL, this );
+	skipButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgPlaygroundScanResultBase::onSkipButtonClick ), NULL, this );
+	commitButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgPlaygroundScanResultBase::onCommitButtonClick ), NULL, this );
 }

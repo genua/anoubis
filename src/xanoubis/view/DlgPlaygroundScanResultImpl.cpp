@@ -109,3 +109,21 @@ DlgPlaygroundScanResultImpl::onSize(wxSizeEvent & event)
 	Fit();
 	Refresh();
 }
+
+void
+DlgPlaygroundScanResultImpl::onOkButtonClick(wxCommandEvent &)
+{
+	EndModal(wxOK);
+}
+
+void
+DlgPlaygroundScanResultImpl::onSkipButtonClick(wxCommandEvent &)
+{
+	EndModal(wxNO);
+}
+
+void
+DlgPlaygroundScanResultImpl::onCommitButtonClick(wxCommandEvent &)
+{
+	EndModal(wxYES);
+}

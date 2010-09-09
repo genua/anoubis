@@ -33,8 +33,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: anoubis. 10.972.C388\n"
 "Report-Msgid-Bugs-To: anoubis@lists.anoubis.org\n"
-"POT-Creation-Date: 2010-09-08 15:16+0200\n"
-"PO-Revision-Date: 2010-09-08 16:14+0100\n"
+"POT-Creation-Date: 2010-09-09 10:33+0200\n"
+"PO-Revision-Date: 2010-09-09 10:51+0100\n"
 "Last-Translator: \n"
 "Language-Team: German <translation-team-de@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -581,10 +581,10 @@ msgid "Multiple errors occured while processing the Playground request"
 msgstr "Bei der Verarbeitung der Playground-Anfrage sind mehrere Fehler aufgetreten"
 
 #: src/xanoubis/view/DlgPlaygroundScanResultImpl.cpp:85
-msgid "The file(s) will not be commited."
+msgid "The file(s) will not be committed."
 msgstr "Es werden keine Datei(en) übernommen."
 
-#: src/xanoubis/view/DlgPlaygroundScanResultImpl.cpp:87
+#: src/xanoubis/view/DlgPlaygroundScanResultImpl.cpp:88
 msgid "Do you really want to commit the file(s)?"
 msgstr "Möchten Sie die Datei(en) trotzdem übernehmen?"
 
@@ -2159,7 +2159,7 @@ msgstr "Überspringen"
 msgid "Commit Files"
 msgstr "Dateien übernehmen"
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.h:153
+#: src/xanoubis/view/ModPlaygroundPanelsBase.h:159
 msgid "Scan results"
 msgstr "Scanergebnisse"
 
@@ -3564,59 +3564,68 @@ msgstr "Warnung"
 msgid "Couldn't remove Autostart file: %ls"
 msgstr "Kann Autostart Datei nicht entfernen: %ls"
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:162
+#: src/xanoubis/control/PlaygroundCtrl.cpp:163
 msgid "Communication error in playground request."
 msgstr "Kommunikationsfehler bei der Playgroundanfrage."
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:167
+#: src/xanoubis/control/PlaygroundCtrl.cpp:168
 #, c-format
 msgid "The daemon returned an error for the playground request: %hs"
 msgstr "Fehler bei der Playgroundanfrage: %hs"
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:173
+#: src/xanoubis/control/PlaygroundCtrl.cpp:174
 #, c-format
 msgid "Error in playground request: %hs"
 msgstr "Kommunikationsfehler bei der Playgroundanfrage: %hs"
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:181
+#: src/xanoubis/control/PlaygroundCtrl.cpp:182
 #, c-format
 msgid "Got unexpected result (%d) for playground request"
 msgstr "Unerwartetes Ergebnis (%d) beim der Playgroundanfrage"
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:241
+#: src/xanoubis/control/PlaygroundCtrl.cpp:242
 msgid "The device is not mounted."
 msgstr "Das Device ist nicht eingebunden."
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:243
+#: src/xanoubis/control/PlaygroundCtrl.cpp:244
 msgid "Cannot find all hard links to the file."
 msgstr "Konnte nicht alle Verweise auf die Datei finden."
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:248
+#: src/xanoubis/control/PlaygroundCtrl.cpp:249
 msgid "Parent directory must be committed first."
 msgstr "Das übergeordnete Verzeichnis muss zuerst übernommen werden."
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:250
+#: src/xanoubis/control/PlaygroundCtrl.cpp:251
 msgid "Did not try to commit the file."
 msgstr "Es wurde nicht versucht, die Datei zu übernehmen."
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:254
+#: src/xanoubis/control/PlaygroundCtrl.cpp:255
 msgid "Target file exists and has multiple hard links."
 msgstr "Die Zieldatei existiert und hat mehr als einen Hardlink."
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:257
+#: src/xanoubis/control/PlaygroundCtrl.cpp:258
 msgid "Target file exists."
 msgstr "Die Zieldatei existiert bereits."
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:261
-msgid "File scanners reported a problem with the file."
-msgstr "Bei der Überprüfung des Dateiinhalts wurde ein Problem entdeckt."
+#: src/xanoubis/control/PlaygroundCtrl.cpp:264
+msgid "Recommended file scanners reported a problem with the file."
+msgstr "Empfohlene Inhaltsscanner haben ein Problem mit der Datei entdeckt."
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:263
+#: src/xanoubis/control/PlaygroundCtrl.cpp:267
+msgid "Required file scanners reported a permanent problem with the file."
+msgstr "Erforderliche Inhaltsscanner haben ein dauerhaftes Problem mit der Datei entdeckt."
+
+#: src/xanoubis/control/PlaygroundCtrl.cpp:270
+#, c-format
+msgid "File scanners reported a problem with the file: %hs"
+msgstr "Inhaltsscanner haben ein Problem mit der Datei %hs entdeckt."
+
+#: src/xanoubis/control/PlaygroundCtrl.cpp:275
 #, c-format
 msgid "File was removed from the playground but could not be renamed (%hs)."
 msgstr "Die Datei wurde aus dem Playground entfernt, konnte dann aber nicht umbenannt werden (%hs)"
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:302
+#: src/xanoubis/control/PlaygroundCtrl.cpp:319
 #, c-format
 msgid ""
 "Commit for file(s) '%ls' failed.\n"
@@ -3627,20 +3636,20 @@ msgstr ""
 "\n"
 "%ls"
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:305
+#: src/xanoubis/control/PlaygroundCtrl.cpp:322
 msgid " Commit anyway?"
 msgstr "Dennoch übernehmen?"
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:306
+#: src/xanoubis/control/PlaygroundCtrl.cpp:323
 msgid "Playground Commit"
 msgstr "Playground Übernahme"
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:356
+#: src/xanoubis/control/PlaygroundCtrl.cpp:411
 #, c-format
 msgid "Unlink '%ls' failed: %hs"
 msgstr "Fehler beim Entfernen von '%ls': %hs"
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:520
+#: src/xanoubis/control/PlaygroundCtrl.cpp:577
 #, c-format
 msgid "Could not determine filename for playground-file: %hs"
 msgstr "Der Pfad für die Playground-Datei %hs konnte nicht ermittelt werden."
@@ -4048,10 +4057,14 @@ msgstr "Nachrichtvom Daemon wird verworfen (zu kurz)"
 msgid "Unkown status message key=%x value=%d"
 msgstr "Unbekannter Status der Nachricht key=%x value=%d"
 
-#: src/xanoubis/job/PlaygroundCommitTask.cpp:101
+#: src/xanoubis/job/PlaygroundCommitTask.cpp:103
 #, c-format
 msgid "Committing %hs"
 msgstr "Übernehme %hs"
+
+#: src/xanoubis/job/PlaygroundCommitTask.cpp:138
+msgid "No scanner output available!"
+msgstr "Keine Scannerausgabe verfügbar!"
 
 #: src/xanoubis/main.cpp:122
 msgid "Error while initialising anoubis_ui"

@@ -33,6 +33,7 @@
 #include "anoubis_errno.h"
 #include "anoubis_playground.h"
 #include "AnEvents.h"
+#include "DlgPlaygroundScanResultImpl.h"
 #include "JobCtrl.h"
 #include "PlaygroundCtrl.h"
 #include "PlaygroundFileEntry.h"
@@ -282,7 +283,6 @@ void
 PlaygroundCtrl::OnPlaygroundFilesCommitted(TaskEvent &event)
 {
 	PlaygroundCommitTask	*task = NULL;
-	bool			 errors = false;
 	std::vector<uint64_t>	 cpdevs, cpinos, noscandevs, noscaninos;
 	uint64_t		 pgid;
 
@@ -326,41 +326,44 @@ PlaygroundCtrl::OnPlaygroundFilesCommitted(TaskEvent &event)
 				continue;
 			}
 		} else if (s == PlaygroundCommitTask::STATE_SCAN_FAILED) {
+			DlgPlaygroundScanResultImpl	*dlg = NULL;
 			const std::vector<wxString>	&res =
 			    task->getScanResults(i);
-			int				 action = wxNO;
+
+			if ((err != EAGAIN && err != EPERM) || res.empty()) {
+				errorList_.Add(fullmsg);
+				continue;
+			}
 
 			/*
-			 * XXX CEH: This is a temporary hack until we have
-			 * XXX CEH: the scanresult widget
+			 * XXX CH: This is ugly design, 'cause a view element
+			 * XXX CH: is opened from/within control. This breaks
+			 * XXX CH: MVC pattern, but due to limited resources
+			 * XXX CH: this solution was chosen.
 			 */
-			if (err == EAGAIN || err == EPERM) {
-				fullmsg += wxT("\n");
-				for (unsigned int j=0; j<res.size(); ++j) {
-					fullmsg += res[j];
-					fullmsg += wxT("\n");
-				}
-			}
+			dlg = new DlgPlaygroundScanResultImpl();
+
+			dlg->setFileName(file);
 			if (err == EAGAIN) {
-				fullmsg += _("Commit anyway?");
-				/* XXX CEH: Use scanresult dialog box */
-				action = wxMessageBox(fullmsg,
-				    _("Playground Commit"), wxYES_NO);
+				dlg->setRequired(false);
 			} else {
-				/* XXX CEH: Use scanresult dialog box */
-				wxMessageBox(fullmsg, _("Playground Commit"),
-				    wxOK);
+				dlg->setRequired(true);
 			}
-			if (action == wxYES) {
+			for (unsigned int j=0; j<res.size(); j+=2) {
+				dlg->addResult(res[j], res[j+1]);
+			}
+
+			if (dlg->ShowModal() == wxYES) {
 				noscandevs.push_back(task->getDevice(i));
 				noscaninos.push_back(task->getInode(i));
 			}
+
+			dlg->Destroy();
 		} else {
 			errorList_.Add(fullmsg);
 		}
-		errors = true;
 	}
-	if (errors)
+	if (!errorList_.empty())
 		sendEvent(anEVT_PLAYGROUND_ERROR);
 	if (cpdevs.size()) {
 		commitFiles(task->getPgid(), cpdevs, cpinos, true,
