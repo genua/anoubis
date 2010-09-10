@@ -50,14 +50,13 @@ message an authentication object is created with
 All of the
 .Em ANOUBIS_C_AUTHDATA
 messages that are exchanged during authentication must be handled by a
-custum dispatch function in the caller.
+custom dispatch function in the caller.
 Once authentication is complete that dispatcher must fill in the result of
 the authentication into the
 .Nm anoubis_auth
 structure associated with the server and call the callback function
 .Va finish.
-Any messages that must be sent during authentication
-are sent directly to the channel
+Any messages sent during authentication are sent directly to the channel
 .Va chan.
 .Sh RETURN VALUES
 .Nm anoubis_auth_create

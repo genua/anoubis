@@ -41,7 +41,7 @@
 .Nm acc_close ,
 .Nm acc_sendmsg ,
 .Nm acc_receivemsg
-.Nd a communiction library for anoubis security suite
+.Nd a communication library for the Anoubis security suite
 .Sh SYNOPSIS
 .In anoubischat.h
 .Ft "struct achat_channel *"
@@ -73,13 +73,13 @@
 .Sh DESCRIPTION
 The
 .Nm anoubischat
-library offers inter process communication facilities. Just throw in some
-data like a socket address and a corresponding socket will be created.
-All errors, occured during system calls like
+library offers inter-process communication facilities. Simply provide
+a socket address and a corresponding communications channel will be created.
+All errors, that occur during system calls like
 .Xr accept 2
-and reported by
+and the associated 
 .Xr errno 3 ,
-will not been altered and are accessable for the caller of the methods
+will not be altered and are accessible to the caller of the methods
 provided by this library.
 .Pp
 Use
@@ -140,23 +140,22 @@ Use
 to specify where to listen or where to connect to.
 Remember to use
 .Xr htons 3
-e.g for setting the port number in the correct byteorder.
-The third paramater specifies the size of the sockaddr structure inside the
-storage.
+e.g to change the port number to the correct network byte order.
+The third parameter specifies the size of the sockaddr structure.
 .Pp
 After you have specified all concerning settings you may call
 .Fn acc_prepare "struct achat_channel *"
 to prepare the channel.
-Technically this will create the socket(s) via
+This will create the socket(s) via
 .Xr socket 2
-and uses
+and use
 .Xr bind 2
 and
 .Xr listen 2
-for setting it up.
+to prepare the socket(s) for use.
 .Pp
 After preparing the channel with
-.Fn acc_prepare "struct achat_channel *"
+.Fn acc_prepare
 you may call
 .Fn acc_open "struct achat_channel *"
 to establish the connection.
@@ -173,7 +172,7 @@ this will just call
 is going to retry (on error EINTR) until a connection is successfully
 established. All other errors cause
 .Fn acc_open "struct achat_channel *"
-to fail and are visible for it's caller by inspecting
+to fail and are visible for its caller by inspecting
 .Xr errno 3 .
 .It
 If you had specified a server end of your channel
@@ -188,10 +187,10 @@ is performed.
 is going to retry (on error EINTR) until a client connected successfully.
 All other errors cause
 .Fn acc_open "struct achat_channel *"
-to fail and are visible for it's caller by inspecting
+to fail and are visible for its caller by inspecting
 .Xr errno 3 .
 .It
-If you intend to manage more than one channel within your programm
+If you intend to manage more than one channel within your program
 .Po
 this is typically done in a server
 .Pc
@@ -222,12 +221,12 @@ If your buffer is too small to hold the entire message the return
 value will be ACHAT_RC_NOSPACE.
 .Sh EXAMPLES
 .Pp
-The following example code may give you an idea of using the communication
+The following example code shoud give you an idea of how to use the communication
 library
 .Nm anoubischat
-for a client application connecting to a server.
+for a client/server application.
 A UNIX domain socket is used.
-You have to find own values for SOCKETDIR, SOCKETPREFIX, SERVERSOCKET.
+You have to specify your own values for SOCKETDIR, SOCKETPREFIX, SERVERSOCKET.
 .Bd -literal -offset indent-two
 struct sockaddr_un       sun;
 struct achat_channel    *c  = NULL;
@@ -262,7 +261,7 @@ rc = acc_open(c);
 if (rc != ACHAT_RC_OK)
 	...
 
-/* do your communication bussines here */
+/* do your communication business here */
 bzero(buffer, sizeof(buffer));
 /* fill buffer with your message */
 
@@ -278,7 +277,7 @@ if (rc != ACHAT_RC_OK)
 	...
 .Ed
 .Pp
-The following example code show the concerning server code.
+The following example code shows the accompanying server code.
 An internet socket on
 .Qq localhost
 is used.
@@ -404,7 +403,7 @@ if (rc != ACHAT_RC_OK)
 	...
 
 /* a client has connected - do your service */
-rc = acc_sendmsg(s, buffer, bugsize);
+rc = acc_sendmsg(s, buffer, bufsize);
 if (rc == ACHAT_RC_PENDING) {
 	/* Some data needs still to be written */
 	while (rc != ACHAT_RC_OK) {

@@ -68,10 +68,10 @@ The default is
 has special support for software upgrades.
 During an upgrade it will automatically recalculate checksums for
 updated files.
-Unsigned checksums are automatically set to the new value.
+Unsigned checksums are automatically updated.
 Signed checksums cannot be updated because the private keys are not available.
-However, all signed checksums are marked and the new value is stored together
-with the signature.
+However, all signed checksums are marked and the new value is stored alongside 
+the signature.
 .Xr sfssig 1
 or
 .Xr xanoubis 1
@@ -148,29 +148,26 @@ Otherwise, the upgrade proceeds as normal and signed checksums of root
 will be marked in the same way as user checksums.
 .Pp
 .It \fBauth_mode\fP
-This option specifies, if an Anoubis client is authenticated, when it
-tries to open a connection to the Anoubis server.
-Authentication is performed against the user's certificate.
-It needs to be stored in the daemon certificate-directory, usually
-.Ar /var/lib/anoubis/policy/pubkeys .
-A certificate is identified by its file-name, it is the uid of the assigned
-user.
+This option specifies whether certificate-based authentication is performed
+when an Anoubis client connects to the Anoubis server.
+Authentication is performed against the user's certificate stored in
+the daemon certificate-directory. Certificates kan be installed using
+.Xr anoubis-keyinstall 1 .
 .Pp
 Possible values of the \fBauth_mode\fP option are:
 .Pp
 .Ar enabled
 Authentication is enabled.
-The connection is accepted by the daemon, if the client tries to establishes
-the connection with the correct key.
+The connection is accepted only if the client supplies the correct key.
 .Pp
 .Ar optional
-Authentication is enabled, if the certificate is stored in the
-certificate-directory of the daemon.
-If no such certificate exists, the connection is accepted everytime.
+Authentication is enabled. Certificates stored in the
+certificate-directory of the daemon will be used to validate connections.
+If no certificate is configured for a particular user the connection will be allowed.
 .Pp
 .Ar off
 No authentication is performed.
-Every connection-attempt is accepted by the server.
+Every connection attempt is accepted by the server.
 .Pp
 The default is
 .Ar optional .
@@ -183,18 +180,18 @@ If 0 is configured the check is turned off.
 The default is 20971520 (20MB).
 .Pp
 .It \fBcommit\fP
-Specifies one playground content scanner that is applied during commit of
+Specifies a playground content scanner that is used during commit of
 playground files. Multiple commit options can be specified in the same
-configuration file to configure a number of content scanners that will
+configuration file to configure multiple content scanners that will
 be applied independently.
 
-The value for each commit option must have the following syntax:
+The value for each commit option should have the following syntax:
 \fIrequired|recommended scanner-path scanner-description\fP
 
 \fIrequired|recommended\fP - Each scanner must be either required or
 recommended. Recommended scanners are optional. They may be ignored if the
 user requests it. Required scanners are mandatory and cannot be ignored. A
-negative result from a required scanner always prevents the file from being
+negative result from a required scanner prevents the file from being
 committed.
 
 \fIscanner-path\fP - Specifies the absolute path to the scanner binary. No
@@ -221,40 +218,34 @@ for each scanner.
 .El
 .Pp
 .Sh PLAYGROUND SCANNER INTERFACE
-A playground scanner can be configured by the administrator to prevent
-users from committing files from a playground environment to the
+A playground scanner can be configured by the administrator to verify
+the content of files which users commit from a playground to the
 production system.
-Each time a file is about to be committed to the production system, all
-configured content scanners are called and each of them can veto the
+Each time a file is about to be transferred to the production system, all
+configured content scanners are called and each of them is able to veto the
 action.
-The user can instruct the anoubisd daemon to skip scanners that are
+The user can instruct the Anoubis daemon to skip scanners that are
 marked as \fIrecommended\fP in the config file.
 
-All scanners run with the privileges of a special user called _anoubisscan.
-The current working directory of the scanners is the home directory of the
-_anoubisscan user.
+All scanners run with the privileges of the _anoubisscan user
+inside the spool directory \fI/var/spool/anoubis\fP.
 Scanning will fail if this directory does not exist.
 
-The file to scan is available read only on stdin.
-The file descriptor of this file references the inode on disk
+The file is made available read-only on stdin.
+This file descriptor references the inode on disk
 directly, i.e. it can be used as an argument to
 .Xr lseek 2
 or
 .Xr fstat 2 .
-If an existing third party scanner insists on file name instead of a
-file descriptor to scan, a wrapper script should spool the file in a
-designated spool directory.
-The recommended path for this is spool directory is /var/spool/anoubis
-and the spool directory should only be accessible by the _anoubisscan
-user.
+If an existing third party scanner requires a file name instead of a
+file descriptor, a wrapper script should spool the file in
+\fI/var/spool/anoubis\fP.
 
 The scanner should exit with a zero exit code if committing the file is
-allowed.
-If the scanner wants to veto the commit it should exit with a non-zero
-exit code.
-In the latter case the scanner should output the reason for the veto in
-a human readable form to stdout and/or stderr.
-This output will be reported to the user.
+allowed. If the scanner wants to reject the commit it should exit with
+a non-zero exit code. In the latter case the scanner should print
+a human-readable string as reason for the rejection to stdout and/or stderr.
+This output will be passed on to the user.
 Output of a single scanner must not exceed 1kb and total output of
 all scanners must not exceed 8kb.
 The latter limit includes the scanner descriptions given in the config file.

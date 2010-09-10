@@ -34,7 +34,7 @@
 .Nd manage checksums for the Anoubis Daemon
 .Sh SYNOPSIS
 .Nm sfssig
-.Op dvi
+.Op -dvi
 .Op --recursiv | -r
 .Op --link | -l
 .Op -f listfile
@@ -73,7 +73,7 @@ Path specification:
 .Pp
 .Bl -tag -width Ds
 .It Fl r , Fl -recursive
-Apply command to all files under each directory, recursively.
+Apply command to all files inside each directory, recursively.
 .It Fl l , Fl -link
 Apply command to a symlink, not to the referenced file.
 .It Fl f Ar listfile
@@ -94,6 +94,7 @@ If the argument is
 .Ar all ,
 all registered uids will be used.
 This requires root privileges.
+.El
 .Pp
 Key files (needed for some operations):
 .Pp
@@ -116,20 +117,20 @@ Filter specification:
 .Pp
 .Bl -tag -width DST
 .It Fl -hassum
-Apply command on files which have checksums.
+Apply command to files which have checksums.
 .It Fl -hasnosum
-Apply command on files which have no checksums.
+Apply command to files which have no checksums.
 .It Fl -hassig
-Apply command on files which have signatures.
+Apply command to files which have signatures.
 .It Fl -hasnosig
-Apply command on files which have no signatures.
+Apply command to files which have no signatures.
 .It Fl -orphaned
-Apply command on checksums or signatures which have no representation in the
-filesystem.
+Apply command to checksums or signatures which do not exist in the real
+file system.
 .It Fl -notfile
 Apply command to checksums or signatures which are not regular files.
 .It Fl -upgraded
-Apply command just on upgraded Signatures. This option requires a certificate.
+Apply command just on upgraded signatures. This option requires a certificate.
 .El
 .Pp
 Command specification:

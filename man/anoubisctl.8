@@ -133,7 +133,7 @@ return value.
 Uses the certificate given by the -c option or the default value if -c was
 omitted.
 .It stat
-Wait for the next status message from the anoubis daemon and output the
+Wait for the next status message from the Anoubis daemon and output the
 statistics contained in the message.
 .It monitor
 shows live information on notifications being sent and received.
@@ -163,21 +163,19 @@ commands) as a message to the daemon.
 .\" This next request is for sections 1, 6, 7 & 8 only.
 .\" .Sh ENVIRONMENT
 .Sh FILES
-The program binary is
-.Ar /sbin/anoubisctl .
-.Pp
-.Ar /var/run/anoubisd.sock
-is the default value for the
-named
+.Bl -tag -width Ds -compact
+.It /var/run/anoubisd.sock
+The Unix domain 
 .Ar socket
-connection from the GUI or clients
-connecting over the
+used for connections from the cli or GUI
+to the Anoubisd daemon via the
 .Ar libanoubischat
 and
 .Ar libanoubisprotocol
 libraries.
+.El
 .Sh EXAMPLES
-The following example shows if the
+The following example shows how to check if the
 .Xr anoubisd 8
 daemon is running
 .Bd -literal -offset -indent-two

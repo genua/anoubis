@@ -43,15 +43,15 @@
 .Sh DESCRIPTION
 The
 .Nm
-searches in (hopefully) all desktop entry files for a given pattern.
-For searching for a special binary, you may specify
+searches in all desktop entry files for a given pattern.
+To search for a specific binary, you may specify
 .Fl b .
 With the optional parameter
 .Fl s
-you can specify addtional directories to search in.
-Those files describe the entries in the start menue of most modern
-desktops (like Gnome or KDE).
-A single line with 4 fields, seperated by '#', for each file containing
+you can specify additional directories to search.
+Desktop files describe the entries in the start menu of most modern
+desktop environments (like Gnome or KDE).
+A single line with 4 fields, separated by '#', for each file containing
 the pattern, is written to standard out.
 The fields are:
 .Bl -tag -width Ds
@@ -66,13 +66,13 @@ specified in the desktop entry file
 key 'Exec'
 .Pc
 .It Package name
-extracted by 'dpkg -s'
+extracted via 'dpkg -s'
 .It Package description
-a short description claimed by 'dpkg -S'
+a short description as reported by 'dpkg -S'
 .El
 .Pp
-If the pattern is ommited, a line for each found desktop entry file
-will been printed.
+If the pattern is omitted, a line for each found desktop entry file
+will be printed.
 .\" The following requests should be uncommented and used where appropriate.
 .\" This next request is for sections 1, 6, 7 & 8 only.
 .\" .Sh ENVIRONMENT
