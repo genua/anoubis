@@ -146,6 +146,9 @@ sandbox {
 	/usr/bin/xanoubis {
 		default allow
 	}
+	/usr/bin/playground {
+		default allow
+	}
 
 	# AntiVirus software
 	{ @antivir@, @avguard@, @avscan@ } {

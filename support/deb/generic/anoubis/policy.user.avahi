@@ -10,7 +10,7 @@ alf {
 sandbox {
 
 	# Only allow anoubis to edit .xanoubis
-	{"/usr/bin/xanoubis", "/sbin/anoubisctl", "/sbin/sfssig"} {
+	{"/usr/bin/xanoubis", "/sbin/anoubisctl", "/sbin/sfssig", "/usr/bin/playground"} {
 		allow  path "@home@/.xanoubis"  rwx
 		allow  any rwx
 	}
