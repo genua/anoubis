@@ -84,17 +84,6 @@ EscalationNotify::setAnswer(NotifyAnswer *answer)
 	answer_ = answer;
 }
 
-void
-EscalationNotify::answer(NotifyAnswer *answer)
-{
-	wxCommandEvent	event(anEVT_ANSWER_ESCALATION);
-
-	answer_ = answer;
-
-	event.SetClientObject((wxClientData *)this);
-	wxPostEvent(AnEvents::instance(), event);
-}
-
 NotifyAnswer *
 EscalationNotify::getAnswer(void)
 {

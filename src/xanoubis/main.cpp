@@ -142,14 +142,10 @@ bool AnoubisGuiApp::OnInit()
 	KeyCtrl::instance()->setPassphraseReader(this);
 
 	/* Initialization of central event management */
-	AnEvents *anEvents = AnEvents::instance();
+	AnEvents::instance();
 
 	/* Initialization of job-controller */
 	JobCtrl *jobCtrl = JobCtrl::instance();
-
-	anEvents->Connect(anEVT_ANSWER_ESCALATION,
-	    wxCommandEventHandler(AnoubisGuiApp::OnAnswerEscalation),
-	    NULL, this);
 
 	jobCtrl->start();
 
@@ -258,14 +254,6 @@ AnoubisGuiApp::OnCmdLineParsed(wxCmdLineParser& parser)
 		hide_ = true;
 
 	return (true);
-}
-
-void
-AnoubisGuiApp::OnAnswerEscalation(wxCommandEvent &event)
-{
-	Notification *notify = (Notification*)event.GetClientObject();
-	JobCtrl::instance()->answerNotification(notify);
-	event.Skip();
 }
 
 wxString

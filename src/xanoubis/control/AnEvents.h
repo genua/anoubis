@@ -468,15 +468,6 @@ BEGIN_DECLARE_EVENT_TYPES()
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_ADD_NOTIFYANSWER, wxNewEventType())
 
 	/**
-	 * Answer escalation event.
-	 * This event transports an escalation been answered to the
-	 * communicator for sending the answer.
-	 *
-	 * @param GetClientObject() The escalation.
-	 */
-	DECLARE_LOCAL_EVENT_TYPE(anEVT_ANSWER_ESCALATION, wxNewEventType())
-
-	/**
 	 * Load ruleset event.
 	 * A new rule set was loaded/stored to the policy controller.
 	 * Your current one may be out of date.
@@ -493,11 +484,6 @@ BEGIN_DECLARE_EVENT_TYPES()
 	 * @param GetInt() The id of the ruleset.
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_SEND_RULESET, wxNewEventType())
-
-	/**
-	 * An error occured while we tried to generate a new escalation rule.
-	 */
-	DECLARE_LOCAL_EVENT_TYPE(anEVT_ESCALATION_RULE_ERROR, wxNewEventType());
 
 	/**
 	 * Load key event.

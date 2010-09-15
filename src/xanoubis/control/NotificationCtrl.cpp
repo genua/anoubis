@@ -27,12 +27,13 @@
 
 #include "AlertNotify.h"
 #include "DaemonAnswerNotify.h"
+#include "Debug.h"
 #include "EscalationNotify.h"
-#include "PlaygroundFileNotify.h"
 #include "JobCtrl.h"
 #include "LogNotify.h"
 #include "MainUtils.h"
 #include "NotificationCtrl.h"
+#include "PlaygroundFileNotify.h"
 #include "PolicyCtrl.h"
 #include "PolicyRuleSet.h"
 #include "StatusNotify.h"
@@ -156,55 +157,73 @@ NotificationCtrl::getPerspective(enum ListPerspectives list)
 	return (NULL);
 }
 
-void
-NotificationCtrl::answerEscalationNotify(EscalationNotify *notify,
-    NotifyAnswer *answer, bool sendAnswer)
+bool
+NotificationCtrl::answerEscalation(EscalationNotify *escalation,
+    bool sendAnswer)
 {
-	long		 id;
-	wxString	 module;
-	AnEvents	*anEvents;
+	bool		 rc = false;
+	long		 id = -1;
+	PolicyCtrl	*policyCtrl = NULL;
+	PolicyRuleSet	*ruleSet = NULL;
+	NotifyAnswer	*answer = NULL;
 
-	anEvents = AnEvents::instance();
-
-	if ((notify != NULL) && IS_ESCALATIONOBJ(notify)) {
-		id = notify->getId();
-		escalationsNotAnswered_.removeId(id);
-		escalationsAnswered_.addId(id);
-		if (sendAnswer) {
-			notify->answer(answer);
-		} else {
-			notify->setAnswer(answer);
-		}
-
-		module = notify->getModule();
-		escalationCount_[module] -= 1;
-
-		if (module.IsSameAs(wxT("ALF"))){
-			wxCommandEvent showEvent(anEVT_OPEN_ALF_ESCALATIONS);
-			showEvent.SetInt(escalationCount_[module]);
-			wxPostEvent(anEvents, showEvent);
-		} else if (module.IsSameAs(wxT("SFS"))) {
-			wxCommandEvent showEvent(anEVT_OPEN_SFS_ESCALATIONS);
-			showEvent.SetInt(escalationCount_[module]);
-			wxPostEvent(anEvents, showEvent);
-		} else if (module.IsSameAs(wxT("SANDBOX"))) {
-			wxCommandEvent showEvent(anEVT_OPEN_SB_ESCALATIONS);
-			showEvent.SetInt(escalationCount_[module]);
-			wxPostEvent(anEvents, showEvent);
-		} else if (module.IsSameAs(wxT("PLAYGROUND"))) {
-		    wxCommandEvent showEvent(anEVT_OPEN_PLAYGROUND_ESCALATIONS);
-			showEvent.SetInt(escalationCount_[module]);
-			wxPostEvent(anEvents, showEvent);
-		} else {
-			/* Default do nothing */
-		}
-		wxCommandEvent  showEvent(anEVT_OPEN_ESCALATIONS);
-		showEvent.SetInt(escalationsNotAnswered_.getSize());
-		showEvent.SetExtraLong(0);
-		wxPostEvent(anEvents, showEvent);
+	if (escalation == NULL) {
+		return (false);
 	}
-}
 
+	policyCtrl = PolicyCtrl::instance();
+	if (escalation->isAdmin()) {
+		id = policyCtrl->getAdminId(geteuid());
+	} else {
+		id = policyCtrl->getUserId();
+	}
+
+	ruleSet = policyCtrl->getRuleSet(id);
+	if (ruleSet == NULL) {
+		Debug::err(_("Can't access user ruleset."));
+		return (false);
+	}
+
+	answer = escalation->getAnswer();
+	if (answer == NULL) {
+		Debug::err(_("Can't access answer of escalation."));
+		return (false);
+	}
+
+	/* Create policy */
+	if (answer->causeTmpRule() || answer->causePermRule()) {
+		rc = ruleSet->createAnswerPolicy(escalation);
+		if (rc != true) {
+			return (false);
+		}
+		/*
+		 * We are going to activate the modified rule set.
+		 * Even though the result is 'ok' the policy may not have
+		 * reached the daemon yet. But all jobs are done in sequence
+		 * and the answer to the event is done later, thus this is
+		 * ok.
+		 */
+		rc = policyCtrl->sendToDaemon(ruleSet->getRuleSetId());
+		if (rc != PolicyCtrl::RESULT_POL_OK) {
+			return (false);
+		}
+	}
+
+	/*  Mark as answered */
+	id = escalation->getId();
+	escalationsNotAnswered_.removeId(id);
+	escalationsAnswered_.addId(id);
+
+	/* Update view */
+	sendUpdateEvent(escalation);
+
+	/* Answer event */
+	if (sendAnswer == true) {
+		JobCtrl::instance()->answerNotification(escalation);
+	}
+
+	return (true);
+}
 
 NotificationCtrl::NotificationCtrl(void) : Singleton<NotificationCtrl>()
 {
@@ -230,19 +249,17 @@ NotificationCtrl::onDaemonDisconnect(wxCommandEvent & event)
 	if (event.GetInt() != JobCtrl::CONNECTED) {
 		while (escalationsNotAnswered_.getSize() > 0) {
 			notify = getNotification(
-				escalationsNotAnswered_.getId(0)
-			);
+			    escalationsNotAnswered_.getId(0));
 			escalation = dynamic_cast<EscalationNotify *>(notify);
 			if (escalation == NULL) {
 				/* Should never happen, but let's play safe. */
 				escalationsNotAnswered_.removeId(
-					escalationsNotAnswered_.getId(0)
-				);
+				    escalationsNotAnswered_.getId(0));
 			} else {
 				answer = new NotifyAnswer(NOTIFY_ANSWER_ONCE,
 				    false);
-				answerEscalationNotify(escalation, answer,
-				    false);
+				escalation->setAnswer(answer);
+				answerEscalation(escalation, false);
 			}
 		}
 	}
@@ -418,7 +435,8 @@ NotificationCtrl::fixupEscalationAnswer(int type, anoubis_token_t token,
 			    (escalation->getToken() == token)) {
 				answer = new NotifyAnswer(NOTIFY_ANSWER_ONCE,
 				    allow);
-				answerEscalationNotify(escalation, answer);
+				escalation->setAnswer(answer);
+				answerEscalation(escalation, true);
 				return (escalation);
 			}
 		}
@@ -453,4 +471,37 @@ NotificationCtrl::fixupEscalationAnswer(int type, anoubis_token_t token,
 	}
 
 	return NULL;
+}
+
+void
+NotificationCtrl::sendUpdateEvent(EscalationNotify *notify)
+{
+	wxString	 module;
+	AnEvents	*anEvents;
+
+	anEvents = AnEvents::instance();
+
+	Debug::trace(wxT("NotificationCtrl::answerEscalationNotify"));
+
+	module = notify->getModule();
+	escalationCount_[module] -= 1;
+
+	if (module.IsSameAs(wxT("ALF"))){
+		wxCommandEvent showEvent(anEVT_OPEN_ALF_ESCALATIONS);
+		showEvent.SetInt(escalationCount_[module]);
+		wxPostEvent(anEvents, showEvent);
+	} else if (module.IsSameAs(wxT("SFS"))) {
+		wxCommandEvent showEvent(anEVT_OPEN_SFS_ESCALATIONS);
+		showEvent.SetInt(escalationCount_[module]);
+		wxPostEvent(anEvents, showEvent);
+	} else if (module.IsSameAs(wxT("SANDBOX"))) {
+		wxCommandEvent showEvent(anEVT_OPEN_SB_ESCALATIONS);
+		showEvent.SetInt(escalationCount_[module]);
+		wxPostEvent(anEvents, showEvent);
+	} else {
+		/* Default do nothing */
+	}
+	wxCommandEvent  showEvent(anEVT_OPEN_ESCALATIONS);
+	showEvent.SetInt(escalationsNotAnswered_.getSize());
+	wxPostEvent(anEvents, showEvent);
 }

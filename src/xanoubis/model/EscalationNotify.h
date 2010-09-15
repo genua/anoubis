@@ -72,7 +72,6 @@ class EscalationNotify : public Notification {
 		~EscalationNotify(void);
 
 		bool		 isAnswered(void);
-		void		 answer(NotifyAnswer *);
 		void		 setAnswer(NotifyAnswer *);
 		NotifyAnswer	*getAnswer(void);
 		anoubis_token_t	 getToken(void);

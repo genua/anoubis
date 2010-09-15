@@ -63,7 +63,27 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase,
 		std::vector<wxString>	pathcomp_;
 		unsigned int		pathKeep_, minPathKeep_;
 
-		void answer(bool);
+		/**
+		 * Assemble time answer.
+		 *
+		 * Create a special type of answer.
+		 *
+		 * param[in] 1st The answer permit (0=deny, 1=allow).
+		 * return The new answer.
+		 */
+		NotifyAnswer *assembleTimeAnswer(bool);
+
+		/**
+		 * Create an answer to the current escalation.
+		 *
+		 * Depending on the given permit from the buttons 'allow'
+		 * and 'deny' an answer is created.
+		 *
+		 * param[in] 1st The answer permit (0=deny, 1=allow).
+		 * return Nothing.
+		 */
+		void answerEscalation(bool);
+
 		void displayMessage(void);
 		void sendNotifierOptionsEvents(WXTYPE, bool, long);
 		void sendNotifierOptions(void);
@@ -106,7 +126,6 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase,
 		void OnAlertNoTimeout(wxCommandEvent&);
 		void OnEscalationTimeout(wxSpinEvent&);
 		void OnAlertTimeout(wxSpinEvent&);
-		void OnEscalationRuleError(wxCommandEvent &);
 
 		void OnEscalationsShow(wxCommandEvent&);
 		void OnAnoubisOptionShow(wxCommandEvent&);

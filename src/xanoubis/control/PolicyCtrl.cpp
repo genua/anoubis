@@ -37,6 +37,7 @@
 #include "AnMessageDialog.h"
 #include "ComPolicyRequestTask.h"
 #include "ComPolicySendTask.h"
+#include "Debug.h"
 #include "JobCtrl.h"
 #include "KeyCtrl.h"
 #include "MainUtils.h"
@@ -71,8 +72,6 @@ PolicyCtrl::~PolicyCtrl(void)
 	    wxTaskEventHandler(PolicyCtrl::OnPolicyRequest), NULL, this);
 	JobCtrl::instance()->Disconnect(anTASKEVT_POLICY_SEND,
 	    wxTaskEventHandler(PolicyCtrl::OnPolicySend), NULL, this);
-	AnEvents::instance()->Disconnect(anEVT_ANSWER_ESCALATION,
-	    wxCommandEventHandler(PolicyCtrl::OnAnswerEscalation), NULL, this);
 	AnEvents::instance()->Disconnect(anEVT_POLICY_CHANGE,
 	    wxCommandEventHandler(PolicyCtrl::OnPolicyChange), NULL, this);
 }
@@ -391,6 +390,8 @@ PolicyCtrl::sendToDaemon(long id)
 
 	if (!rs)
 		return (RESULT_POL_ERR);
+
+	Debug::trace(wxT("PolicyCtrl::sendToDaemon"));
 
 	task = new ComPolicySendTask;
 	if (!task->setPolicy(rs)) {
@@ -711,33 +712,6 @@ PolicyCtrl::cleanRuleSetList(RuleSetList &list, bool force)
 }
 
 void
-PolicyCtrl::OnAnswerEscalation(wxCommandEvent &event)
-{
-	EscalationNotify	*escalation;
-	PolicyRuleSet		*ruleset = NULL;
-
-	escalation = (EscalationNotify *)event.GetClientObject();
-	if (escalation->isAdmin()) {
-		ruleset = getRuleSet(getAdminId(geteuid()));
-	} else {
-		ruleset = getRuleSet(getUserId());
-	}
-
-	if ((ruleset == NULL) || (escalation == NULL)) {
-		/* This is strange and should never happen. Unable to act. */
-		event.Skip();
-		return;
-	}
-
-	/* Does the answer involve a temporary or permanent policy? */
-	if (escalation->getAnswer()->causeTmpRule() ||
-	    escalation->getAnswer()->causePermRule()) {
-		ruleset->createAnswerPolicy(escalation);
-	}
-	event.Skip(); /* Ensures others can react to this event, too. */
-}
-
-void
 PolicyCtrl::OnPolicyChange(wxCommandEvent &event)
 {
 	long		 prio = event.GetInt();
@@ -774,8 +748,6 @@ PolicyCtrl::PolicyCtrl(void) : Singleton<PolicyCtrl>()
 	    wxTaskEventHandler(PolicyCtrl::OnPolicyRequest), NULL, this);
 	jobCtrl->Connect(anTASKEVT_POLICY_SEND,
 	    wxTaskEventHandler(PolicyCtrl::OnPolicySend), NULL, this);
-	AnEvents::instance()->Connect(anEVT_ANSWER_ESCALATION,
-	    wxCommandEventHandler(PolicyCtrl::OnAnswerEscalation), NULL, this);
 	AnEvents::instance()->Connect(anEVT_POLICY_CHANGE,
 	    wxCommandEventHandler(PolicyCtrl::OnPolicyChange), NULL, this);
 }

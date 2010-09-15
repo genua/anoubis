@@ -726,7 +726,7 @@ PolicyRuleSet::getRowProvider(void) const
 	return (this->rowProvider_);
 }
 
-void
+bool
 PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 {
 	struct apn_ruleset		*rs;
@@ -751,7 +751,9 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 	TAILQ_INIT(&tmpchain);
 	rs = getApnRuleSet();
 	if (!rs)
-		return;
+		return false;
+
+	Debug::trace(wxT("PolicyRuleSet::createAnswerPolicy"));
 
 	answer = escalation->getAnswer();
 	ispg = (escalation->getPlaygroundID() != 0);
@@ -759,14 +761,14 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 	flags = answer->getFlags();
 	triggerrule = apn_find_rule(rs, triggerid);
 	if (!triggerrule)
-		return;
+		return false;
 	triggerPolicy = dynamic_cast<FilterPolicy*>(
 	    (Policy*) triggerrule->userdata);
 	if (!triggerPolicy)
-		return;
+		return false;
 	parentPolicy = triggerPolicy->getParentPolicy();
 	if (!parentPolicy)
-		return;
+		return -1;
 	copyblock = false;
 	if (module != wxT("CTX")) {
 		if (parentPolicy->isAnyBlock() && module != wxT("SFS"))
@@ -871,7 +873,6 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 	/* this PolicyRuleSet has changed, update myself */
 	refresh();
 
-	PolicyCtrl::instance()->sendToDaemon(getRuleSetId());
 	event.SetInt(getRuleSetId());
 	event.SetExtraLong(getRuleSetId());
 	wxPostEvent(AnEvents::instance(), event);
@@ -880,10 +881,8 @@ PolicyRuleSet::createAnswerPolicy(EscalationNotify *escalation)
 		editevent.SetExtraLong(tmp->apn_id);
 		wxPostEvent(AnEvents::instance(), editevent);
 	}
-	return;
+	return true;
 err:
-	wxCommandEvent	errevent(anEVT_ESCALATION_RULE_ERROR);
-	wxPostEvent(AnEvents::instance(), errevent);
 	while(!TAILQ_EMPTY(&tmpchain)) {
 		struct apn_rule		*tmp = TAILQ_FIRST(&tmpchain);
 		TAILQ_REMOVE(&tmpchain, tmp, entry);
@@ -891,7 +890,7 @@ err:
 	}
 	if (newblock)
 		apn_free_one_rule(newblock, NULL);
-	return;
+	return false;
 }
 
 void

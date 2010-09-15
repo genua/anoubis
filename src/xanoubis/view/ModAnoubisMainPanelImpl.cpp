@@ -62,9 +62,15 @@
 #include "ModAnoubis.h"
 #include "ModAnoubisMainPanelImpl.h"
 #include "Notification.h"
+#include "LogNotify.h"
+#include "AlertNotify.h"
+#include "EscalationNotify.h"
 #include "NotifyAnswer.h"
+#include "VersionCtrl.h"
+#include "VersionListCtrl.h"
 #include "PolicyCtrl.h"
 #include "ProfileListCtrl.h"
+
 #include "VersionCtrl.h"
 #include "VersionListCtrl.h"
 #include "apn.h"
@@ -129,8 +135,6 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 	anEvents->Connect(anEVT_LOAD_RULESET,
 	    wxCommandEventHandler(ModAnoubisMainPanelImpl::OnLoadRuleSet),
 	    NULL, this);
-	anEvents->Connect(anEVT_ESCALATION_RULE_ERROR, wxCommandEventHandler(
-	    ModAnoubisMainPanelImpl::OnEscalationRuleError), NULL, this);
 	anEvents->Connect(anEVT_ANOUBISOPTIONS_UPDATE, wxCommandEventHandler(
 	    ModAnoubisMainPanelImpl::OnAnoubisOptionsUpdate), NULL, this);
 	tb_MainAnoubisNotify->Connect(wxEVT_COMMAND_NOTEBOOK_PAGE_CHANGED,
@@ -201,8 +205,6 @@ ModAnoubisMainPanelImpl::~ModAnoubisMainPanelImpl(void)
 	anEvents->Disconnect(anEVT_LOAD_RULESET,
 	    wxCommandEventHandler(ModAnoubisMainPanelImpl::OnLoadRuleSet),
 	    NULL, this);
-	anEvents->Disconnect(anEVT_ESCALATION_RULE_ERROR, wxCommandEventHandler(
-	    ModAnoubisMainPanelImpl::OnEscalationRuleError), NULL, this);
 	anEvents->Disconnect(anEVT_ANOUBISOPTIONS_UPDATE, wxCommandEventHandler(
 	    ModAnoubisMainPanelImpl::OnAnoubisOptionsUpdate), NULL, this);
 }
@@ -1003,65 +1005,92 @@ ModAnoubisMainPanelImpl::setSbOptions(EscalationNotify *, NotifyAnswer *answer)
 	answer->setFlags(flags);
 }
 
-void
-ModAnoubisMainPanelImpl::answer(bool permission)
+NotifyAnswer *
+ModAnoubisMainPanelImpl::assembleTimeAnswer(bool permit)
 {
-	ModAnoubis		*module;
-	NotifyAnswer		*answer;
-	EscalationNotify	*current;
-	wxString		 escalationType;
+	enum timeUnit	unit;
+	long		value;
+	wxString	selection;
 
-	current = dynamic_cast<EscalationNotify *>(currentNotify_);
-	if (current) {
-		module = (ModAnoubis *)(MainUtils::instance()->getModule(
-		    ANOUBIS));
-
-		if (rb_EscalationOnce->GetValue()) {
-			answer = new NotifyAnswer(NOTIFY_ANSWER_ONCE,
-			    permission);
-		} else if (rb_EscalationProcess->GetValue()) {
-			answer = new NotifyAnswer(NOTIFY_ANSWER_PROCEND,
-			    permission);
-		} else if (rb_EscalationTime->GetValue()) {
-			enum timeUnit	unit;
-			unit = (enum timeUnit)
-			    ch_EscalationTimeUnit->GetCurrentSelection();
-			answer = new NotifyAnswer(NOTIFY_ANSWER_TIME,
-			    permission, spin_EscalationTime->GetValue(), unit);
-		} else if (rb_EscalationAlways->GetValue()) {
-			answer = new NotifyAnswer(NOTIFY_ANSWER_FOREVER,
-			    permission);
-		} else {
-			answer = new NotifyAnswer(NOTIFY_ANSWER_NONE,
-			    permission);
-		}
-		answer->setEditor(ck_EscalationEditor->GetValue());
-		if (current->allowOptions()) {
-			escalationType = current->getModule();
-			if (escalationType == wxT("ALF")) {
-				setAlfOptions(current, answer);
-			} else if (escalationType == wxT("SFS")) {
-				setSfsOptions(current, answer);
-			} else if (escalationType == wxT("SANDBOX")) {
-				setSbOptions(current, answer);
-			}
-		}
-		NotificationCtrl::instance()->answerEscalationNotify(
-		    current, answer);
+	value = spin_EscalationTime->GetValue();
+	selection = ch_EscalationTimeUnit->GetStringSelection();
+	if (selection == _("Seconds")) {
+		unit = TIMEUNIT_SECOND;
+	} else if (selection == _("Minutes")) {
+		unit = TIMEUNIT_MINUTE;
+	} else if (selection == _("Hours")) {
+		unit = TIMEUNIT_HOUR;
+	} else if (selection == _("Days")) {
+		unit = TIMEUNIT_DAY;
+	} else {
+		/* This should never happen. */
+		unit = TIMEUNIT_SECOND;
 	}
+
+	return (new NotifyAnswer(NOTIFY_ANSWER_TIME, permit, value, unit));
+}
+
+void
+ModAnoubisMainPanelImpl::answerEscalation(bool permit)
+{
+	bool			 rc = false;
+	wxString		 escalationType;
+	NotifyAnswer		*answer = NULL;
+	EscalationNotify	*escalation = NULL;
+	NotificationCtrl	*notificationCtrl = NULL;
+
+	notificationCtrl = NotificationCtrl::instance();
+	escalation = dynamic_cast<EscalationNotify *>(currentNotify_);
+	if (escalation == NULL) {
+		return;
+	}
+
+	/* Create answer */
+	if (rb_EscalationOnce->GetValue()) {
+		answer = new NotifyAnswer(NOTIFY_ANSWER_ONCE, permit);
+	} else if (rb_EscalationProcess->GetValue()) {
+		answer = new NotifyAnswer(NOTIFY_ANSWER_PROCEND, permit);
+	} else if (rb_EscalationTime->GetValue()) {
+		answer = assembleTimeAnswer(permit);
+	} else if (rb_EscalationAlways->GetValue()) {
+		answer = new NotifyAnswer(NOTIFY_ANSWER_FOREVER, permit);
+	} else {
+		answer = new NotifyAnswer(NOTIFY_ANSWER_NONE, permit);
+	}
+
+	/* Set additional answer options */
+	answer->setEditor(ck_EscalationEditor->GetValue());
+	if (escalation->allowOptions()) {
+		escalationType = escalation->getModule();
+		if (escalationType == wxT("ALF")) {
+			setAlfOptions(escalation, answer);
+		} else if (escalationType == wxT("SFS")) {
+			setSfsOptions(escalation, answer);
+		} else if (escalationType == wxT("SANDBOX")) {
+			setSbOptions(escalation, answer);
+		}
+	}
+
+	escalation->setAnswer(answer);
+	rc = notificationCtrl->answerEscalation(escalation, true);
+	if (rc != true) {
+		anMessageBox(_("Failed to create a rule from escalation"),
+		    _("Error"), wxICON_ERROR);
+	}
+	currentNotify_ = NULL;
 	update();
 }
 
 void
 ModAnoubisMainPanelImpl::OnAllowBtnClick(wxCommandEvent&)
 {
-	answer(true);
+	answerEscalation(true);
 }
 
 void
 ModAnoubisMainPanelImpl::OnDenyBtnClick(wxCommandEvent&)
 {
-	answer(false);
+	answerEscalation(false);
 }
 
 void
@@ -1588,13 +1617,6 @@ ModAnoubisMainPanelImpl::OnEscalationSbPathRight(wxCommandEvent &)
 {
 	pathKeep_++;
 	setPathLabel();
-}
-
-void
-ModAnoubisMainPanelImpl::OnEscalationRuleError(wxCommandEvent &)
-{
-	anMessageBox(_("Failed to create a rule from escalation"),
-	    _("Error"), wxICON_ERROR);
 }
 
 void

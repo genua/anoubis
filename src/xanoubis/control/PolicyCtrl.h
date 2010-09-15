@@ -472,19 +472,6 @@ class PolicyCtrl : public Singleton<PolicyCtrl>, public AnRowProvider
 		static void cleanRuleSetList(RuleSetList &, bool);
 
 		/**
-		 * Answer escalation
-		 * A previously received escalation was answered by the user.
-		 * An anEVT_ANSWER_ESCALATION event was sent to inform anyone
-		 * within the gui.\n
-		 * This method will cause the current PolicyRuleSet to create
-		 * a concerning new policy matching the answer.
-		 *
-		 * @param[in] 1st The command event anEVT_ANSWER_ESCALATION.
-		 * @return Nothing.
-		 */
-		void OnAnswerEscalation(wxCommandEvent &);
-
-		/**
 		 * Policy Change
 		 * A Policy in the daemon just changed.
 		 * @param[in] 1st The command event anEVT_POLICY_CHANGE.

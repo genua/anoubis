@@ -102,14 +102,17 @@ class NotificationCtrl : public wxEvtHandler, public Singleton<NotificationCtrl>
 		NotificationPerspective *getPerspective(enum ListPerspectives);
 
 		/**
-		 * Mark given escalation as been answered.
-		 * @param[in] 1st The escalation.
-		 * @param[in] 2nd The answer.
-		 * @param[in] 3rd True if the answer shall be sent.
-		 * @return Nothing.
+		 * Answer an escalation.
+		 * In fact the answer object has to be assigned to the
+		 * escalation already. This method will cause the creation of
+		 * policies if nessesary and sends them to the daemon. After
+		 * That the causing event is answered.
+		 * @param[in] 1st The escalation in question.
+		 * @param[in] 2nd True if answer of causing event shall be send
+		 *	to daemon.
+		 * @return True on success.
 		 */
-		void answerEscalationNotify(EscalationNotify *, NotifyAnswer *,
-		    bool sendAnswer = true);
+		bool answerEscalation(EscalationNotify *, bool);
 
 		/**
 		 * Return the latest playground file notification. Each
@@ -212,6 +215,15 @@ class NotificationCtrl : public wxEvtHandler, public Singleton<NotificationCtrl>
 		 * processed by a commit task.
 		 */
 		long	playgroundFileNotifyId_;
+
+		/**
+		 * Send update events to view.
+		 * This method just sends the concerning events about
+		 * new escalation. Main recipient is view.
+		 * @param[in] 1st The concerning escalation.
+		 * @return Nothing.
+		 */
+		void sendUpdateEvent(EscalationNotify *);
 
 	/* Allow singlton class access to protected constructor. */
 	friend class Singleton<NotificationCtrl>;

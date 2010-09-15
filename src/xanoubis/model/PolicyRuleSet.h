@@ -367,7 +367,14 @@ class PolicyRuleSet : public Subject
 		 */
 		bool prependAppPolicy(AppPolicy *);
 
-		void createAnswerPolicy(EscalationNotify *);
+		/**
+		 * Create answer policy.
+		 * Some answers of escalation have to be done as new rules in
+		 * the current ruleset. This method will create those rules.
+		 * @param[in] 1st The escalation in question.
+		 * @return True on sucess
+		 */
+		bool createAnswerPolicy(EscalationNotify *);
 
 	private:
 		int			 refCnt_;
