@@ -81,6 +81,7 @@ headers = \
 	include/anoubis_csumtoken.h \
 	include/anoubis_keygen.h \
 	include/anoubis_playground.h \
+	include/anoubis_procinfo.h \
 	include/apn.h \
 	include/apninternals.h
 
@@ -111,6 +112,7 @@ csources = \
 	anoubisui/key/keygen.c \
 	anoubisui/playground/playground.c \
 	anoubisui/playground/playground_files.c \
+	procinfo/procinfo.c \
 	apn/apnescalations.c \
 	apn/apnparser.c \
 	apn/rbtree.c

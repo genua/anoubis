@@ -25,4 +25,17 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##########################################################################
 
-SUBDIRS = apnvm csum auth key procinfo
+TESTS = test_csum
+
+include $(top_srcdir)/src/Makefile.include
+
+noinst_PROGRAMS = procinfo_tester
+
+TESTS_ENVIRONMENT = LD_LIBRARY_PATH=$(test_ldpath)
+
+AM_CPPFLAGS = $(test_cppflags)
+AM_LDFLAGS = $(test_ldflags)
+LDADD = $(test_ldadd)
+
+procinfo_tester_DEPENDENCIES = $(test_dependencies)
+procinfo_tester_SOURCES = procinfo_tester.c

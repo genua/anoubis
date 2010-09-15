@@ -110,6 +110,7 @@ dnl checks for libraries
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
 AC_CHECK_LIB(check_pic, suite_create, check_pic=yes, check_pic=no)
 AC_CHECK_LIB(event, event_init)
+AC_CHECK_LIB(kvm, kvm_open)
 AX_CHECK_SSL
 AS_IF(test -e /usr/lib/libwxGuiTestingd.a,
 	[PKG_CHECK_MODULES([CPPUNIT], [cppunit >= 1.12])
@@ -152,6 +153,7 @@ AC_CONFIG_FILES([
 	test/libanoubisui/csum/Makefile
 	test/libanoubisui/key/Makefile
 	test/libanoubisui/auth/Makefile
+	test/libanoubisui/procinfo/Makefile
 	include/Makefile
 	include/linux/Makefile
 	include/dev/Makefile
