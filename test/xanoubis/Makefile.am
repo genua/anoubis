@@ -56,9 +56,12 @@ noinst_PROGRAMS = \
 endif
 
 if HAVE_LIBWXGUITESTING
-TESTS += wxGuiTest_Playground
 noinst_PROGRAMS = \
-	test_xanoubis_server testSuite_JobCtrl testSuite_Ctrl $(TESTS)
+	test_xanoubis_server \
+	testSuite_JobCtrl \
+	testSuite_Ctrl \
+	wxGuiTest_Playground \
+	$(TESTS)
 endif
 
 xanoubisdir       = src/xanoubis

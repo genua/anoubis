@@ -25,8 +25,6 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##########################################################################
 
-TESTS = test_csum
-
 include $(top_srcdir)/src/Makefile.include
 
 noinst_PROGRAMS = procinfo_tester
