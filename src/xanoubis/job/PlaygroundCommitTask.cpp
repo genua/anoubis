@@ -75,8 +75,8 @@ PlaygroundCommitTask::createFileListTransaction(void)
 {
 	if (listta_)
 		anoubis_transaction_destroy(listta_);
-	listta_ = anoubis_client_pglist_start(getClient(),
-	    ANOUBIS_PGREC_FILELIST, pgid_);
+	listta_ = anoubis_client_list_start(getClient(),
+	    ANOUBIS_REC_PGFILELIST, pgid_);
 	if (listta_ == NULL) {
 		setComTaskResult(RESULT_LOCAL_ERROR);
 		setResultDetails(ENOMEM);
@@ -321,12 +321,12 @@ PlaygroundCommitTask::createNames(void)
 	for (m=listta_->msg; m; m = m->next) {
 		unsigned int		i, offset;
 
-		for (i=offset=0; i<get_value(m->u.pgreply->nrec); ++i) {
+		for (i=offset=0; i<get_value(m->u.listreply->nrec); ++i) {
 			Anoubis_PgFileRecord	*rec;
 			uint64_t		 dev, ino;
 
 			rec = (Anoubis_PgFileRecord *)
-			    (m->u.pgreply->payload + offset);
+			    (m->u.listreply->payload + offset);
 			offset += get_value(rec->reclen);
 			dev = get_value(rec->dev);
 			ino = get_value(rec->ino);

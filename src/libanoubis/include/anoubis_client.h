@@ -204,17 +204,19 @@ anoubis_client_csmulti_start(struct anoubis_client *client,
     struct anoubis_csmulti_request *request);
 
 /**
- * Request a playground list from the daemon. Possible lists are a list
- * of all playgrounds or a list of all files in a particular playground.
+ * Request a list from the daemon. Possible lists are a list of all
+ * playgrounds, a list of all files in a particular playground or a
+ * list of all processes of a user.
  *
  * @param client The procotol client object for the request.
- * @param listtype The type of list to request. (ANOUBIS_PGREC_*)
- * @param pgid The playground-ID for the affected playground. This value
- *     is only used by some request types.
+ * @param listtype The type of list to request. (ANOUBIS_REC_*)
+ * @param arg This argument restricts the elements to list. For playground
+ *     related list this is a playground ID for process lists it is a
+ *     user ID.
  * @return A transaction for the request or NULL if an error occured.
  */
-struct anoubis_transaction *anoubis_client_pglist_start(
-    struct anoubis_client *client, uint32_t listtype, uint64_t pgid);
+struct anoubis_transaction *anoubis_client_list_start(
+    struct anoubis_client *client, uint32_t listtype, uint64_t arg);
 
 /**
  * Start a transaction that request that a file is committed.

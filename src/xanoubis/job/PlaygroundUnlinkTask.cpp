@@ -109,12 +109,12 @@ PlaygroundUnlinkTask::done(void)
 		transaction_ = NULL;
 		return true;
 	} else if (transaction_ && (transaction_->msg == NULL ||
-	    !VERIFY_LENGTH(transaction_->msg, sizeof(Anoubis_PgReplyMessage)) ||
-	    get_value(transaction_->msg->u.pgreply->error) != 0)) {
+	    !VERIFY_LENGTH(transaction_->msg, sizeof(Anoubis_ListMessage)) ||
+	    get_value(transaction_->msg->u.listreply->error) != 0)) {
 		/* Message verification failed */
 		setComTaskResult(RESULT_REMOTE_ERROR);
 		setResultDetails(get_value(
-		    transaction_->msg->u.pgreply->error));
+		    transaction_->msg->u.listreply->error));
 		anoubis_transaction_destroy(transaction_);
 		transaction_ = NULL;
 		return true;
@@ -139,8 +139,8 @@ PlaygroundUnlinkTask::done(void)
 		anoubis_msg_free(message);
 		state_ = FILEFETCH;
 
-		transaction_ = anoubis_client_pglist_start(getClient(),
-		    ANOUBIS_PGREC_FILELIST, pgId_);
+		transaction_ = anoubis_client_list_start(getClient(),
+		    ANOUBIS_REC_PGFILELIST, pgId_);
 		if (transaction_ == NULL) {
 			setComTaskResult(RESULT_LOCAL_ERROR);
 			setResultDetails(ENOMEM);
@@ -193,8 +193,8 @@ PlaygroundUnlinkTask::reset(void)
 void
 PlaygroundUnlinkTask::execCom(void)
 {
-	transaction_ = anoubis_client_pglist_start(getClient(),
-	    ANOUBIS_PGREC_PGLIST, pgId_);
+	transaction_ = anoubis_client_list_start(getClient(),
+	    ANOUBIS_REC_PGLIST, pgId_);
 
 	if (transaction_ == NULL) {
 		setComTaskResult(RESULT_LOCAL_ERROR);
@@ -244,9 +244,9 @@ PlaygroundUnlinkTask::extractFileList(struct anoubis_msg *message)
 
 	cleanFileMap(unlinkList_);
 	for(; message; message = message->next) {
-		for (i=offset=0; i<get_value(message->u.pgreply->nrec); ++i) {
+		for (i=offset=0; i<get_value(message->u.listreply->nrec); ++i) {
 			record = (Anoubis_PgFileRecord *)
-			    (message->u.pgreply->payload + offset);
+			    (message->u.listreply->payload + offset);
 			offset += get_value(record->reclen);
 
 			dev = get_value(record->dev);
@@ -305,9 +305,9 @@ PlaygroundUnlinkTask::isPlaygroundActive(struct anoubis_msg *message)
 	Anoubis_PgInfoRecord	*record = NULL;
 
 	for(; message; message = message->next) {
-		for (i=offset=0; i<get_value(message->u.pgreply->nrec); ++i) {
+		for (i=offset=0; i<get_value(message->u.listreply->nrec); ++i) {
 			record = (Anoubis_PgInfoRecord *)
-			    (message->u.pgreply->payload + offset);
+			    (message->u.listreply->payload + offset);
 			offset += get_value(record->reclen);
 			if (get_value(record->pgid) != pgId_) {
 				continue;

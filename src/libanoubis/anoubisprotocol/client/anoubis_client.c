@@ -2004,7 +2004,7 @@ anoubis_client_version_start(struct anoubis_client *client)
 }
 
 static void
-anoubis_client_pglist_steps(struct anoubis_transaction *t,
+anoubis_client_list_steps(struct anoubis_transaction *t,
     struct anoubis_msg *m)
 {
 	struct anoubis_client		*client = t->cbdata;
@@ -2015,14 +2015,14 @@ anoubis_client_pglist_steps(struct anoubis_transaction *t,
 	if (ret < 0)
 		goto err;
 	ret = -EPROTO;
-	if (!VERIFY_LENGTH(m, sizeof(Anoubis_PgReplyMessage))
-	    || get_value(m->u.pgreply->type) != ANOUBIS_P_PGLISTREP)
+	if (!VERIFY_LENGTH(m, sizeof(Anoubis_ListMessage))
+	    || get_value(m->u.listreply->type) != ANOUBIS_P_LISTREP)
 		goto err;
-	flags = get_value(m->u.pgreply->flags);
+	flags = get_value(m->u.listreply->flags);
 	/* Start must be set exactly once on the first message. */
 	if ((t->msg == NULL) == ((flags & POLICY_FLAG_START) == 0))
 		goto err;
-	ret = - get_value(m->u.pgreply->error);
+	ret = - get_value(m->u.listreply->error);
 	if ((flags & POLICY_FLAG_END) == 0)
 		return;
 err:
@@ -2033,10 +2033,10 @@ err:
 }
 
 struct anoubis_transaction *
-anoubis_client_pglist_start(struct anoubis_client *client,
-    uint32_t listtype, uint64_t pgid)
+anoubis_client_list_start(struct anoubis_client *client,
+    uint32_t listtype, uint64_t arg)
 {
-	static const u_int32_t nextops[] = { ANOUBIS_P_PGLISTREP, -1 };
+	static const u_int32_t nextops[] = { ANOUBIS_P_LISTREP, -1 };
 	struct anoubis_msg		*m;
 	struct anoubis_transaction	*t = NULL;
 
@@ -2046,15 +2046,15 @@ anoubis_client_pglist_start(struct anoubis_client *client,
 		return NULL;
 	if (client->flags & FLAG_POLICY_PENDING)
 		return NULL;
-	m = anoubis_msg_new(sizeof(Anoubis_PgRequestMessage));
+	m = anoubis_msg_new(sizeof(Anoubis_ListRequestMessage));
 	if (!m)
 		return NULL;
-	set_value(m->u.pgreq->type, ANOUBIS_P_PGLISTREQ);
-	set_value(m->u.pgreq->listtype, listtype);
-	set_value(m->u.pgreq->pgid, pgid);
+	set_value(m->u.listreq->type, ANOUBIS_P_LISTREQ);
+	set_value(m->u.listreq->listtype, listtype);
+	set_value(m->u.listreq->arg, arg);
 	t = anoubis_transaction_create(0,
 	    ANOUBIS_T_INITSELF|ANOUBIS_T_WANT_ALL,
-	    &anoubis_client_pglist_steps, NULL, client);
+	    &anoubis_client_list_steps, NULL, client);
 	if (anoubis_client_send(client, m) < 0) {
 		anoubis_msg_free(m);
 		anoubis_transaction_destroy(t);

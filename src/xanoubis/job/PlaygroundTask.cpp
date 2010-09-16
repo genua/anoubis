@@ -48,8 +48,8 @@ PlaygroundTask::exec(void)
 {
 	reset();
 
-	ta_ = anoubis_client_pglist_start(
-	    getClient(), this->listtype_, this->pgid_);
+	ta_ = anoubis_client_list_start(getClient(), this->listtype_,
+	    this->pgid_);
 
 	if (ta_ == NULL) {
 		setComTaskResult(RESULT_LOCAL_ERROR);
@@ -80,11 +80,12 @@ PlaygroundTask::done(void)
 		}
 
 		if (ta_->msg == NULL ||
-		    !VERIFY_LENGTH(ta_->msg, sizeof(Anoubis_PgReplyMessage)) ||
-		    get_value(ta_->msg->u.pgreply->error) != 0) {
+		    !VERIFY_LENGTH(ta_->msg, sizeof(Anoubis_ListMessage)) ||
+		    get_value(ta_->msg->u.listreply->error) != 0) {
 			/* Message verification failed */
 			setComTaskResult(RESULT_REMOTE_ERROR);
-			setResultDetails(get_value(ta_->msg->u.pgreply->error));
+			setResultDetails(
+			    get_value(ta_->msg->u.listreply->error));
 			anoubis_transaction_destroy(ta_);
 			ta_ = NULL;
 

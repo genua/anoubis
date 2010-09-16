@@ -29,7 +29,7 @@
 #include "TaskEvent.h"
 
 PlaygroundFilesTask::PlaygroundFilesTask(uint64_t pgid, bool reportESRCH)
-    : PlaygroundIteratorTask<Anoubis_PgFileRecord>(ANOUBIS_PGREC_FILELIST, pgid)
+    : PlaygroundIteratorTask<Anoubis_PgFileRecord>(ANOUBIS_REC_PGFILELIST, pgid)
 {
 	reportESRCH_ = reportESRCH;
 }

@@ -56,7 +56,7 @@ class PlaygroundTask : public ComTask
 		 * Constructs the task.
 		 *
 		 * @param listtype The listtype you want to fetch.
-		 *                 One of ANOUBIS_PGREC_*
+		 *                 One of ANOUBIS_REC_*
 		 * @param pgid The requested playground-id
 		 *             (if used by the operation).
 		 */
@@ -170,13 +170,14 @@ class PlaygroundIteratorTask : public PlaygroundTask
 				record_ = NULL;
 				return false;
 			}
-			if (number_ >= get_value(message_->u.pgreply->nrec)) {
+			if (number_ >= get_value(message_->u.listreply->nrec)) {
 				message_ = message_->next;
 				number_ = 0;
 				offset_ = 0;
 				return readNextRecord();
 			}
-			record_ = (T*)(message_->u.pgreply->payload + offset_);
+			record_ = (T*)
+			    (message_->u.listreply->payload + offset_);
 			number_++;
 			offset_ += get_value(record_->reclen);
 			return true;

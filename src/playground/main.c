@@ -727,8 +727,8 @@ pgcli_list(void)
 	}
 
 	/* Connection established. Send message and wait for answer. */
-	transaction = anoubis_client_pglist_start(client,
-	    ANOUBIS_PGREC_PGLIST, 0);
+	transaction = anoubis_client_list_start(client,
+	    ANOUBIS_REC_PGLIST, 0);
 	rc = anoubis_transaction_complete(client, transaction, NULL);
 	if (rc < 0) {
 		PGCLI_CONNECTION_WIPE(channel, client);
@@ -754,13 +754,13 @@ pgcli_list_print_msg(struct anoubis_msg *message)
 	Anoubis_PgInfoRecord	*record = NULL;
 
 	if (message == NULL ||
-	    !VERIFY_LENGTH(message, sizeof(Anoubis_PgReplyMessage)) ||
-	    get_value(message->u.pgreply->error) != 0) {
+	    !VERIFY_LENGTH(message, sizeof(Anoubis_ListMessage)) ||
+	    get_value(message->u.listreply->error) != 0) {
 		fprintf(stderr, "Error retrieving playground list\n");
 		return;
 	}
 
-	if (get_value(message->u.pgreply->rectype) != ANOUBIS_PGREC_PGLIST) {
+	if (get_value(message->u.listreply->rectype) != ANOUBIS_REC_PGLIST) {
 		fprintf(stderr, "Error: wrong record type in received list.\n");
 		return;
 	}
@@ -775,9 +775,9 @@ pgcli_list_print_msg(struct anoubis_msg *message)
 
 	/* Print table lines */
 	while (message) {
-		for (offset=i=0; i<get_value(message->u.pgreply->nrec); ++i) {
+		for (offset=i=0; i<get_value(message->u.listreply->nrec); ++i) {
 			record = (Anoubis_PgInfoRecord *)(
-			    message->u.pgreply->payload + offset);
+			    message->u.listreply->payload + offset);
 			offset += get_value(record->reclen);
 
 			pgcli_list_print_record(record);
@@ -839,8 +839,8 @@ pgcli_files(anoubis_cookie_t pgid)
 	}
 
 	/* Connection established. Send message and wait for answer. */
-	transaction = anoubis_client_pglist_start(client,
-	    ANOUBIS_PGREC_FILELIST, pgid);
+	transaction = anoubis_client_list_start(client,
+	    ANOUBIS_REC_PGFILELIST, pgid);
 	rc = anoubis_transaction_complete(client, transaction, NULL);
 	if (rc < 0) {
 		PGCLI_CONNECTION_WIPE(channel, client);
@@ -874,8 +874,8 @@ pgcli_validate_playground(anoubis_cookie_t pgid, struct achat_channel *channel,
 	struct anoubis_transaction *transaction;
 
 	/* Retrieve information about the playground. */
-	transaction = anoubis_client_pglist_start(client,
-	    ANOUBIS_PGREC_PGLIST, pgid);
+	transaction = anoubis_client_list_start(client,
+	    ANOUBIS_REC_PGLIST, pgid);
 	int rc = anoubis_transaction_complete(client, transaction, NULL);
 	if (rc < 0) {
 		PGCLI_CONNECTION_WIPE(channel, client);
@@ -884,13 +884,13 @@ pgcli_validate_playground(anoubis_cookie_t pgid, struct achat_channel *channel,
 
 	message = transaction->msg;
 	rc = 1;
-	if (get_value(message->u.pgreply->nrec) == 0) {
+	if (get_value(message->u.listreply->nrec) == 0) {
 		fprintf(stderr, "Playground %" PRIx64 " does not exist\n",
 		    pgid);
 	} else {
 		Anoubis_PgInfoRecord    *rec;
 
-		rec = (Anoubis_PgInfoRecord *)message->u.pgreply->payload;
+		rec = (Anoubis_PgInfoRecord *)message->u.listreply->payload;
 		if (opts & PGCLI_OPT_FORCE) {
 			rc = 0;
 		} else if (get_value(rec->nrprocs)) {
@@ -911,7 +911,7 @@ pgcli_validate_playground(anoubis_cookie_t pgid, struct achat_channel *channel,
 
 /**
  * Try to delete all files that are reported in a series of messages that
- * contain ANOUBIS_PGREC_FILELIST records. A single line of text is printed
+ * contain ANOUBIS_REC_PGFILELIST records. A single line of text is printed
  * for each file/directory that is removed. Failure to remove a file in
  * the record does not lead to any error message. Instead the caller must
  * retry the removal until no more progress is made.
@@ -928,13 +928,13 @@ pgcli_delete_filelist(struct anoubis_msg *msg)
 	for(; msg; msg = msg->next) {
 		int	i, offset;
 
-		for (i=offset=0; i<get_value(msg->u.pgreply->nrec); ++i) {
+		for (i=offset=0; i<get_value(msg->u.listreply->nrec); ++i) {
 			Anoubis_PgFileRecord	*rec;
 			char			*path;
 			uint64_t		 dev, ino;
 
 			rec = (Anoubis_PgFileRecord *)
-			    (msg->u.pgreply->payload + offset);
+			    (msg->u.listreply->payload + offset);
 			offset += get_value(rec->reclen);
 			dev = get_value(rec->dev);
 			ino = get_value(rec->ino);
@@ -994,15 +994,15 @@ pgcli_remove(anoubis_cookie_t pgid)
 	/* delete files until the playground is gone */
 	noprogress = 0;
 	while (noprogress < 2) {
-		transaction = anoubis_client_pglist_start(client,
-		    ANOUBIS_PGREC_FILELIST, pgid);
+		transaction = anoubis_client_list_start(client,
+		    ANOUBIS_REC_PGFILELIST, pgid);
 		rc = anoubis_transaction_complete(client, transaction, NULL);
 		if (rc < 0) {
 			if (rc == -ESRCH)
 				rc = 0;
 			break;
 		}
-		if (get_value(transaction->msg->u.pgreply->nrec) == 0) {
+		if (get_value(transaction->msg->u.listreply->nrec) == 0) {
 			fprintf(stderr, "No more playground files but "
 			    "playground is still active");
 			rc = 1;
@@ -1049,14 +1049,14 @@ pgcli_find_file(struct anoubis_msg *filelist, const char *filename)
 		int offset = 0;
 
 		for (record_cnt = 0;
-		    record_cnt < get_value(filelist->u.pgreply->nrec);
+		    record_cnt < get_value(filelist->u.listreply->nrec);
 		    ++record_cnt) {
 			Anoubis_PgFileRecord *rec;
 			char	*path, *npath;
 			uint64_t dev, ino;
 
 			rec = (Anoubis_PgFileRecord *)
-			    (filelist->u.pgreply->payload + offset);
+			    (filelist->u.listreply->payload + offset);
 			offset += get_value(rec->reclen);
 			dev = get_value(rec->dev);
 			ino = get_value(rec->ino);
@@ -1119,8 +1119,8 @@ pgcli_delete(anoubis_cookie_t pgid, int filecnt, char** filenames)
 	if (rc != 0)
 		return rc;
 
-	transaction = anoubis_client_pglist_start(client,
-	    ANOUBIS_PGREC_FILELIST, pgid);
+	transaction = anoubis_client_list_start(client,
+	    ANOUBIS_REC_PGFILELIST, pgid);
 	rc = anoubis_transaction_complete(client, transaction, NULL);
 	if (rc < 0)
 		return rc;
@@ -1164,13 +1164,14 @@ pgcli_files_print_msg(struct anoubis_msg *message)
 
 
 	if (message == NULL ||
-	    !VERIFY_LENGTH(message, sizeof(Anoubis_PgReplyMessage)) ||
-	    get_value(message->u.pgreply->error) != 0) {
+	    !VERIFY_LENGTH(message, sizeof(Anoubis_ListMessage)) ||
+	    get_value(message->u.listreply->error) != 0) {
 		fprintf(stderr, "Error retrieving playground list\n");
 		return;
 	}
 
-	if (get_value(message->u.pgreply->rectype) != ANOUBIS_PGREC_FILELIST) {
+	if (get_value(message->u.listreply->rectype)
+	    != ANOUBIS_REC_PGFILELIST) {
 		fprintf(stderr, "Error: wrong record type in received list.\n");
 		return;
 	}
@@ -1183,9 +1184,9 @@ pgcli_files_print_msg(struct anoubis_msg *message)
 
 	/* Print table lines */
 	while (message) {
-		for (offset=i=0; i<get_value(message->u.pgreply->nrec); ++i) {
+		for (offset=i=0; i<get_value(message->u.listreply->nrec); ++i) {
 			rec = (Anoubis_PgFileRecord *)(
-			    message->u.pgreply->payload + offset);
+			    message->u.listreply->payload + offset);
 			offset += get_value(rec->reclen);
 
 			if (lastrec == NULL
@@ -1618,8 +1619,8 @@ pgcli_commit(uint64_t pgid, const char* file)
 	}
 
 	/* request PG file list from daemon */
-	transaction = anoubis_client_pglist_start(client,
-	    ANOUBIS_PGREC_FILELIST, pgid);
+	transaction = anoubis_client_list_start(client,
+	    ANOUBIS_REC_PGFILELIST, pgid);
 
 	rc = anoubis_transaction_complete(client, transaction, NULL);
 	if (rc < 0) {
@@ -1669,13 +1670,13 @@ pgcli_commit(uint64_t pgid, const char* file)
 			int record_cnt;
 			int offset = 0;
 			for (record_cnt = 0;
-			    record_cnt < get_value(filelist->u.pgreply->nrec);
+			    record_cnt < get_value(filelist->u.listreply->nrec);
 			    ++record_cnt) {
 				Anoubis_PgFileRecord *rec;
 				uint64_t dev, ino;
 
 				rec = (Anoubis_PgFileRecord *)
-				    (filelist->u.pgreply->payload + offset);
+				    (filelist->u.listreply->payload + offset);
 				offset += get_value(rec->reclen);
 				dev = get_value(rec->dev);
 				ino = get_value(rec->ino);

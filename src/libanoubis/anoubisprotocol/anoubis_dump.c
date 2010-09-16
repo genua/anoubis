@@ -352,18 +352,19 @@ dump_csmultireply(Anoubis_CSMultiReplyMessage *m, size_t len __used)
 }
 
 static void
-dump_pgreq(Anoubis_PgRequestMessage *m, size_t len __used)
+dump_listreq(Anoubis_ListRequestMessage *m, size_t len __used)
 {
 	DUMP_NETU(m, listtype);
-	DUMP_NETULL(m, pgid);
+	DUMP_NETULL(m, arg);
 }
 
 static void
-dump_pgreply(Anoubis_PgReplyMessage *m, size_t len __used)
+dump_listreply(Anoubis_ListMessage *m, size_t len __used)
 {
 	int			 i, off = 0;
 	Anoubis_PgInfoRecord	*pgrec = NULL;
 	Anoubis_PgFileRecord	*filerec = NULL;
+	Anoubis_ProcRecord	*procrec = NULL;
 
 	DUMP_NETU(m, error);
 	DUMP_NETU(m, nrec);
@@ -372,7 +373,7 @@ dump_pgreply(Anoubis_PgReplyMessage *m, size_t len __used)
 	for (i=0; i<get_value(m->nrec); ++i) {
 		snprintf(DSTR, DLEN, " {");
 		switch(get_value(m->rectype)) {
-		case ANOUBIS_PGREC_PGLIST:
+		case ANOUBIS_REC_PGLIST:
 			pgrec = (Anoubis_PgInfoRecord *)(m->payload + off);
 			off += get_value(pgrec->reclen);
 			snprintf(DSTR, DLEN, " path=%s", pgrec->path);
@@ -382,13 +383,18 @@ dump_pgreply(Anoubis_PgReplyMessage *m, size_t len __used)
 			DUMP_NETU(pgrec, nrprocs);
 			DUMP_NETU(pgrec, nrfiles);
 			break;
-		case ANOUBIS_PGREC_FILELIST:
+		case ANOUBIS_REC_PGFILELIST:
 			filerec = (Anoubis_PgFileRecord *)(m->payload + off);
 			off += get_value(filerec->reclen);
 			DUMP_NETULL(filerec, pgid);
 			DUMP_NETXLL(filerec, dev);
 			DUMP_NETULL(filerec, ino);
 			snprintf(DSTR, DLEN, " path=%s", filerec->path);
+			break;
+		case ANOUBIS_REC_PROCLIST:
+			procrec = (Anoubis_ProcRecord *)m->payload + off;
+			off += get_value(procrec->reclen);
+			/* XXX */
 			break;
 		default:
 			DUMP_NETU(m, rectype);
@@ -455,8 +461,8 @@ void __anoubis_dump(struct anoubis_msg * m, const char * pre, char **pstr)
 	CASE(ANOUBIS_P_CSMULTIREPLY, csmultireply)
 	CASE(ANOUBIS_P_VERSION, general)
 	CASE(ANOUBIS_P_VERSIONREPLY, version)
-	CASE(ANOUBIS_P_PGLISTREQ, pgreq)
-	CASE(ANOUBIS_P_PGLISTREP, pgreply)
+	CASE(ANOUBIS_P_LISTREQ, listreq)
+	CASE(ANOUBIS_P_LISTREP, listreply)
 	default:
 		snprintf(DSTR, DLEN, " type = %x", opcode);
 		dump_general(m->u.general, m->length-CSUM_LEN);

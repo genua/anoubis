@@ -29,7 +29,7 @@
 #include "TaskEvent.h"
 
 PlaygroundListTask::PlaygroundListTask(void)
-    : PlaygroundIteratorTask<Anoubis_PgInfoRecord>(ANOUBIS_PGREC_PGLIST, 0)
+    : PlaygroundIteratorTask<Anoubis_PgInfoRecord>(ANOUBIS_REC_PGLIST, 0)
 {
 }
 

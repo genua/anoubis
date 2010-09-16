@@ -264,7 +264,7 @@ session_connect(int fd __used, short event __used, void *arg)
 	    &dispatch_csmulti, info);
 	anoubis_dispatch_create(session->proto, ANOUBIS_P_PASSPHRASE,
 	    &dispatch_passphrase, NULL);
-	anoubis_dispatch_create(session->proto, ANOUBIS_P_PGLISTREQ,
+	anoubis_dispatch_create(session->proto, ANOUBIS_P_LISTREQ,
 	    &dispatch_pglist, info);
 	anoubis_dispatch_create(session->proto, ANOUBIS_P_PGCOMMIT,
 	    &dispatch_pgcommit, info);
@@ -617,7 +617,7 @@ dispatch_pglist(struct anoubis_server *server, struct anoubis_msg *m,
 
 	DEBUG(DBG_TRACE, ">dispatch_pglist");
 
-	if (!VERIFY_LENGTH(m, sizeof(Anoubis_PgRequestMessage))) {
+	if (!VERIFY_LENGTH(m, sizeof(Anoubis_ListRequestMessage))) {
 		dispatch_pglist_reply(server, EFAULT, NULL, 0,
 		    POLICY_FLAG_START | POLICY_FLAG_END);
 		DEBUG(DBG_TRACE, "<dispatch_pglist(error): verify length");
@@ -633,8 +633,8 @@ dispatch_pglist(struct anoubis_server *server, struct anoubis_msg *m,
 
 	pgmsg = (struct anoubisd_msg_pgrequest *)msg->msg;
 	pgmsg->auth_uid = auth_uid;
-	pgmsg->listtype = get_value(m->u.pgreq->listtype);
-	pgmsg->pgid = get_value(m->u.pgreq->pgid);
+	pgmsg->listtype = get_value(m->u.listreq->listtype);
+	pgmsg->pgid = get_value(m->u.listreq->arg);
 	chan = anoubis_server_getchannel(server);
 	err = anoubis_policy_comm_addrequest(ev_info->policy, chan,
 	    POLICY_FLAG_START | POLICY_FLAG_END, &dispatch_pglist_reply,
@@ -1145,7 +1145,7 @@ dispatch_pglist_reply(void *cbdata, int error, void *data, int len, int flags)
 		log_warnx("Wrong flags value in dispatch_pglist_reply");
 	if (error)
 		goto err;
-	if (len < (int)sizeof(Anoubis_PgReplyMessage)) {
+	if (len < (int)sizeof(Anoubis_ListMessage)) {
 		log_warnx(" dispatch_pglist_reply: "
 		    "Short pglist reply message: len=%d\n", len);
 		return -EFAULT;
@@ -1161,14 +1161,14 @@ dispatch_pglist_reply(void *cbdata, int error, void *data, int len, int flags)
 	DEBUG(DBG_TRACE, "<dispatch_pglist_reply: error=%d", -ret);
 	return ret;
 err:
-	m = anoubis_msg_new(sizeof(Anoubis_PgReplyMessage));
+	m = anoubis_msg_new(sizeof(Anoubis_ListMessage));
 	if (!m)
 		return -ENOMEM;
-	set_value(m->u.pgreply->type, ANOUBIS_P_PGLISTREP);
-	set_value(m->u.pgreply->flags, flags | POLICY_FLAG_END);
-	set_value(m->u.pgreply->error, error);
-	set_value(m->u.pgreply->nrec, 0);
-	set_value(m->u.pgreply->rectype, 0);
+	set_value(m->u.listreply->type, ANOUBIS_P_LISTREP);
+	set_value(m->u.listreply->flags, flags | POLICY_FLAG_END);
+	set_value(m->u.listreply->error, error);
+	set_value(m->u.listreply->nrec, 0);
+	set_value(m->u.listreply->rectype, 0);
 	ret = anoubis_msg_send(anoubis_server_getchannel(server), m);
 	anoubis_msg_free(m);
 	DEBUG(DBG_TRACE, "<dispatch_pglist_reply: error=%d ret=%d",

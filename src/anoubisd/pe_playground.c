@@ -768,7 +768,7 @@ pe_playground_initpgid(int anoubisfd __used, int eventfd __used)
  * dmsg A pointer to the anoubis daemon header within the reply message. This
  *     header is a anoubisd_msg_pgreply structure.
  * pmsg A pointer to the protocol header within the reply message. This
- *     header is of type Anoubis_PgReplyMessage.
+ *     header is of type Anoubis_ListMessage.
  * buf This buffer represents the message payload at the end of the
  *     message. The caller can use the memory in this buffer for individual
  *     reply records. Once a record is added the buffer should be modified
@@ -786,7 +786,7 @@ pe_playground_initpgid(int anoubisfd __used, int eventfd __used)
 struct pg_reply_context {
 	struct anoubisd_msg			*msg;
 	struct anoubisd_msg_pgreply		*dmsg;
-	Anoubis_PgReplyMessage			*pmsg;
+	Anoubis_ListMessage			*pmsg;
 	struct abuf_buffer			 buf;
 	int					 curlen;
 	int					 nrec;
@@ -825,23 +825,23 @@ pe_playground_init_reply(struct pg_reply_context *ctx, uint64_t token,
 	}
 	ctx->dmsg->token = token;
 	ctx->dmsg->flags = 0;
-	ctx->dmsg->len = sizeof(Anoubis_PgReplyMessage);
+	ctx->dmsg->len = sizeof(Anoubis_ListMessage);
 	ctx->buf = abuf_open(ctx->buf,
 	    offsetof(struct anoubisd_msg_pgreply, data));
-	ctx->pmsg = abuf_cast(ctx->buf, Anoubis_PgReplyMessage);
+	ctx->pmsg = abuf_cast(ctx->buf, Anoubis_ListMessage);
 	if (!ctx->pmsg) {
 		free(ctx->msg);
 		return -ENOMEM;
 	}
-	set_value(ctx->pmsg->type, ANOUBIS_P_PGLISTREP);
+	set_value(ctx->pmsg->type, ANOUBIS_P_LISTREP);
 	set_value(ctx->pmsg->flags, 0);
 	set_value(ctx->pmsg->error, 0);
 	set_value(ctx->pmsg->nrec, 0);
 	set_value(ctx->pmsg->rectype, listtype);
 	ctx->buf = abuf_open(ctx->buf,
-	    offsetof(Anoubis_PgReplyMessage, payload));
+	    offsetof(Anoubis_ListMessage, payload));
 	ctx->curlen = sizeof(struct anoubisd_msg_pgreply)
-	    + sizeof(Anoubis_PgReplyMessage);
+	    + sizeof(Anoubis_ListMessage);
 	ctx->nrec = 0;
 	ctx->flags = POLICY_FLAG_START;
 	return 0;
@@ -889,7 +889,7 @@ pe_playground_reply_addrecord(struct pg_reply_context *ctx, int size)
 /**
  * Send information about a single or all known playgrounds to the queue
  * given as parameter. This function iterates over all playgrounds and
- * sends one or more messages containing ANOUBIS_PGREC_PGLIST records to
+ * sends one or more messages containing ANOUBIS_REC_PGLIST records to
  * the given queue. Each record represents one playground. If the playground
  * ID is zero information all playgrounds are sent.
  *
@@ -907,7 +907,7 @@ pe_playground_send_pglist(uint64_t token, anoubis_cookie_t pgid,
 	struct pg_reply_context		 ctx;
 	int				 error;
 
-	error = pe_playground_init_reply(&ctx, token, ANOUBIS_PGREC_PGLIST);
+	error = pe_playground_init_reply(&ctx, token, ANOUBIS_REC_PGLIST);
 	if (error < 0)
 		return error;
 	LIST_FOREACH(pg, &playgrounds, next) {
@@ -923,7 +923,7 @@ pe_playground_send_pglist(uint64_t token, anoubis_cookie_t pgid,
 		if (size > abuf_length(ctx.buf)) {
 			pe_playground_send_reply(&ctx, q);
 			error = pe_playground_init_reply(&ctx, token,
-			    ANOUBIS_PGREC_PGLIST);
+			    ANOUBIS_REC_PGLIST);
 			if (error < 0)
 				return error;
 			ctx.flags = 0;
@@ -955,11 +955,11 @@ pe_playground_send_pglist(uint64_t token, anoubis_cookie_t pgid,
  * @param ctx The message context containing the current message. This
  *     message may or may not contain records.
  * @param dev The playground ID of the current file. This value is stored in
- *     each ANOUBIS_PGREC_FILELIST record that is added to the message.
+ *     each ANOUBIS_REC_PGFILELIST record that is added to the message.
  * @param dev The device ID of the current file. This value is stored in
- *     each ANOUBIS_PGREC_FILELIST record that is added to the message.
+ *     each ANOUBIS_REC_PGFILELIST record that is added to the message.
  * @param ino The inode number of the  current file. This value is stored in
- *     each ANOUBIS_PGREC_FILELIST record that is added to the message.
+ *     each ANOUBIS_REC_PGFILELIST record that is added to the message.
  * @param fd The file descriptor of the file that contains the playground
  *     path names for the file. Each pathname results in one record.
  * @param q Completed messages are added to this queue.
@@ -1022,7 +1022,7 @@ pe_playground_send_onefile(struct pg_reply_context *ctx, uint64_t pgid,
 			struct pg_reply_context		nctx;
 
 			err = pe_playground_init_reply(&nctx, ctx->dmsg->token,
-			    ANOUBIS_PGREC_FILELIST);
+			    ANOUBIS_REC_PGFILELIST);
 			if (err < 0)
 				return err;
 			abuf_copy_part(nctx.buf, 0, ctx->buf, 0, recoff);
@@ -1099,7 +1099,7 @@ pe_playground_send_filelist(uint64_t token, uint64_t pgid, uint32_t auth_uid,
 	dir = atfd_fdopendir(&pg->dirfd);
 	if (!dir)
 		return -errno;
-	error = pe_playground_init_reply(&ctx, token, ANOUBIS_PGREC_FILELIST);
+	error = pe_playground_init_reply(&ctx, token, ANOUBIS_REC_PGFILELIST);
 	if (error < 0)
 		goto err;
 
@@ -1134,7 +1134,7 @@ err:
 }
 
 /**
- * This is an external function that handle playground list requests by
+ * This is an external function that handles playground list requests by
  * the user. The request message is passed as a paramter. Any response
  * message that must be generated are added to the given queue.
  *
@@ -1152,12 +1152,12 @@ pe_playground_dispatch_request(struct anoubisd_msg *inmsg, Queue *queue)
 
 	pgreq = (struct anoubisd_msg_pgrequest *)inmsg->msg;
 	switch(pgreq->listtype) {
-	case ANOUBIS_PGREC_PGLIST:
+	case ANOUBIS_REC_PGLIST:
 		token = pgreq->token;
 		err = pe_playground_send_pglist(pgreq->token, pgreq->pgid,
 		    queue);
 		break;
-	case ANOUBIS_PGREC_FILELIST:
+	case ANOUBIS_REC_PGFILELIST:
 		token = pgreq->token;
 		err = pe_playground_send_filelist(pgreq->token, pgreq->pgid,
 		    pgreq->auth_uid, queue);
@@ -1169,7 +1169,7 @@ pe_playground_dispatch_request(struct anoubisd_msg *inmsg, Queue *queue)
 	if (err == 0)
 		return;
 	/* Send an error message */
-	if (pe_playground_init_reply(&ctx, token, ANOUBIS_PGREC_NOTYPE) < 0) {
+	if (pe_playground_init_reply(&ctx, token, ANOUBIS_REC_NOTYPE) < 0) {
 		master_terminate(ENOMEM);
 		return;
 	}

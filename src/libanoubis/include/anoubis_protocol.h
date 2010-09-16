@@ -173,9 +173,10 @@ static inline u_int64_t __ntohll(u_int64_t arg)
 #define		ANOUBIS_P_VERSION	0x3900
 #define		ANOUBIS_P_VERSIONREPLY	0x3901
 
-#define		ANOUBIS_P_PGLISTREQ	0x3A00
-#define		ANOUBIS_P_PGLISTREP	0x3A01
+#define		ANOUBIS_P_LISTREQ	0x3A00
+#define		ANOUBIS_P_LISTREP	0x3A01
 #define		ANOUBIS_P_PGCOMMIT	0x3A02
+#define		ANOUBIS_P_PROCLIST	0x3A03
 
 #define		ANOUBIS_P_MAX		0x3FFF
 
@@ -550,43 +551,50 @@ typedef struct {
 	char	payload[0];
 } __attribute__((packed)) Anoubis_PassphraseMessage;
 
-/* Record types for Anoubis_PgReplyMessages */
-#define ANOUBIS_PGREC_NOTYPE		0	/* Error or empty. */
-#define ANOUBIS_PGREC_PGLIST		1	/* Anoubis_PgInfoRecord list */
-#define ANOUBIS_PGREC_FILELIST		2	/* Anoubis_PgFileRecord. */
+/* Record types for Anoubis_ListMessages */
+#define ANOUBIS_REC_NOTYPE		0	/* Error or empty. */
+#define ANOUBIS_REC_PGLIST		1	/* Anoubis_PgInfoRecord list */
+#define ANOUBIS_REC_PGFILELIST		2	/* Anoubis_PgFileRecord. */
+#define	ANOUBIS_REC_PROCLIST		3	/* Anoubis_ProcRecord. */
 
 /**
- * This structure is used to request playground status information from
- * the anoubis daemon. The result is one or more Anoubis_PgReplyMessage
- * messages. Message fields:
+ * This structure is used to request status information from the anoubis
+ * daemon. This includes information about playgrounds or processes.
+ * The result is one or more Anoubis_ListMessage messages.
+ * Message fields:
  *
- * type The type of the message. Must be ANOUBIS_P_PGLISTREQ.
- * listtype The type of information to list. Possible values are:
- *     - ANOUBIS_PGREC_PGLIST: List all known playgrounds. The answer will
- *         contain a list of Anoubis_PgInfoRecord structures. The pgid
- *         field is ignored for this list type.
- *     - ANOUBIS_PGREC_FILELIST: List all playground files for a paricular
+ * type: The type of the message. Must be ANOUBIS_P_LISTREQ.
+ * listtype: The type of information to list. Possible values are:
+ *     - ANOUBIS_REC_PGLIST: List all known playgrounds. The answer will
+ *         contain a list of Anoubis_PgInfoRecord structures.
+ *     - ANOUBIS_REC_PGFILELIST: List all playground files for a paricular
  *         playground. This is only allowed for playgrounds that were
  *         created by the user or for root.
- * _pad Padding. Should, not used.
- * pgid The playground ID of the affected playground. Use zero here to list
- *     all playgrounds. This is not allowed if the list type is
- *     ANOUBIS_PGREC_FILELIST.
+ *     - ANOUBIS_REC_PROCLIST: List all processes of a particular user.
+ *         Normal users cannot list processes of other users.
+ * _pad: Padding. Should, not used.
+ * arg: This argument is used to restrict the list of objects to list.
+ *     Its meaning depens on the list type:
+ *     - ANOUBIS_REC_PGLIST: Argument specifies the playground that
+ *         we are interested in. Use zero here to list all playgrounds.
+ *     - ANOUBIS_REC_PGFILELIST: Argument specifies the playground ID
+ *         of the playground.
+ *     - ANOUBIS_REC_PROCLIST: The user ID of the user.
  */
 typedef struct {
 	u32n	type;
 	u16n	listtype;
 	u16n	_pad;
-	u64n	pgid;
-} __attribute__((packed)) Anoubis_PgRequestMessage;
+	u64n	arg;
+} __attribute__((packed)) Anoubis_ListRequestMessage;
 
 /**
- * This message is sent in reply to an ANOUBIS_P_PGLISTREQ request.
+ * This message is sent in reply to an ANOUBIS_P_LISTREQ request.
  * It contains (part of) the result of the request. If the result is split
  * into multiply messages, it is still guaranteed that individual records
  * do not span accross multiple reply messages. Fields:
  *
- * type The type of the message. Must be ANOUBIS_P_PGLISTREP.
+ * type The type of the message. Must be ANOUBIS_P_LISTREP.
  * flags Possible flags are POLICY_FLAG_START and POLICY_FLAG_END. The
  *     start flag is set on the first message that answers a request and
  *     the end flag is set on the last message.
@@ -594,14 +602,16 @@ typedef struct {
  *     non-zero the payload must be empty and nrec must be zero.
  * nrec The number of records in this message.
  * rectype The record type used in this message. Possible values and types are:
- *     - ANOUBIS_PGREC_NOTYPE: The message contains no records. This is
+ *     - ANOUBIS_REC_NOTYPE: The message contains no records. This is
  *         only allowed, if the error field is non-zero.
- *     - ANOUBIS_PGREC_PGLIST: The message contains Anoubis_PgInfoRecord
+ *     - ANOUBIS_REC_PGLIST: The message contains Anoubis_PgInfoRecord
  *         records.
- *     - ANOUBIS_PGREC_FILELIST: The message contains Anobuis_PgFileRecord
+ *     - ANOUBIS_REC_PGFILELIST: The message contains Anoubis_PgFileRecord
  *         records. Each of these records references a single path name,
  *         multiple path names for the same dev/ino pair result in multiple
  *         records.
+ *     - ANOUBIS_REC_PROCLIST: The message contains Anobuis_PgProcRecord
+ *         records. Each of these records describes a single process.
  */
 typedef struct {
 	u32n	type;
@@ -610,7 +620,7 @@ typedef struct {
 	u16n	nrec;
 	u16n	rectype;
 	char	payload[0];
-} __attribute__((packed)) Anoubis_PgReplyMessage;
+} __attribute__((packed)) Anoubis_ListMessage;
 
 /**
  * This message is sent by the client to ask the daemon for the removal
@@ -636,7 +646,7 @@ typedef struct {
 
 /**
  * This structure contains information about a single playground. It is
- * used in Anoubis_PgReplyMessage replies. Fields:
+ * used in Anoubis_ListMessage replies. Fields:
  *
  * reclen The total length of this record including the length itself.
  * uid The used ID of the user that created the playground.
@@ -658,7 +668,7 @@ typedef struct {
 
 /**
  * This structure contains information about a single file in the playground.
- * It is used in Anobuis_PgReplyMessage replies. Fields:
+ * It is used in Anobuis_ListMessage replies. Fields:
  *
  * reclen The total length of this record including the length itself.
  * _pad Padding. Do not use.
@@ -679,5 +689,10 @@ typedef struct {
 	u64n			ino;
 	char			path[0];
 } __attribute__((packed)) Anoubis_PgFileRecord;
+
+typedef struct {
+	u32n			reclen;
+	/* XXX */
+} __attribute__((packed)) Anoubis_ProcRecord;
 
 #endif
