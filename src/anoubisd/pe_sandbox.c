@@ -226,7 +226,7 @@ pe_sb_getrules (struct pe_proc *proc, uid_t uid, int prio, const char *path,
 	 * If we do not have a process, find the default rules
 	 * for the given UID (if any) and try to apply these.
 	 */
-	if (proc) {
+	if (proc && pe_proc_get_uid(proc) == uid) {
 		sbrules = pe_context_get_sbrule(
 		    pe_proc_get_context(proc, prio));
 		DEBUG(DBG_SANDBOX, " pe_sb_getrules: context rules "

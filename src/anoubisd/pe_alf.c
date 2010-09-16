@@ -210,7 +210,7 @@ pe_alf_evaluate(struct pe_proc *proc, int prio, uid_t uid,
 	time_t		 t;
 	int		 ispg = (extract_pgid(&msg->common) != 0);
 
-	if (proc) {
+	if (proc && pe_proc_get_uid(proc) == uid) {
 		rule = pe_context_get_alfrule(pe_proc_get_context(proc, prio));
 	} else {
 		struct apn_ruleset *rs = pe_user_get_ruleset(uid, prio, NULL);

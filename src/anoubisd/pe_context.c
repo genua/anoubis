@@ -328,6 +328,7 @@ pe_context_dump(struct eventdev_hdr *hdr, struct pe_proc *proc, int prio)
 /*
  * Inherit the parent process context. This happens on fork(2).
  * - If our parent was never tracked, we simulate an exec.
+ * - If the parent's uid and our uid do not match we simulate an exec, too.
  * - If the parent has a non NULL context for a prio. Use it.
  * - Otherwise if there are no rules for that uid/prio, use a norules
  *   context.
@@ -347,8 +348,14 @@ pe_context_fork(struct pe_proc *proc, struct pe_proc *parent)
 	DEBUG(DBG_PE_CTX, "pe_context_fork: parent %p 0x%08" PRIx64, parent,
 	    pe_proc_task_cookie(parent));
 	for (i = 0; i < PE_PRIO_MAX; i++) {
-		struct pe_context	*ctx = pe_proc_get_context(parent, i);
-		if (ctx) {
+		struct pe_context	*ctx;
+
+		/*
+		 * Keep the parent's context if it has one and both processes
+		 * run with the same uid (aka ruleset).
+		 */
+		if (parent && pe_proc_get_uid(parent) == pe_proc_get_uid(proc)
+		    && (ctx = pe_proc_get_context(parent, i)) != NULL) {
 			pe_proc_set_context(proc, i, ctx);
 			continue;
 		}
@@ -358,6 +365,7 @@ pe_context_fork(struct pe_proc *proc, struct pe_proc *parent)
 		    i);
 		pe_context_switch(proc, i, pe_proc_ident(proc),
 		    pe_proc_get_uid(proc));
+		pe_proc_drop_saved_ctx(proc, i);
 	}
 	pe_dump_dbgctx("pe_context_fork", proc);
 }
@@ -497,6 +505,7 @@ pe_context_exec(struct pe_proc *proc, uid_t uid, struct pe_proc_ident *pident)
 		DEBUG(DBG_PE_CTX,
 		    "pe_context_exec: prio %d switching context", i);
 		pe_context_switch(proc, i, pident, uid);
+		pe_proc_drop_saved_ctx(proc, i);
 	}
 	if (uid != (uid_t)-1)
 		pe_proc_set_uid(proc, uid);
@@ -822,6 +831,10 @@ pe_context_decide(struct pe_proc *proc, int type, int prio,
 	/* No context: Allow a context switch. */
 	if (ctx == NULL)
 		return (type == APN_CTX_NEW);
+	/* Force a context switch if this  will change the user-ID, too. */
+	if (type == APN_CTX_NEW
+	    && (proc == NULL || pe_proc_get_uid(proc) != uid))
+		return 1;
 	/* Context without rule means, not switching. */
 	if (ctx->ctxrule == NULL)
 		return 0;

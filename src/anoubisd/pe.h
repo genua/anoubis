@@ -141,6 +141,7 @@ void			 pe_proc_save_ctx(struct pe_proc *, int,
 			     anoubis_cookie_t);
 void			 pe_proc_restore_ctx(struct pe_proc *, int,
 			     anoubis_cookie_t);
+void			 pe_proc_drop_saved_ctx(struct pe_proc *, int);
 struct pe_context	*pe_proc_get_savedctx(struct pe_proc *, int);
 void			 pe_proc_set_savedctx( struct pe_proc *, int,
 			     struct pe_context *);

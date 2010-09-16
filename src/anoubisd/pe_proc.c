@@ -39,7 +39,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
 #ifdef LINUX
@@ -919,6 +918,27 @@ pe_proc_restore_ctx(struct pe_proc *proc, int prio, anoubis_cookie_t cookie)
 		pe_proc_set_context(proc, prio, ctx);
 		/* pe_proc_set_context got a reference to this context. */
 		pe_context_put(ctx);
+		proc->saved_ctx[prio] = NULL;
+	}
+}
+
+/**
+ * Forget about a saved context without restoring it. This is useful if
+ * the process execs.
+ *
+ * @param proc The process.
+ * @param prio The priority of the affected context.
+ * @return None.
+ */
+void
+pe_proc_drop_saved_ctx(struct pe_proc *proc, int prio)
+{
+	if (proc == NULL)
+		return;
+	if (prio < 0 || prio >= PE_PRIO_MAX)
+		return;
+	if (proc->saved_ctx[prio]) {
+		pe_context_put(proc->saved_ctx[prio]);
 		proc->saved_ctx[prio] = NULL;
 	}
 }
