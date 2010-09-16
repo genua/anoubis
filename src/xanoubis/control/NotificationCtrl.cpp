@@ -180,13 +180,13 @@ NotificationCtrl::answerEscalation(EscalationNotify *escalation,
 
 	ruleSet = policyCtrl->getRuleSet(id);
 	if (ruleSet == NULL) {
-		Debug::err(_("Can't access user ruleset."));
+		Debug::err(wxT("Can't access user ruleset."));
 		return (false);
 	}
 
 	answer = escalation->getAnswer();
 	if (answer == NULL) {
-		Debug::err(_("Can't access answer of escalation."));
+		Debug::err(wxT("Can't access answer of escalation."));
 		return (false);
 	}
 

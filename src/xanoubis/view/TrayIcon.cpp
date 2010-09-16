@@ -315,51 +315,57 @@ TrayIcon::update(bool increase)
 	wxString tooltip;
 	wxString connection;
 	char message[MAX_MESSAGE];
-	tooltip = _("Messages: ");
 
-	/* connection to daemon established */
-	if (daemon_.IsEmpty()) {
-		connection = _("not connected");
-	} else {
-		connection = _("connected with ");
-		connection += daemon_;
+	/* Setup tooltip */
+	if (daemon_.IsEmpty()) { /* Not connected */
+		if (messageEscalationCount_ > 0 || messageAlertCount_ > 0) {
+			int count = (messageEscalationCount_ > 0) ?
+			    messageEscalationCount_ : messageAlertCount_;
+
+			tooltip = wxString::Format(
+			    _("Messages: %d\nnot connected"), count);
+		} else
+			tooltip = _("No messages\nnot connected");
+	} else { /* Connected */
+		if (messageEscalationCount_ > 0 || messageAlertCount_ > 0) {
+			int count = (messageEscalationCount_ > 0) ?
+			    messageEscalationCount_ : messageAlertCount_;
+
+			tooltip = wxString::Format(
+			    _("Messages: %d\nconnected with %ls"),
+			    count, daemon_.c_str());
+		} else
+			tooltip = wxString::Format(
+			    _("No messages\nconnected with %ls"),
+			    daemon_.c_str());
 	}
 
 	/* escalations represent the highest priority */
 	if (messageEscalationCount_ > 0) {
-		tooltip += wxString::Format(wxT("%d\n"),
-		    messageEscalationCount_);
-		tooltip += connection;
-		sprintf(message, "Received Escalations: %d\n",
-		    messageEscalationCount_);
+		strlcpy(message, wxString::Format(_("Received Escalations: %d"),
+		    messageEscalationCount_).fn_str(), MAX_MESSAGE);
 		SetIcon(getIcon(ICON_TYPE_QUESTION), tooltip);
 		if (sendEscalation_ && (increase || !closed_)) {
-			if (!systemNotify("ESCALATION", message,
-			    NOTIFY_URGENCY_CRITICAL, escalationTimeout_))
+			if (!systemNotify(wxString(_("ESCALATION")).fn_str(),
+			    message, NOTIFY_URGENCY_CRITICAL,
+			    escalationTimeout_))
 				Debug::err(_("Couldn't send Escalation"));
 		}
-	} else {
-		if (messageAlertCount_ > 0) {
-			tooltip += wxString::Format(wxT("%d\n"),
-			    messageAlertCount_);
-			tooltip += connection;
-			sprintf(message, "Received Alerts: %d\n",
-			    messageAlertCount_);
-			SetIcon(getIcon(ICON_TYPE_ALERT), tooltip);
-			if (sendAlert_ && (increase || !closed_)) {
-				if (!systemNotify("ALERT", message,
-				    NOTIFY_URGENCY_NORMAL,
-				    alertTimeout_)){
-					Debug::err(_("Couldn't send Alert"));
-				}
+	} else if (messageAlertCount_ > 0) {
+		strlcpy(message, wxString::Format(_("Received Alerts: %d"),
+		    messageAlertCount_).fn_str(), MAX_MESSAGE);
+		SetIcon(getIcon(ICON_TYPE_ALERT), tooltip);
+		if (sendAlert_ && (increase || !closed_)) {
+			if (!systemNotify(wxString(_("ALERT")).fn_str(),
+			    message, NOTIFY_URGENCY_NORMAL,
+			    alertTimeout_)) {
+				Debug::err(_("Couldn't send Alert"));
 			}
-		} else {
-			tooltip = _("No messages\n");
-			tooltip += connection;
-			SetIcon(getIcon(ICON_TYPE_NORMAL), tooltip);
-			/* enforce hiding of the system notifier popup */
-			notify_notification_close(notification, NULL);
 		}
+	} else {
+		SetIcon(getIcon(ICON_TYPE_NORMAL), tooltip);
+		/* enforce hiding of the system notifier popup */
+		notify_notification_close(notification, NULL);
 	}
 	/* Process pending libnotify events. */
 	wxGetApp().Yield(false);
