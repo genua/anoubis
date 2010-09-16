@@ -108,6 +108,15 @@ RuleWizard::RuleWizard(wxWindow *parent)
 
 	GetPageAreaSizer()->Add(pages_[PAGE_PROGRAM]);
 
+	/* XXX Make buttons a little bit wider. The forward-button is not wide
+	 * XXX enough. The german translation for Finish (Fertigstellen) does
+	 * XXX not fit. Maybe this is an wxWidgets-bug...
+	 * XXX All buttons should have the same size, thus adjust all buttons.
+	 */
+	adjustButtonSize(wxID_BACKWARD);
+	adjustButtonSize(wxID_FORWARD);
+	adjustButtonSize(wxID_CANCEL);
+
 	Connect(wxEVT_WIZARD_FINISHED,
 	    wxWizardEventHandler(RuleWizard::onWizardFinished),
 	    NULL, this);
@@ -862,4 +871,16 @@ RuleWizard::toAPN_SBA(SbEntry::Permission permission)
 	}
 
 	return (-1); /* Never reached */
+}
+
+void
+RuleWizard::adjustButtonSize(int id)
+{
+	wxWindow *w = wxWindow::FindWindowById(id, this);
+
+	if (w != 0) {
+		wxSize size = w->GetSize();
+		size.SetWidth(size.GetWidth() + 10);
+		w->SetMinSize(size);
+	}
 }

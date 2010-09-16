@@ -321,6 +321,13 @@ class RuleWizard : public wxWizard
 		 * @return The related SbEntry::Permission-value
 		 */
 		static int toAPN_SBA(SbEntry::Permission);
+
+		/**
+		 * Adjusts the sizes of the buttons.
+		 *
+		 * Make then a little bit wider. Text does not fit...
+		 */
+		void adjustButtonSize(int);
 };
 
 #endif	/* _RULEWIZARD_H_ */
