@@ -66,6 +66,7 @@
 #include "pe.h"
 #include "pe_filetree.h"
 #include "cfg.h"
+#include "amsg_list.h"
 #include <anoubis_alloc.h>
 
 #include <anoubis_protocol.h>
@@ -901,6 +902,54 @@ oom:
 	return -ENOMEM;
 }
 
+/**
+ * This function handles list requests received from the session engine,
+ * i.e. the user.  The request message is passed as a paramter. Any response
+ * messages that must be generated are added to the given queue.
+ *
+ * @param inmsg The request message of type anoubisd_msg_listrequest.
+ * @param queue Reply messages are added to this queue.
+ * @return None. The user is notified of any error via error messages.
+ */
+static void
+dispatch_list_request(struct anoubisd_msg *inmsg, Queue *queue)
+{
+	int				 err = 0;
+	uint64_t			 token = 0;
+	struct anoubisd_msg_listrequest	*listreq;
+	struct amsg_list_context	 ctx;
+
+	listreq = (struct anoubisd_msg_listrequest *)inmsg->msg;
+	switch(listreq->listtype) {
+	case ANOUBIS_REC_PGLIST:
+		token = listreq->token;
+		err = pe_playground_send_pglist(listreq->token, listreq->arg,
+		    queue);
+		break;
+	case ANOUBIS_REC_PGFILELIST:
+		token = listreq->token;
+		err = pe_playground_send_filelist(listreq->token, listreq->arg,
+		    listreq->auth_uid, queue);
+		break;
+	case ANOUBIS_REC_PROCLIST:
+		/* XXX CEH: Fall through for now. */
+	default:
+		log_warnx("pe_playground_dispatch_request: Dropping invalid "
+		    "message of type %d", listreq->listtype);
+	}
+	if (err == 0)
+		return;
+	/* Send an error message */
+	if (amsg_list_init(&ctx, token, ANOUBIS_REC_NOTYPE) < 0) {
+		master_terminate(ENOMEM);
+		return;
+	}
+	ctx.flags = POLICY_FLAG_START | POLICY_FLAG_END;
+	set_value(ctx.pmsg->error, -err);
+	amsg_list_send(&ctx, queue);
+}
+
+
 static void
 dispatch_s2p(int fd, short sig __used, void *arg)
 {
@@ -964,8 +1013,8 @@ dispatch_s2p(int fd, short sig __used, void *arg)
 				free(msg);
 			}
 			break;
-		case ANOUBISD_MSG_PGREQUEST:
-			pe_playground_dispatch_request(msg, &eventq_p2s);
+		case ANOUBISD_MSG_LISTREQUEST:
+			dispatch_list_request(msg, &eventq_p2s);
 			free(msg);
 			break;
 		case ANOUBISD_MSG_PGCOMMIT:

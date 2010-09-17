@@ -610,7 +610,7 @@ dispatch_pglist(struct anoubis_server *server, struct anoubis_msg *m,
     uid_t auth_uid, void *arg)
 {
 	struct anoubisd_msg			*msg;
-	struct anoubisd_msg_pgrequest		*pgmsg;
+	struct anoubisd_msg_listrequest		*pgmsg;
 	struct event_info_session		*ev_info = arg;
 	struct achat_channel			*chan;
 	int					 err;
@@ -624,17 +624,17 @@ dispatch_pglist(struct anoubis_server *server, struct anoubis_msg *m,
 		return;
 	}
 
-	msg = msg_factory(ANOUBISD_MSG_PGREQUEST,
-	    sizeof(struct anoubisd_msg_pgrequest));
+	msg = msg_factory(ANOUBISD_MSG_LISTREQUEST,
+	    sizeof(struct anoubisd_msg_listrequest));
 	if (!msg) {
 		master_terminate(ENOMEM);
 		return;
 	}
 
-	pgmsg = (struct anoubisd_msg_pgrequest *)msg->msg;
+	pgmsg = (struct anoubisd_msg_listrequest *)msg->msg;
 	pgmsg->auth_uid = auth_uid;
 	pgmsg->listtype = get_value(m->u.listreq->listtype);
-	pgmsg->pgid = get_value(m->u.listreq->arg);
+	pgmsg->arg = get_value(m->u.listreq->arg);
 	chan = anoubis_server_getchannel(server);
 	err = anoubis_policy_comm_addrequest(ev_info->policy, chan,
 	    POLICY_FLAG_START | POLICY_FLAG_END, &dispatch_pglist_reply,
@@ -1374,8 +1374,8 @@ dispatch_p2s(int fd, short sig __used, void *arg)
 			dispatch_p2s_pol_reply(msg, ev_info);
 			break;
 
-		case ANOUBISD_MSG_PGREPLY:
-			DEBUG(DBG_QUEUE, " >p2s: pgreply");
+		case ANOUBISD_MSG_LISTREPLY:
+			DEBUG(DBG_QUEUE, " >p2s: listreply");
 			dispatch_p2s_pg_reply(msg, ev_info);
 			break;
 
@@ -1660,22 +1660,22 @@ static void
 dispatch_p2s_pg_reply(struct anoubisd_msg *msg,
     struct event_info_session *ev_info)
 {
-	struct anoubisd_msg_pgreply	*pgreply;
+	struct anoubisd_msg_listreply	*listreply;
 	void				*buf = NULL;
 	int				 end, ret;
 
 	DEBUG(DBG_TRACE, ">dispatch_p2s_pg_reply");
 
-	pgreply = (struct anoubisd_msg_pgreply *)msg->msg;
-	if (pgreply->len)
-		buf = pgreply->data;
-	end = pgreply->flags & POLICY_FLAG_END;
-	ret = anoubis_policy_comm_answer(ev_info->policy, pgreply->token, 0,
-	    buf, pgreply->len, end != 0);
+	listreply = (struct anoubisd_msg_listreply *)msg->msg;
+	if (listreply->len)
+		buf = listreply->data;
+	end = listreply->flags & POLICY_FLAG_END;
+	ret = anoubis_policy_comm_answer(ev_info->policy, listreply->token, 0,
+	    buf, listreply->len, end != 0);
 	if (ret < 0)
 		log_warnx("Dropping unexpected playground list reply");
 	DEBUG(DBG_TRACE, ">anoubis_policy_comm_answer: %" PRId64,
-	    pgreply->token);
+	    listreply->token);
 	DEBUG(DBG_TRACE, "<dispatch_p2s_pg_reply");
 }
 

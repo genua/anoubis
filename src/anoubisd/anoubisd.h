@@ -216,8 +216,8 @@ enum anoubisd_msg_type {
 	ANOUBISD_MSG_AUTH_RESULT,	/* anoubisd_msg_authresult */
 	ANOUBISD_MSG_CSMULTIREQUEST,	/* anoubisd_msg_csumop */
 	ANOUBISD_MSG_CSMULTIREPLY,	/* anoubisd_msg_csumreply */
-	ANOUBISD_MSG_PGREQUEST,		/* anoubisd_msg_pgrequest */
-	ANOUBISD_MSG_PGREPLY,		/* anoubisd_msg_pgreply */
+	ANOUBISD_MSG_LISTREQUEST,	/* anoubisd_msg_listrequest */
+	ANOUBISD_MSG_LISTREPLY,		/* anoubisd_msg_listreply */
 	ANOUBISD_MSG_PGCOMMIT,		/* anoubisd_msg_pgcommit */
 	ANOUBISD_MSG_PGCOMMIT_REPLY,	/* anoubisd_msg_pgcommit_reply */
 };
@@ -368,14 +368,14 @@ struct anoubisd_msg_config
 };
 typedef struct anoubisd_msg_config anoubisd_msg_config_t;
 
-struct anoubisd_msg_pgrequest {
+struct anoubisd_msg_listrequest {
 	uint64_t	token;
 	uint32_t	auth_uid;
 	uint32_t	listtype;
-	uint64_t	pgid;
+	uint64_t	arg;
 };
 
-struct anoubisd_msg_pgreply {
+struct anoubisd_msg_listreply {
 	uint64_t	token;
 	uint32_t	flags;
 	uint32_t	len;

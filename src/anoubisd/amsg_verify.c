@@ -394,7 +394,7 @@ amsg_sfs_checksumop_size(const char *buf, int buflen)
 }
 
 DEFINE_LEN_CHECK_FUNCTION(struct, anoubisd_msg_csumreply, data, len)
-DEFINE_LEN_CHECK_FUNCTION(struct, anoubisd_msg_pgreply, data, len)
+DEFINE_LEN_CHECK_FUNCTION(struct, anoubisd_msg_listreply, data, len)
 DEFINE_STRING_CHECK_FUNCTION(struct, anoubisd_msg_pgcommit, path)
 DEFINE_LEN_CHECK_FUNCTION(struct, anoubisd_msg_pgcommit_reply, payload, len)
 DEFINE_CHECK_FUNCTION(struct, alf_event)
@@ -790,7 +790,7 @@ anoubisd_msg_authverify_size(const char *buf, int buflen)
 }
 
 DEFINE_CHECK_FUNCTION(struct, anoubisd_msg_authresult)
-DEFINE_CHECK_FUNCTION(struct, anoubisd_msg_pgrequest)
+DEFINE_CHECK_FUNCTION(struct, anoubisd_msg_listrequest)
 
 static int
 anoubisd_msg_size(const char *buf, int buflen)
@@ -829,8 +829,9 @@ anoubisd_msg_size(const char *buf, int buflen)
 	VARIANT(ANOUBISD_MSG_AUTH_RESULT, anoubisd_msg_authresult, buf, buflen);
 	VARIANT(ANOUBISD_MSG_CSMULTIREQUEST, anoubisd_msg_csumop, buf, buflen);
 	VARIANT(ANOUBISD_MSG_CSMULTIREPLY, anoubisd_msg_csumreply, buf, buflen);
-	VARIANT(ANOUBISD_MSG_PGREQUEST, anoubisd_msg_pgrequest, buf, buflen);
-	VARIANT(ANOUBISD_MSG_PGREPLY, anoubisd_msg_pgreply, buf, buflen);
+	VARIANT(ANOUBISD_MSG_LISTREQUEST, anoubisd_msg_listrequest,
+	    buf, buflen);
+	VARIANT(ANOUBISD_MSG_LISTREPLY, anoubisd_msg_listreply, buf, buflen);
 	VARIANT(ANOUBISD_MSG_PGCOMMIT, anoubisd_msg_pgcommit, buf, buflen);
 	VARIANT(ANOUBISD_MSG_PGCOMMIT_REPLY, anoubisd_msg_pgcommit_reply,
 	    buf, buflen);

@@ -263,8 +263,10 @@ int			 pe_playground_file_scanrequest(anoubis_cookie_t,
 			     uid_t uid);
 void			 pe_playground_dump(void);
 void			 pe_playground_init(void);
-void			 pe_playground_dispatch_request(struct anoubisd_msg *,
-			     Queue *queue);
+int			 pe_playground_send_pglist(uint64_t token,
+			     anoubis_cookie_t pgid, Queue *q);
+int			 pe_playground_send_filelist(uint64_t token,
+			     uint64_t pgid, uint32_t auth_uid, Queue *q);
 void			 pe_playground_dispatch_commit(struct anoubisd_msg *,
 			     Queue *session, Queue *master);
 void			 pe_playground_dispatch_commitreply(

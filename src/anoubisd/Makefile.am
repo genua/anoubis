@@ -65,6 +65,7 @@ lint_sources = \
 	pe_sandbox.c \
 	pe_filetree.c \
 	pe_playground.c \
+	amsg_list.c \
 	cert.c \
 	session.c \
 	log.c \
@@ -85,6 +86,7 @@ headers = \
 	aqueue.h \
 	sfs.h \
 	pe.h \
+	amsg_list.h \
 	pe_proc_internals.h \
 	cfg.h \
 	cert.h \
