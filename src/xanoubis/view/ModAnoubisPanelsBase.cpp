@@ -772,6 +772,284 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	tb_MainAnoubisOptions->Layout();
 	sz_MainAnoubisOptions->Fit( tb_MainAnoubisOptions );
 	tb_MainAnoubisNotify->AddPage( tb_MainAnoubisOptions, _("Options"), false );
+	tb_PsBrowser = new wxScrolledWindow( tb_MainAnoubisNotify, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
+	tb_PsBrowser->SetScrollRate( 5, 5 );
+	wxBoxSizer* psMainSizer;
+	psMainSizer = new wxBoxSizer( wxVERTICAL );
+	
+	wxBoxSizer* psHeadSizer;
+	psHeadSizer = new wxBoxSizer( wxHORIZONTAL );
+	
+	
+	psHeadSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	psReloadButton = new wxButton( tb_PsBrowser, wxID_ANY, _("reload"), wxDefaultPosition, wxDefaultSize, 0 );
+	psHeadSizer->Add( psReloadButton, 0, wxALL, 5 );
+	
+	psColumnButton = new wxButton( tb_PsBrowser, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	psHeadSizer->Add( psColumnButton, 0, wxALL, 5 );
+	
+	psMainSizer->Add( psHeadSizer, 0, wxEXPAND, 5 );
+	
+	psList = new wxListCtrl( tb_PsBrowser, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_VIRTUAL );
+	psMainSizer->Add( psList, 2, wxALL|wxEXPAND, 5 );
+	
+	psInfoBook = new wxNotebook( tb_PsBrowser, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	psDetailsPage = new wxScrolledWindow( psInfoBook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
+	psDetailsPage->SetScrollRate( 5, 5 );
+	wxFlexGridSizer* psDetailsSizer;
+	psDetailsSizer = new wxFlexGridSizer( 4, 4, 0, 0 );
+	psDetailsSizer->AddGrowableCol( 1 );
+	psDetailsSizer->AddGrowableCol( 3 );
+	psDetailsSizer->SetFlexibleDirection( wxBOTH );
+	psDetailsSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	psDetailsCommandLabel = new wxStaticText( psDetailsPage, wxID_ANY, _("Command:"), wxDefaultPosition, wxDefaultSize, 0 );
+	psDetailsCommandLabel->Wrap( -1 );
+	psDetailsSizer->Add( psDetailsCommandLabel, 0, wxALL, 5 );
+	
+	psDetailsCommandText = new wxStaticText( psDetailsPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	psDetailsCommandText->Wrap( -1 );
+	psDetailsSizer->Add( psDetailsCommandText, 0, wxALL, 5 );
+	
+	
+	psDetailsSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	
+	psDetailsSizer->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	psDetailsPidLabel = new wxStaticText( psDetailsPage, wxID_ANY, _("PID:"), wxDefaultPosition, wxDefaultSize, 0 );
+	psDetailsPidLabel->Wrap( -1 );
+	psDetailsSizer->Add( psDetailsPidLabel, 0, wxALL, 5 );
+	
+	psDetailsPidText = new wxStaticText( psDetailsPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	psDetailsPidText->Wrap( -1 );
+	psDetailsSizer->Add( psDetailsPidText, 0, wxALL, 5 );
+	
+	psDetailsPpidLabel = new wxStaticText( psDetailsPage, wxID_ANY, _("PPID:"), wxDefaultPosition, wxDefaultSize, 0 );
+	psDetailsPpidLabel->Wrap( -1 );
+	psDetailsSizer->Add( psDetailsPpidLabel, 0, wxALL, 5 );
+	
+	psDetailsPpidText = new wxStaticText( psDetailsPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	psDetailsPpidText->Wrap( -1 );
+	psDetailsSizer->Add( psDetailsPpidText, 0, wxALL, 5 );
+	
+	psDetailsRealUidLabel = new wxStaticText( psDetailsPage, wxID_ANY, _("Real UID:"), wxDefaultPosition, wxDefaultSize, 0 );
+	psDetailsRealUidLabel->Wrap( -1 );
+	psDetailsSizer->Add( psDetailsRealUidLabel, 0, wxALL, 5 );
+	
+	psDetailsRealUidText = new wxStaticText( psDetailsPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	psDetailsRealUidText->Wrap( -1 );
+	psDetailsSizer->Add( psDetailsRealUidText, 0, wxALL, 5 );
+	
+	psDetailsRealGidLabel = new wxStaticText( psDetailsPage, wxID_ANY, _("Real GID:"), wxDefaultPosition, wxDefaultSize, 0 );
+	psDetailsRealGidLabel->Wrap( -1 );
+	psDetailsSizer->Add( psDetailsRealGidLabel, 0, wxALL, 5 );
+	
+	psDetailsRealGidText = new wxStaticText( psDetailsPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	psDetailsRealGidText->Wrap( -1 );
+	psDetailsSizer->Add( psDetailsRealGidText, 0, wxALL, 5 );
+	
+	psDetailsEffectiveUidLabel = new wxStaticText( psDetailsPage, wxID_ANY, _("Effective UID:"), wxDefaultPosition, wxDefaultSize, 0 );
+	psDetailsEffectiveUidLabel->Wrap( -1 );
+	psDetailsSizer->Add( psDetailsEffectiveUidLabel, 0, wxALL, 5 );
+	
+	psDetailsEffectiveUidText = new wxStaticText( psDetailsPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	psDetailsEffectiveUidText->Wrap( -1 );
+	psDetailsSizer->Add( psDetailsEffectiveUidText, 0, wxALL, 5 );
+	
+	psDetailsEffectiveGidLabel = new wxStaticText( psDetailsPage, wxID_ANY, _("Effective GID:"), wxDefaultPosition, wxDefaultSize, 0 );
+	psDetailsEffectiveGidLabel->Wrap( -1 );
+	psDetailsSizer->Add( psDetailsEffectiveGidLabel, 0, wxALL, 5 );
+	
+	psDetailsEffectiveGidText = new wxStaticText( psDetailsPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	psDetailsEffectiveGidText->Wrap( -1 );
+	psDetailsSizer->Add( psDetailsEffectiveGidText, 0, wxALL, 5 );
+	
+	psDetailsSecureExecLabel = new wxStaticText( psDetailsPage, wxID_ANY, _("Secure exec:"), wxDefaultPosition, wxDefaultSize, 0 );
+	psDetailsSecureExecLabel->Wrap( -1 );
+	psDetailsSizer->Add( psDetailsSecureExecLabel, 0, wxALL, 5 );
+	
+	psDetailsSecureExecText = new wxStaticText( psDetailsPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	psDetailsSecureExecText->Wrap( -1 );
+	psDetailsSizer->Add( psDetailsSecureExecText, 0, wxALL, 5 );
+	
+	psDetailsPlaygroundLabel = new wxStaticText( psDetailsPage, wxID_ANY, _("Playground:"), wxDefaultPosition, wxDefaultSize, 0 );
+	psDetailsPlaygroundLabel->Wrap( -1 );
+	psDetailsSizer->Add( psDetailsPlaygroundLabel, 0, wxALL, 5 );
+	
+	psDetailsPlaygroundText = new wxStaticText( psDetailsPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	psDetailsPlaygroundText->Wrap( -1 );
+	psDetailsSizer->Add( psDetailsPlaygroundText, 0, wxALL, 5 );
+	
+	psDetailsPage->SetSizer( psDetailsSizer );
+	psDetailsPage->Layout();
+	psDetailsSizer->Fit( psDetailsPage );
+	psInfoBook->AddPage( psDetailsPage, _("Details"), true );
+	psPathPage = new wxScrolledWindow( psInfoBook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
+	psPathPage->SetScrollRate( 5, 5 );
+	wxFlexGridSizer* psPathSizer;
+	psPathSizer = new wxFlexGridSizer( 4, 2, 0, 0 );
+	psPathSizer->AddGrowableCol( 1 );
+	psPathSizer->AddGrowableCol( 3 );
+	psPathSizer->SetFlexibleDirection( wxBOTH );
+	psPathSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	psPathAppLabel = new wxStaticText( psPathPage, wxID_ANY, _("Path:"), wxDefaultPosition, wxDefaultSize, 0 );
+	psPathAppLabel->Wrap( -1 );
+	psPathSizer->Add( psPathAppLabel, 0, wxTOP|wxRIGHT|wxLEFT, 5 );
+	
+	psPathAppText = new wxStaticText( psPathPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	psPathAppText->Wrap( -1 );
+	psPathSizer->Add( psPathAppText, 0, wxTOP|wxRIGHT|wxLEFT, 5 );
+	
+	psPathCsumLabel = new wxStaticText( psPathPage, wxID_ANY, _("Checksum:"), wxDefaultPosition, wxDefaultSize, 0 );
+	psPathCsumLabel->Wrap( -1 );
+	psPathSizer->Add( psPathCsumLabel, 0, wxALL, 5 );
+	
+	psPathCsumText = new wxStaticText( psPathPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	psPathCsumText->Wrap( -1 );
+	psPathSizer->Add( psPathCsumText, 0, wxALL, 5 );
+	
+	psPathStaticLine1 = new wxStaticLine( psPathPage, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL );
+	psPathSizer->Add( psPathStaticLine1, 0, wxEXPAND | wxALL, 5 );
+	
+	psPathStaticLine2 = new wxStaticLine( psPathPage, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL );
+	psPathSizer->Add( psPathStaticLine2, 0, wxEXPAND | wxALL, 5 );
+	
+	psPathUserCtxPathLabel = new wxStaticText( psPathPage, wxID_ANY, _("User context path:"), wxDefaultPosition, wxDefaultSize, 0 );
+	psPathUserCtxPathLabel->Wrap( -1 );
+	psPathSizer->Add( psPathUserCtxPathLabel, 0, wxTOP|wxRIGHT|wxLEFT, 5 );
+	
+	psPathUserCtxPathText = new wxStaticText( psPathPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	psPathUserCtxPathText->Wrap( -1 );
+	psPathSizer->Add( psPathUserCtxPathText, 0, wxTOP|wxRIGHT|wxLEFT, 5 );
+	
+	psPathUserCtxCsumLabel = new wxStaticText( psPathPage, wxID_ANY, _("User context checksum:"), wxDefaultPosition, wxDefaultSize, 0 );
+	psPathUserCtxCsumLabel->Wrap( -1 );
+	psPathSizer->Add( psPathUserCtxCsumLabel, 0, wxALL, 5 );
+	
+	psPathUserCtxCsumText = new wxStaticText( psPathPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	psPathUserCtxCsumText->Wrap( -1 );
+	psPathSizer->Add( psPathUserCtxCsumText, 0, wxALL, 5 );
+	
+	psPathStaticLine3 = new wxStaticLine( psPathPage, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL );
+	psPathSizer->Add( psPathStaticLine3, 0, wxEXPAND | wxALL, 5 );
+	
+	psPathStaticLine4 = new wxStaticLine( psPathPage, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL );
+	psPathSizer->Add( psPathStaticLine4, 0, wxEXPAND | wxALL, 5 );
+	
+	psPathAdminCtxPathLabel = new wxStaticText( psPathPage, wxID_ANY, _("Admin context path:"), wxDefaultPosition, wxDefaultSize, 0 );
+	psPathAdminCtxPathLabel->Wrap( -1 );
+	psPathSizer->Add( psPathAdminCtxPathLabel, 0, wxTOP|wxRIGHT|wxLEFT, 5 );
+	
+	psPathAdminCtxPathText = new wxStaticText( psPathPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	psPathAdminCtxPathText->Wrap( -1 );
+	psPathSizer->Add( psPathAdminCtxPathText, 0, wxTOP|wxRIGHT|wxLEFT, 5 );
+	
+	psPathAdminCtxCsumLabel = new wxStaticText( psPathPage, wxID_ANY, _("Admin context checksum:"), wxDefaultPosition, wxDefaultSize, 0 );
+	psPathAdminCtxCsumLabel->Wrap( -1 );
+	psPathSizer->Add( psPathAdminCtxCsumLabel, 0, wxALL, 5 );
+	
+	psPathAdminCtxCsumText = new wxStaticText( psPathPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	psPathAdminCtxCsumText->Wrap( -1 );
+	psPathSizer->Add( psPathAdminCtxCsumText, 0, wxALL, 5 );
+	
+	psPathPage->SetSizer( psPathSizer );
+	psPathPage->Layout();
+	psPathSizer->Fit( psPathPage );
+	psInfoBook->AddPage( psPathPage, _("Paths"), false );
+	psAlfPage = new wxScrolledWindow( psInfoBook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
+	psAlfPage->SetScrollRate( 5, 5 );
+	wxFlexGridSizer* psAlfPageSizer;
+	psAlfPageSizer = new wxFlexGridSizer( 2, 2, 0, 0 );
+	psAlfPageSizer->AddGrowableCol( 0 );
+	psAlfPageSizer->AddGrowableCol( 1 );
+	psAlfPageSizer->AddGrowableRow( 1 );
+	psAlfPageSizer->SetFlexibleDirection( wxBOTH );
+	psAlfPageSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	psAlfUserLabel = new wxStaticText( psAlfPage, wxID_ANY, _("User:"), wxDefaultPosition, wxDefaultSize, 0 );
+	psAlfUserLabel->Wrap( -1 );
+	psAlfPageSizer->Add( psAlfUserLabel, 0, wxTOP|wxRIGHT|wxLEFT, 5 );
+	
+	psAlfAdminLabel = new wxStaticText( psAlfPage, wxID_ANY, _("Admin:"), wxDefaultPosition, wxDefaultSize, 0 );
+	psAlfAdminLabel->Wrap( -1 );
+	psAlfPageSizer->Add( psAlfAdminLabel, 0, wxTOP|wxRIGHT|wxLEFT, 5 );
+	
+	psAlfUserPolicy = new wxTextCtrl( psAlfPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTE_MULTILINE|wxTE_READONLY );
+	psAlfPageSizer->Add( psAlfUserPolicy, 1, wxALL|wxEXPAND, 5 );
+	
+	psAlfAdminPolicy = new wxTextCtrl( psAlfPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTE_MULTILINE|wxTE_READONLY );
+	psAlfPageSizer->Add( psAlfAdminPolicy, 1, wxALL|wxEXPAND, 5 );
+	
+	psAlfPage->SetSizer( psAlfPageSizer );
+	psAlfPage->Layout();
+	psAlfPageSizer->Fit( psAlfPage );
+	psInfoBook->AddPage( psAlfPage, _("ALF rules"), false );
+	psSbPage = new wxScrolledWindow( psInfoBook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
+	psSbPage->SetScrollRate( 5, 5 );
+	wxFlexGridSizer* psSbPageSizer;
+	psSbPageSizer = new wxFlexGridSizer( 2, 2, 0, 0 );
+	psSbPageSizer->AddGrowableCol( 0 );
+	psSbPageSizer->AddGrowableCol( 1 );
+	psSbPageSizer->AddGrowableRow( 1 );
+	psSbPageSizer->SetFlexibleDirection( wxBOTH );
+	psSbPageSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	psSbUserLabel = new wxStaticText( psSbPage, wxID_ANY, _("User:"), wxDefaultPosition, wxDefaultSize, 0 );
+	psSbUserLabel->Wrap( -1 );
+	psSbPageSizer->Add( psSbUserLabel, 0, wxTOP|wxRIGHT|wxLEFT, 5 );
+	
+	psSbAdminLabel = new wxStaticText( psSbPage, wxID_ANY, _("Admin:"), wxDefaultPosition, wxDefaultSize, 0 );
+	psSbAdminLabel->Wrap( -1 );
+	psSbPageSizer->Add( psSbAdminLabel, 0, wxTOP|wxRIGHT|wxLEFT, 5 );
+	
+	psSbUserPolicy = new wxTextCtrl( psSbPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTE_MULTILINE|wxTE_READONLY );
+	psSbPageSizer->Add( psSbUserPolicy, 1, wxALL|wxEXPAND, 5 );
+	
+	psSbAdminPolicy = new wxTextCtrl( psSbPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTE_MULTILINE|wxTE_READONLY );
+	psSbPageSizer->Add( psSbAdminPolicy, 1, wxALL|wxEXPAND, 5 );
+	
+	psSbPage->SetSizer( psSbPageSizer );
+	psSbPage->Layout();
+	psSbPageSizer->Fit( psSbPage );
+	psInfoBook->AddPage( psSbPage, _("SB rules"), false );
+	psCtxPage = new wxScrolledWindow( psInfoBook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
+	psCtxPage->SetScrollRate( 5, 5 );
+	wxFlexGridSizer* psCtxPageSizer;
+	psCtxPageSizer = new wxFlexGridSizer( 2, 2, 0, 0 );
+	psCtxPageSizer->AddGrowableCol( 0 );
+	psCtxPageSizer->AddGrowableCol( 1 );
+	psCtxPageSizer->AddGrowableRow( 1 );
+	psCtxPageSizer->SetFlexibleDirection( wxBOTH );
+	psCtxPageSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+	
+	psCtxUserLabel = new wxStaticText( psCtxPage, wxID_ANY, _("User:"), wxDefaultPosition, wxDefaultSize, 0 );
+	psCtxUserLabel->Wrap( -1 );
+	psCtxPageSizer->Add( psCtxUserLabel, 0, wxTOP|wxRIGHT|wxLEFT, 5 );
+	
+	psCtxAdminLabel = new wxStaticText( psCtxPage, wxID_ANY, _("Admin:"), wxDefaultPosition, wxDefaultSize, 0 );
+	psCtxAdminLabel->Wrap( -1 );
+	psCtxPageSizer->Add( psCtxAdminLabel, 0, wxTOP|wxRIGHT|wxLEFT, 5 );
+	
+	psCtxUserPolicy = new wxTextCtrl( psCtxPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTE_MULTILINE|wxTE_READONLY );
+	psCtxPageSizer->Add( psCtxUserPolicy, 1, wxALL|wxEXPAND, 5 );
+	
+	psCtxAdminPolicy = new wxTextCtrl( psCtxPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTE_MULTILINE|wxTE_READONLY );
+	psCtxPageSizer->Add( psCtxAdminPolicy, 1, wxALL|wxEXPAND, 5 );
+	
+	psCtxPage->SetSizer( psCtxPageSizer );
+	psCtxPage->Layout();
+	psCtxPageSizer->Fit( psCtxPage );
+	psInfoBook->AddPage( psCtxPage, _("CTX rules"), false );
+	
+	psMainSizer->Add( psInfoBook, 0, wxEXPAND | wxALL, 5 );
+	
+	tb_PsBrowser->SetSizer( psMainSizer );
+	tb_PsBrowser->Layout();
+	psMainSizer->Fit( tb_PsBrowser );
+	tb_MainAnoubisNotify->AddPage( tb_PsBrowser, _("Processes"), false );
 	
 	sz_MainAnoubisMain->Add( tb_MainAnoubisNotify, 1, wxEXPAND | wxALL, 5 );
 	

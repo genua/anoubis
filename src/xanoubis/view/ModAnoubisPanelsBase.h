@@ -201,6 +201,65 @@ class ModAnoubisMainPanelBase : public wxPanel
 		wxCheckBox* toolTipCheckBox;
 		wxSpinCtrl* toolTipSpinCtrl;
 		wxStaticText* m_staticText411;
+		wxScrolledWindow* tb_PsBrowser;
+		
+		wxButton* psReloadButton;
+		wxButton* psColumnButton;
+		wxListCtrl* psList;
+		wxNotebook* psInfoBook;
+		wxScrolledWindow* psDetailsPage;
+		wxStaticText* psDetailsCommandLabel;
+		wxStaticText* psDetailsCommandText;
+		
+		
+		wxStaticText* psDetailsPidLabel;
+		wxStaticText* psDetailsPidText;
+		wxStaticText* psDetailsPpidLabel;
+		wxStaticText* psDetailsPpidText;
+		wxStaticText* psDetailsRealUidLabel;
+		wxStaticText* psDetailsRealUidText;
+		wxStaticText* psDetailsRealGidLabel;
+		wxStaticText* psDetailsRealGidText;
+		wxStaticText* psDetailsEffectiveUidLabel;
+		wxStaticText* psDetailsEffectiveUidText;
+		wxStaticText* psDetailsEffectiveGidLabel;
+		wxStaticText* psDetailsEffectiveGidText;
+		wxStaticText* psDetailsSecureExecLabel;
+		wxStaticText* psDetailsSecureExecText;
+		wxStaticText* psDetailsPlaygroundLabel;
+		wxStaticText* psDetailsPlaygroundText;
+		wxScrolledWindow* psPathPage;
+		wxStaticText* psPathAppLabel;
+		wxStaticText* psPathAppText;
+		wxStaticText* psPathCsumLabel;
+		wxStaticText* psPathCsumText;
+		wxStaticLine* psPathStaticLine1;
+		wxStaticLine* psPathStaticLine2;
+		wxStaticText* psPathUserCtxPathLabel;
+		wxStaticText* psPathUserCtxPathText;
+		wxStaticText* psPathUserCtxCsumLabel;
+		wxStaticText* psPathUserCtxCsumText;
+		wxStaticLine* psPathStaticLine3;
+		wxStaticLine* psPathStaticLine4;
+		wxStaticText* psPathAdminCtxPathLabel;
+		wxStaticText* psPathAdminCtxPathText;
+		wxStaticText* psPathAdminCtxCsumLabel;
+		wxStaticText* psPathAdminCtxCsumText;
+		wxScrolledWindow* psAlfPage;
+		wxStaticText* psAlfUserLabel;
+		wxStaticText* psAlfAdminLabel;
+		wxTextCtrl* psAlfUserPolicy;
+		wxTextCtrl* psAlfAdminPolicy;
+		wxScrolledWindow* psSbPage;
+		wxStaticText* psSbUserLabel;
+		wxStaticText* psSbAdminLabel;
+		wxTextCtrl* psSbUserPolicy;
+		wxTextCtrl* psSbAdminPolicy;
+		wxScrolledWindow* psCtxPage;
+		wxStaticText* psCtxUserLabel;
+		wxStaticText* psCtxAdminLabel;
+		wxTextCtrl* psCtxUserPolicy;
+		wxTextCtrl* psCtxAdminPolicy;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnTypeChoosen( wxCommandEvent& event ){ event.Skip(); }
