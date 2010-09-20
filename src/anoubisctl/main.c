@@ -32,8 +32,6 @@
 #include "splint-includes.h"
 #endif
 
-#define __STDC_FORMAT_MACROS	1
-
 #include <sys/file.h>
 #include <sys/param.h>
 #include <sys/types.h>
@@ -107,9 +105,12 @@ static int	fetch_versions(int *, int *);
 static int	moo(void);
 static int	verify(const char *file, const char *signature);
 static int	kernel_stat(void);
+static int	proc_list(void);
 
 typedef int (*func_int_t)(void);
 typedef int (*func_arg_t)(char *, uid_t, unsigned int);
+
+static anoubis_token_t		 nexttok = 1;
 
 struct cmd {
 	char	       *command;
@@ -136,6 +137,7 @@ struct cmd {
 	{ "load",	(func_int_t)load,	1 },
 	{ "dump",	(func_int_t)dump,	2 },
 	{ "stat",	kernel_stat,		3 },
+	{ "ps",		proc_list,		0 },
 };
 
 static const char		 def_cert[] = ".xanoubis/default.crt";
@@ -167,13 +169,13 @@ usage(void)
 			fprintf(stderr, "	%s <file>\n",
 				commands[i].command);
 			break;
+		case 0:
 		case 3:
-		case 4:
 			fprintf(stderr, "	%s\n", commands[i].command);
 			break;
 		}
 	}
-	fprintf(stderr, "       verify file signature\n");
+	fprintf(stderr, "	verify file signature\n");
 	fprintf(stderr, "	monitor [ all ] [ delegate ] [ error=<num> ] "
 	    "[ count=<num> ]\n");
 	exit(1);
@@ -669,56 +671,77 @@ free_msg_list(struct anoubis_msg * m)
 	}
 }
 
+#ifndef EPROTO
+#define EPROTO EINVAL
+#endif
+
+/* NOTE: Always destroys the transation! */
+static int
+anoubis_transaction_complete(struct anoubis_client *client,
+    struct anoubis_transaction *ta, struct anoubis_msg **msgp)
+{
+	int		rc;
+
+	if (ta == NULL)
+		return -ENOMEM;
+	while (1) {
+		rc = anoubis_client_wait(client);
+		if (rc <= 0) {
+			if (msgp) {
+				(*msgp) = ta->msg;
+				ta->msg = NULL;
+			}
+			anoubis_transaction_destroy(ta);
+			if (rc == 0)
+				rc = -EPROTO;
+			return rc;
+		}
+		if (ta->flags & ANOUBIS_T_DONE)
+			break;
+	}
+	rc = -ta->result;
+	if (msgp) {
+		(*msgp) = ta->msg;
+		ta->msg = NULL;
+	}
+	anoubis_transaction_destroy(ta);
+	return rc;
+}
+
 static int
 fetch_versions(int * apn_version, int * prot_version)
 {
 
 	struct anoubis_transaction	*t;
 	struct anoubis_msg		*m;
+	int				 err;
 
 	if (!client)
-		return (3);
+		return 3;
 
 	t = anoubis_client_version_start(client);
-	if (!t) {
-		return (3);
+	err = anoubis_transaction_complete(client, t, &m);
+	if (err < 0) {
+		free_msg_list(m);
+		fprintf(stderr, "Version Request failed: %d (%s)\n", -err,
+		    anoubis_strerror(-err));
+		return 3;
 	}
 
-	while(1) {
-		int ret = anoubis_client_wait(client);
-		if (ret <= 0) {
-			anoubis_transaction_destroy(t);
-			return (3);
-		}
-		if (t->flags & ANOUBIS_T_DONE)
-			break;
-	}
-
-	if (t->result) {
-		fprintf(stderr, "Version Request failed: %d (%s)\n",
-		    t->result, anoubis_strerror(t->result));
-		anoubis_transaction_destroy(t);
-		return (3);
-	}
-
-	m = t->msg;
-	t->msg = NULL;
-	anoubis_transaction_destroy(t);
 	if (!m || !VERIFY_LENGTH(m, sizeof(Anoubis_VersionMessage))
 	    || get_value(m->u.version->error) != 0) {
 		fprintf(stderr, "Error retrieving version information\n");
 		free_msg_list(m);
-		return (3);
+		return 3;
 	}
 
 	if (apn_version)
 		*apn_version = get_value(m->u.version->apn);
 	if (prot_version)
 		*prot_version = get_value(m->u.version->protocol);
-
 	free_msg_list(m);
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -790,12 +813,12 @@ daemon_version(void)
 static int
 dump(char *file, uid_t uid, unsigned int prio)
 {
-	int	error = 0;
-	FILE * fp = NULL;
-	struct anoubis_transaction * t;
-	struct anoubis_msg * m;
-	Policy_GetByUid req;
-	size_t	len;
+	int				 error = 0;
+	FILE				*fp = NULL;
+	struct anoubis_transaction	*t;
+	struct anoubis_msg		*m;
+	Policy_GetByUid			 req;
+	size_t				 len;
 
 	error = create_channel(1);
 	if (error) {
@@ -808,29 +831,13 @@ dump(char *file, uid_t uid, unsigned int prio)
 	set_value(req.prio, prio);
 	t = anoubis_client_policyrequest_start(client, &req,
 	    sizeof(req));
-	if (!t) {
-		destroy_channel();
-		return 3;
-	}
-	while(1) {
-		int ret = anoubis_client_wait(client);
-		if (ret <= 0) {
-			anoubis_transaction_destroy(t);
-			destroy_channel();
-			return 3;
-		}
-		if (t->flags & ANOUBIS_T_DONE)
-			break;
-	}
-	if (t->result) {
+	error = anoubis_transaction_complete(client, t, &m);
+	if (error < 0) {
 		fprintf(stderr, "Policy Request failed: %d (%s)\n",
-		    t->result, anoubis_strerror(t->result));
-		anoubis_transaction_destroy(t);
+		    -error, anoubis_strerror(-error));
+		free_msg_list(m);
 		return 3;
 	}
-	m = t->msg;
-	t->msg = NULL;
-	anoubis_transaction_destroy(t);
 	if (!m || !VERIFY_LENGTH(m, sizeof(Anoubis_PolicyReplyMessage))
 	    || get_value(m->u.policyreply->error) != 0) {
 		fprintf(stderr, "Error retrieving policy\n");
@@ -1080,25 +1087,11 @@ load(char *rulesopt, uid_t uid, unsigned int prio)
 	}
 	t = anoubis_client_policyrequest_start(client, req, total);
 	free(req);
-	if (!t) {
-		fprintf(stderr, "Failed to issue policy request\n");
+	error = anoubis_transaction_complete(client, t, NULL);
+	if (error < 0) {
+		fprintf(stderr, "Policy Request failed: %d (%s)\n", -error,
+		    anoubis_strerror(-error));
 		destroy_channel();
-		return 3;
-	}
-	while(1) {
-		int ret = anoubis_client_wait(client);
-		if (ret <= 0) {
-			anoubis_transaction_destroy(t);
-			destroy_channel();
-			return 3;
-		}
-		if (t->flags & ANOUBIS_T_DONE)
-			break;
-	}
-	if (t->result) {
-		fprintf(stderr, "Policy Request failed: %d (%s)\n", t->result,
-		    anoubis_strerror(t->result));
-		anoubis_transaction_destroy(t);
 		return 3;
 	}
 	destroy_channel();
@@ -1111,7 +1104,6 @@ load(char *rulesopt, uid_t uid, unsigned int prio)
 static int monitor(int argc, char **argv)
 {
 	int				 i, count = 0, error;
-	static anoubis_token_t		 nexttok = 1;
 	struct anoubis_transaction	*t;
 
 	int maxcount = -1;
@@ -1164,29 +1156,13 @@ static int monitor(int argc, char **argv)
 	if (uid == 0)
 		uid = geteuid();
 	t = anoubis_client_register_start(client, ++nexttok, uid, 0, 0);
-	if (!t) {
-		fprintf(stderr, "Cannot register for notificiations\n");
-		destroy_channel();
-		return 5;
-	}
-	while(1) {
-		error = anoubis_client_wait(client);
-		if (error <= 0) {
-			anoubis_transaction_destroy(t);
-			destroy_channel();
-			return 5;
-		}
-		if (t->flags & ANOUBIS_T_DONE)
-			break;
-	}
-	if (t->result) {
+	error = anoubis_transaction_complete(client, t, NULL);
+	if (error < 0) {
 		fprintf(stderr, "Notify registration failed with %d (%s)\n",
-		    t->result, anoubis_strerror(t->result));
-		anoubis_transaction_destroy(t);
+		    -error, anoubis_strerror(-error));
 		destroy_channel();
 		return 5;
 	}
-	anoubis_transaction_destroy(t);
 	while (1) {
 		struct anoubis_msg	*m;
 		if (anoubis_client_wait(client) <= 0) {
@@ -1276,26 +1252,10 @@ send_passphrase(void)
 	} else {
 		memset(passbuf, 0, sizeof(passbuf));
 	}
-	if (!t) {
-		fprintf(stderr, "Out of memory?");
-		return 5;
-	}
-	while(1) {
-		int ret = anoubis_client_wait(client);
-		if (ret <= 0) {
-			fprintf(stderr, "Communication error\n");
-			anoubis_transaction_destroy(t);
-			destroy_channel();
-			return 5;
-		}
-		if (t->flags & ANOUBIS_T_DONE)
-			break;
-	}
-	error = t->result;
-	anoubis_transaction_destroy(t);
-	if (error) {
+	error = anoubis_transaction_complete(client, t, NULL);
+	if (error < 0) {
 		destroy_channel();
-		errno = error;
+		errno = -error;
 		perror("Communication error");
 		return 5;
 	}
@@ -1620,7 +1580,6 @@ verify(const char *filename, const char *signature)
 static int
 kernel_stat(void)
 {
-	static anoubis_token_t		 nexttok = 1;
 	int				 error;
 	struct anoubis_transaction	*ta;
 	struct anoubis_msg		*m;
@@ -1632,29 +1591,14 @@ kernel_stat(void)
 	}
 	ta = anoubis_client_register_start(client, ++nexttok, 0, 0,
 	    ANOUBIS_SOURCE_STAT);
-	if (ta == NULL) {
-		fprintf(stderr, "Cannot register for notificiations\n");
-		destroy_channel();
-		return 5;
-	}
-	while(1) {
-		error = anoubis_client_wait(client);
-		if (error <= 0) {
-			anoubis_transaction_destroy(ta);
-			destroy_channel();
-			return 5;
-		}
-		if (ta->flags & ANOUBIS_T_DONE)
-			break;
-	}
-	if (ta->result) {
+	error = anoubis_transaction_complete(client, ta, NULL);
+	if (error < 0) {
 		fprintf(stderr, "Notify registration failed with %d (%s)\n",
 		    ta->result, anoubis_strerror(ta->result));
-		anoubis_transaction_destroy(ta);
 		destroy_channel();
 		return 5;
 	}
-	anoubis_transaction_destroy(ta);
+	/* Wait for the stat message. */
 	if (anoubis_client_wait(client) <= 0) {
 		fprintf(stderr, "message receive failed\n");
 		destroy_channel();
@@ -1683,6 +1627,112 @@ kernel_stat(void)
 			    statmsg->vals[i].value);
 		}
 	}
+	destroy_channel();
+	return 0;
+}
+
+/**
+ * Print the path an optionally the checksum of a context in an
+ * Anoubis_ProcRecord. The context consists of ANOUBIS_CS_LEN bytes of
+ * checksum data followed by a NUL-terminted path name.
+ * The checksum is printed iff ANOUBISCTL_OPT_VERBOSE2 is set.
+ *
+ * @param ptr The pointer to the start of the context.
+ * @return The total length of the context, i.e. one plus the offset
+ *     off the NUL-byte of the path name.
+ */
+static int
+proc_print_ctx(char *ptr)
+{
+	printf("%s", ptr+ANOUBIS_CS_LEN);
+	if (opts & ANOUBISCTL_OPT_VERBOSE2) {
+		int		i;
+		printf("(");
+		for(i=0; i<ANOUBIS_CS_LEN; ++i)
+			printf("%02x", (unsigned char)ptr[i]);
+		printf(")");
+	}
+	return ANOUBIS_CS_LEN + strlen(ptr+ANOUBIS_CS_LEN) + 1;
+}
+
+/**
+ * Print a single process list record to stdout. We only print
+ * information that is provided by the daemon. This includes the
+ * pid, task cookie, user ID the rule IDs used and the path of the
+ * binary. If ANOUBISCTL_OPT_VERBOSE is set (-v was given on the command
+ * line) the path names of the contexts are printed, too. If
+ * ANOUBISCTL_OPT_VERBOSE2 is set (-vv was given on the command line)
+ * the checksums of the program an the contexts are printed, too.
+ *
+ * @param rec The record to print.
+ * @return None.
+ */
+static void
+proc_list_print_record(Anoubis_ProcRecord *rec)
+{
+	int		off = 0;
+	printf("pid=%d cookie=%lld alf=%d:%d sb=%d:%d ctx=%d:%d",
+	    get_value(rec->pid), (long long)get_value(rec->taskcookie),
+	    get_value(rec->alfrule[0]), get_value(rec->alfrule[1]),
+	    get_value(rec->sbrule[0]), get_value(rec->sbrule[1]),
+	    get_value(rec->ctxrule[0]), get_value(rec->ctxrule[1]));
+	if (get_value(rec->pgid))
+		printf(" pgid=%lld", (long long)get_value(rec->pgid));
+	if (get_value(rec->secureexec))
+		printf(" secureexec");
+	printf(" ");
+	off += proc_print_ctx(rec->payload);
+	if (opts & ANOUBISCTL_OPT_VERBOSE) {
+		printf(" contexts=");
+		off += proc_print_ctx(rec->payload+off);
+		printf(":");
+		proc_print_ctx(rec->payload+off);
+	}
+	printf("\n");
+}
+
+/**
+ * Implementation of the "ps" command. This retrieves a list of all
+ * processes owned by the user from the daemon and prints them.
+ *
+ * @param None.
+ * @return Zero in case of succes, a non-zero value in case of an error.
+ */
+static int
+proc_list(void)
+{
+	int				 error;
+	struct anoubis_transaction	*ta;
+	struct anoubis_msg		*msg = NULL, *m;
+
+	error = create_channel(0);
+	if (error < 0) {
+		fprintf(stderr, "Cannot connect to anoubis daemon\n");
+		return 5;
+	}
+	ta = anoubis_client_list_start(client, ANOUBIS_REC_PROCLIST,
+	    geteuid());
+	error = anoubis_transaction_complete(client, ta, &msg);
+	if (error < 0) {
+		fprintf(stderr, "Cannot retrieve process list from: %s\n",
+		    anoubis_strerror(-error));
+		free_msg_list(msg);
+		destroy_channel();
+		return 5;
+	}
+	for (m=msg; m; m = m->next) {
+		unsigned int		 off, i;
+		Anoubis_ProcRecord	*rec;
+
+		off = 0;
+		for (i=0; i<get_value(m->u.listreply->nrec); ++i) {
+			rec = (Anoubis_ProcRecord *)
+			    (m->u.listreply->payload+off);
+			off += get_value(rec->reclen);
+			proc_list_print_record(rec);
+		}
+	}
+	free_msg_list(msg);
 	destroy_channel();
 	return 0;
 }

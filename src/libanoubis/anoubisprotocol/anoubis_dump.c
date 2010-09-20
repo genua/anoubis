@@ -34,9 +34,13 @@
 #include <anoubis_dump.h>
 #include <ctype.h>
 #include <anoubis_crc32.h>
-#define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
+#ifdef LINUX
+#include <linux/anoubis.h>
+#else
+#include <dev/anoubis.h>
+#endif
 
 #define __used __attribute__((unused))
 
@@ -193,13 +197,22 @@ dump_part_hex(const char *payload, int totallen, int off, int len,
 		snprintf(DSTR, DLEN, "truncated");
 }
 
-static void
+/* Returns the string length (including NUL byte) if len is initially -1 */
+static int
 dump_part_string(const char *payload, int totallen, int off, int len,
     const char *label)
 {
 	int trunc = 0;
 	if (len == 0)
-		return;
+		return 0;
+	if (len == -1) {
+		for (len=0; off+len < totallen; ++len) {
+			if (payload[off+len] == 0) {
+				len++;
+				break;
+			}
+		}
+	}
 	if (len > totallen - off) {
 		len = totallen - off;
 		trunc = 1;
@@ -209,6 +222,7 @@ dump_part_string(const char *payload, int totallen, int off, int len,
 	snprintf(DSTR, DLEN, " %s = %*s", label, len, payload+off);
 	if (trunc)
 		snprintf(DSTR, DLEN, "truncated");
+	return len;
 }
 
 static void dump_notify(Anoubis_NotifyMessage * m, size_t len, int arg)
@@ -391,11 +405,43 @@ dump_listreply(Anoubis_ListMessage *m, size_t len __used)
 			DUMP_NETULL(filerec, ino);
 			snprintf(DSTR, DLEN, " path=%s", filerec->path);
 			break;
-		case ANOUBIS_REC_PROCLIST:
-			procrec = (Anoubis_ProcRecord *)m->payload + off;
+		case ANOUBIS_REC_PROCLIST: {
+			unsigned int		 i, poff, payloadlen;
+			void			*p;
+			static const char	*labels[3] = {
+			    "proc csum",
+			    "adminctx csum",
+			    "userctx csum",
+			};
+
+			procrec = (Anoubis_ProcRecord *)(m->payload + off);
 			off += get_value(procrec->reclen);
-			/* XXX */
+			DUMP_NETU(procrec, pid);
+			DUMP_NETULL(procrec, taskcookie);
+			DUMP_NETULL(procrec, pgid);
+			DUMP_NETU(procrec, uid);
+			DUMP_NETU(procrec, alfrule[0]);
+			DUMP_NETU(procrec, alfrule[1]);
+			DUMP_NETU(procrec, sbrule[0]);
+			DUMP_NETU(procrec, sbrule[1]);
+			DUMP_NETU(procrec, ctxrule[0]);
+			DUMP_NETU(procrec, ctxrule[1]);
+			DUMP_NETU(procrec, secureexec);
+			p = procrec->payload;
+			poff = 0;
+			payloadlen = get_value(procrec->reclen)
+			    - sizeof(Anoubis_ProcRecord);
+			for (i=0; i<3; ++i) {
+				if (poff + ANOUBIS_CS_LEN + 1 > payloadlen)
+					break;
+				dump_part_hex(p, payloadlen, poff,
+				    ANOUBIS_CS_LEN, labels[i]);
+				poff += ANOUBIS_CS_LEN;
+				poff += dump_part_string(p, payloadlen, poff,
+				    -1, "path");
+			}
 			break;
+		}
 		default:
 			DUMP_NETU(m, rectype);
 		}

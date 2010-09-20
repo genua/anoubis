@@ -920,19 +920,20 @@ dispatch_list_request(struct anoubisd_msg *inmsg, Queue *queue)
 	struct amsg_list_context	 ctx;
 
 	listreq = (struct anoubisd_msg_listrequest *)inmsg->msg;
+	token = listreq->token;
 	switch(listreq->listtype) {
 	case ANOUBIS_REC_PGLIST:
-		token = listreq->token;
 		err = pe_playground_send_pglist(listreq->token, listreq->arg,
 		    queue);
 		break;
 	case ANOUBIS_REC_PGFILELIST:
-		token = listreq->token;
 		err = pe_playground_send_filelist(listreq->token, listreq->arg,
 		    listreq->auth_uid, queue);
 		break;
 	case ANOUBIS_REC_PROCLIST:
-		/* XXX CEH: Fall through for now. */
+		err = pe_proc_send_pslist(listreq->token, listreq->arg,
+		    listreq->auth_uid, queue);
+		break;
 	default:
 		log_warnx("pe_playground_dispatch_request: Dropping invalid "
 		    "message of type %d", listreq->listtype);
@@ -948,7 +949,6 @@ dispatch_list_request(struct anoubisd_msg *inmsg, Queue *queue)
 	set_value(ctx.pmsg->error, -err);
 	amsg_list_send(&ctx, queue);
 }
-
 
 static void
 dispatch_s2p(int fd, short sig __used, void *arg)

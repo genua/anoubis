@@ -913,6 +913,14 @@ pe_context_get_sbrule(struct pe_context *ctx)
 	return ctx->sbrule;
 }
 
+struct apn_rule *
+pe_context_get_ctxrule(struct pe_context *ctx)
+{
+	if (!ctx)
+		return NULL;
+	return ctx->ctxrule;
+}
+
 struct pe_proc_ident *
 pe_context_get_ident(struct pe_context *ctx)
 {

@@ -610,7 +610,7 @@ typedef struct {
  *         records. Each of these records references a single path name,
  *         multiple path names for the same dev/ino pair result in multiple
  *         records.
- *     - ANOUBIS_REC_PROCLIST: The message contains Anobuis_PgProcRecord
+ *     - ANOUBIS_REC_PROCLIST: The message contains Anoubis_ProcRecord
  *         records. Each of these records describes a single process.
  */
 typedef struct {
@@ -690,9 +690,37 @@ typedef struct {
 	char			path[0];
 } __attribute__((packed)) Anoubis_PgFileRecord;
 
+/**
+ * This structure contains information about a single process that is
+ * known to the anoubis daemon. It is used in Anoubis_ListMessage replies.
+ * Fields:
+ *
+ * reclen: The lenght of this recordd including the length itself.
+ * pid: The process ID of the process.
+ * taskcookie: The task cookie of the process.
+ * pgid: The playground ID of the process. Zero if not in a playground.
+ * uid: The user ID of the process. This value determines the rule set
+ *     that is used.
+ * alfrule: The alf rule IDs used for the process.
+ * sbrule: The sandbox rule IDs used for the process.
+ * ctxrule: The context rule IDs used for the process.
+ * payload: The payload contains three process identifications (i.e.
+ *     a binary checksum followed by a NUL-terminated path name):
+ *     - Identifier of the process binary itself.
+ *     - Identifier of the admin context.
+ *     - Identifier of the user context.
+ */
 typedef struct {
 	u32n			reclen;
-	/* XXX */
+	u32n			pid;
+	u64n			taskcookie;
+	u64n			pgid;
+	u32n			uid;
+	u32n			alfrule[2];
+	u32n			sbrule[2];
+	u32n			ctxrule[2];
+	u8n			secureexec;
+	char			payload[0];
 } __attribute__((packed)) Anoubis_ProcRecord;
 
 #endif

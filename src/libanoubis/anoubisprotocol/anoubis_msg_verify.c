@@ -35,9 +35,13 @@
 #include <anoubis_protocol_auth.h>
 #include <ctype.h>
 #include <anoubis_crc32.h>
-#define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
+#ifdef LINUX
+#include <linux/anoubis.h>
+#else
+#include <dev/anoubis.h>
+#endif
 
 #define CASE(CONST,FUNC)				\
 	case CONST : return verify_ ## FUNC(m)
@@ -466,6 +470,7 @@ static int
 verify_pgfile_record(Anoubis_PgFileRecord *r, int reclen)
 {
 	int		i;
+
 	reclen -= sizeof(Anoubis_PgFileRecord);
 	/* Make sure that the path name is NUL terminated. */
 	for (i=0; i<reclen; ++i)
@@ -480,7 +485,28 @@ static int
 verify_proc_record(Anoubis_ProcRecord *r __attribute__((unused)),
     int reclen __attribute__((unused)))
 {
-	/* XXX */
+	int		off, i;
+	if (reclen < (int)sizeof(Anoubis_ProcRecord))
+		return 0;
+
+	/*
+	 * Make sure that the payload contains of three contexts
+	 * where each context consists of ANOUBIS_CS_LEN bytes of checksum
+	 * data followed by a NUL-terminated path name.
+	 */
+	for (off=i=0; i<3; ++i) {
+		if (reclen < off+ANOUBIS_CS_LEN)
+			return 0;
+		off += ANOUBIS_CS_LEN;
+		for (; off < reclen; ++off) {
+			if (r->payload[off] == 0)
+				break;
+		}
+		if (off == reclen)
+			return 0;
+		off++;		/* The NUL-byte */
+	}
+
 	return 1;
 }
 

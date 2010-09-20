@@ -53,7 +53,9 @@
 
 #include "anoubisd.h"
 #include "pe.h"
+#include "amsg_list.h"
 #include <anoubis_alloc.h>
+#include <anoubis_protocol.h>
 
 /*
  * The flag is true if we have seen at least one process create or
@@ -1201,4 +1203,144 @@ pe_proc_is_secure(struct pe_proc *proc)
 	if (!proc)
 		return 0;
 	return pe_proc_get_flag(proc, PE_PROC_FLAGS_SECUREEXEC);
+}
+
+/**
+ * Calculate the size required to store the given process identifier
+ * in an Anoubis_ProcRecord.
+ *
+ * @param The pident.
+ * @return The size.
+ */
+static int
+pident_size(struct pe_proc_ident *pident)
+{
+	int		ret = ANOUBIS_SFS_CS_LEN;
+
+	if (pident == NULL)
+		return ret+1;
+	if (pident->pathhint)
+		ret += strlen(pident->pathhint);
+	return ret+1;
+}
+
+/**
+ * Copy a process identifier to the buffer given by buf and return
+ * the number of bytes copied.
+ *
+ * @param buf The destination buffer.
+ * @param off The offset in the destination buffer. The data is copied
+ *     starting at this offset.
+ * @param pident The process identifier to copy.
+ * @return The number of bytes copied.
+ */
+static int
+pident_copy(struct abuf_buffer buf, int off, struct pe_proc_ident *pident)
+{
+	int		ret = ANOUBIS_SFS_CS_LEN;
+
+	if (pident == 0 || abuf_length(pident->csum) < ANOUBIS_SFS_CS_LEN) {
+		void	*ptr = abuf_toptr(buf, off, ANOUBIS_SFS_CS_LEN);
+		memset(ptr, 0, ANOUBIS_CS_LEN);
+	} else {
+		abuf_copy_part(buf, off, pident->csum, 0,
+		    ANOUBIS_SFS_CS_LEN);
+	}
+	off += ANOUBIS_SFS_CS_LEN;
+	if (pident->pathhint) {
+		ret += abuf_copy_tobuf(abuf_open(buf, off),
+		    pident->pathhint, 1+strlen(pident->pathhint));
+	} else {
+		ret += abuf_copy_tobuf(abuf_open(buf, off), "", 1);
+	}
+	return ret;
+}
+
+/**
+ * Send a list of all processes of a particular user. This function
+ * is called in response to a user's process list request.
+ *
+ * @param token The token for the reply messages. The session engine
+ *     uses this to demultiplex replies to the correct user session.
+ * @param uid List processes owned by this user.
+ * @param auth_uid The user ID of the authorized user. Currently a user
+ *     can only list its own processes.
+ * @param q Reply messages are sent to this queue.
+ * @return Zero in case of success, a negative error code in case of
+ *     an error. The caller will send an error reply to the user in this
+ *     case.
+ */
+int
+pe_proc_send_pslist(uint64_t token, uint64_t uid, uint32_t auth_uid,
+    Queue *q)
+{
+	struct pe_proc			*proc;
+	struct amsg_list_context	 ctx;
+	int				 error;
+
+	if (uid != auth_uid)
+		return -EPERM;
+	ctx.msg = NULL;
+	error = amsg_list_init(&ctx, token, ANOUBIS_REC_PROCLIST);
+	if (error < 0)
+		return error;
+	TAILQ_FOREACH(proc, &tracker, entry) {
+		int			 i, off;
+		Anoubis_ProcRecord	*rec;
+		unsigned int		 reclen;
+
+		/* Only report running processes. */
+		if (proc->threads == 0 && have_task_tracking)
+			continue;
+		/* Only report processes for the correct user. */
+		if (proc->uid != uid)
+			continue;
+		reclen = sizeof(Anoubis_ProcRecord);
+		reclen += pident_size(&proc->ident);
+		for (i=0; i<PE_PRIO_MAX; ++i)
+			reclen += pident_size(
+			    pe_context_get_ident(proc->context[i]));
+		reclen = (reclen+7UL) & ~7UL;	/* Align to 8 bytes */
+		if (reclen > abuf_length(ctx.buf)) {
+			amsg_list_send(&ctx, q);
+			error = amsg_list_init(&ctx, token,
+			    ANOUBIS_REC_PROCLIST);
+			if (error < 0)
+				return error;
+			ctx.flags = 0;
+		}
+		/* Record permanently too long? */
+		if (reclen > abuf_length(ctx.buf)) {
+			if (ctx.msg)
+				free(ctx.msg);
+			return -EFAULT;
+		}
+		rec = abuf_cast(ctx.buf, Anoubis_ProcRecord);
+		set_value(rec->reclen, reclen);
+		set_value(rec->pid, proc->pid);
+		set_value(rec->taskcookie, proc->task_cookie);
+		set_value(rec->pgid, proc->pgid);
+		set_value(rec->uid, proc->uid);
+		for (i=0; i<PE_PRIO_MAX;++i) {
+			struct apn_rule		*rule;
+
+			rule = pe_context_get_alfrule(proc->context[i]);
+			set_value(rec->alfrule[i], rule ? rule->apn_id : 0);
+			rule = pe_context_get_sbrule(proc->context[i]);
+			set_value(rec->sbrule[i], rule ? rule->apn_id : 0);
+			rule = pe_context_get_ctxrule(proc->context[i]);
+			set_value(rec->ctxrule[i], rule ? rule->apn_id : 0);
+		}
+		set_value(rec->secureexec, !!pe_proc_is_secure(proc));
+		off = sizeof(Anoubis_ProcRecord);
+		off += pident_copy(ctx.buf, off, &proc->ident);
+		for (i=0; i<PE_PRIO_MAX; ++i) {
+			off += pident_copy(ctx.buf, off,
+			    pe_context_get_ident(proc->context[i]));
+		}
+		amsg_list_addrecord(&ctx, reclen);
+	}
+	ctx.flags |= POLICY_FLAG_END;
+	amsg_list_send(&ctx, q);
+	return 0;
 }

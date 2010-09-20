@@ -802,6 +802,12 @@ pe_playground_send_pglist(uint64_t token, anoubis_cookie_t pgid,
 				return error;
 			ctx.flags = 0;
 		}
+		/* Record permanently too long */
+		if (size > abuf_length(ctx.buf)) {
+			if (ctx.msg)
+				free(ctx.msg);
+			return -EFAULT;
+		}
 		rec = abuf_cast(ctx.buf, Anoubis_PgInfoRecord);
 		set_value(rec->reclen, size);
 		set_value(rec->uid, pg->uid);

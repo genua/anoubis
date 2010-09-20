@@ -153,11 +153,14 @@ void			 pe_proc_upgrade_clrallmarks(void);
 void			 pe_proc_hold(struct pe_proc *);
 int			 pe_proc_is_hold(struct pe_proc *);
 void			 pe_proc_release(void);
+int			 pe_proc_send_pslist(uint64_t token,
+			     uint64_t uid, uint32_t auth_uid, Queue *q);
 
 /* pe_context access functions */
 struct pe_proc_ident	*pe_context_get_ident(struct pe_context *);
 struct apn_rule		*pe_context_get_alfrule(struct pe_context *);
 struct apn_rule		*pe_context_get_sbrule(struct pe_context *);
+struct apn_rule		*pe_context_get_ctxrule(struct pe_context *);
 void			 pe_context_reference(struct pe_context *);
 void			 pe_context_put(struct pe_context *);
 int			 pe_context_uses_rs(struct pe_context *,
