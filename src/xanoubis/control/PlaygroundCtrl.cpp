@@ -623,7 +623,7 @@ PlaygroundCtrl::fileIdentification(uint64_t dev, uint64_t ino)
 		if (e->getDevice() == dev && e->getInode() == ino)
 			break;
 	}
-	if (i == playgroundInfo_.getSize()) {
+	if (i == playgroundFiles_.getSize()) {
 		return wxString::Format(wxT("dev=%lld ino=%lld"),
 		    (long long) dev, (long long)ino);
 	}
