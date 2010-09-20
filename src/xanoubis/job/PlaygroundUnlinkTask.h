@@ -42,7 +42,6 @@
 #include "TaskEvent.h"
 
 typedef std::pair<uint64_t, uint64_t>	devInodePair;
-typedef std::map<devInodePair, char *>	fileMap;
 
 /**
  * Task to unlink list of (playground) files.
@@ -193,13 +192,13 @@ class PlaygroundUnlinkTask : public ComTask
 		bool isPlaygroundActive(struct anoubis_msg *);
 
 		/**
-		 * Clean map list.
-		 * This method iterates over the given list and deletes every
-		 * element until the list is empty.
-		 * @param[in] 1st The list in question.
+		 * Clean the unlink list. This method iterates over the
+		 * given list and deletes every element until the list
+		 * is empty.
+		 * @param None.
 		 * @return Nothing.
 		 */
-		void cleanFileMap(fileMap &);
+		void cleanUnlinkList(void);
 
 		/**
 		 * Store id of playground.
@@ -224,12 +223,12 @@ class PlaygroundUnlinkTask : public ComTask
 		/**
 		 * These files will be deleted.
 		 */
-		fileMap unlinkList_;
+		std::map<char *, devInodePair> unlinkList_;
 
 		/**
 		 * Mask list: only unlink these files.
 		 */
-		fileMap matchList_;
+		std::map<devInodePair, bool> matchList_;
 
 		/**
 		 * Counts the delete attempts without any progress.

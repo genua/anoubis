@@ -39,6 +39,8 @@ PlaygroundUnlinkTask::PlaygroundUnlinkTask(uint64_t pgId)
 	state_ = INFO;
 	considerMatchList_ = false;
 	no_progress_ = 0;
+	matchList_.clear();
+	unlinkList_.clear();
 }
 
 PlaygroundUnlinkTask::~PlaygroundUnlinkTask(void)
@@ -63,7 +65,7 @@ PlaygroundUnlinkTask::addFile(PlaygroundFileEntry *entry)
 	devInodePair dip;
 
 	dip = devInodePair(entry->getDevice(), entry->getInode());
-	matchList_[dip] = NULL;
+	matchList_[dip] = true;
 	considerMatchList_ = true;
 
 	return (true);
@@ -185,8 +187,8 @@ PlaygroundUnlinkTask::getErrorList(void)
 void
 PlaygroundUnlinkTask::reset(void)
 {
-	cleanFileMap(unlinkList_);
-	cleanFileMap(matchList_);
+	cleanUnlinkList();
+	matchList_.clear();
 	setComTaskResult(RESULT_INIT);
 }
 
@@ -242,7 +244,7 @@ PlaygroundUnlinkTask::extractFileList(struct anoubis_msg *message)
 	uint64_t		 ino = 0;
 	devInodePair		 dip;
 
-	cleanFileMap(unlinkList_);
+	cleanUnlinkList();
 	for(; message; message = message->next) {
 		for (i=offset=0; i<get_value(message->u.listreply->nrec); ++i) {
 			record = (Anoubis_PgFileRecord *)
@@ -259,10 +261,12 @@ PlaygroundUnlinkTask::extractFileList(struct anoubis_msg *message)
 			dip = devInodePair(dev,ino);
 			if (considerMatchList_) {
 				if (matchList_.find(dip) != matchList_.end()) {
-					unlinkList_[dip] = path;
+					unlinkList_[path] = dip;
+				} else {
+					free(path);
 				}
 			} else {
-				unlinkList_[dip] = path;
+				unlinkList_[path] = dip;
 			}
 		}
 	}
@@ -271,26 +275,25 @@ PlaygroundUnlinkTask::extractFileList(struct anoubis_msg *message)
 int
 PlaygroundUnlinkTask::unlinkLoop(void)
 {
-	int			 count = 0;
-	char			*path = NULL;
-	fileMap::iterator	 it;
-
-	std::map<devInodePair, int>::iterator eIt;
+	int						 count = 0;
+	char						*path = NULL;
+	std::map<char *, devInodePair>::iterator	 it;
+	std::map<devInodePair, int>::iterator		 eIt;
 
 	setResultDetails(0);
 	for (it=unlinkList_.begin(); it!=unlinkList_.end(); it++) {
-		path = it->second;
+		path = it->first;
 		if (unlink(path) == 0 ||
 		    (errno == EISDIR && rmdir(path) == 0)) {
 			count++;
 			/* Erase from errorList if prev. reported. */
-			eIt = errorList_.find(it->first);
+			eIt = errorList_.find(it->second);
 			if (eIt != errorList_.end()) {
 				errorList_.erase(eIt);
 			}
 		} else {
 			setResultDetails(errno);
-			errorList_[it->first] = errno;
+			errorList_[it->second] = errno;
 		}
 	}
 
@@ -324,15 +327,15 @@ PlaygroundUnlinkTask::isPlaygroundActive(struct anoubis_msg *message)
 }
 
 void
-PlaygroundUnlinkTask::cleanFileMap(fileMap & list)
+PlaygroundUnlinkTask::cleanUnlinkList(void)
 {
-	fileMap::iterator it;
+	std::map<char *, devInodePair>::iterator	it;
 
-	while (!list.empty()) {
-		it = list.begin();
-		if (it->second != NULL) {
-			free(it->second);
+	while (!unlinkList_.empty()) {
+		it = unlinkList_.begin();
+		if (it->first != NULL) {
+			free(it->first);
 		}
-		list.erase(it);
+		unlinkList_.erase(it);
 	}
 }
