@@ -54,15 +54,12 @@ TESTS = \
 	wxStringTest
 noinst_PROGRAMS = \
 	test_xanoubis_server testSuite_JobCtrl testSuite_Ctrl $(TESTS)
-endif
 
 if HAVE_LIBWXGUITESTING
-noinst_PROGRAMS = \
-	test_xanoubis_server \
-	testSuite_JobCtrl \
-	testSuite_Ctrl \
-	wxGuiTest_Playground \
-	$(TESTS)
+noinst_PROGRAMS += \
+	wxGuiTest_Playground
+endif
+
 endif
 
 xanoubisdir       = src/xanoubis
