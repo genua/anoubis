@@ -93,7 +93,7 @@
 #include <anoubis_alloc.h>
 
 /* Prototypes. */
-static void	main_shutdown(int) __dead;
+static void	main_shutdown(void) __dead;
 static void	sanitise_stdfd(void);
 
 static void	sighandler(int, short, void *);
@@ -414,7 +414,7 @@ sighandler(int sig, short event __used, void *arg)
 		if (terminate && sig == SIGCHLD && info)
 			signal_del(info->ev_sigchld);
 		if (die) {
-			main_shutdown(0);
+			main_shutdown();
 			/*NOTREACHED*/
 		}
 		break;
@@ -723,10 +723,10 @@ main(int argc, char *argv[])
 		int	fd;
 		fd = open(_PATH_DEV "anoubis", O_RDWR);
 		if (fd < 0)
-			early_err(2, "Could not open " _PATH_DEV "anoubis");
+			early_err("Could not open " _PATH_DEV "anoubis");
 
 		if (ioctl(fd, ANOUBIS_GETVERSION, &version) < 0)
-			early_err(3, "ANOUBIS_GETVERSION: Cannot retrieve "
+			early_err("ANOUBIS_GETVERSION: Cannot retrieve "
 			    "version number");
 
 		if (version < ANOUBISCORE_MIN_VERSION
@@ -736,16 +736,16 @@ main(int argc, char *argv[])
 			    "expected=%lx min=%lx", version,
 			    ANOUBISCORE_VERSION, ANOUBISCORE_MIN_VERSION) < 0 )
 				msg = NULL;
-			early_errx(4, msg);
+			early_errx(msg);
 		}
 		close(fd);
 	}
 
 	/* Get anoubisd gid early. This is used by read/write_sfsversion */
 	if ((pw = getpwnam(ANOUBISD_USER)) == NULL)
-		early_errx(1, "User " ANOUBISD_USER " does not exist");
+		early_errx("User " ANOUBISD_USER " does not exist");
 	if (pw->pw_gid == 0)
-		early_errx(1, "Group ID of " ANOUBISD_USER " must not be 0");
+		early_errx("Group ID of " ANOUBISD_USER " must not be 0");
 	anoubisd_gid = pw->pw_gid;
 
 	sfsversion = read_sfsversion();
@@ -757,7 +757,7 @@ main(int argc, char *argv[])
 		 */
 		int empty = is_sfstree_empty();
 		if (empty < 0)
-			early_err(5, "Could not read " SFS_CHECKSUMROOT);
+			early_err("Could not read " SFS_CHECKSUMROOT);
 		if (empty) {
 			if (anoubisd_config.opts & ANOUBISD_OPT_NOACTION) {
 				/* No further action required */
@@ -765,14 +765,14 @@ main(int argc, char *argv[])
 			}
 			sfsversion = write_sfsversion();
 			if (sfsversion < 0) {
-				early_err(5, "Could not write "
+				early_err("Could not write "
 				    ANOUBISD_SFS_TREE_VERSIONFILE);
 			}
 		}
 	}
 
 	if (sfsversion < 0) {
-		early_err(5, "Could not read " ANOUBISD_SFS_TREE_VERSIONFILE);
+		early_err("Could not read " ANOUBISD_SFS_TREE_VERSIONFILE);
 	} else if (sfsversion > ANOUBISD_SFS_TREE_FORMAT_VERSION) {
 		char *msg;
 		if (asprintf(&msg, "Layout version of " SFS_CHECKSUMROOT
@@ -780,7 +780,7 @@ main(int argc, char *argv[])
 		    "You need to upgrade anoubisd.",
 		    sfsversion, ANOUBISD_SFS_TREE_FORMAT_VERSION) == -1)
 			msg = NULL;
-		early_errx(6, msg);
+		early_errx(msg);
 	} else if (sfsversion < ANOUBISD_SFS_TREE_FORMAT_VERSION) {
 		char *msg;
 		if (asprintf(&msg, "Layout version of " SFS_CHECKSUMROOT
@@ -788,7 +788,7 @@ main(int argc, char *argv[])
 		    "You need to run the upgrade script.",
 		    sfsversion, ANOUBISD_SFS_TREE_FORMAT_VERSION) == -1)
 			msg = NULL;
-		early_errx(6, msg);
+		early_errx(msg);
 	}
 
 	if (anoubisd_config.opts & ANOUBISD_OPT_NOACTION) {
@@ -803,7 +803,7 @@ main(int argc, char *argv[])
 		struct rlimit limits = { RLIM_INFINITY, RLIM_INFINITY };
 		int ret = setrlimit(RLIMIT_CORE, &limits);
 		if (ret < 0)
-			early_err(1, "setrlmit RLIMIT_CORE failed");
+			early_err("setrlmit RLIMIT_CORE failed");
 	} else {
 		act.sa_flags = SA_SIGINFO;
 		act.sa_sigaction = segvhandler;
@@ -814,36 +814,36 @@ main(int argc, char *argv[])
 		    sigaction(SIGABRT, &act, NULL) < 0 ||
 		    sigaction(SIGBUS,  &act, NULL) < 0
 		    ) {
-			early_errx(1, "Sigaction failed");
+			early_errx("Sigaction failed");
 		}
 	}
 
 	if (geteuid() != 0)
-		early_errx(1, "need root privileges");
+		early_errx("need root privileges");
 
 	if (getpwnam(ANOUBISD_USER) == NULL)
-		early_errx(1, "unkown user " ANOUBISD_USER);
+		early_errx("unkown user " ANOUBISD_USER);
 
 	if ((pidfp = check_pid()) == NULL) {
 		if (errno == EWOULDBLOCK || errno == EAGAIN)
-			early_errx(1, PACKAGE_DAEMON " is already running");
+			early_errx(PACKAGE_DAEMON " is already running");
 		else
-			early_errx(1, "cannot write pid file");
+			early_errx("cannot write pid file");
 	}
 	if (debug_stderr == 0)
 		if (daemon(1, 0) !=0)
-			early_errx(1, "daemonize failed");
+			early_errx("daemonize failed");
 
 	for (p = 0; p < PROC_LOGGER; p += 2) {
 		if (socketpair(AF_UNIX, SOCK_STREAM,
 		    PF_UNSPEC, &loggers[p]) == -1)
-			early_errx(1, "socketpair");
+			early_errx("socketpair");
 	}
 
 	for (p = 0; p < PIPE_MAX; p += 2) {
 		if (socketpair(AF_UNIX, SOCK_STREAM,
 		    PF_UNSPEC, &pipes[p]) == -1)
-			early_errx(1, "socketpair");
+			early_errx("socketpair");
 	}
 
 	logger_pid = logger_main(pipes, loggers);
@@ -937,7 +937,7 @@ main(int argc, char *argv[])
 	eventfds[0] = open(_PATH_DEV "eventdev", O_RDWR);
 	if (eventfds[0] < 0) {
 		log_warn("Could not open " _PATH_DEV "eventdev");
-		main_shutdown(1);
+		main_shutdown();
 	}
 	msg_init(eventfds[0]);
 
@@ -983,20 +983,20 @@ main(int argc, char *argv[])
 	if (eventfds[1] < 0) {
 		log_warn("Could not open " _PATH_DEV "anoubis");
 		close(eventfds[0]);
-		main_shutdown(1);
+		main_shutdown();
 	}
 
 	if (ioctl(eventfds[1], ANOUBIS_DECLARE_FD, eventfds[0]) < 0) {
 		log_warn("ioctl");
 		close(eventfds[0]);
 		close(eventfds[1]);
-		main_shutdown(1);
+		main_shutdown();
 	}
 	if (ioctl(eventfds[1], ANOUBIS_DECLARE_LISTENER, eventfds[0]) < 0) {
 		log_warn("ioctl");
 		close(eventfds[0]);
 		close(eventfds[1]);
-		main_shutdown(1);
+		main_shutdown();
 	}
 	pe_playground_initpgid(eventfds[1], eventfds[0]);
 	/* Note that we keep the anoubis device open for subsequent ioctls. */
@@ -1041,11 +1041,10 @@ main(int argc, char *argv[])
  * forcefully terminates child processes (except for the logger process)
  * using SIGQUIT, cleans up open files and exits.
  *
- * @param error The exit code to use.
  * @return This function never returns.
  */
 __dead static void
-main_shutdown(int error)
+main_shutdown(void)
 {
 	pid_t			pid;
 
@@ -1090,7 +1089,7 @@ main_shutdown(int error)
 		unlink(omit_pid_file);
 #endif
 	log_info("shutting down");
-	exit(error);
+	exit(2);
 }
 
 /**
@@ -1098,22 +1097,22 @@ main_shutdown(int error)
  * it initiate a forceful termination of the anoubis daemon. Non master
  * processes do this simply by exiting. The master process calls main_shutdown.
  *
- * @param The exit code to use for the calling process.
+ * @param None.
  * @return This function never returns.
  */
 __dead void
-master_terminate(int error)
+master_terminate(void)
 {
-	DEBUG(DBG_TRACE, ">master_terminate: error=%d", error);
+	DEBUG(DBG_TRACE, ">master_terminate");
 
 	if (master_pid && getpid() == master_pid)
-		main_shutdown(error);
+		main_shutdown();
 	/*
 	 * This will send a SIGCHLD to the master which will then terminate.
 	 * It is not possible to just kill(2) the master because we switched
 	 * UIDs and are no longer allowed to do this.
 	 */
-	_exit(error);
+	_exit(2);
 }
 
 #ifdef LINUX
@@ -1156,14 +1155,14 @@ sanitise_stdfd(void)
 	int nullfd, dupfd;
 
 	if ((nullfd = dupfd = open(_PATH_DEVNULL, O_RDWR)) == -1)
-		early_err(1, "open");
+		early_err("open");
 
 	while (++dupfd <= 2) {
 		/* Only clobber closed fds */
 		if (fcntl(dupfd, F_GETFL, 0) >= 0)
 			continue;
 		if (dup2(nullfd, dupfd) == -1) {
-			early_err(1, "dup2");
+			early_err("dup2");
 		}
 	}
 	if (nullfd > 2)
@@ -1172,7 +1171,7 @@ sanitise_stdfd(void)
 
 /**
  * Close all file descriptors in the pipes and loggers array. The
- * caller should set file descriptors that it wants to keep opern to -1.
+ * caller should set file descriptors that it wants to keep open to -1.
  * Additionally, all processes except the master also close the anoubis
  * daemon pid file.
  *
@@ -1280,10 +1279,8 @@ send_sfscache_invalidate_uid(const char *path, uid_t uid)
 
 	msg = msg_factory(ANOUBISD_MSG_SFSCACHE_INVALIDATE,
 	    sizeof(struct anoubisd_sfscache_invalidate) + strlen(path) + 1);
-	if (!msg) {
-		master_terminate(ENOMEM);
-		return;
-	}
+	if (!msg)
+		master_terminate();
 	invmsg = (struct anoubisd_sfscache_invalidate*)msg->msg;
 	invmsg->uid = uid;
 	invmsg->plen = strlen(path)+1;
@@ -1309,17 +1306,14 @@ send_sfscache_invalidate_key(const char *path, const struct abuf_buffer keyid)
 	char					*keyidstr = NULL;
 
 	keyidstr = abuf_convert_tohexstr(keyid);
-	if (keyidstr == NULL) {
-		master_terminate(ENOMEM);
-		return;
-	}
+	if (keyidstr == NULL)
+		master_terminate();
 	msg = msg_factory(ANOUBISD_MSG_SFSCACHE_INVALIDATE,
 	    sizeof(struct anoubisd_sfscache_invalidate) + strlen(path) + 1
 	    + strlen(keyidstr) + 1);
 	if (!msg) {
 		free(keyidstr);
-		master_terminate(ENOMEM);
-		return;
+		master_terminate();
 	}
 	invmsg = (struct anoubisd_sfscache_invalidate*)msg->msg;
 	invmsg->uid = (uid_t)-1;
@@ -1369,10 +1363,8 @@ send_upgrade_ok(int value)
 
 	msg = msg_factory(ANOUBISD_MSG_UPGRADE,
 	    sizeof(struct anoubisd_msg_upgrade) + 1);
-	if (!msg) {
-		master_terminate(ENOMEM);
-		return;
-	}
+	if (!msg)
+		master_terminate();
 	upg = (struct anoubisd_msg_upgrade*)msg->msg;
 	upg->upgradetype = ANOUBISD_UPGRADE_OK;
 	upg->chunksize = 1;
@@ -1395,10 +1387,8 @@ send_upgrade_notification(void)
 
 	msg = msg_factory(ANOUBISD_MSG_UPGRADE,
 	    sizeof(struct anoubisd_msg_upgrade));
-	if (!msg) {
-		master_terminate(ENOMEM);
-		return;
-	}
+	if (!msg)
+		master_terminate();
 	upg = (struct anoubisd_msg_upgrade*)msg->msg;
 	upg->upgradetype = ANOUBISD_UPGRADE_NOTIFY;
 	upg->chunksize = upgraded_files;
@@ -1494,10 +1484,8 @@ create_checksumreply_msg(int type, u_int64_t token, int payloadlen)
 
 	msg = msg_factory(type, sizeof(struct anoubisd_msg_csumreply)
 	    + payloadlen);
-	if (!msg) {
-		master_terminate(ENOMEM);
-		return 0;
-	}
+	if (!msg)
+		master_terminate();
 	reply = (struct anoubisd_msg_csumreply *)msg->msg;
 	memset(reply, 0, sizeof(struct anoubisd_msg_csumreply));
 	reply->flags = 0;
@@ -1980,10 +1968,8 @@ dispatch_auth_request(struct anoubisd_msg *msg)
 	    || abuf_length(cert->keyid) == 0) {
 		rep_msg = msg_factory(ANOUBISD_MSG_AUTH_CHALLENGE,
 		    sizeof(struct anoubisd_msg_authchallenge));
-		if (rep_msg == NULL) {
-			master_terminate(ENOMEM);
-			return;
-		}
+		if (rep_msg == NULL)
+			master_terminate();
 		challenge = (struct anoubisd_msg_authchallenge *)rep_msg->msg;
 		challenge->token = auth->token;
 		challenge->auth_uid = auth->auth_uid;
@@ -2000,10 +1986,8 @@ dispatch_auth_request(struct anoubisd_msg *msg)
 
 		rep_msg = msg_factory(ANOUBISD_MSG_AUTH_CHALLENGE,
 		    sizeof(struct anoubisd_msg_authchallenge) + payload);
-		if (rep_msg == NULL) {
-			master_terminate(ENOMEM);
-			return;
-		}
+		if (rep_msg == NULL)
+			master_terminate();
 		challenge = (struct anoubisd_msg_authchallenge *)rep_msg->msg;
 		challenge->token = auth->token;
 		challenge->auth_uid = auth->auth_uid;
@@ -2047,10 +2031,8 @@ dispatch_auth_verify(struct anoubisd_msg *imsg)
 	siglen = verify->siglen;
 	omsg = msg_factory(ANOUBISD_MSG_AUTH_RESULT,
 	    sizeof(struct anoubisd_msg_authresult));
-	if (omsg == NULL) {
-		master_terminate(ENOMEM);
-		return;
-	}
+	if (omsg == NULL)
+		master_terminate();
 	authresult = (struct anoubisd_msg_authresult *)omsg->msg;
 	authresult->token = verify->token;
 	authresult->auth_uid = verify->auth_uid;
@@ -2398,10 +2380,8 @@ dispatch_dev2m(int fd, short event __used, void *arg)
 		     || hdr->msg_pid == (u_int32_t)logger_pid)) {
 			msg_reply = msg_factory(ANOUBISD_MSG_EVENTREPLY,
 			    sizeof(struct eventdev_reply));
-			if (msg_reply == NULL) {
-				master_terminate(ENOMEM);
-				return;
-			}
+			if (msg_reply == NULL)
+				master_terminate();
 			rep = (struct eventdev_reply *)msg_reply->msg;
 			rep->msg_token = hdr->msg_token;
 			rep->reply = 0;

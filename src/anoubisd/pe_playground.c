@@ -452,10 +452,8 @@ pe_playground_file_instantiate(anoubis_cookie_t pgid, uint64_t dev,
 		log_warnx("pe_playground_file_instantiate: File instantiated "
 		    "in unknown playground");
 		pg = pe_playground_create(pgid, 1);
-		if (!pg) {
-			master_terminate(ENOMEM);
-			return;
-		}
+		if (!pg)
+			master_terminate();
 	}
 	pe_playground_devtoname(buf, sizeof(buf), dev, ino);
 	fd = atfd_openat(&pg->dirfd, buf, O_RDWR | O_CREAT, 0640);

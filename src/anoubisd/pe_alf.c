@@ -174,8 +174,7 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 
 	if ((reply = calloc(1, sizeof(struct anoubisd_reply))) == NULL) {
 		log_warn("pe_decide_alf: cannot allocate memory");
-		master_terminate(ENOMEM);
-		return (NULL);
+		master_terminate();
 	}
 
 	reply->ask = 0;
@@ -235,10 +234,8 @@ pe_alf_evaluate(struct pe_proc *proc, int prio, uid_t uid,
 	}
 
 	if (time(&t) == (time_t)-1) {
-		int code = errno;
 		log_warn("Cannot get current time");
-		master_terminate(code);
-		return -1;
+		master_terminate();
 	}
 	decision = pe_decide_alffilt(rule, msg, log, rule_id, t);
 	if (decision == -1)

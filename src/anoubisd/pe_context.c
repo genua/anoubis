@@ -190,10 +190,8 @@ pe_context_norules(struct pe_proc *proc, int prio)
 	    && ctx->sbrule == NULL && ctx->ctxrule == NULL)
 		return;
 	ctx = pe_context_alloc(NULL, &ctx->ident);
-	if (!ctx) {
-		master_terminate(ENOMEM);
-		return;
-	}
+	if (!ctx)
+		master_terminate();
 	pe_proc_set_context(proc, prio, ctx);
 	pe_context_put(ctx);
 }
@@ -219,10 +217,8 @@ pe_savedctx_norules(struct pe_proc *proc, int prio)
 		return;
 	/* Create norules context. */
 	ctx = pe_context_alloc(NULL, &ctx->ident);
-	if (!ctx) {
-		master_terminate(ENOMEM);
-		return;
-	}
+	if (!ctx)
+		master_terminate();
 	pe_proc_set_savedctx(proc, prio, ctx);
 	pe_context_put(ctx);
 }
@@ -748,10 +744,8 @@ pe_context_search(struct apn_ruleset *rs, struct pe_proc_ident *pident,
 		return (NULL);
 
 	context = pe_context_alloc(rs, pident);
-	if (!context) {
-		master_terminate(ENOMEM);
-		return NULL;
-	}
+	if (!context)
+		master_terminate();
 	context->alfrule = pe_context_search_chain(&rs->alf_queue, pident,
 	    uid, ispg);
 	context->sbrule = pe_context_search_chain(&rs->sb_queue, pident,
@@ -776,8 +770,7 @@ pe_context_alloc(struct apn_ruleset *rs, struct pe_proc_ident *pident)
 
 	if ((ctx = calloc(1, sizeof(struct pe_context))) == NULL) {
 		log_warn("calloc");
-		master_terminate(ENOMEM);
-		return NULL;
+		master_terminate();
 	}
 	ctx->alfrule = NULL;
 	ctx->sbrule = NULL;

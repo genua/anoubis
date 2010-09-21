@@ -445,11 +445,10 @@ extern void	log_debug(const char *, ...)
 
 void anoubisd_defaultsigset(sigset_t *);
 
-__dead void	fatalx(const char *);
 __dead void	fatal(const char *);
-__dead void	master_terminate(int);
-__dead void	early_err(int, const char *);
-__dead void	early_errx(int, const char *);
+__dead void	master_terminate(void);
+__dead void	early_err(const char *);
+__dead void	early_errx(const char *);
 
 int	dazukofs_ignore(void);
 

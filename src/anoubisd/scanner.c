@@ -189,8 +189,7 @@ dispatch_scand2m(int fd, short event __used, void *arg)
 		return;
 	if (sp->pipe[0] != fd) {
 		log_warnx("Bad file descriptior in dispatch_scand2m");
-		master_terminate(EINVAL);
-		return;
+		master_terminate();
 	}
 	DEBUG(DBG_TRACE, ">dispatch_scand2m");
 	while (1) {
@@ -206,10 +205,8 @@ dispatch_scand2m(int fd, short event __used, void *arg)
 			struct anoubisd_msg		*msg;
 
 			msg = abuf_cast(sp->msgbuf, struct anoubisd_msg);
-			if (!msg) {
-				master_terminate(ENOMEM);
-				return;
-			}
+			if (!msg)
+				master_terminate();
 			if (msg->size > 8000)
 				msg->size = 8000;
 			len = msg->size;

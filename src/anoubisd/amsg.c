@@ -112,8 +112,7 @@ msg_init(int fd)
 
 	if (fd < 0) {
 		log_warnx("msg_init with negative fd");
-		master_terminate(EIO);
-		return;
+		master_terminate();
 	}
 	/* already initialized? */
 	for (idx=0; idx < MSG_BUFS; idx++)
@@ -146,8 +145,7 @@ msg_init(int fd)
 	 */
 	if ((fds[idx].rbufp = malloc(MSG_BUF_SIZE*2)) == NULL) {
 		log_warn("msg_init: can't allocate memory");
-		master_terminate(ENOMEM);
-		return;
+		master_terminate();
 	}
 	fds[idx].rheadp = fds[idx].rtailp = fds[idx].rbufp;
 	fds[idx].rmsg = NULL;
@@ -422,13 +420,11 @@ get_msg(int fd)
 	if (msg->size > MSG_SIZE_LIMIT
 	    || msg->size < (int)sizeof(struct anoubisd_msg)) {
 		log_warnx("get_msg: Bad message size %d", msg->size);
-		master_terminate(EINVAL);
-		return NULL;
+		master_terminate();
 	}
 	if ((msg_r = malloc(msg->size)) == NULL) {
 		log_warn("get_msg: can't allocate memory");
-		master_terminate(ENOMEM);
-		return NULL;
+		master_terminate();
 	}
 	copy = mbp->rtailp - mbp->rheadp;
 	if (copy > msg->size)
@@ -477,8 +473,7 @@ get_event(int fd)
 
 	if ((mbp = _get_mbp(fd)) == NULL) {
 		log_warnx("msg_buf not initialized");
-		master_terminate(ENOENT);
-		return NULL;
+		master_terminate();
 	}
 
 	/*
@@ -506,8 +501,7 @@ get_event(int fd)
 	msg_r = msg_factory(ANOUBISD_MSG_EVENTDEV, evt->msg_size);
 	if (msg_r == NULL) {
 		log_warn("get_event: can't allocate memory");
-		master_terminate(ENOMEM);
-		return NULL;
+		master_terminate();
 	}
 	memcpy(msg_r->msg, evt, evt->msg_size);
 	if (version < ANOUBISCORE_VERSION) {
@@ -515,7 +509,7 @@ get_event(int fd)
 		if (!msg_r) {
 			log_warnx("Cannot convert Message from version %ld",
 			    version);
-			master_terminate(ENOMEM);
+			master_terminate();
 		}
 		evt = (struct eventdev_hdr *)msg_r->msg;
 	}
@@ -685,8 +679,7 @@ msg_factory(int mtype, int size)
 	}
 	if ((msg = malloc(size)) == NULL) {
 		log_warn("msg_factory: cannot allocate memory");
-		master_terminate(ENOMEM);
-		return NULL;
+		master_terminate();
 	}
 	bzero(msg, size);
 	msg->mtype = mtype;

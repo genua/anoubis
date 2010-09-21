@@ -61,7 +61,7 @@ enqueue(Queue * queue, void *data)
 	entry = abuf_alloc_type(struct queue_entry);
 	if (entry == NULL) {
 		log_warn("enqueue: can't allocate memory");
-		master_terminate(ENOMEM);
+		master_terminate();
 	}
 	entry->data = data;
 	TAILQ_INSERT_TAIL(&queue->list, entry, next);

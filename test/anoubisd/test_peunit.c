@@ -71,23 +71,18 @@ DEFINELOG(log_warnx)
 DEFINELOG(log_info)
 DEFINELOG(log_debug)
 
-void
+__dead void
 fatal(const char *msg)
 {
 	log_warnx("%s", msg);
 	exit(1);
 }
 
-void
-fatalx(const char *msg)
+__dead void
+master_terminate(void)
 {
-	fatal(msg);
-}
-
-void
-master_terminate(int code __used)
-{
-	fatalx("MASTER TERMINATE");
+	log_warnx("MASTER TERMINATE");
+	exit(1);
 }
 
 void

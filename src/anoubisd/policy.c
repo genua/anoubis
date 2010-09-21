@@ -316,10 +316,8 @@ dispatch_timer(int sig __used, short event __used, void *arg)
 			continue;
 		msg = msg_factory(ANOUBISD_MSG_EVENTREPLY,
 			    sizeof(struct eventdev_reply));
-		if (!msg) {
-			master_terminate(ENOMEM);
-			return;
-		}
+		if (!msg)
+			master_terminate();
 		rep = (struct eventdev_reply *)msg->msg;
 		rep->msg_token = msg_wait->token;
 		rep->reply = EPERM;
@@ -328,10 +326,8 @@ dispatch_timer(int sig __used, short event __used, void *arg)
 
 		msg = msg_factory(ANOUBISD_MSG_EVENTCANCEL,
 		    sizeof(eventdev_token));
-		if (!msg) {
-			master_terminate(ENOMEM);
-			return;
-		}
+		if (!msg)
+			master_terminate();
 		tk = (eventdev_token *)msg->msg;
 		*tk = msg_wait->token;
 		enqueue(&eventq_p2s, msg);
@@ -706,8 +702,7 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 			if (!nmsg) {
 				free(msg);
 				free(reply);
-				master_terminate(ENOMEM);
-				return;
+				master_terminate();
 			}
 			/* The hdr is in the freed message! */
 			hdr = NULL;
@@ -718,8 +713,7 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 			if (msg_wait == NULL) {
 				log_warn("dispatch_m2p: can't allocate memory");
 				free(reply);
-				master_terminate(ENOMEM);
-				continue;
+				master_terminate();
 			}
 
 			msg_wait->token = token;
@@ -727,8 +721,7 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 				free(msg);
 				free(reply);
 				log_warn("dispatch_m2p: failed to get time");
-				master_terminate(EIO);
-				continue;
+				master_terminate();
 			}
 			msg_wait->flags = ANOUBIS_RET_FLAGS(reply->reply);
 			msg_wait->timeout = reply->timeout;
@@ -748,8 +741,7 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 			if (!msg_reply) {
 				free(msg);
 				free(reply);
-				master_terminate(ENOMEM);
-				return;
+				master_terminate();
 			}
 			rep = (struct eventdev_reply *)msg_reply->msg;
 			rep->msg_token = hdr->msg_token;
@@ -863,7 +855,8 @@ send_policychange(u_int32_t uid, u_int32_t prio)
 	enqueue(&eventq_p2s, msg);
 }
 
-int send_policy_data(u_int64_t token, int fd)
+int
+send_policy_data(u_int64_t token, int fd)
 {
 	struct anoubisd_msg		*msg;
 	struct anoubisd_msg_polreply	*polreply;
@@ -898,8 +891,7 @@ int send_policy_data(u_int64_t token, int fd)
 	return 0;
 oom:
 	log_warn("send_policy_data: can't allocate memory");
-	master_terminate(ENOMEM);
-	return -ENOMEM;
+	master_terminate();
 }
 
 /**
@@ -941,10 +933,8 @@ dispatch_list_request(struct anoubisd_msg *inmsg, Queue *queue)
 	if (err == 0)
 		return;
 	/* Send an error message */
-	if (amsg_list_init(&ctx, token, ANOUBIS_REC_NOTYPE) < 0) {
-		master_terminate(ENOMEM);
-		return;
-	}
+	if (amsg_list_init(&ctx, token, ANOUBIS_REC_NOTYPE) < 0)
+		master_terminate();
 	ctx.flags = POLICY_FLAG_START | POLICY_FLAG_END;
 	set_value(ctx.pmsg->error, -err);
 	amsg_list_send(&ctx, queue);

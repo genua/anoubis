@@ -852,7 +852,7 @@ __amsg_verify(struct anoubisd_msg *msg, int fatal)
 
 	if (msg->size < (int)sizeof(*msg)) {
 		log_warnx("Invalid message size: %d", msg->size);
-		master_terminate(EINVAL);
+		master_terminate();
 	}
 	buflen = msg->size;
 	tmp = anoubisd_msg_size(buf, buflen);
@@ -875,7 +875,7 @@ __amsg_verify(struct anoubisd_msg *msg, int fatal)
 		msgfmt[pos] = 0;
 		log_warnx("MSG DATA: %s", msgfmt);
 		if (fatal)
-			master_terminate(EINVAL);
+			master_terminate();
 		else
 			return 0;
 	} else if (tmp < buflen) {

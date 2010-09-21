@@ -44,20 +44,82 @@
 #include "amsg.h"
 #include "aqueue.h"
 
+/**
+ * \file
+ * This file provides functions and mechanisms for logging to the other
+ * anoubis daemon processes. Additionally, it contains the implementation
+ * of the logger process.
+ *
+ * Each anoubis daemon process sends its log messages to the logger process
+ * which will forward them to syslog stderr. This is neccessary because syslog
+ * can block in this is not a good idea e.g. in the policy engine. If
+ * debugging is to stderr, the logger process is basically unused.
+ *
+ * The logging file descriptor and other logging state is maintained in
+ * static variables that are defined in this file below. Each anoubis daemon
+ * process starts its life by calling log_init which will set up logging and
+ * initialize these global variabels.
+ *
+ * The logger process itself is started by calling logger_main.
+ */
+
+/**
+ * This array maps numerical process names to strings. The process name
+ * is used to prefix each log message with a message source.
+ */
 static const char * const procnames[] = {
-	"main", NULL, "policy", NULL, "session", NULL, "upgrade", NULL
+	[ PROC_MAIN ] = "main",
+	[ PROC_POLICY ] = "policy",
+	[ PROC_SESSION ] = "session",
+	[ PROC_UPGRADE ] = "upgrade",
 };
 
-static void	logit(int, const char *, ...);
-static void	vlog(int, const char *, va_list);
-
+/**
+ * Log message file descriptor. This variable is set up by log_init and
+ * stores the file descriptor that log messages are sent to in other
+ * anoubis daemon processes.
+ */
 static int		__log_fd = -1;
+
+/**
+ * The log write event. This event is initialized by log_init and is added
+ * to  the event loop once a log message was added to the log write queue
+ * of an anoubis daemon process. Each anoubis daemon process has its own
+ * instance of this event.
+ */
 static struct event	__log_event;
+
+/**
+ * This is the outgoing log queue. Each anoubis daemonprocess has its own
+ * instance of this queue.
+ */
 static Queue		__eventq_log;
+
+/**
+ * This variable is used to avoid recurive calls to the logging functions
+ * if an error occurs while we are in the process of logging another message.
+ * If it is set to true, log messages will simply be dropped.
+ */
 static int		__logging = 0;
 
+/**
+ * This array is used by the logger process to store the event structures of
+ * its signal events. It is used in the signal handler to remove all signal
+ * events from the event queue.
+ */
 static struct event	*sigs[10];
 
+/**
+ * This is the write dispatcher function for anoubis daemon processes
+ * other than the logger. It is called once the log file desciptor becomes
+ * ready.
+ *
+ * @param fd Allways equal to __log_fd. The file descriptor that is ready
+ *     for write.
+ * @param event Unused. The type of event that occured.
+ * @param arg Unused. The callback argument of the event.
+ * @return None.
+ */
 static void
 dispatch_log_write(int fd __used, short event __used, void *arg __used)
 {
@@ -66,6 +128,15 @@ dispatch_log_write(int fd __used, short event __used, void *arg __used)
 	__logging = 0;
 }
 
+/**
+ * Try to forward messages in the outgoing log queue to syslog directly.
+ * This is used to make pending log messages available if the logger process
+ * terminates unexpectedly. Note that this might not work for chrooted
+ * processes.
+ *
+ * @param None.
+ * @return None.
+ */
 void
 flush_log_queue(void)
 {
@@ -79,6 +150,17 @@ flush_log_queue(void)
 	}
 }
 
+/**
+ * Initialize logging for an anoubis daemon process. The caller must
+ * provide teh write end of a file descriptor that is connected to the
+ * logger process.
+ *
+ * @param fd Log messages are sent to this file descriptor.
+ * @return None.
+ *
+ * NOTE: This function should be called exactly once for each anoubis
+ *     daemon process.
+ */
 void
 log_init(int fd)
 {
@@ -89,16 +171,19 @@ log_init(int fd)
 	queue_init(&__eventq_log, &__log_event);
 }
 
-static void
-logit(int pri, const char *fmt, ...)
-{
-	va_list	ap;
-
-	va_start(ap, fmt);
-	vlog(pri, fmt, ap);
-	va_end(ap);
-}
-
+/**
+ * Log a formatted message. The message is first formatted in a printf
+ * like fashion and then either written to stderr or sent to the logger
+ * process. This is the core function that handles all logging request
+ *
+ * @param pri The logging priority. This is ultimately passed as the
+ *     first parameter of syslog(3).
+ * @param fmt The format string for the message.
+ * @param ap The arguments for the format string. The variable length
+ *     argument list was already parsed into a va_list. See stdarg.h for
+ *     details regarding this issue.
+ * @return None.
+ */
 static void
 vlog(int pri, const char *fmt, va_list ap)
 {
@@ -121,16 +206,13 @@ vlog(int pri, const char *fmt, va_list ap)
 		if (__log_fd >= 0) {
 			struct anoubisd_msg	*msg;
 			struct anoubisd_msg_logit	*lmsg;
-			if (vasprintf(&nfmt, fmt, ap) == -1) {
-				master_terminate(ENOMEM);
-				return;
-			}
+			if (vasprintf(&nfmt, fmt, ap) == -1)
+				master_terminate();
 			msg = msg_factory(ANOUBISD_MSG_LOGIT,
 			    sizeof(struct anoubisd_msg_logit) + strlen(nfmt)+1);
 			if (!msg) {
 				free(nfmt);
-				master_terminate(ENOMEM);
-				return;
+				master_terminate();
 			}
 			lmsg = (struct anoubisd_msg_logit *)msg->msg;
 			lmsg->prio = pri;
@@ -144,6 +226,36 @@ vlog(int pri, const char *fmt, va_list ap)
 	__logging = 0;
 }
 
+/**
+ * Format and send a log message. This is a wrapper around vlog that
+ * does not require a parsed va_list but accepts a normal variable length
+ * argument list instead.
+ *
+ * @param pri The log priority.
+ * @param fmt The format string for the message.
+ * @param ... The format arguments.
+ * @return None.
+ */
+static void
+logit(int pri, const char *fmt, ...)
+{
+	va_list	ap;
+
+	va_start(ap, fmt);
+	vlog(pri, fmt, ap);
+	va_end(ap);
+}
+
+/**
+ * Create and format a warning message with an error message derived from
+ * the current value of errno. The message created is logged as LOG_CRIT.
+ * It consists of the message format is specified followed by the error
+ * string that corresponds to the current value of errno(3).
+ *
+ * @param emsg The format string for the message.
+ * @param ... The format arguments.
+ * @return None.
+ */
 void
 log_warn(const char *emsg, ...)
 {
@@ -169,6 +281,15 @@ log_warn(const char *emsg, ...)
 	}
 }
 
+/**
+ * Create and format a warning message. Use this function instead of
+ * log_warnx if errno is not set to something useful. The message is
+ * logged with priority LOG_CRIT.
+ *
+ * @param emsg The format string for the message.
+ * @param ... The format arguments.
+ * @return None.
+ */
 void
 log_warnx(const char *emsg, ...)
 {
@@ -179,6 +300,14 @@ log_warnx(const char *emsg, ...)
 	va_end(ap);
 }
 
+/**
+ * Create and format an informational message. This is the same as
+ * log_warnx except that the priority is only LOG_INFO.
+ *
+ * @param emsg The format string for the message.
+ * @param ... The format arguments.
+ * @return None.
+ */
 void
 log_info(const char *emsg, ...)
 {
@@ -189,6 +318,14 @@ log_info(const char *emsg, ...)
 	va_end(ap);
 }
 
+/**
+ * Format and log a debug message. This should not be used directly. Use
+ * the DEBUG macro instead. The message is logged with priority LOG_DEBUG.
+ *
+ * @param emsg The format string for the message.
+ * @param ... The format arguments.
+ * @return None.
+ */
 void
 log_debug(const char *emsg, ...)
 {
@@ -199,6 +336,14 @@ log_debug(const char *emsg, ...)
 	va_end(ap);
 }
 
+/**
+ * Log a critical error message, flush pending log messages and exit.
+ * The log message is not formatted, the string is logged as is. Consider
+ * using log_warnx plus master_terminate() instead of this function.
+ *
+ * @param The message to log.
+ * @return This function never returns.
+ */
 __dead void
 fatal(const char *emsg)
 {
@@ -214,21 +359,20 @@ fatal(const char *emsg)
 			logit(LOG_CRIT, "fatal in %s: %s",
 			    procnames[anoubisd_process], emsg);
 	flush_log_queue();
-	if (anoubisd_process == PROC_MAIN)
-		exit(1);
-	else				/* parent copes via SIGCHLD */
-		_exit(1);
+	exit(1);
 }
 
+/**
+ * Print an error message early in the anoubis daemon startup. This
+ * functions unconditionally prints the message to stderr and appends
+ * an error string derived from errno. Finally the function exits with
+ * exit code 1.
+ *
+ * @param The error message string. No format characters are allowed.
+ * @return This function never returns.
+ */
 __dead void
-fatalx(const char *emsg)
-{
-	errno = 0;
-	fatal(emsg);
-}
-
-void
-early_err(int eval, const char *emsg)
+early_err(const char *emsg)
 {
 	if (emsg == NULL) {
 		fprintf(stderr, "%s: %s\n", logname, anoubis_strerror(errno));
@@ -240,17 +384,36 @@ early_err(int eval, const char *emsg)
 			fprintf(stderr, "%s: %s\n", logname, emsg);
 		}
 	}
-
-	exit(eval);
+	exit(1);
 }
 
-void
-early_errx(int eval, const char *emsg)
+/**
+ * Print an error message early in the anoubis daemon startup. This
+ * functions unconditionally prints the message to stderr and exits
+ * with exit code 1.
+ *
+ * @param The error message string. No format characters are allowed.
+ * @return This function never returns.
+ */
+__dead void
+early_errx(const char *emsg)
 {
 	errno = 0;
-	early_err(eval, emsg);
+	early_err(emsg);
 }
 
+/**
+ * This is the signal handler used inside the logger process. Once a
+ * fatal signal is received it blocks all further signals and removes
+ * the signal events from the event loop. This will cause the event loop
+ * to exit once all of the logger pipes from the other anoubis daemon
+ * processes are closed.
+ *
+ * @param sig The signal (unused).
+ * @param event The type of the event (unused).
+ * @param arg The callback argument of the event (unused).
+ * @return None.
+ */
 static void
 logger_sighandler(int sig __used, short event __used, void *arg __used)
 {
@@ -267,6 +430,19 @@ logger_sighandler(int sig __used, short event __used, void *arg __used)
 		signal_del(sigs[i]);
 }
 
+/**
+ * Dispatch a read event on one of the log file descriptors inside the
+ * logger process. This is the event handler for all read events in the
+ * logger. Messages are read from the fd and logged to syslog. If EOF
+ * is detected on one of the file descriptors a TERM signal is simulated
+ * by calling the signal handler manually.
+ *
+ * @param fd The log file descriptor to read from.
+ * @param sig The event type (unused).
+ * @param arg The event callback. This is the event itself. We use this
+ *     to remove the event from the event queue in case of EOF.
+ * @return None.
+ */
 void
 dispatch_log_read(int fd, short sig __used, void *arg)
 {
@@ -293,10 +469,26 @@ dispatch_log_read(int fd, short sig __used, void *arg)
 	__logging = 0;
 }
 
+/**
+ * Spawn the logger process and return its process ID. This functions
+ * sets up signal handling and the event loop in the logger process.
+ * The parent process returns immediately.
+ *
+ * @param pipes The pipes between the different anoubis daemon processes.
+ *     This array should have PIPE_MAX elements. All of the file descriptors
+ *     in this array will be closed in the child.
+ * @param loggers The file descriptors of the pipes between the anoubisd
+ *     daemon processes and the logger. The ends that at the odd indices
+ *     belong to the logger process and will be used to read log messages
+ *     while the ends at the even indices will be closed in the logger whild.
+ *     This array should have PROC_LOGGER elements.
+ * @return This function returns the process ID of the logger process in
+ *     the parent.
+ */
 pid_t
 logger_main(int pipes[], int loggers[])
 {
-	int		 p;
+	int		 pp;
 	pid_t		 pid;
 	struct event	*ev_logger;
 	struct event	 ev_sigterm, ev_sigint, ev_sigquit;
@@ -305,6 +497,8 @@ logger_main(int pipes[], int loggers[])
 #ifdef LINUX
 	int		 dazukofd;
 #endif
+	static int	 logpipeidx[] = { PROC_MAIN+1, PROC_POLICY+1,
+			     PROC_SESSION+1, PROC_UPGRADE+1, -1 };
 
 	if ((pw = getpwnam(ANOUBISD_USER)) == NULL)
 		fatal("getpwnam");
@@ -348,23 +542,17 @@ logger_main(int pipes[], int loggers[])
 	anoubisd_defaultsigset(&mask);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 
-	msg_init(loggers[PROC_MAIN + 1]);
-	msg_init(loggers[PROC_POLICY + 1]);
-	msg_init(loggers[PROC_SESSION + 1]);
-	msg_init(loggers[PROC_UPGRADE + 1]);
+	for (pp = 0; logpipeidx[pp] >= 0; pp ++) {
+		int		idx = logpipeidx[pp];
 
-	for (p = 0; p < PROC_LOGGER; p += 2) {
 		if ((ev_logger = malloc(sizeof(struct event))) == NULL)
 			fatal("logger_main: event malloc");
-		event_set(ev_logger, loggers[p + 1], EV_READ|EV_PERSIST,
+		msg_init(loggers[idx]);
+		event_set(ev_logger, loggers[idx], EV_READ|EV_PERSIST,
 		    &dispatch_log_read, ev_logger);
 		event_add(ev_logger, NULL);
+		loggers[idx] = -1;
 	}
-
-	loggers[PROC_MAIN + 1] = -1;
-	loggers[PROC_POLICY + 1] = -1;
-	loggers[PROC_SESSION + 1] = -1;
-	loggers[PROC_UPGRADE + 1] = -1;
 	cleanup_fds(pipes, loggers);
 
 	setproctitle("logger");

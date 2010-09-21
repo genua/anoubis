@@ -123,7 +123,7 @@ pe_proc_ident_set(struct pe_proc_ident *pident, const struct abuf_buffer csum,
 	return;
 oom:
 	log_warnx("pe_proc_ident_set: out of memory");
-	master_terminate(ENOMEM);
+	master_terminate();
 }
 
 /**
@@ -221,7 +221,7 @@ pe_proc_put(struct pe_proc *proc)
 		return;
 	if (proc->instances) {
 		log_warnx("pe_proc_put: PANIC: Remaining instances");
-		master_terminate(EINVAL);
+		master_terminate();
 		return;
 	}
 	if (proc->pgid && proc->threads)
@@ -317,8 +317,8 @@ pe_proc_alloc(uid_t uid, anoubis_cookie_t cookie, struct pe_proc_ident *pident,
 	return (proc);
 oom:
 	log_warn("pe_proc_alloc: cannot allocate memory");
-	master_terminate(ENOMEM);
-	return (NULL);	/* XXX HSH */
+	master_terminate();
+	return NULL;
 }
 
 /**

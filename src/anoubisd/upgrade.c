@@ -172,8 +172,7 @@ send_upgrade_message(int type)
 	msg = msg_factory(ANOUBISD_MSG_UPGRADE, sizeof(*umsg));
 	if (msg == NULL) {
 		log_warnx("send_upgrade_message: Out of memory");
-		master_terminate(ENOMEM);
-		return;
+		master_terminate();
 	}
 	umsg = (anoubisd_msg_upgrade_t *)msg->msg;
 	umsg->chunksize = 0;

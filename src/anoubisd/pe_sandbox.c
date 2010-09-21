@@ -359,8 +359,7 @@ pe_decide_sandbox(struct pe_proc *proc, struct pe_file_event *sbevent)
 	reply = calloc(1, sizeof(struct anoubisd_reply));
 	if (!reply) {
 		log_warn(" pe_decide_sandbox: cannot allocate memory");
-		master_terminate(ENOMEM);
-		return NULL;
+		master_terminate();
 	}
 	/*
 	 * If we still do not have a final verdict we do not have a log

@@ -2140,10 +2140,8 @@ sfs_check_for_uid(const char *sfs_path, const char *entryname, uid_t uid,
 		idxstr = ".*u_";
 	}
 	ret = asprintf(&file, "%s/%s/%s%d", sfs_path, entryname, idxstr, uid);
-	if (ret < 0) {
-		master_terminate(ENOMEM);
-		return 0;
-	}
+	if (ret < 0)
+		master_terminate();
 	ret = lstat(file, &statbuf);
 	if (ret < 0 || !S_ISREG(statbuf.st_mode)) {
 		free(file);
@@ -2196,15 +2194,11 @@ sfs_check_for_key(const char *sfs_path, const char *entryname,
 			return 1;
 		idxstr = ".*u_";
 	}
-	if ((keystr = abuf_convert_tohexstr(keyid)) == NULL) {
-		master_terminate(ENOMEM);
-		return 0;
-	}
+	if ((keystr = abuf_convert_tohexstr(keyid)) == NULL)
+		master_terminate();
 	if (asprintf(&file, "%s/%s/%sk%s", sfs_path, entryname, idxstr,
-	    keystr) < 0) {
-		master_terminate(ENOMEM);
-		return 0;
-	}
+	    keystr) < 0)
+		master_terminate();
 	free(keystr);
 	ret = lstat(file, &statbuf);
 	if (ret < 0 || !S_ISREG(statbuf.st_mode)) {
@@ -2310,24 +2304,18 @@ sfs_remove_index(const char *path, struct sfs_checksumop *csop)
 	if (csop->listflags & (ANOUBIS_CSUM_ALL | ANOUBIS_CSUM_WANTIDS))
 		return;
 	if (csop->listflags & ANOUBIS_CSUM_UID) {
-		if (asprintf(&idxfile, "%s/.*u_%d", path, csop->uid) < 0) {
-			master_terminate(ENOMEM);
-			return;
-		}
+		if (asprintf(&idxfile, "%s/.*u_%d", path, csop->uid) < 0)
+			master_terminate();
 		sfs_deletechecksum(idxfile);
 		free(idxfile);
 	}
 	if (csop->listflags & ANOUBIS_CSUM_KEY) {
 		char	*keystr;
 		keystr = abuf_convert_tohexstr(csop->keyid);
-		if (keystr == NULL) {
-			master_terminate(ENOMEM);
-			return;
-		}
-		if (asprintf(&idxfile, "%s/.*u_k%s", path, keystr) < 0) {
-			master_terminate(ENOMEM);
-			return;
-		}
+		if (keystr == NULL)
+			master_terminate();
+		if (asprintf(&idxfile, "%s/.*u_k%s", path, keystr) < 0)
+			master_terminate();
 		sfs_deletechecksum(idxfile);
 		free(keystr);
 		free(idxfile);

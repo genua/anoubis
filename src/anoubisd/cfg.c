@@ -1177,7 +1177,7 @@ cfg_msg_create(void)
 	msg = msg_factory(ANOUBISD_MSG_CONFIG, msgsize);
 	if (msg == NULL) {
 		log_warnx("cfg_transmit: Out of memory");
-		master_terminate(ENOMEM);
+		master_terminate();
 		return (NULL);
 	}
 	confmsg = (anoubisd_msg_config_t *)msg->msg;

@@ -499,16 +499,13 @@ notify_callback(struct anoubis_notify_head *head, int verdict, void *_cbdata)
 
 	if (cbdata == NULL) {
 		log_warnx("notify_callback: null pointer");
-		master_terminate(EINVAL);
-		return;
+		master_terminate();
 	}
 
 	msg = msg_factory(ANOUBISD_MSG_EVENTREPLY,
 	    sizeof(struct eventdev_reply));
-	if (!msg) {
-		master_terminate(ENOMEM);
-		return;
-	}
+	if (!msg)
+		master_terminate();
 	rep = (struct eventdev_reply *)msg->msg;
 	rep->msg_token = cbdata->ev_token;
 	rep->reply = verdict;
@@ -575,10 +572,8 @@ dispatch_csmulti(struct anoubis_server *server, struct anoubis_msg *m,
 		goto invalid;
 	s2m_msg = msg_factory(ANOUBISD_MSG_CSMULTIREQUEST,
 	    sizeof(struct anoubisd_msg_csumop) + m->length);
-	if (!s2m_msg) {
-		master_terminate(ENOMEM);
-		return;
-	}
+	if (!s2m_msg)
+		master_terminate();
 	chan = anoubis_server_getchannel(server);
 	csum_msg = (struct anoubisd_msg_csumop *)(s2m_msg->msg),
 	csum_msg->uid = uid;
@@ -626,10 +621,8 @@ dispatch_pglist(struct anoubis_server *server, struct anoubis_msg *m,
 
 	msg = msg_factory(ANOUBISD_MSG_LISTREQUEST,
 	    sizeof(struct anoubisd_msg_listrequest));
-	if (!msg) {
-		master_terminate(ENOMEM);
-		return;
-	}
+	if (!msg)
+		master_terminate();
 
 	pgmsg = (struct anoubisd_msg_listrequest *)msg->msg;
 	pgmsg->auth_uid = auth_uid;
@@ -676,10 +669,8 @@ dispatch_pgcommit(struct anoubis_server *server, struct anoubis_msg *m,
 
 	msg = msg_factory(ANOUBISD_MSG_PGCOMMIT,
 	    sizeof(struct anoubisd_msg_pgcommit) + len);
-	if (!msg) {
-		master_terminate(ENOMEM);
-		return;
-	}
+	if (!msg)
+		master_terminate();
 
 	pgmsg = (struct anoubisd_msg_pgcommit *)msg->msg;
 	pgmsg->auth_uid = auth_uid;
@@ -727,10 +718,8 @@ dispatch_checksum(struct anoubis_server *server, struct anoubis_msg *m,
 	chan = anoubis_server_getchannel(server);
 	s2m_msg = msg_factory(ANOUBISD_MSG_CHECKSUM_OP,
 	    sizeof(struct anoubisd_msg_csumop) + m->length);
-	if (!s2m_msg) {
-		master_terminate(ENOMEM);
-		return;
-	}
+	if (!s2m_msg)
+		master_terminate();
 	msg_csum = (struct anoubisd_msg_csumop *)s2m_msg->msg;
 	msg_csum->uid = uid;
 	msg_csum->len = m->length;
@@ -797,10 +786,8 @@ dispatch_passphrase(struct anoubis_server *server, struct anoubis_msg *m,
 	dispatch_generic_reply(server, 0, NULL, 0, ANOUBIS_P_PASSPHRASE);
 	msg = msg_factory(ANOUBISD_MSG_PASSPHRASE,
 	    sizeof(anoubisd_msg_passphrase_t) + plen);
-	if (!msg) {
-		master_terminate(ENOMEM);
-		return;
-	}
+	if (!msg)
+		master_terminate();
 	pass = (anoubisd_msg_passphrase_t *)msg->msg;
 	memcpy(pass->payload, m->u.passphrase->payload, plen);
 
@@ -863,10 +850,8 @@ dispatch_auth_challenge(void *cbdata, int error __used, void *data,
 	 * anoubisd message and will be freed by the caller.
 	 */
 	auth->auth_private = malloc(len);
-	if (!auth->auth_private) {
-		master_terminate(ENOMEM);
-		return -ENOMEM;
-	}
+	if (!auth->auth_private)
+		master_terminate();
 	memcpy(auth->auth_private, data, len);
 	m = anoubis_msg_new(sizeof(Anoubis_AuthChallengeMessage)
 	    + challenge->challengelen + challenge->idlen);
@@ -940,10 +925,8 @@ dispatch_authdata(struct anoubis_server *server, struct anoubis_msg *m,
 
 		msg = msg_factory(ANOUBISD_MSG_AUTH_REQUEST,
 		    sizeof(struct anoubisd_msg_authrequest));
-		if (!msg) {
-			master_terminate(ENOMEM);
-			return;
-		}
+		if (!msg)
+			master_terminate();
 		authreq = (struct anoubisd_msg_authrequest *)msg->msg;
 		authreq->auth_uid = auth->chan->euid;
 		err = - anoubis_policy_comm_addrequest(ev_info->policy,
@@ -990,10 +973,8 @@ dispatch_authdata(struct anoubis_server *server, struct anoubis_msg *m,
 		msg = msg_factory(ANOUBISD_MSG_AUTH_VERIFY,
 		    sizeof(struct anoubisd_msg_authverify)
 		    + challenge->challengelen + ivlen + siglen);
-		if (!msg) {
-			master_terminate(ENOMEM);
-			return;
-		}
+		if (!msg)
+			master_terminate();
 		verify = (struct anoubisd_msg_authverify *)msg->msg;
 		verify->auth_uid = uid;
 		verify->datalen = challenge->challengelen + ivlen;
@@ -1193,10 +1174,8 @@ dispatch_policy(struct anoubis_policy_comm *comm __used, uint64_t token,
 		struct anoubisd_msg_polrequest_abort	*abort;
 		msg = msg_factory(ANOUBISD_MSG_POLREQUEST_ABORT,
 		    sizeof(struct anoubisd_msg_polrequest_abort));
-		if (!msg) {
-			master_terminate(ENOMEM);
-			return -ENOMEM;
-		}
+		if (!msg)
+			master_terminate();
 		abort = (struct anoubisd_msg_polrequest_abort *)msg->msg;
 		abort->token = token;
 	} else {
@@ -1206,10 +1185,8 @@ dispatch_policy(struct anoubis_policy_comm *comm __used, uint64_t token,
 		}
 		msg = msg_factory(ANOUBISD_MSG_POLREQUEST,
 		    sizeof(struct anoubisd_msg_polrequest) + len);
-		if (!msg) {
-			master_terminate(ENOMEM);
-			return -ENOMEM;
-		}
+		if (!msg)
+			master_terminate();
 		polreq = (struct anoubisd_msg_polrequest *)msg->msg;
 		polreq->token = token;
 		polreq->auth_uid = uid;

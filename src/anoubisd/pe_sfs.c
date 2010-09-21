@@ -208,8 +208,7 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent)
 	DEBUG(DBG_PE_SFS, ">pe_decide_sfs");
 	if ((reply = calloc(1, sizeof(struct anoubisd_reply))) == NULL) {
 		log_warn("pe_handle_sfs: cannot allocate memory");
-		master_terminate(ENOMEM);
-		return (NULL);
+		master_terminate();
 	}
 	if (proc && pe_proc_is_secure(proc))
 		secure = 1;

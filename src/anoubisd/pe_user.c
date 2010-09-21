@@ -122,7 +122,7 @@ pe_user_init(void)
 
 	if ((pp = calloc(1, sizeof(struct pe_policy_db))) == NULL) {
 		log_warn("calloc");
-		master_terminate(ENOMEM);	/* XXX HSH */
+		master_terminate();
 	}
 	TAILQ_INIT(pp);
 
@@ -142,7 +142,7 @@ pe_user_reconfigure(void)
 
 	if ((newpdb = calloc(1, sizeof(struct pe_policy_db))) == NULL) {
 		log_warn("calloc");
-		master_terminate(ENOMEM);       /* XXX HSH */
+		master_terminate();
 	}
 	TAILQ_INIT(newpdb);
 	if ((count = pe_user_load_db(newpdb)) == -1) {
@@ -401,7 +401,7 @@ pe_user_insert_rs(struct apn_ruleset *rs, uid_t uid, unsigned int prio,
 	if ((user = pe_user_get(uid, p)) == NULL) {
 		if ((user = calloc(1, sizeof(struct pe_user))) == NULL) {
 			log_warn("calloc");
-			master_terminate(ENOMEM);	/* XXX HSH */
+			master_terminate();
 		}
 		user->uid = uid;
 		TAILQ_INSERT_TAIL(p, user, entry);
@@ -427,7 +427,7 @@ pe_user_replace_rs(struct apn_ruleset *rs, uid_t uid, unsigned int prio)
 	struct pe_user		*user;
 
 	if (rs == NULL) {
-		log_warnx("pe_replac_rs: empty ruleset");
+		log_warnx("pe_replace_rs: empty ruleset");
 		return (1);
 	}
 	if (prio >= PE_PRIO_MAX) {
@@ -439,8 +439,7 @@ pe_user_replace_rs(struct apn_ruleset *rs, uid_t uid, unsigned int prio)
 		user = calloc(1, sizeof(struct pe_user));
 		if (user == NULL) {
 			log_warn("calloc");
-			master_terminate(ENOMEM);
-			return 1;
+			master_terminate();
 		}
 		user->uid = uid;
 		TAILQ_INSERT_TAIL(pdb, user, entry);
@@ -536,10 +535,8 @@ pe_policy_get(uid_t uid, unsigned int prio)
 		return -ENOENT;
 	}
 	if (time(&now) == (time_t)-1) {
-		err = errno;
 		log_warn("Cannot get current time");
-		master_terminate(err);
-		return -1;
+		master_terminate();
 	}
 	fd = fopen(tmp, "w+");
 	if (!fd) {
@@ -961,7 +958,7 @@ reply:
 	replymsg = msg_factory(ANOUBISD_MSG_POLREPLY, sizeof(*reply));
 	if (!replymsg) {
 		log_warnx("pe_dispatch_policy: Out of memory\n");
-		master_terminate(ENOMEM);
+		master_terminate();
 	}
 	reply = (struct anoubisd_msg_polreply *)replymsg->msg;
 	reply->token = polreq->token;

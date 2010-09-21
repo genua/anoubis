@@ -85,7 +85,7 @@ cert_init(int chroot)
 		certdir = CERT_DIR_CHROOT;
 	if ((cdb = abuf_alloc_type(struct cert_db)) == NULL) {
 		log_warn("%s: abuf_alloc_type", certdir);
-		master_terminate(ENOMEM);
+		master_terminate();
 	}
 	TAILQ_INIT(cdb);
 
@@ -113,7 +113,7 @@ cert_reconfigure(int chroot)
 		certdir = CERT_DIR_CHROOT;
 	if ((newdb = abuf_alloc_type(struct cert_db)) == NULL) {
 		log_warn("abuf_alloc_type");
-		master_terminate(ENOMEM);
+		master_terminate();
 	}
 	TAILQ_INIT(newdb);
 
