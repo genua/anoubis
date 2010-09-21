@@ -25,20 +25,20 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _PLAYGROUNDTASK_H_
-#define _PLAYGROUNDTASK_H_
+#ifndef _ListTask_H_
+#define _ListTask_H_
 
 #include <anoubis_msg.h>
 #include "ComTask.h"
 
 /**
- * Base-class for playground-related daemon-operations.
+ * Base-class for list-related daemon-operations.
  *
  * This class implements exec() and done(). The protected attribute result_
  * contains the answer from the daemon. Derivated classes needs to extract the
  * information from the result-message.
  */
-class PlaygroundTask : public ComTask
+class ListTask : public ComTask
 {
 	public:
 		/**
@@ -57,21 +57,21 @@ class PlaygroundTask : public ComTask
 		 *
 		 * @param listtype The listtype you want to fetch.
 		 *                 One of ANOUBIS_REC_*
-		 * @param pgid The requested playground-id
+		 * @param arg The requested id argument
 		 *             (if used by the operation).
 		 */
-		PlaygroundTask(uint32_t listtype, uint64_t pgid);
+		ListTask(uint32_t listtype, uint64_t arg);
 
 		/**
 		 * D'tor.
 		 */
-		~PlaygroundTask(void);
+		~ListTask(void);
 
 		/**
-		 * Playground-id of request-message.
+		 * Id argument of request-message.
 		 * Derivated classes are able to modify the id.
 		 */
-		uint64_t pgid_;
+		uint64_t arg_;
 
 		/**
 		 * The answer from the daemon.
@@ -110,7 +110,7 @@ class PlaygroundTask : public ComTask
  *     }
  */
 template<typename T>
-class PlaygroundIteratorTask : public PlaygroundTask
+class ListIteratorTask : public ListTask
 {
 	private:
 		/**
@@ -137,8 +137,8 @@ class PlaygroundIteratorTask : public PlaygroundTask
 		 * Constructor. Note that this does not reset the
 		 * iterator.
 		 */
-		PlaygroundIteratorTask(uint32_t listtype, uint64_t pgid)
-		    : PlaygroundTask(listtype, pgid) {
+		ListIteratorTask(uint32_t listtype, uint64_t arg)
+		    : ListTask(listtype, arg) {
 			message_ = NULL;
 			record_ = NULL;
 			number_ = 0;
@@ -195,4 +195,4 @@ class PlaygroundIteratorTask : public PlaygroundTask
 		};
 };
 
-#endif /* _PLAYGROUNDTASK_H_ */
+#endif /* _ListTask_H_ */

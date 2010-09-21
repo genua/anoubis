@@ -28,14 +28,14 @@
 #ifndef _PLAYGROUNDFILESTASK_H_
 #define _PLAYGROUNDFILESTASK_H_
 
-#include "PlaygroundTask.h"
+#include "ListTask.h"
 
 /**
  * Task fetches a list with playground-files from the daemon. The task
- * inherits from PlaygroundIteratorTask, i.e. the iterator of the base
+ * inherits from ListIteratorTask, i.e. the iterator of the base
  * class can be used to iterate over all records.
  */
-class PlaygroundFilesTask : public PlaygroundIteratorTask<Anoubis_PgFileRecord>
+class PlaygroundFilesTask : public ListIteratorTask<Anoubis_PgFileRecord>
 {
 	public:
 		/**

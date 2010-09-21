@@ -30,14 +30,14 @@
 
 #include <anoubis_msg.h>
 
-#include "PlaygroundTask.h"
+#include "ListTask.h"
 
 /**
  * Task fetches a list with all available playgrounds from the daemon.
- * It inherits from PlaygroundIteratorTask, i.e. you can use the
- * iterator from the base class to iterator over all records in the reply.
+ * It inherits from ListIteratorTask, i.e. you can use the
+ * iterator from the base class to iterate over all records in the reply.
  */
-class PlaygroundListTask : public PlaygroundIteratorTask<Anoubis_PgInfoRecord>
+class PlaygroundListTask : public ListIteratorTask<Anoubis_PgInfoRecord>
 {
 	public:
 		/**

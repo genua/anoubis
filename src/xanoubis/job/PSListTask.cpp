@@ -29,7 +29,7 @@
 #include "TaskEvent.h"
 
 PSListTask::PSListTask(void)
-    : PlaygroundIteratorTask<Anoubis_ProcRecord>(ANOUBIS_REC_PROCLIST,
+    : ListIteratorTask<Anoubis_ProcRecord>(ANOUBIS_REC_PROCLIST,
     geteuid())
 {
 }

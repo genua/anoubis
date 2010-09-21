@@ -28,28 +28,28 @@
 #include <anoubis_client.h>
 #include <anoubis_transaction.h>
 
-#include "PlaygroundTask.h"
+#include "ListTask.h"
 
-PlaygroundTask::PlaygroundTask(uint32_t listtype, uint64_t pgid)
+ListTask::ListTask(uint32_t listtype, uint64_t arg)
 {
 	this->listtype_ = listtype;
 	this->result_ = 0;
-	this->pgid_ = pgid;
+	this->arg_ = arg;
 	this->ta_ = 0;
 }
 
-PlaygroundTask::~PlaygroundTask(void)
+ListTask::~ListTask(void)
 {
 	reset();
 }
 
 void
-PlaygroundTask::exec(void)
+ListTask::exec(void)
 {
 	reset();
 
 	ta_ = anoubis_client_list_start(getClient(), this->listtype_,
-	    this->pgid_);
+	    this->arg_);
 
 	if (ta_ == NULL) {
 		setComTaskResult(RESULT_LOCAL_ERROR);
@@ -59,7 +59,7 @@ PlaygroundTask::exec(void)
 }
 
 bool
-PlaygroundTask::done(void)
+ListTask::done(void)
 {
 	/* An error occured. We are done. */
 	if (getComTaskResult() != RESULT_INIT)
@@ -107,7 +107,7 @@ PlaygroundTask::done(void)
 }
 
 void
-PlaygroundTask::reset(void)
+ListTask::reset(void)
 {
 	setComTaskResult(RESULT_INIT);
 	setResultDetails(0);

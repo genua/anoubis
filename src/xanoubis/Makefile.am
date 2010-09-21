@@ -568,8 +568,8 @@ xanoubis_SOURCES= \
 	job/PlaygroundListTask.h \
 	job/PSListTask.h \
 	job/PSListTask.cpp \
-	job/PlaygroundTask.cpp \
-	job/PlaygroundTask.h \
+	job/ListTask.cpp \
+	job/ListTask.h \
 	job/PlaygroundUnlinkTask.cpp \
 	job/PlaygroundUnlinkTask.h \
 	job/PlaygroundCommitTask.h \

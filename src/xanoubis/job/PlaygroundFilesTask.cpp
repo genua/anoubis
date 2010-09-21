@@ -29,7 +29,7 @@
 #include "TaskEvent.h"
 
 PlaygroundFilesTask::PlaygroundFilesTask(uint64_t pgid, bool reportESRCH)
-    : PlaygroundIteratorTask<Anoubis_PgFileRecord>(ANOUBIS_REC_PGFILELIST, pgid)
+    : ListIteratorTask<Anoubis_PgFileRecord>(ANOUBIS_REC_PGFILELIST, pgid)
 {
 	reportESRCH_ = reportESRCH;
 }
@@ -43,7 +43,7 @@ PlaygroundFilesTask::getEventType(void) const
 uint64_t
 PlaygroundFilesTask::getRequestedPGID(void) const
 {
-	return (pgid_);
+	return (arg_);
 }
 
 uint64_t
@@ -96,7 +96,7 @@ PlaygroundFilesTask::done(void)
 {
 	bool		isdone;
 
-	isdone = this->PlaygroundIteratorTask<Anoubis_PgFileRecord>::done();
+	isdone = this->ListIteratorTask<Anoubis_PgFileRecord>::done();
 	if (!isdone)
 		return false;
 	if (getComTaskResult() == RESULT_REMOTE_ERROR

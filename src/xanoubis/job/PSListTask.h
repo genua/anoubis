@@ -29,15 +29,15 @@
 #define _PSLISTTASK_H_
 
 #include <anoubis_msg.h>
-#include "PlaygroundTask.h"
+#include "ListTask.h"
 
 /**
  * This task fetches a list of all processes of the current user from the
- * anoubis daemon. It inherits from PlaygroundIteratorTask, i.e. you can
- * use the iterator from the base class to iterator over all records in
+ * anoubis daemon. It inherits from ListIteratorTask, i.e. you can
+ * use the iterator from the base class to iterate over all records in
  * the reply.
  */
-class PSListTask : public PlaygroundIteratorTask<Anoubis_ProcRecord>
+class PSListTask : public ListIteratorTask<Anoubis_ProcRecord>
 {
 	public:
 		/**
