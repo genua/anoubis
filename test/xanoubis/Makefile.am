@@ -49,6 +49,7 @@ TESTS = \
 	testSuite_Notifications \
 	testSuite_Config \
 	testSuite_Playground \
+	testSuite_ProcessList \
 	pidtest \
 	wxStringTest
 noinst_PROGRAMS = \
@@ -327,6 +328,17 @@ testSuite_Playground_SOURCES = \
 	suite_Playground/tc_PlaygroundFileEntry.cpp
 
 #
+# Testsuite: Process list
+#
+testSuite_ProcessList_CPPFLAGS = $(AM_CPPFLAGS)
+testSuite_ProcessList_DEPENDENCIES = $(dependencies)
+testSuite_ProcessList_LDADD = $(GUITEST_LDADD)
+
+testSuite_ProcessList_SOURCES = \
+	testrunner.cpp \
+	suite_ProcessList/testSuite.cpp \
+	suite_ProcessList/tc_PSEntry.cpp
+
 # pidtest
 #
 pidtest_SOURCES = pidtest.cpp

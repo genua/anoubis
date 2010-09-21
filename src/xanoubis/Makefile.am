@@ -260,6 +260,8 @@ xanoubis_SOURCES= \
 	model/PlaygroundFileEntry.h \
 	model/PlaygroundInfoEntry.cpp \
 	model/PlaygroundInfoEntry.h \
+	model/PSEntry.cpp \
+	model/PSEntry.h \
 	model/Policy.cpp \
 	model/Policy.h \
 	model/PolicyChecks.cpp \
