@@ -29,6 +29,11 @@
 
 #include <set>
 #include <wx/msgdlg.h>
+#include <sys/types.h>
+
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+#include <wx/intl.h>
 
 #include "anoubis_errno.h"
 #include "anoubis_playground.h"
@@ -148,7 +153,7 @@ PlaygroundCtrl::handleComTaskResult(ComTask *task)
 {
 	switch (task->getComTaskResult()) {
 	case ComTask::RESULT_COM_ERROR:
-		addError(wxString::Format(_("Communication error in "
+		addError(wxString::Format(_("Communication error during "
 		    "playground request.")));
 		sendEvent(anEVT_PLAYGROUND_ERROR);
 		break;
@@ -388,19 +393,47 @@ PlaygroundCtrl::OnPlaygroundUnlinkDone(TaskEvent &event)
 
 	/* Progress for the finished task. */
 	clearPlaygroundInfo();
-	if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
-		if (task->hasMatchList() && task->hasErrorList()) {
-			list = task->getErrorList();
-			for (it=list.begin(); it!=list.end(); it++) {
-				file = fileIdentification(it->first.first,
-				    it->first.second);
-				msg = wxString::Format(
-				    _("Unlink '%ls' failed: %hs"), file.c_str(),
-				    anoubis_strerror(it->second));
-				addError(msg);
-			}
+	if (task->hasErrorList()) {
+		/*
+		 * error processing (commit window used)
+		 */
+		list = task->getErrorList();
+		for (it=list.begin(); it!=list.end(); it++) {
+			file = fileIdentification(it->first.first,
+			    it->first.second);
+			msg = wxString::Format(
+			    _("Unlink '%ls' failed: %hs"), file.c_str(),
+			    anoubis_strerror(it->second));
+			addError(msg);
 		}
+		sendEvent(anEVT_PLAYGROUND_ERROR);
 		handleComTaskResult(task);
+	} else if (!task->hasMatchList() &&
+	    task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
+		/*
+		 * error processing (right delete button used)
+		 */
+		int _error = task->getResultDetails();
+		if (_error != ESRCH) {
+			msg = wxString::Format(
+			    _("Removing Playground (ID %llx) failed: %hs"),
+			    (long long)task->getPgId(),
+			    anoubis_strerror(_error));
+			addError(msg);
+			sendEvent(anEVT_PLAYGROUND_ERROR);
+		}
+		/*
+		 *  _error == ESRCH means playground already removed -> silent
+		 */
+	} else if (task->hasMatchList() && !task->hasErrorList()) {
+		if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
+			msg = wxString::Format(
+			    _("Removing Playground (ID %llx) failed: %hs"),
+			    (long long)task->getPgId(), anoubis_strerror(
+			    task->getComTaskResult()));
+			addError(msg);
+			sendEvent(anEVT_PLAYGROUND_ERROR);
+		}
 	}
 	removeTask(task);
 	if (taskListEmpty()) {

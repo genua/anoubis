@@ -133,7 +133,7 @@ PlaygroundUnlinkTask::done(void)
 	case INFO:
 		if (isPlaygroundActive(message)) {
 			setComTaskResult(RESULT_REMOTE_ERROR);
-			setResultDetails(EINPROGRESS);
+			setResultDetails(EBUSY);
 			anoubis_msg_free(message);
 			return true;
 		}
@@ -220,8 +220,12 @@ PlaygroundUnlinkTask::execFs(void)
 		no_progress_++;
 
 		if (no_progress_ == 2) {
-			setComTaskResult(RESULT_LOCAL_ERROR);
-			setResultDetails(EBUSY);
+			if (!hasMatchList()) {
+				setComTaskResult(RESULT_LOCAL_ERROR);
+				setResultDetails(EBUSY);
+			} else {
+				setComTaskResult(RESULT_SUCCESS);
+			}
 		} else {
 			/* try once more, daemon might not have catched up */
 			type_ = Task::TYPE_COM;

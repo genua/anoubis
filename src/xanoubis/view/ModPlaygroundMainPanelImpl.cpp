@@ -294,7 +294,7 @@ ModPlaygroundMainPanelImpl::startApplication(void)
 	command = applicationComboBox->GetValue();
 	argv = convertStringToArgV(command);
 	if (argv == NULL) {
-		message = wxString::Format(_("Sytem error: %hs"),
+		message = wxString::Format(_("System error: %hs"),
 		    anoubis_strerror(errno));
 		anMessageBox(message, _("Playground error"),
 		    wxOK | wxICON_ERROR, this);
@@ -416,7 +416,8 @@ ModPlaygroundMainPanelImpl::openCommitDialog(void)
 
 	dlg = new DlgPlaygroundCommitFileListImpl(entry);
 	dlg->SetTitle(
-	    wxString::Format(_("Commit files for playground %"PRIx64), pgId));
+	    wxString::Format(_("Commit files for playground %llx"),
+	    (long long)pgId));
 	#ifdef USE_WXGUITESTING
 		dlg->Show();
 		/* Note: the dialog will not be cleaned up. This is a
