@@ -1263,8 +1263,8 @@ pident_copy(struct abuf_buffer buf, int off, struct pe_proc_ident *pident)
  * @param token The token for the reply messages. The session engine
  *     uses this to demultiplex replies to the correct user session.
  * @param uid List processes owned by this user.
- * @param auth_uid The user ID of the authorized user. Currently a user
- *     can only list its own processes.
+ * @param auth_uid The user ID of the authorized user. Only root
+ *     can list foreign processes.
  * @param q Reply messages are sent to this queue.
  * @return Zero in case of success, a negative error code in case of
  *     an error. The caller will send an error reply to the user in this
@@ -1278,7 +1278,7 @@ pe_proc_send_pslist(uint64_t token, uint64_t uid, uint32_t auth_uid,
 	struct amsg_list_context	 ctx;
 	int				 error;
 
-	if (uid != auth_uid)
+	if (uid != auth_uid && auth_uid != 0)
 		return -EPERM;
 	ctx.msg = NULL;
 	error = amsg_list_init(&ctx, token, ANOUBIS_REC_PROCLIST);

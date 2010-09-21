@@ -105,7 +105,7 @@ static int	fetch_versions(int *, int *);
 static int	moo(void);
 static int	verify(const char *file, const char *signature);
 static int	kernel_stat(void);
-static int	proc_list(void);
+static int	proc_list(uid_t uid);
 
 typedef int (*func_int_t)(void);
 typedef int (*func_arg_t)(char *, uid_t, unsigned int);
@@ -137,7 +137,6 @@ struct cmd {
 	{ "load",	(func_int_t)load,	1 },
 	{ "dump",	(func_int_t)dump,	2 },
 	{ "stat",	kernel_stat,		3 },
-	{ "ps",		proc_list,		0 },
 };
 
 static const char		 def_cert[] = ".xanoubis/default.crt";
@@ -159,7 +158,7 @@ usage(void)
 {
 	unsigned int	i;
 
-	fprintf(stderr, "usage: %s [-fnv] [-k key] [-c cert] [-p <prio>] "
+	fprintf(stderr, "usage: %s [-fnvv] [-k key] [-c cert] [-p <prio>] "
 	    "[-u uid] [-i fd] [-o sigfile] <command> [<file>]\n", __progname);
 	fprintf(stderr, "    <command>:\n");
 	for (i=1; i < sizeof(commands)/sizeof(struct cmd); i++) {
@@ -175,6 +174,7 @@ usage(void)
 			break;
 		}
 	}
+	fprintf(stderr, "	ps\n");
 	fprintf(stderr, "	verify file signature\n");
 	fprintf(stderr, "	monitor [ all ] [ delegate ] [ error=<num> ] "
 	    "[ count=<num> ]\n");
@@ -319,7 +319,7 @@ main(int argc, char *argv[])
 			break;
 		}
 	}
-	if (cmd && cmd->args == 3)
+	if ((cmd && cmd->args == 3) || strcmp(command, "ps") == 0)
 		need_xanoubis = 0;
 	openlog(__progname, LOG_ODELAY|LOG_PERROR, LOG_USER);
 
@@ -462,6 +462,12 @@ main(int argc, char *argv[])
 		if (argc != 2)
 			usage();
 		error = verify(argv[0], argv[1]);
+	}
+	if (!done && strcmp(command, "ps") == 0) {
+		done = 1;
+		if (argc != 0)
+			usage();
+		error = proc_list(uid);
 	}
 	if (!done && strcmp(command, "monitor") == 0) {
 		error = monitor(argc, argv);
@@ -1699,7 +1705,7 @@ proc_list_print_record(Anoubis_ProcRecord *rec)
  * @return Zero in case of succes, a non-zero value in case of an error.
  */
 static int
-proc_list(void)
+proc_list(uid_t uid)
 {
 	int				 error;
 	struct anoubis_transaction	*ta;
@@ -1710,8 +1716,9 @@ proc_list(void)
 		fprintf(stderr, "Cannot connect to anoubis daemon\n");
 		return 5;
 	}
-	ta = anoubis_client_list_start(client, ANOUBIS_REC_PROCLIST,
-	    geteuid());
+	if (uid == (uid_t)-1)
+		uid = geteuid();
+	ta = anoubis_client_list_start(client, ANOUBIS_REC_PROCLIST, uid);
 	error = anoubis_transaction_complete(client, ta, &msg);
 	if (error < 0) {
 		fprintf(stderr, "Cannot retrieve process list from: %s\n",

@@ -52,7 +52,7 @@
  *
  * Each anoubis daemon process sends its log messages to the logger process
  * which will forward them to syslog stderr. This is neccessary because syslog
- * can block in this is not a good idea e.g. in the policy engine. If
+ * can block and this is not a good idea e.g. in the policy engine. If
  * debugging is to stderr, the logger process is basically unused.
  *
  * The logging file descriptor and other logging state is maintained in
@@ -90,7 +90,7 @@ static int		__log_fd = -1;
 static struct event	__log_event;
 
 /**
- * This is the outgoing log queue. Each anoubis daemonprocess has its own
+ * This is the outgoing log queue. Each anoubis daemon process has its own
  * instance of this queue.
  */
 static Queue		__eventq_log;
@@ -152,7 +152,7 @@ flush_log_queue(void)
 
 /**
  * Initialize logging for an anoubis daemon process. The caller must
- * provide teh write end of a file descriptor that is connected to the
+ * provide the write end of a file descriptor that is connected to the
  * logger process.
  *
  * @param fd Log messages are sent to this file descriptor.
@@ -283,7 +283,7 @@ log_warn(const char *emsg, ...)
 
 /**
  * Create and format a warning message. Use this function instead of
- * log_warnx if errno is not set to something useful. The message is
+ * log_warn if errno is not set to something useful. The message is
  * logged with priority LOG_CRIT.
  *
  * @param emsg The format string for the message.
@@ -478,9 +478,9 @@ dispatch_log_read(int fd, short sig __used, void *arg)
  *     This array should have PIPE_MAX elements. All of the file descriptors
  *     in this array will be closed in the child.
  * @param loggers The file descriptors of the pipes between the anoubisd
- *     daemon processes and the logger. The ends that at the odd indices
- *     belong to the logger process and will be used to read log messages
- *     while the ends at the even indices will be closed in the logger whild.
+ *     daemon processes and the logger. The ends at the odd indices belong
+ *     to the logger process and will be used to read log messages while
+ *     the ends at the even indices will be closed in the logger child.
  *     This array should have PROC_LOGGER elements.
  * @return This function returns the process ID of the logger process in
  *     the parent.
