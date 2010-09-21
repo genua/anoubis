@@ -564,6 +564,8 @@ xanoubis_SOURCES= \
 	job/PlaygroundFilesTask.h \
 	job/PlaygroundListTask.cpp \
 	job/PlaygroundListTask.h \
+	job/PSListTask.h \
+	job/PSListTask.cpp \
 	job/PlaygroundTask.cpp \
 	job/PlaygroundTask.h \
 	job/PlaygroundUnlinkTask.cpp \

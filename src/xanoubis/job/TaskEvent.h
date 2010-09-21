@@ -103,18 +103,25 @@ BEGIN_DECLARE_EVENT_TYPES()
 	DECLARE_LOCAL_EVENT_TYPE(anTASKEVT_VERSION, wxNewEventType())
 
 	/**
-	 * Event-type of TaskEvent when a list of playgrounds arrived from
+	 * Event-type of a TaskEvent when a list of playgrounds arrived from
 	 * anoubisd.
 	 * @see PlaygroundListTask
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anTASKEVT_PG_LIST, wxNewEventType())
 
 	/**
-	 * Event-type of TaskEvent when a list of file in a playground arrived
-	 * from anoubisd.
+	 * Event-type of a TaskEvent when a list of file in a playground
+	 * arrived from anoubisd.
 	 * @see PlaygroundFilesTask
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anTASKEVT_PG_FILES, wxNewEventType())
+
+	/**
+	 * Event-type of a TaskEvent when a list of processes arrived
+	 * from anobuisd.
+	 * @see PSListTask
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anTASKEVT_PS_LIST, wxNewEventType())
 
 	/**
 	 * Event-type of TaskEvent when a list of files of a playground
