@@ -106,6 +106,8 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase,
 		void updateDelete(Subject *);
 
 	protected:
+		void onConnectionStateChange(wxCommandEvent &);
+		void onTabChange(wxNotebookEvent &);
 		void OnLoadRuleSet(wxCommandEvent&);
 
 		void OnTypeChoosen(wxCommandEvent&);
@@ -167,6 +169,8 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase,
 		 * @return Nothing
 		 */
 		void OnAnoubisOptionsUpdate(wxCommandEvent &);
+
+		void onPsReloadClicked(wxCommandEvent &);
 
 	public:
 		ModAnoubisMainPanelImpl(wxWindow*, wxWindowID);

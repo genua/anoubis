@@ -57,6 +57,7 @@
 #include "DlgProfileSelection.h"
 #include "EscalationNotify.h"
 #include "KeyCtrl.h"
+#include "JobCtrl.h"
 #include "LogNotify.h"
 #include "MainUtils.h"
 #include "ModAnoubis.h"
@@ -70,6 +71,7 @@
 #include "VersionListCtrl.h"
 #include "PolicyCtrl.h"
 #include "ProfileListCtrl.h"
+#include "PSListCtrl.h"
 
 #include "VersionCtrl.h"
 #include "VersionListCtrl.h"
@@ -132,6 +134,10 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 	anEvents->Connect(anEVT_ANOUBISOPTIONS_SHOW,
 	    wxCommandEventHandler(ModAnoubisMainPanelImpl::OnAnoubisOptionShow),
 	    NULL, this);
+	JobCtrl::instance()->Connect(anEVT_COM_CONNECTION,
+	    wxCommandEventHandler(
+	    ModAnoubisMainPanelImpl::onConnectionStateChange), NULL, this);
+
 	anEvents->Connect(anEVT_LOAD_RULESET,
 	    wxCommandEventHandler(ModAnoubisMainPanelImpl::OnLoadRuleSet),
 	    NULL, this);
@@ -202,11 +208,22 @@ ModAnoubisMainPanelImpl::~ModAnoubisMainPanelImpl(void)
 	anEvents->Disconnect(anEVT_ANOUBISOPTIONS_SHOW,
 	    wxCommandEventHandler(ModAnoubisMainPanelImpl::OnAnoubisOptionShow),
 	    NULL, this);
+	JobCtrl::instance()->Disconnect(anEVT_COM_CONNECTION,
+	    wxCommandEventHandler(
+	    ModAnoubisMainPanelImpl::onConnectionStateChange), NULL, this);
 	anEvents->Disconnect(anEVT_LOAD_RULESET,
 	    wxCommandEventHandler(ModAnoubisMainPanelImpl::OnLoadRuleSet),
 	    NULL, this);
 	anEvents->Disconnect(anEVT_ANOUBISOPTIONS_UPDATE, wxCommandEventHandler(
 	    ModAnoubisMainPanelImpl::OnAnoubisOptionsUpdate), NULL, this);
+
+        /*
+	 * Disconnect page changing event from notebook to prevent segfault
+	 * on program close!
+	 */
+	tb_MainAnoubisNotify->Disconnect(wxEVT_COMMAND_NOTEBOOK_PAGE_CHANGING,
+	    wxNotebookEventHandler(ModAnoubisMainPanelImpl::onTabChange),
+	    NULL, this);
 }
 
 void
@@ -347,6 +364,31 @@ ModAnoubisMainPanelImpl::profileTabUpdate(void)
 	    policyCtrl->isProfileWritable(selectedProfile));
 	profileLoadButton->Enable(haveSelected);
 	profileActivateButton->Enable(haveSelected);
+}
+
+void
+ModAnoubisMainPanelImpl::onConnectionStateChange(wxCommandEvent &event)
+{
+	JobCtrl::ConnectionState state =
+	    (JobCtrl::ConnectionState)event.GetInt();
+
+	psReloadButton->Enable(state == JobCtrl::CONNECTED);
+
+	event.Skip();
+}
+
+void
+ModAnoubisMainPanelImpl::onTabChange(wxNotebookEvent &event)
+{
+	/* You are only interested in the PsBrowser */
+	if (tb_MainAnoubisNotify->GetPage(event.GetSelection()) ==
+	    tb_PsBrowser) {
+	    	/* Fetch only if connected */
+	    	if (JobCtrl::instance()->isConnected())
+			PSListCtrl::instance()->updatePSList();
+	}
+
+	event.Skip();
 }
 
 void
@@ -1678,4 +1720,10 @@ ModAnoubisMainPanelImpl::OnAnoubisOptionsUpdate(wxCommandEvent& event)
 	cb_ShowKeyGenInfoMsg->SetValue(showKeyGenInfoMessage);
 
 	event.Skip();
+}
+
+void
+ModAnoubisMainPanelImpl::onPsReloadClicked(wxCommandEvent &)
+{
+	PSListCtrl::instance()->updatePSList();
 }
