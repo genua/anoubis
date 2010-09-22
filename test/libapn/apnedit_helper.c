@@ -311,10 +311,9 @@ parse_keyid(char *string)
 	int		 i;
 
 	for (i=0; string[2*i] && string[2*i+1]; ++i) {
-		int d1, d2;
-		if ((d1 = xdigit(string[2*i])) < 0)
+		if (xdigit(string[2*i]) < 0)
 			return NULL;
-		if ((d2 = xdigit(string[2*i+1])) < 0)
+		if (xdigit(string[2*i+1]) < 0)
 			return NULL;
 	}
 	if (string[2*i])

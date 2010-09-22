@@ -1247,7 +1247,7 @@ pident_copy(struct abuf_buffer buf, int off, struct pe_proc_ident *pident)
 		    ANOUBIS_SFS_CS_LEN);
 	}
 	off += ANOUBIS_SFS_CS_LEN;
-	if (pident->pathhint) {
+	if (pident && pident->pathhint) {
 		ret += abuf_copy_tobuf(abuf_open(buf, off),
 		    pident->pathhint, 1+strlen(pident->pathhint));
 	} else {

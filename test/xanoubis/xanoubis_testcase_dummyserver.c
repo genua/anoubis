@@ -65,6 +65,15 @@
 #include <string.h>
 #include <unistd.h>
 
+#if __clang__
+/* help clang static analyzer with the test macros */
+void _clang_fail(void) __attribute__((analyzer_noreturn));
+#undef	fail_if
+#undef	fail_unless
+#define	fail_if(expr, ...)	do { if (expr) _clang_fail(1) } while (0)
+#define	fail_unless(expr, ...)	do { if (!expr) _clang_fail(1) } while (0)
+#endif
+
 #define __used __attribute__((unused))
 
 static char **tc_argv;

@@ -859,6 +859,10 @@ cfg_read_cmdline(int argc, char * const *argv)
 			debug_stderr = 1;
 			break;
 		case 'D':
+			if (!optarg) {
+				/* make statical analyzers happy */
+				early_errx("getopt error");
+			}
 			errno = 0;    /* To distinguish success/failure */
 			debug_flags = strtol(optarg, &endptr, 0);
 			if (errno) {
@@ -874,12 +878,20 @@ cfg_read_cmdline(int argc, char * const *argv)
 			data_store.cmdlineopts |= ANOUBISD_OPT_NOACTION;
 			break;
 		case 's':
+			if (!optarg) {
+				/* make statical analyzers happy */
+				early_errx("getopt error");
+			}
 			if (data_store.optsocket) {
 				usage();
 			}
 			data_store.optsocket = optarg;
 			break;
 		case 'f':
+			if (!optarg) {
+				/* make statical analyzers happy */
+				early_errx("getopt error");
+			}
 			data_store.conffile = optarg;
 			break;
 		default:

@@ -31,6 +31,9 @@
 #include "splint-includes.h"
 #endif
 
+/* assertions are mainly used to help clang statical analyzer */
+#include <assert.h>
+
 #include <openssl/rand.h>
 
 #include "sfssig.h"
@@ -276,11 +279,13 @@ main(int argc, char *argv[])
 			set_flag_opt(ch);
 			break;
 		case 'o':
+			assert(optarg);
 			if (out_file)
 				usage();
 			out_file = optarg;
 			break;
 		case 'k':
+			assert(optarg);
 			if (sfs_key)
 				usage();
 			sfs_key = optarg;
@@ -291,6 +296,7 @@ main(int argc, char *argv[])
 			sfs_infile = optarg;
 			break;
 		case 'u':
+			assert(optarg);
 			if (got_uid)
 				usage();
 			got_uid = 1;
@@ -314,6 +320,7 @@ main(int argc, char *argv[])
 			}
 			break;
 		case 'c':
+			assert(optarg);
 			if (got_cert)
 				usage();
 			got_cert = 1;
@@ -324,6 +331,7 @@ main(int argc, char *argv[])
 			}
 			break;
 		case 'A':
+			assert(optarg);
 			sys_argcsumstr = optarg;
 			/* FALLTROUGH */
 		case 'U':
@@ -1803,6 +1811,7 @@ _export(char *arg, FILE *out_fd, int rec, uid_t sfs_uid)
 	if ((result = anoubis_csum_list(t->msg, &sfs_cnt)) == NULL) {
 		if (opts & SFSSIG_OPT_DEBUG)
 			fprintf(stderr, "anoubis_csum_list: no result\n");
+		assert(sfs_cnt == 0);
 	}
 	anoubis_transaction_destroy(t);
 	for (i = 0; i < sfs_cnt; i++) {
