@@ -280,6 +280,7 @@ class ModAnoubisMainPanelBase : public wxPanel
 		wxTextCtrl* psCtxAdminPolicy;
 		
 		// Virtual event handlers, overide them in your derived class
+		virtual void onTabChange( wxNotebookEvent& event ){ event.Skip(); }
 		virtual void OnTypeChoosen( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnFirstBtnClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnPreviousBtnClick( wxCommandEvent& event ){ event.Skip(); }
@@ -321,6 +322,7 @@ class ModAnoubisMainPanelBase : public wxPanel
 		virtual void OnToolTipCheckBox( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnToolTipSpinCtrl( wxSpinEvent& event ){ event.Skip(); }
 		virtual void OnToolTipSpinCtrlText( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onPsReloadClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAlfUserEditClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAlfAdminEditClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onSbUserEditClicked( wxCommandEvent& event ){ event.Skip(); }
