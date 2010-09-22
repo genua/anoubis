@@ -247,18 +247,36 @@ class ModAnoubisMainPanelBase : public wxPanel
 		wxStaticText* psPathAdminCtxCsumText;
 		wxScrolledWindow* psAlfPage;
 		wxStaticText* psAlfUserLabel;
+		
+		wxButton* alfUserEditButton;
+		wxStaticLine* m_staticline7;
 		wxStaticText* psAlfAdminLabel;
+		
+		wxButton* alfAdminEditButton;
 		wxTextCtrl* psAlfUserPolicy;
+		wxStaticLine* m_staticline8;
 		wxTextCtrl* psAlfAdminPolicy;
 		wxScrolledWindow* psSbPage;
 		wxStaticText* psSbUserLabel;
+		
+		wxButton* sbUserEditButton;
+		wxStaticLine* m_staticline9;
 		wxStaticText* psSbAdminLabel;
+		
+		wxButton* sbAdminEditButton;
 		wxTextCtrl* psSbUserPolicy;
+		wxStaticLine* m_staticline10;
 		wxTextCtrl* psSbAdminPolicy;
 		wxScrolledWindow* psCtxPage;
 		wxStaticText* psCtxUserLabel;
+		
+		wxButton* ctxUserEditButton;
+		wxStaticLine* m_staticline11;
 		wxStaticText* psCtxAdminLabel;
+		
+		wxButton* ctxAdminEditButton;
 		wxTextCtrl* psCtxUserPolicy;
+		wxStaticLine* m_staticline12;
 		wxTextCtrl* psCtxAdminPolicy;
 		
 		// Virtual event handlers, overide them in your derived class
@@ -303,6 +321,12 @@ class ModAnoubisMainPanelBase : public wxPanel
 		virtual void OnToolTipCheckBox( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnToolTipSpinCtrl( wxSpinEvent& event ){ event.Skip(); }
 		virtual void OnToolTipSpinCtrlText( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onAlfUserEditClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onAlfAdminEditClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onSbUserEditClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onSbAdminEditClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onCtxUserEditClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onCtxAdminEditClicked( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:

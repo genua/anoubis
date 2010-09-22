@@ -962,23 +962,51 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	psAlfPage = new wxScrolledWindow( psInfoBook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	psAlfPage->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* psAlfPageSizer;
-	psAlfPageSizer = new wxFlexGridSizer( 2, 2, 0, 0 );
+	psAlfPageSizer = new wxFlexGridSizer( 2, 3, 0, 0 );
 	psAlfPageSizer->AddGrowableCol( 0 );
-	psAlfPageSizer->AddGrowableCol( 1 );
+	psAlfPageSizer->AddGrowableCol( 2 );
 	psAlfPageSizer->AddGrowableRow( 1 );
 	psAlfPageSizer->SetFlexibleDirection( wxBOTH );
 	psAlfPageSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
+	wxBoxSizer* bSizer39;
+	bSizer39 = new wxBoxSizer( wxHORIZONTAL );
+	
 	psAlfUserLabel = new wxStaticText( psAlfPage, wxID_ANY, _("User:"), wxDefaultPosition, wxDefaultSize, 0 );
 	psAlfUserLabel->Wrap( -1 );
-	psAlfPageSizer->Add( psAlfUserLabel, 0, wxTOP|wxRIGHT|wxLEFT, 5 );
+	bSizer39->Add( psAlfUserLabel, 0, wxALIGN_CENTER|wxLEFT|wxRIGHT|wxTOP, 5 );
+	
+	
+	bSizer39->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	alfUserEditButton = new wxButton( psAlfPage, wxID_ANY, _("Edit..."), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer39->Add( alfUserEditButton, 0, wxALL, 5 );
+	
+	psAlfPageSizer->Add( bSizer39, 1, wxEXPAND, 5 );
+	
+	m_staticline7 = new wxStaticLine( psAlfPage, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL );
+	psAlfPageSizer->Add( m_staticline7, 0, wxEXPAND | wxALL, 5 );
+	
+	wxBoxSizer* bSizer40;
+	bSizer40 = new wxBoxSizer( wxHORIZONTAL );
 	
 	psAlfAdminLabel = new wxStaticText( psAlfPage, wxID_ANY, _("Admin:"), wxDefaultPosition, wxDefaultSize, 0 );
 	psAlfAdminLabel->Wrap( -1 );
-	psAlfPageSizer->Add( psAlfAdminLabel, 0, wxTOP|wxRIGHT|wxLEFT, 5 );
+	bSizer40->Add( psAlfAdminLabel, 0, wxALIGN_CENTER|wxLEFT|wxRIGHT|wxTOP, 5 );
+	
+	
+	bSizer40->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	alfAdminEditButton = new wxButton( psAlfPage, wxID_ANY, _("Edit..."), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer40->Add( alfAdminEditButton, 0, wxALL, 5 );
+	
+	psAlfPageSizer->Add( bSizer40, 1, wxEXPAND, 5 );
 	
 	psAlfUserPolicy = new wxTextCtrl( psAlfPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTE_MULTILINE|wxTE_READONLY );
 	psAlfPageSizer->Add( psAlfUserPolicy, 1, wxALL|wxEXPAND, 5 );
+	
+	m_staticline8 = new wxStaticLine( psAlfPage, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL );
+	psAlfPageSizer->Add( m_staticline8, 0, wxALL|wxEXPAND, 5 );
 	
 	psAlfAdminPolicy = new wxTextCtrl( psAlfPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTE_MULTILINE|wxTE_READONLY );
 	psAlfPageSizer->Add( psAlfAdminPolicy, 1, wxALL|wxEXPAND, 5 );
@@ -990,23 +1018,51 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	psSbPage = new wxScrolledWindow( psInfoBook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	psSbPage->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* psSbPageSizer;
-	psSbPageSizer = new wxFlexGridSizer( 2, 2, 0, 0 );
+	psSbPageSizer = new wxFlexGridSizer( 2, 3, 0, 0 );
 	psSbPageSizer->AddGrowableCol( 0 );
-	psSbPageSizer->AddGrowableCol( 1 );
+	psSbPageSizer->AddGrowableCol( 2 );
 	psSbPageSizer->AddGrowableRow( 1 );
 	psSbPageSizer->SetFlexibleDirection( wxBOTH );
 	psSbPageSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
+	wxBoxSizer* bSizer41;
+	bSizer41 = new wxBoxSizer( wxHORIZONTAL );
+	
 	psSbUserLabel = new wxStaticText( psSbPage, wxID_ANY, _("User:"), wxDefaultPosition, wxDefaultSize, 0 );
 	psSbUserLabel->Wrap( -1 );
-	psSbPageSizer->Add( psSbUserLabel, 0, wxTOP|wxRIGHT|wxLEFT, 5 );
+	bSizer41->Add( psSbUserLabel, 0, wxALIGN_CENTER|wxLEFT|wxRIGHT|wxTOP, 5 );
+	
+	
+	bSizer41->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	sbUserEditButton = new wxButton( psSbPage, wxID_ANY, _("Edit..."), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer41->Add( sbUserEditButton, 0, wxALL, 5 );
+	
+	psSbPageSizer->Add( bSizer41, 1, wxEXPAND, 5 );
+	
+	m_staticline9 = new wxStaticLine( psSbPage, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL );
+	psSbPageSizer->Add( m_staticline9, 0, wxEXPAND | wxALL, 5 );
+	
+	wxBoxSizer* bSizer42;
+	bSizer42 = new wxBoxSizer( wxHORIZONTAL );
 	
 	psSbAdminLabel = new wxStaticText( psSbPage, wxID_ANY, _("Admin:"), wxDefaultPosition, wxDefaultSize, 0 );
 	psSbAdminLabel->Wrap( -1 );
-	psSbPageSizer->Add( psSbAdminLabel, 0, wxTOP|wxRIGHT|wxLEFT, 5 );
+	bSizer42->Add( psSbAdminLabel, 0, wxALIGN_CENTER|wxLEFT|wxRIGHT|wxTOP, 5 );
+	
+	
+	bSizer42->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	sbAdminEditButton = new wxButton( psSbPage, wxID_ANY, _("Edit..."), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer42->Add( sbAdminEditButton, 0, wxALL, 5 );
+	
+	psSbPageSizer->Add( bSizer42, 1, wxEXPAND, 5 );
 	
 	psSbUserPolicy = new wxTextCtrl( psSbPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTE_MULTILINE|wxTE_READONLY );
 	psSbPageSizer->Add( psSbUserPolicy, 1, wxALL|wxEXPAND, 5 );
+	
+	m_staticline10 = new wxStaticLine( psSbPage, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL );
+	psSbPageSizer->Add( m_staticline10, 0, wxEXPAND | wxALL, 5 );
 	
 	psSbAdminPolicy = new wxTextCtrl( psSbPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTE_MULTILINE|wxTE_READONLY );
 	psSbPageSizer->Add( psSbAdminPolicy, 1, wxALL|wxEXPAND, 5 );
@@ -1018,23 +1074,51 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	psCtxPage = new wxScrolledWindow( psInfoBook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
 	psCtxPage->SetScrollRate( 5, 5 );
 	wxFlexGridSizer* psCtxPageSizer;
-	psCtxPageSizer = new wxFlexGridSizer( 2, 2, 0, 0 );
+	psCtxPageSizer = new wxFlexGridSizer( 2, 3, 0, 0 );
 	psCtxPageSizer->AddGrowableCol( 0 );
-	psCtxPageSizer->AddGrowableCol( 1 );
+	psCtxPageSizer->AddGrowableCol( 2 );
 	psCtxPageSizer->AddGrowableRow( 1 );
 	psCtxPageSizer->SetFlexibleDirection( wxBOTH );
 	psCtxPageSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
+	wxBoxSizer* bSizer43;
+	bSizer43 = new wxBoxSizer( wxHORIZONTAL );
+	
 	psCtxUserLabel = new wxStaticText( psCtxPage, wxID_ANY, _("User:"), wxDefaultPosition, wxDefaultSize, 0 );
 	psCtxUserLabel->Wrap( -1 );
-	psCtxPageSizer->Add( psCtxUserLabel, 0, wxTOP|wxRIGHT|wxLEFT, 5 );
+	bSizer43->Add( psCtxUserLabel, 0, wxALIGN_CENTER|wxLEFT|wxRIGHT|wxTOP, 5 );
+	
+	
+	bSizer43->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	ctxUserEditButton = new wxButton( psCtxPage, wxID_ANY, _("Edit..."), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer43->Add( ctxUserEditButton, 0, wxALL, 5 );
+	
+	psCtxPageSizer->Add( bSizer43, 1, wxEXPAND, 5 );
+	
+	m_staticline11 = new wxStaticLine( psCtxPage, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL );
+	psCtxPageSizer->Add( m_staticline11, 0, wxEXPAND | wxALL, 5 );
+	
+	wxBoxSizer* bSizer44;
+	bSizer44 = new wxBoxSizer( wxHORIZONTAL );
 	
 	psCtxAdminLabel = new wxStaticText( psCtxPage, wxID_ANY, _("Admin:"), wxDefaultPosition, wxDefaultSize, 0 );
 	psCtxAdminLabel->Wrap( -1 );
-	psCtxPageSizer->Add( psCtxAdminLabel, 0, wxTOP|wxRIGHT|wxLEFT, 5 );
+	bSizer44->Add( psCtxAdminLabel, 0, wxALIGN_CENTER|wxLEFT|wxRIGHT|wxTOP, 5 );
+	
+	
+	bSizer44->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	ctxAdminEditButton = new wxButton( psCtxPage, wxID_ANY, _("Edit..."), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer44->Add( ctxAdminEditButton, 0, wxALL, 5 );
+	
+	psCtxPageSizer->Add( bSizer44, 1, wxEXPAND, 5 );
 	
 	psCtxUserPolicy = new wxTextCtrl( psCtxPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTE_MULTILINE|wxTE_READONLY );
 	psCtxPageSizer->Add( psCtxUserPolicy, 1, wxALL|wxEXPAND, 5 );
+	
+	m_staticline12 = new wxStaticLine( psCtxPage, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL );
+	psCtxPageSizer->Add( m_staticline12, 0, wxEXPAND | wxALL, 5 );
 	
 	psCtxAdminPolicy = new wxTextCtrl( psCtxPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTE_MULTILINE|wxTE_READONLY );
 	psCtxPageSizer->Add( psCtxAdminPolicy, 1, wxALL|wxEXPAND, 5 );
@@ -1099,6 +1183,12 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	toolTipCheckBox->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnToolTipCheckBox ), NULL, this );
 	toolTipSpinCtrl->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ModAnoubisMainPanelBase::OnToolTipSpinCtrl ), NULL, this );
 	toolTipSpinCtrl->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnToolTipSpinCtrlText ), NULL, this );
+	alfUserEditButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::onAlfUserEditClicked ), NULL, this );
+	alfAdminEditButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::onAlfAdminEditClicked ), NULL, this );
+	sbUserEditButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::onSbUserEditClicked ), NULL, this );
+	sbAdminEditButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::onSbAdminEditClicked ), NULL, this );
+	ctxUserEditButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::onCtxUserEditClicked ), NULL, this );
+	ctxAdminEditButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::onCtxAdminEditClicked ), NULL, this );
 }
 
 ModAnoubisOverviewPanelBase::ModAnoubisOverviewPanelBase( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )
