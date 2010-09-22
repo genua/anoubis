@@ -474,6 +474,8 @@ xanoubis_SOURCES= \
 	control/NotificationCtrl.h \
 	control/PlaygroundCtrl.cpp \
 	control/PlaygroundCtrl.h \
+	control/PSListCtrl.h \
+	control/PSListCtrl.cpp \
 	control/PolicyCtrl.cpp \
 	control/PolicyCtrl.h \
 	control/ProcCtrl.cpp \

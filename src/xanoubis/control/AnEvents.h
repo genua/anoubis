@@ -613,6 +613,13 @@ BEGIN_DECLARE_EVENT_TYPES()
 	 * @param GetExtraLong() The id of the notification event.
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_PLAYGROUND_FORCED, wxNewEventType())
+
+	/**
+	 * Sent by the PSListCtrl if an error occured in a process list
+	 * request.
+	 * @param None.
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_PSLIST_ERROR, wxNewEventType())
 END_DECLARE_EVENT_TYPES()
 /**
  * @}

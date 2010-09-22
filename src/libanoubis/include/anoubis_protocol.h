@@ -104,9 +104,17 @@ static inline u_int64_t __ntohll(u_int64_t arg)
 }
 #endif
 
+/*
+ * NOTE: The expression in the __typeof__ below is a trick that is needed
+ * NOTE: by code that includes this file and tries to use it with a const
+ * NOTE: qualified variable. The result is that __ret is constant which
+ * NOTE: results in errors for the assignments to __ret. For shorter types
+ * NOTE: this will turn __ret into a larger signed integer type. We cast
+ * NOTE: the result back to the desired type before returing.
+ */
 #define get_value(VAR)		({				\
 	__typeof__(&(VAR)) __ptr = &(VAR);			\
-	__typeof__(__ptr->netint) __ret;			\
+	__typeof__(__ptr->netint+__ptr->netint) __ret;		\
 	switch (sizeof(__ptr->netint)) {			\
 	case 1:		__ret = (__ptr->netint); break;		\
 	case 2:		__ret = ntohs(__ptr->netint); break;	\
@@ -115,7 +123,7 @@ static inline u_int64_t __ntohll(u_int64_t arg)
 	default:						\
 		assert(0);					\
 	}							\
-	__ret;							\
+	(__typeof__(__ptr->netint))__ret;			\
 })
 #else
 #define get_value(VAR) 0 /* ((VAR).netint) */

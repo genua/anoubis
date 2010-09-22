@@ -61,103 +61,103 @@ class PSEntry : public AnListClass
 		 *             value is NULL the process is not known by the
 		 *             OS. This may happen due to race conditions.
 		 */
-		PSEntry(Anoubis_ProcRecord* procrec,
-		    struct anoubis_proc* procinfo);
+		PSEntry(const Anoubis_ProcRecord* procrec,
+		    const struct anoubis_proc* procinfo);
 
 		/**
 		 * Get process id.
 		 * @return the process id
 		 */
-		const wxString getProcessId(void);
+		const wxString getProcessId(void) const;
 
 		/**
 		 * Get parent process id.
 		 * @return the parent process id,
 		 *     empty string if process does not exist anymore
 		 */
-		const wxString getParentProcessId(void);
+		const wxString getParentProcessId(void) const;
 
 		/**
 		 * Get real user id.
 		 * @return the real uid of the process,
 		 *     empty string if process does not exist anymore
 		 */
-		const wxString getUID(void);
+		const wxString getUID(void) const;
 
 		/**
 		 * Get effective user id.
 		 * @return the effective uid of the process,
 		 *     empty string if process does not exist anymore
 		 */
-		const wxString getEUID(void);
+		const wxString getEUID(void) const;
 
 		/**
 		 * Get real group id.
 		 * @return the real gid of the process,
 		 *     empty string if process does not exist anymore
 		 */
-		const wxString getGID(void);
+		const wxString getGID(void) const;
 
 		/**
 		 * Get effective group id.
 		 * @return the effective gid of the process,
 		 *     empty string if process does not exist anymore
 		 */
-		const wxString getEGID(void);
+		const wxString getEGID(void) const;
 
 		/**
 		 * Get the process name (as in 'ps').
 		 * @return the process name
 		 */
-		const wxString getProcessName(void);
+		const wxString getProcessName(void) const;
 
 		/**
 		 * Get SecureExec flag.
 		 * @return the secure exec flag
 		 */
-		bool getSecureExec(void);
+		bool getSecureExec(void) const;
 
 		/**
 		 * Get the playground ID of this process.
 		 * @return the playground id, 0 if process is not in playground
 		 */
-		uint64_t getPlaygroundId(void);
+		uint64_t getPlaygroundId(void) const;
 
 		/**
 		 * Get path with full name for the process.
 		 * @return the process path.
 		 */
-		const wxString getPathProcess(void);
+		const wxString getPathProcess(void) const;
 
 		/**
 		 * Get path with full name for the admin context
 		 * @return the admin context path.
 		 */
-		const wxString getPathAdminContext(void);
+		const wxString getPathAdminContext(void) const;
 
 		/**
 		 * Get path with full name for the user context
 		 * @return the user context path.
 		 */
-		const wxString getPathUserContext(void);
+		const wxString getPathUserContext(void) const;
 
 		/**
 		 * Get checksum for the process.
 		 * @return the checksum for the process.
 		 */
-		const wxString getChecksumProcess(void);
+		const wxString getChecksumProcess(void) const;
 
 		/**
 		 * Get checksum for the admin context.
 		 * @return the checksum for the admin context.
 		 */
-		const wxString getChecksumUserContext(void);
+		const wxString getChecksumUserContext(void) const;
 
 		/**
 		 * Get checksum for the user context.
 		 * @return the checksum for the user context.
 		 */
-		const wxString getChecksumAdminContext(void);
+		const wxString getChecksumAdminContext(void) const;
 
 		/*
 		 * Note: Getters for rules are not yet available

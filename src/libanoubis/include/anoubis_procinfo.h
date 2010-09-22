@@ -119,7 +119,9 @@ anoubis_proc_close(struct anoubis_proc_handle *handle);
  *
  * @param handle The process reading handle returned from
  *     anoubis_proc_open.
- * @return pid The process ID of the process to look for.
+ * @param pid The process ID of the process to look for.
+ * @return A pointer to a malloced anoubis_proc record that describes
+ *     the process or NULL if the process was not found.
  */
 extern struct anoubis_proc *
 anoubis_proc_get(struct anoubis_proc_handle *, pid_t pid);

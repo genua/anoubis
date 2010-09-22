@@ -28,10 +28,11 @@
 #include "PSEntry.h"
 #include "PolicyUtils.h"
 
-PSEntry::PSEntry(Anoubis_ProcRecord* psrec,
-    struct anoubis_proc* psinfo)
+PSEntry::PSEntry(const Anoubis_ProcRecord* psrec,
+    const struct anoubis_proc* psinfo)
 {
-	int i;
+	int			 i;
+	const char		*payload;
 
 	/* values from daemon */
 	pid_ = get_value(psrec->pid);
@@ -45,7 +46,7 @@ PSEntry::PSEntry(Anoubis_ProcRecord* psrec,
 	}
 
 	/* process payload (payload is already verified) */
-	char* payload = psrec->payload;
+	payload = psrec->payload;
 	for (i=0; i<3; i++) {
 		/* checksum */
 		PolicyUtils::csumToString((unsigned char*)payload,
@@ -79,7 +80,7 @@ PSEntry::PSEntry(Anoubis_ProcRecord* psrec,
 }
 
 const wxString
-PSEntry::getProcessId(void)
+PSEntry::getProcessId(void) const
 {
 	if (pid_ == -1) {
 		return wxEmptyString;
@@ -88,7 +89,7 @@ PSEntry::getProcessId(void)
 }
 
 const wxString
-PSEntry::getParentProcessId(void)
+PSEntry::getParentProcessId(void) const
 {
 	if (ppid_ == -1) {
 		return wxEmptyString;
@@ -97,7 +98,7 @@ PSEntry::getParentProcessId(void)
 }
 
 const wxString
-PSEntry::getUID(void)
+PSEntry::getUID(void) const
 {
 	if (uid_ == -1) {
 		return wxEmptyString;
@@ -106,7 +107,7 @@ PSEntry::getUID(void)
 }
 
 const wxString
-PSEntry::getEUID(void)
+PSEntry::getEUID(void) const
 {
 	if (euid_ == -1) {
 		return wxEmptyString;
@@ -115,7 +116,7 @@ PSEntry::getEUID(void)
 }
 
 const wxString
-PSEntry::getGID(void)
+PSEntry::getGID(void) const
 {
 	if (gid_ == -1) {
 		return wxEmptyString;
@@ -124,7 +125,7 @@ PSEntry::getGID(void)
 }
 
 const wxString
-PSEntry::getEGID(void)
+PSEntry::getEGID(void) const
 {
 	if (egid_ == -1) {
 		return wxEmptyString;
@@ -133,55 +134,55 @@ PSEntry::getEGID(void)
 }
 
 const wxString
-PSEntry::getProcessName(void)
+PSEntry::getProcessName(void) const
 {
 	return process_name_;
 }
 
 bool
-PSEntry::getSecureExec(void)
+PSEntry::getSecureExec(void) const
 {
 	return secure_exec_;
 }
 
 uint64_t
-PSEntry::getPlaygroundId(void)
+PSEntry::getPlaygroundId(void) const
 {
 	return pgid_;
 }
 
 const wxString
-PSEntry::getPathProcess(void)
+PSEntry::getPathProcess(void) const
 {
 	return path_[2];
 }
 
 const wxString
-PSEntry::getPathAdminContext(void)
+PSEntry::getPathAdminContext(void) const
 {
 	return path_[0];
 }
 
 const wxString
-PSEntry::getPathUserContext(void)
+PSEntry::getPathUserContext(void) const
 {
 	return path_[1];
 }
 
 const wxString
-PSEntry::getChecksumProcess(void)
+PSEntry::getChecksumProcess(void) const
 {
 	return checksum_[2];
 }
 
 const wxString
-PSEntry::getChecksumAdminContext(void)
+PSEntry::getChecksumAdminContext(void) const
 {
 	return checksum_[0];
 }
 
 const wxString
-PSEntry::getChecksumUserContext(void)
+PSEntry::getChecksumUserContext(void) const
 {
 	return checksum_[1];
 }
