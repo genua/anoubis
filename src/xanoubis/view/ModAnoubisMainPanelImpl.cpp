@@ -1828,3 +1828,31 @@ ModAnoubisMainPanelImpl::updatePSDetails(void)
 	setRules(psCtxUserPolicy, user, entry->getCtxUserRule(), APN_CTX);
 	setRules(psCtxAdminPolicy, admin, entry->getCtxAdminRule(), APN_CTX);
 }
+
+bool
+ModAnoubisMainPanelImpl::Show(bool show)
+{
+	bool result = ModAnoubisMainPanelBase::Show(show);
+
+	/* If the PS-list is currently selected, you need to update the PSList
+	 * now! */
+
+	if (!show)
+		return (result);
+
+	int selected = tb_MainAnoubisNotify->GetSelection();
+
+	if (selected == -1)
+		return (result);
+
+	wxWindow *selectedPage = tb_MainAnoubisNotify->GetPage(selected);
+
+	if (selectedPage != tb_PsBrowser)
+		return (result);
+
+	/* Fetch only if connected */
+	if (JobCtrl::instance()->isConnected())
+		PSListCtrl::instance()->updatePSList();
+
+	return (result);
+}

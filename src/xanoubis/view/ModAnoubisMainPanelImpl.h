@@ -180,6 +180,7 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase,
 		ModAnoubisMainPanelImpl(wxWindow*, wxWindowID);
 		~ModAnoubisMainPanelImpl(void);
 		void update(void);
+		bool Show(bool show = true);
 };
 
 #endif /* __ModAnoubisMainPanelImpl__ */
