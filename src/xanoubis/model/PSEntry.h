@@ -159,10 +159,59 @@ class PSEntry : public AnListClass
 		 */
 		const wxString getChecksumAdminContext(void) const;
 
-		/*
-		 * Note: Getters for rules are not yet available
+		/**
+		 * Return the rule id of the ALF admin rules.
+		 * @param None.
+		 * @return The rule id.
 		 */
+		unsigned long getAlfAdminRule(void) const {
+			return rule_alf_[0];
+		}
 
+		/**
+		 * Return the rule id of the ALF user rules.
+		 * @param None.
+		 * @return The rule id.
+		 */
+		unsigned long getAlfUserRule(void) const {
+			return rule_alf_[1];
+		}
+
+		/**
+		 * Return the rule id of the sandbox admin rules.
+		 * @param None.
+		 * @return The rule id.
+		 */
+		unsigned long getSbAdminRule(void) const {
+			return rule_sb_[0];
+		}
+
+		/**
+		 * Return the rule id of the sandbox user rules.
+		 * @param None.
+		 * @return The rule id.
+		 */
+		unsigned long getSbUserRule(void) const {
+			return rule_sb_[1];
+		}
+
+		/**
+		 * Return the rule id of the CTX admin rules.
+		 * @param None.
+		 * @return The rule id.
+		 */
+		unsigned long getCtxAdminRule(void) const {
+			return rule_ctx_[0];
+		}
+
+		/**
+		 * Return the rule id of the CTX user rules.
+		 * @param None.
+		 * @return The rule id.
+		 */
+		unsigned long getCtxUserRule(void) const {
+			return rule_ctx_[1];
+		}
 
 	private:
 		long pid_;	/**< Process id */

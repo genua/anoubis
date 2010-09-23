@@ -29,6 +29,9 @@
 #include "config.h"
 #endif
 
+#define __STDC_FORMAT_MACROS
+#include <stdint.h>
+#include <inttypes.h>
 #include <sys/types.h>
 
 #ifdef LINUX
@@ -72,6 +75,8 @@
 #include "PolicyCtrl.h"
 #include "ProfileListCtrl.h"
 #include "PSListCtrl.h"
+#include "PSEntry.h"
+#include "DefaultConversions.h"
 
 #include "VersionCtrl.h"
 #include "VersionListCtrl.h"
@@ -399,10 +404,11 @@ ModAnoubisMainPanelImpl::OnLoadRuleSet(wxCommandEvent &event)
 }
 
 void
-ModAnoubisMainPanelImpl::OnProfileDeleteClicked(wxCommandEvent &)
+ModAnoubisMainPanelImpl::OnProfileDeleteClicked(wxCommandEvent &event)
 {
 	PolicyCtrl *policyCtrl = PolicyCtrl::instance();
 
+	event.Skip();
 	if (policyCtrl->removeProfile(selectedProfile)) {
 		selectedProfile = wxEmptyString;
 		profileTabUpdate();
@@ -1726,4 +1732,99 @@ void
 ModAnoubisMainPanelImpl::onPsReloadClicked(wxCommandEvent &)
 {
 	PSListCtrl::instance()->updatePSList();
+}
+
+void
+ModAnoubisMainPanelImpl::OnPSListItemSelected(wxCommandEvent &event)
+{
+	event.Skip();
+	updatePSDetails();
+}
+
+void
+ModAnoubisMainPanelImpl::OnPSListItemDeselected(wxCommandEvent &event)
+{
+	event.Skip();
+	updatePSDetails();
+}
+
+/* Expects an empty rule set. */
+static void
+setRules(wxTextCtrl *ctrl, PolicyRuleSet *ruleset, unsigned int ruleid,
+    int ruletype)
+{
+	struct apn_ruleset		*rs;
+	struct apn_rule			*rule;
+	AppPolicy			*app;
+
+	if (ruleid == 0)
+		return;
+	if (ruleset == NULL || (rs = ruleset->getApnRuleSet()) == NULL)
+		return;
+	rule = apn_find_rule(rs, ruleid);
+	if (rule == NULL || rule->apn_type != ruletype)
+		return;
+	app = dynamic_cast<AppPolicy *>((Policy *)rule->userdata);
+	if (app == NULL)
+		return;
+	ctrl->AppendText(app->toString());
+}
+
+void
+ModAnoubisMainPanelImpl::updatePSDetails(void)
+{
+	const PSEntry		*entry = NULL;
+	wxString		 secure = wxT("");
+	wxString		 pgidstr = wxT("");
+	PolicyRuleSet		*admin, *user;
+	PolicyCtrl		*pctrl = PolicyCtrl::instance();
+
+	entry = PSListCtrl::instance()->getEntry(psList->getFirstSelection());
+	/* Always clear the text controls and maybe fill them later. */
+	psAlfUserPolicy->Clear();
+	psAlfAdminPolicy->Clear();
+	psSbUserPolicy->Clear();
+	psSbAdminPolicy->Clear();
+	psCtxUserPolicy->Clear();
+	psCtxAdminPolicy->Clear();
+	if (entry) {
+		uint64_t	pgid = entry->getPlaygroundId();
+
+		secure = DefaultConversions::toYesNo(entry->getSecureExec());
+		if (pgid == 0) {
+			pgidstr = _("no");
+		} else {
+			pgidstr = wxString::Format(_("yes (ID: %"PRIx64")"),
+			    pgid);
+		}
+	}
+#define	S(NAME,METHOD) do {					\
+	NAME->SetLabel(entry?entry->METHOD():wxT(""));		\
+} while(0)
+	S(psDetailsCommandText, getProcessName);
+	S(psDetailsPidText, getProcessId);
+	S(psDetailsPpidText, getParentProcessId);
+	S(psDetailsRealUidText, getUID);
+	S(psDetailsRealGidText, getGID);
+	S(psDetailsEffectiveUidText, getEUID);
+	S(psDetailsEffectiveGidText, getEGID);
+	psDetailsSecureExecText->SetLabel(secure);
+	psDetailsPlaygroundText->SetLabel(pgidstr);
+	S(psPathAppText, getPathProcess);
+	S(psPathCsumText, getChecksumProcess);
+	S(psPathUserCtxPathText, getPathUserContext);
+	S(psPathUserCtxCsumText, getChecksumUserContext);
+	S(psPathAdminCtxPathText, getPathAdminContext);
+	S(psPathAdminCtxCsumText, getChecksumAdminContext);
+#undef S
+	if (entry == NULL)
+		return;
+	admin = pctrl->getRuleSet(pctrl->getAdminId(geteuid()));
+	user = pctrl->getRuleSet(pctrl->getUserId());
+	setRules(psAlfUserPolicy, user, entry->getAlfUserRule(), APN_ALF);
+	setRules(psAlfAdminPolicy, admin, entry->getAlfAdminRule(), APN_ALF);
+	setRules(psSbUserPolicy, user, entry->getSbUserRule(), APN_SB);
+	setRules(psSbAdminPolicy, admin, entry->getSbAdminRule(), APN_SB);
+	setRules(psCtxUserPolicy, user, entry->getCtxUserRule(), APN_CTX);
+	setRules(psCtxAdminPolicy, admin, entry->getCtxAdminRule(), APN_CTX);
 }

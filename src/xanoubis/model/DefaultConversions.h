@@ -98,6 +98,7 @@ public:
 	static wxString toDate(const wxDateTime dt) {
 		return dt.FormatDate();
 	}
+
 	/**
 	 * Returns the time of the argument in the default time zone as
 	 * a string.
@@ -105,6 +106,15 @@ public:
 	static wxString toTime(const wxDateTime dt) {
 		return dt.FormatTime();
 	}
+
+	/**
+	 * Return either "yes" or "no" (localized) depending on the
+	 * boolean argument.
+	 */
+	static wxString toYesNo(bool val) {
+		return val ? _("yes") : _("no");
+	}
+
 	/**
 	 * Return an empty string regardless of the argument value.
 	 */

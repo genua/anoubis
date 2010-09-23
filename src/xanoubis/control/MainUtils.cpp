@@ -95,7 +95,7 @@ MainUtils::getUserIdByName(wxString name) const
 wxString
 MainUtils::getUserNameById(uid_t uid) const
 {
-	static int	 lastuid = 1;
+	static int	 lastuid = -1;
 	static wxString	 lastname = wxEmptyString;
 	struct passwd	*pwd;
 

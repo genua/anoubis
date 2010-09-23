@@ -104,6 +104,7 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase,
 
 		void update(Subject *);
 		void updateDelete(Subject *);
+		void updatePSDetails(void);
 
 	protected:
 		void onConnectionStateChange(wxCommandEvent &);
@@ -160,6 +161,9 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase,
 		void OnEscalationSfsPathRight(wxCommandEvent &);
 		void OnEscalationSbPathLeft(wxCommandEvent &);
 		void OnEscalationSbPathRight(wxCommandEvent &);
+
+		void OnPSListItemSelected(wxCommandEvent &);
+		void OnPSListItemDeselected(wxCommandEvent &);
 
 		/**
 		 * This is called when the checkbox of the upgrade-dialog

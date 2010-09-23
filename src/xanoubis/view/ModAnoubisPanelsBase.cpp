@@ -31,6 +31,7 @@
 // PLEASE DO "NOT" EDIT THIS FILE!
 ///////////////////////////////////////////////////////////////////////////
 
+#include "AnListCtrl.h"
 #include "ProfileListCtrl.h"
 #include "VersionListCtrl.h"
 
@@ -793,7 +794,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	psMainSizer->Add( psHeadSizer, 0, wxEXPAND, 5 );
 	
-	psList = new wxListCtrl( tb_PsBrowser, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_VIRTUAL );
+	psList = new AnListCtrl( tb_PsBrowser, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_VIRTUAL );
 	psMainSizer->Add( psList, 2, wxALL|wxEXPAND, 5 );
 	
 	psInfoBook = new wxNotebook( tb_PsBrowser, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
@@ -1187,6 +1188,8 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	toolTipSpinCtrl->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ModAnoubisMainPanelBase::OnToolTipSpinCtrl ), NULL, this );
 	toolTipSpinCtrl->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnToolTipSpinCtrlText ), NULL, this );
 	psReloadButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::onPsReloadClicked ), NULL, this );
+	psList->Connect( wxEVT_COMMAND_LIST_ITEM_DESELECTED, wxListEventHandler( ModAnoubisMainPanelBase::OnPSListItemDeselected ), NULL, this );
+	psList->Connect( wxEVT_COMMAND_LIST_ITEM_SELECTED, wxListEventHandler( ModAnoubisMainPanelBase::OnPSListItemSelected ), NULL, this );
 	alfUserEditButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::onAlfUserEditClicked ), NULL, this );
 	alfAdminEditButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::onAlfAdminEditClicked ), NULL, this );
 	sbUserEditButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::onSbUserEditClicked ), NULL, this );
