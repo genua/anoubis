@@ -790,9 +790,8 @@ MainFrame::onSfsListArrived(TaskEvent &event)
 			    "error while fetching list of upgraded "
 			    "files."));
 		} else if (comResult == ComTask::RESULT_REMOTE_ERROR) {
-			errMsg = wxString::Format(_("Got error "
-			    "(%hs) from daemon while fetching list "
-			    "of upgraded files."),
+			errMsg = wxString::Format(_("%hs.\n\nCould not "
+			    "fetch the list of upgraded files."),
 			anoubis_strerror(task->getResultDetails()));
 		} else {
 			errMsg = wxString::Format(_("An unexpected "

@@ -43,8 +43,9 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: src/libanoubis/anoubiserrorcode/anoubis_errno.c:36
+#, fuzzy
 msgid "Operation not permitted: no certificate found"
-msgstr "Operation nicht erlaubt: Kein Zertifikat gefunden"
+msgstr "Operation nicht erlaubt: Clientzertifikat ist dem Daemon unbekannt"
 
 #: src/libanoubis/anoubiserrorcode/anoubis_errno.c:38
 msgid "Operation not permitted: User ID and certificate's User ID do not match"
@@ -1418,7 +1419,7 @@ msgstr ""
 "Upgrade veränderten wurden."
 
 #: src/xanoubis/view/MainFrame.cpp:793
-#, c-format
+#, fuzzy, c-format
 msgid "Got error (%hs) from daemon while fetching list of upgraded files."
 msgstr ""
 "Fehler vom Daemon (%hs) beim Abfrage der Liste von Dateien, die durch ein "
@@ -4430,6 +4431,15 @@ msgstr ""
 "Eingabe des Passwortes für:\n"
 "%ls"
 
+#~ msgid ""
+#~ "%hs.\n"
+#~ "\n"
+#~ "Could not fetch the list of upgraded files."
+#~ msgstr ""
+#~ "%hs.\n"
+#~ "\n"
+#~ "Konnte die Liste der aktualisierten Dateien nicht abrufen."
+
 #, fuzzy
 #~ msgid "Can't access user ruleset."
 #~ msgstr "Neuer Regelsatz wurde erzeugt."
@@ -4660,11 +4670,6 @@ msgstr ""
 
 #~ msgid "File does not exist or is not executable"
 #~ msgstr "Datei existiert nicht oder ist nicht ausführbar"
-
-#~ msgid "Got error (%hs) from daemon while fetching listof upgraded files."
-#~ msgstr ""
-#~ "Fehler vom Daemon (%hs) beim Abfrage der Liste von Dateien, die durch ein "
-#~ "Upgrade veränderten wurden."
 
 #~ msgid ""
 #~ "An unexpected error (%i) occured while while fetching listof upgraded "
