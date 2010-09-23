@@ -97,40 +97,28 @@ PSEntry::getParentProcessId(void) const
 	return wxString::Format(wxT("%d"), ppid_);
 }
 
-const wxString
+long
 PSEntry::getUID(void) const
 {
-	if (uid_ == -1) {
-		return wxEmptyString;
-	}
-	return wxString::Format(wxT("%d"), uid_);
+	return uid_;
 }
 
-const wxString
+long
 PSEntry::getEUID(void) const
 {
-	if (euid_ == -1) {
-		return wxEmptyString;
-	}
-	return wxString::Format(wxT("%d"), euid_);
+	return euid_;
 }
 
-const wxString
+long
 PSEntry::getGID(void) const
 {
-	if (gid_ == -1) {
-		return wxEmptyString;
-	}
-	return wxString::Format(wxT("%d"), gid_);
+	return gid_;
 }
 
-const wxString
+long
 PSEntry::getEGID(void) const
 {
-	if (egid_ == -1) {
-		return wxEmptyString;
-	}
-	return wxString::Format(wxT("%d"), egid_);
+	return egid_;
 }
 
 const wxString
@@ -185,4 +173,40 @@ const wxString
 PSEntry::getChecksumUserContext(void) const
 {
 	return checksum_[1];
+}
+
+unsigned long
+PSEntry::getAlfRuleAdmin(void) const
+{
+	return rule_alf_[0];
+}
+
+unsigned long
+PSEntry::getAlfRuleUser(void) const
+{
+	return rule_alf_[1];
+}
+
+unsigned long
+PSEntry::getSbRuleAdmin(void) const
+{
+	return rule_sb_[0];
+}
+
+unsigned long
+PSEntry::getSbRuleUser(void) const
+{
+	return rule_sb_[1];
+}
+
+unsigned long
+PSEntry::getCtxRuleAdmin(void) const
+{
+	return rule_ctx_[0];
+}
+
+unsigned long
+PSEntry::getCtxRuleUser(void) const
+{
+	return rule_ctx_[1];
 }

@@ -324,6 +324,7 @@ class ModAnoubisMainPanelBase : public wxPanel
 		virtual void OnToolTipSpinCtrl( wxSpinEvent& event ){ event.Skip(); }
 		virtual void OnToolTipSpinCtrlText( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onPsReloadClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnPSListColumnButtonClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnPSListItemDeselected( wxListEvent& event ){ event.Skip(); }
 		virtual void OnPSListItemSelected( wxListEvent& event ){ event.Skip(); }
 		virtual void onAlfUserEditClicked( wxCommandEvent& event ){ event.Skip(); }

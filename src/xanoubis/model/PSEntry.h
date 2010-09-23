@@ -82,28 +82,28 @@ class PSEntry : public AnListClass
 		 * @return the real uid of the process,
 		 *     empty string if process does not exist anymore
 		 */
-		const wxString getUID(void) const;
+		long getUID(void) const;
 
 		/**
 		 * Get effective user id.
 		 * @return the effective uid of the process,
 		 *     empty string if process does not exist anymore
 		 */
-		const wxString getEUID(void) const;
+		long getEUID(void) const;
 
 		/**
 		 * Get real group id.
 		 * @return the real gid of the process,
 		 *     empty string if process does not exist anymore
 		 */
-		const wxString getGID(void) const;
+		long getGID(void) const;
 
 		/**
 		 * Get effective group id.
 		 * @return the effective gid of the process,
 		 *     empty string if process does not exist anymore
 		 */
-		const wxString getEGID(void) const;
+		long getEGID(void) const;
 
 		/**
 		 * Get the process name (as in 'ps').
@@ -160,58 +160,40 @@ class PSEntry : public AnListClass
 		const wxString getChecksumAdminContext(void) const;
 
 		/**
-		 * Return the rule id of the ALF admin rules.
-		 * @param None.
+		 * Get the id of the effective ALF admin rule.
 		 * @return The rule id.
 		 */
-		unsigned long getAlfAdminRule(void) const {
-			return rule_alf_[0];
-		}
+		unsigned long getAlfRuleAdmin(void) const;
 
 		/**
-		 * Return the rule id of the ALF user rules.
-		 * @param None.
+		 * Get the id of the effective ALF user rule.
 		 * @return The rule id.
 		 */
-		unsigned long getAlfUserRule(void) const {
-			return rule_alf_[1];
-		}
+		unsigned long getAlfRuleUser(void) const;
 
 		/**
-		 * Return the rule id of the sandbox admin rules.
-		 * @param None.
+		 * Get the id of the effective SB admin rule.
 		 * @return The rule id.
 		 */
-		unsigned long getSbAdminRule(void) const {
-			return rule_sb_[0];
-		}
+		unsigned long getSbRuleAdmin(void) const;
 
 		/**
-		 * Return the rule id of the sandbox user rules.
-		 * @param None.
+		 * Get the id of the effective SB user rule.
 		 * @return The rule id.
 		 */
-		unsigned long getSbUserRule(void) const {
-			return rule_sb_[1];
-		}
+		unsigned long getSbRuleUser(void) const;
 
 		/**
-		 * Return the rule id of the CTX admin rules.
-		 * @param None.
+		 * Get the id of the effective CTX admin rule.
 		 * @return The rule id.
 		 */
-		unsigned long getCtxAdminRule(void) const {
-			return rule_ctx_[0];
-		}
+		unsigned long getCtxRuleAdmin(void) const;
 
 		/**
-		 * Return the rule id of the CTX user rules.
-		 * @param None.
+		 * Get the id of the effective CTX user rule.
 		 * @return The rule id.
 		 */
-		unsigned long getCtxUserRule(void) const {
-			return rule_ctx_[1];
-		}
+		unsigned long getCtxRuleUser(void) const;
 
 	private:
 		long pid_;	/**< Process id */

@@ -106,6 +106,9 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase,
 		void updateDelete(Subject *);
 		void updatePSDetails(void);
 
+		static wxString uidToString(long uid);
+		static wxString pgidToString(uint64_t pgid);
+
 	protected:
 		void onConnectionStateChange(wxCommandEvent &);
 		void onTabChange(wxNotebookEvent &);
@@ -164,6 +167,8 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase,
 
 		void OnPSListItemSelected(wxCommandEvent &);
 		void OnPSListItemDeselected(wxCommandEvent &);
+
+		void OnPSListColumnButtonClick(wxCommandEvent&);
 
 		/**
 		 * This is called when the checkbox of the upgrade-dialog

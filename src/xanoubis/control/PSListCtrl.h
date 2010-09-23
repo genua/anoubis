@@ -70,7 +70,7 @@ class PSListCtrl : public GenericCtrl, public Singleton<PSListCtrl>
 		 *     is allocate once and never changes. However, the
 		 *     contents may well change.
 		 */
-		const AnRowProvider *getPSListProvider(void) const;
+		AnRowProvider *getPSListProvider(void);
 
 		/**
 		 * Return a description of the process at the given index

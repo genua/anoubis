@@ -1188,6 +1188,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	toolTipSpinCtrl->Connect( wxEVT_COMMAND_SPINCTRL_UPDATED, wxSpinEventHandler( ModAnoubisMainPanelBase::OnToolTipSpinCtrl ), NULL, this );
 	toolTipSpinCtrl->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnToolTipSpinCtrlText ), NULL, this );
 	psReloadButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::onPsReloadClicked ), NULL, this );
+	psColumnButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::OnPSListColumnButtonClick ), NULL, this );
 	psList->Connect( wxEVT_COMMAND_LIST_ITEM_DESELECTED, wxListEventHandler( ModAnoubisMainPanelBase::OnPSListItemDeselected ), NULL, this );
 	psList->Connect( wxEVT_COMMAND_LIST_ITEM_SELECTED, wxListEventHandler( ModAnoubisMainPanelBase::OnPSListItemSelected ), NULL, this );
 	alfUserEditButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( ModAnoubisMainPanelBase::onAlfUserEditClicked ), NULL, this );

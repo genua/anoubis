@@ -78,8 +78,6 @@
 #include "PSEntry.h"
 #include "DefaultConversions.h"
 
-#include "VersionCtrl.h"
-#include "VersionListCtrl.h"
 #include "apn.h"
 #include "main.h"
 
@@ -103,11 +101,21 @@
 		slotValueText##slotNo->Hide(); \
 	} while (0)
 
+#define ADDCOLUMN(title, function, type, conversion, width) \
+	do { \
+		AnListColumn            *col; \
+		col = psList->addColumn( \
+		    new AnFmtListProperty<PSEntry, type>( \
+		    _(title), &PSEntry::function, NULL, conversion)); \
+		col->setWidth(width); \
+	} while (0)
+
 ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
     wxWindowID id) : ModAnoubisMainPanelBase(parent, id), Observer(NULL)
 {
 	AnEvents *anEvents;
 	NotificationCtrl	*notifyCtrl;
+	PSListCtrl		*psListCtrl;
 
 	currentNotify_ = NULL;
 	savedNotify_ = NULL;
@@ -155,6 +163,20 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 	pathcomp_.clear();
 	pathKeep_ = minPathKeep_ = 0;
 	addSubject(listPerspective_);
+
+	/* configure Process List tab */
+	ADDCOLUMN("Process ID", getProcessId, const wxString, NULL, 80);
+	ADDCOLUMN("User", getEUID, long, &uidToString, 100);
+	ADDCOLUMN("ALF", getAlfRuleUser, unsigned long, NULL, 50);
+	ADDCOLUMN("SB", getSbRuleUser, unsigned long, NULL, 50);
+	ADDCOLUMN("CTX", getCtxRuleUser, unsigned long, NULL, 50);
+	ADDCOLUMN("Playground ID", getPlaygroundId, uint64_t,
+	    &pgidToString, 90);
+	ADDCOLUMN("Command", getProcessName, const wxString, NULL, 300);
+
+	psListCtrl = PSListCtrl::instance();
+	psList->setRowProvider(psListCtrl->getPSListProvider());
+
 	update();
 }
 
@@ -222,7 +244,7 @@ ModAnoubisMainPanelImpl::~ModAnoubisMainPanelImpl(void)
 	anEvents->Disconnect(anEVT_ANOUBISOPTIONS_UPDATE, wxCommandEventHandler(
 	    ModAnoubisMainPanelImpl::OnAnoubisOptionsUpdate), NULL, this);
 
-        /*
+	/*
 	 * Disconnect page changing event from notebook to prevent segfault
 	 * on program close!
 	 */
@@ -388,8 +410,8 @@ ModAnoubisMainPanelImpl::onTabChange(wxNotebookEvent &event)
 	/* You are only interested in the PsBrowser */
 	if (tb_MainAnoubisNotify->GetPage(event.GetSelection()) ==
 	    tb_PsBrowser) {
-	    	/* Fetch only if connected */
-	    	if (JobCtrl::instance()->isConnected())
+		/* Fetch only if connected */
+		if (JobCtrl::instance()->isConnected())
 			PSListCtrl::instance()->updatePSList();
 	}
 
@@ -864,6 +886,34 @@ ModAnoubisMainPanelImpl::update(void)
 	tb_MainAnoubisNotification->Layout();
 	Layout();
 	Refresh();
+}
+
+/**
+ * Stringify user id, static method for use in AnFmtListProperty conversion.
+ * @return user name, empty if uid is -1
+ */
+wxString
+ModAnoubisMainPanelImpl::uidToString(long uid)
+{
+	if (uid == -1) {
+		return wxEmptyString;
+	} else {
+		return MainUtils::instance()->getUserNameById(uid);
+	}
+}
+
+/**
+ * Stringify playground id, static method for use in AnFmtListProperty.
+ * @return playground id in hex, empty if pgid is 0
+ */
+wxString
+ModAnoubisMainPanelImpl::pgidToString(uint64_t pgid)
+{
+	if (pgid == 0) {
+		return wxEmptyString;
+	} else {
+		return wxString::Format(wxT("%x"), pgid);
+	}
 }
 
 void
@@ -1668,6 +1718,13 @@ ModAnoubisMainPanelImpl::OnEscalationSbPathRight(wxCommandEvent &)
 }
 
 void
+ModAnoubisMainPanelImpl::OnPSListColumnButtonClick(wxCommandEvent& event)
+{
+	event.Skip();
+	psList->showColumnVisibilityDialog();
+}
+
+void
 ModAnoubisMainPanelImpl::setPathLabel(void)
 {
 	unsigned int		i;
@@ -1801,13 +1858,18 @@ ModAnoubisMainPanelImpl::updatePSDetails(void)
 #define	S(NAME,METHOD) do {					\
 	NAME->SetLabel(entry?entry->METHOD():wxT(""));		\
 } while(0)
+#define L(NAME,METHOD) do {					\
+	NAME->SetLabel(entry?					\
+	    wxString::Format(wxT("%d"), entry->METHOD()):	\
+	    wxT(""));	\
+} while (0)
 	S(psDetailsCommandText, getProcessName);
 	S(psDetailsPidText, getProcessId);
 	S(psDetailsPpidText, getParentProcessId);
-	S(psDetailsRealUidText, getUID);
-	S(psDetailsRealGidText, getGID);
-	S(psDetailsEffectiveUidText, getEUID);
-	S(psDetailsEffectiveGidText, getEGID);
+	L(psDetailsRealUidText, getUID);
+	L(psDetailsRealGidText, getGID);
+	L(psDetailsEffectiveUidText, getEUID);
+	L(psDetailsEffectiveGidText, getEGID);
 	psDetailsSecureExecText->SetLabel(secure);
 	psDetailsPlaygroundText->SetLabel(pgidstr);
 	S(psPathAppText, getPathProcess);
@@ -1817,16 +1879,17 @@ ModAnoubisMainPanelImpl::updatePSDetails(void)
 	S(psPathAdminCtxPathText, getPathAdminContext);
 	S(psPathAdminCtxCsumText, getChecksumAdminContext);
 #undef S
+#undef L
 	if (entry == NULL)
 		return;
 	admin = pctrl->getRuleSet(pctrl->getAdminId(geteuid()));
 	user = pctrl->getRuleSet(pctrl->getUserId());
-	setRules(psAlfUserPolicy, user, entry->getAlfUserRule(), APN_ALF);
-	setRules(psAlfAdminPolicy, admin, entry->getAlfAdminRule(), APN_ALF);
-	setRules(psSbUserPolicy, user, entry->getSbUserRule(), APN_SB);
-	setRules(psSbAdminPolicy, admin, entry->getSbAdminRule(), APN_SB);
-	setRules(psCtxUserPolicy, user, entry->getCtxUserRule(), APN_CTX);
-	setRules(psCtxAdminPolicy, admin, entry->getCtxAdminRule(), APN_CTX);
+	setRules(psAlfUserPolicy, user, entry->getAlfRuleUser(), APN_ALF);
+	setRules(psAlfAdminPolicy, admin, entry->getAlfRuleAdmin(), APN_ALF);
+	setRules(psSbUserPolicy, user, entry->getSbRuleUser(), APN_SB);
+	setRules(psSbAdminPolicy, admin, entry->getSbRuleAdmin(), APN_SB);
+	setRules(psCtxUserPolicy, user, entry->getCtxRuleUser(), APN_CTX);
+	setRules(psCtxAdminPolicy, admin, entry->getCtxRuleAdmin(), APN_CTX);
 }
 
 bool

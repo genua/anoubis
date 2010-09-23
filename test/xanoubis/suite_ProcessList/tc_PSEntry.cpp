@@ -77,9 +77,9 @@ START_TEST(psentry_test)
 	fprintf(stderr, "pid=%ls, ppid=%ls, secex=%d\n",
 	    entry->getProcessId().c_str(), entry->getParentProcessId().c_str(),
 	    entry->getSecureExec());
-	fprintf(stderr, "uid=%ls, ruid=%ls, gid=%ls, rgid=%ls\n",
-	    entry->getUID().c_str(), entry->getEUID().c_str(),
-	    entry->getGID().c_str(), entry->getEGID().c_str());
+	fprintf(stderr, "uid=%lu, euid=%lu, gid=%lu, egid=%lu\n",
+	    entry->getUID(), entry->getEUID(),
+	    entry->getGID(), entry->getEGID());
 	fprintf(stderr, "process: path=%ls, csum=%ls\n",
 	    entry->getPathProcess().c_str(),
 	    entry->getChecksumProcess().c_str());
@@ -93,10 +93,10 @@ START_TEST(psentry_test)
 	/* make sure that all getters return what we created */
 	fail_if(entry->getProcessId().Cmp(wxT("1")) != 0);
 	fail_if(entry->getParentProcessId().Cmp(wxT("20")) != 0);
-	fail_if(entry->getUID().Cmp(wxT("21"))  != 0);
-	fail_if(entry->getEUID().Cmp(wxT("22")) != 0);
-	fail_if(entry->getGID().Cmp(wxT("24"))  != 0);
-	fail_if(entry->getEGID().Cmp(wxT("25")) != 0);
+	fail_if(entry->getUID() != 21);
+	fail_if(entry->getEUID() != 22);
+	fail_if(entry->getGID() != 24);
+	fail_if(entry->getEGID() != 25);
 	fail_if(entry->getProcessName().Cmp(wxT("d")) != 0);
 
 	fail_if(entry->getSecureExec() != true);
@@ -109,6 +109,13 @@ START_TEST(psentry_test)
 	    "00000000000000000000000000000000000000000000000c")) != 0);
 	fail_if(entry->getChecksumProcess().Cmp(wxT("0000000000000000"
 	    "00000000000000000000000000000000000000000000000d")) != 0);
+
+	fail_if(entry->getAlfRuleAdmin() != 4);
+	fail_if(entry->getAlfRuleUser() != 5);
+	fail_if(entry->getSbRuleAdmin() != 6);
+	fail_if(entry->getSbRuleUser() != 7);
+	fail_if(entry->getCtxRuleAdmin() != 8);
+	fail_if(entry->getCtxRuleUser() != 9);
 
 	delete(entry);
 }

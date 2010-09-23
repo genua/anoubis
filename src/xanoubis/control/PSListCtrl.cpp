@@ -78,8 +78,8 @@ PSListCtrl::updatePSList(void)
 	clearPSList();
 }
 
-const AnRowProvider *
-PSListCtrl::getPSListProvider(void) const
+AnRowProvider *
+PSListCtrl::getPSListProvider(void)
 {
 	return &psinfo_;
 }
