@@ -1792,14 +1792,14 @@ ModAnoubisMainPanelImpl::onPsReloadClicked(wxCommandEvent &)
 }
 
 void
-ModAnoubisMainPanelImpl::OnPSListItemSelected(wxCommandEvent &event)
+ModAnoubisMainPanelImpl::OnPSListItemSelected(wxListEvent &event)
 {
 	event.Skip();
 	updatePSDetails();
 }
 
 void
-ModAnoubisMainPanelImpl::OnPSListItemDeselected(wxCommandEvent &event)
+ModAnoubisMainPanelImpl::OnPSListItemDeselected(wxListEvent &event)
 {
 	event.Skip();
 	updatePSDetails();

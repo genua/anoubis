@@ -165,8 +165,8 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase,
 		void OnEscalationSbPathLeft(wxCommandEvent &);
 		void OnEscalationSbPathRight(wxCommandEvent &);
 
-		void OnPSListItemSelected(wxCommandEvent &);
-		void OnPSListItemDeselected(wxCommandEvent &);
+		void OnPSListItemSelected(wxListEvent &);
+		void OnPSListItemDeselected(wxListEvent &);
 
 		void OnPSListColumnButtonClick(wxCommandEvent&);
 
