@@ -1591,7 +1591,7 @@ kernel_stat(void)
 	struct anoubis_msg		*m;
 
 	error = create_channel(0);
-	if (error < 0) {
+	if (error) {
 		fprintf(stderr, "Cannot connect to anoubis daemon\n");
 		return 5;
 	}
@@ -1712,7 +1712,7 @@ proc_list(uid_t uid)
 	struct anoubis_msg		*msg = NULL, *m;
 
 	error = create_channel(0);
-	if (error < 0) {
+	if (error) {
 		fprintf(stderr, "Cannot connect to anoubis daemon\n");
 		return 5;
 	}
