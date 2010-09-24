@@ -249,14 +249,6 @@ ModAnoubisMainPanelImpl::~ModAnoubisMainPanelImpl(void)
 	PSListCtrl::instance()->Disconnect(anEVT_PSLIST_ERROR,
 	    wxCommandEventHandler(ModAnoubisMainPanelImpl::OnPSListError),
 	    NULL, this);
-
-	/*
-	 * Disconnect page changing event from notebook to prevent segfault
-	 * on program close!
-	 */
-	tb_MainAnoubisNotify->Disconnect(wxEVT_COMMAND_NOTEBOOK_PAGE_CHANGING,
-	    wxNotebookEventHandler(ModAnoubisMainPanelImpl::onTabChange),
-	    NULL, this);
 }
 
 void
@@ -402,23 +394,14 @@ ModAnoubisMainPanelImpl::profileTabUpdate(void)
 void
 ModAnoubisMainPanelImpl::onConnectionStateChange(wxCommandEvent &event)
 {
-	JobCtrl::ConnectionState state =
-	    (JobCtrl::ConnectionState)event.GetInt();
+	bool	connected = (event.GetInt() == JobCtrl::CONNECTED);
 
-	psReloadButton->Enable(state == JobCtrl::CONNECTED);
-
-	event.Skip();
-}
-
-void
-ModAnoubisMainPanelImpl::onTabChange(wxNotebookEvent &event)
-{
-	/* You are only interested in the PsBrowser */
-	if (tb_MainAnoubisNotify->GetPage(event.GetSelection()) ==
-	    tb_PsBrowser) {
-		/* Fetch only if connected */
-		if (JobCtrl::instance()->isConnected())
-			PSListCtrl::instance()->updatePSList();
+	psReloadButton->Enable(connected);
+	psList->clearSelection();
+	if (connected)  {
+		PSListCtrl::instance()->updatePSList();
+	} else {
+		PSListCtrl::instance()->clearPSList();
 	}
 
 	event.Skip();
@@ -1327,9 +1310,18 @@ void ModAnoubisMainPanelImpl::OnDoAutostart(wxCommandEvent& event)
 	MainUtils::instance()->autoStart(event.IsChecked());
 }
 
+/*
+ * NOTE: apparently wxNotebookEvents are propagated to the parent window,
+ * NOTE: at least if there is no appropriate handler installed. This means
+ * NOTE: that events that originate from the process browser notebook will
+ * NOTE: end up here, too. Hence the check for the event object.
+ */
 void
-ModAnoubisMainPanelImpl::OnNotebookTabChanged(wxNotebookEvent&)
+ModAnoubisMainPanelImpl::OnNotebookTabChanged(wxNotebookEvent &event)
 {
+	event.Skip();
+	if (event.GetEventObject() != tb_MainAnoubisNotify)
+		return;
 	if (tb_MainAnoubisNotify->GetCurrentPage() == tb_MainAnoubisVersions) {
 		/*
 		 * When the versioning-tab becomes active,
@@ -1343,6 +1335,16 @@ ModAnoubisMainPanelImpl::OnNotebookTabChanged(wxNotebookEvent&)
 		wxCommandEvent	showEvent(anEVT_OPEN_ALERTS);
 		showEvent.SetInt(0);
 		wxPostEvent(AnEvents::instance(), showEvent);
+	}
+	/* You are only interested in the PsBrowser */
+	if (tb_MainAnoubisNotify->GetPage(event.GetSelection()) ==
+	    tb_PsBrowser) {
+		/* Fetch only if connected */
+		psList->clearSelection();
+		if (JobCtrl::instance()->isConnected())
+			PSListCtrl::instance()->updatePSList();
+		else
+			PSListCtrl::instance()->clearPSList();
 	}
 }
 
@@ -1794,6 +1796,7 @@ ModAnoubisMainPanelImpl::OnAnoubisOptionsUpdate(wxCommandEvent& event)
 void
 ModAnoubisMainPanelImpl::onPsReloadClicked(wxCommandEvent &)
 {
+	psList->clearSelection();
 	PSListCtrl::instance()->updatePSList();
 }
 
@@ -1949,8 +1952,11 @@ ModAnoubisMainPanelImpl::Show(bool show)
 		return (result);
 
 	/* Fetch only if connected */
+	psList->clearSelection();
 	if (JobCtrl::instance()->isConnected())
 		PSListCtrl::instance()->updatePSList();
+	else
+		PSListCtrl::instance()->clearPSList();
 
 	return (result);
 }

@@ -158,12 +158,7 @@ void
 DlgPlaygroundCommitFileListImpl::onPlaygroundCompleted(wxCommandEvent &)
 {
 	/* remove the selection */
-	for (int i=fileList->getFirstSelection(); i>=0;
-	    i=fileList->getNextSelection(i)) {
-		fileList->SetItemState(i, 0,
-		    wxLIST_STATE_SELECTED|wxLIST_STATE_FOCUSED);
-	}
-
+	fileList->clearSelection();
 	/* reenable buttons */
 	commitButton->Enable();
 	delButton->Enable();

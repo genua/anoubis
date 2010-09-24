@@ -111,7 +111,6 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase,
 
 	protected:
 		void onConnectionStateChange(wxCommandEvent &);
-		void onTabChange(wxNotebookEvent &);
 		void OnLoadRuleSet(wxCommandEvent&);
 
 		void OnTypeChoosen(wxCommandEvent&);

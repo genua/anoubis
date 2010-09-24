@@ -241,6 +241,14 @@ AnListCtrl::hasSelection(void)
 	return false;
 }
 
+void
+AnListCtrl::clearSelection(void)
+{
+	for (int i=getFirstSelection(); i>=0; i=getNextSelection(i)) {
+		SetItemState(i, 0, wxLIST_STATE_SELECTED|wxLIST_STATE_FOCUSED);
+	}
+}
+
 int
 AnListCtrl::getFirstSelection(void) const
 {

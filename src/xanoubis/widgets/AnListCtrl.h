@@ -227,6 +227,16 @@ class AnListCtrl : public wxListCtrl, public Observer
 		bool hasSelection(void);
 
 		/**
+		 * Clear the entire selection of the list. This function
+		 * is linear in the number of list item, i.e. it should
+		 * be avoided for lists that can contain many elements.
+		 *
+		 * @param None.
+		 * @return None.
+		 */
+		void clearSelection(void);
+
+		/**
 		 * Returns the index of the first selected row.
 		 *
 		 * Do not use this function to test if a selection exists.
@@ -295,7 +305,7 @@ class AnListCtrl : public wxListCtrl, public Observer
 		int OnGetItemColumnImage(long, long) const;
 
 		/**
-		 * Overloader wxListCtrl::OnGetItemAttr().
+		 * Overloaded wxListCtrl::OnGetItemAttr().
 		 *
 		 * Specifies item attributes the for given item.
 		 *

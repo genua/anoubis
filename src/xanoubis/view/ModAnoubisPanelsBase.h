@@ -281,7 +281,6 @@ class ModAnoubisMainPanelBase : public wxPanel
 		wxTextCtrl* psCtxAdminPolicy;
 		
 		// Virtual event handlers, overide them in your derived class
-		virtual void onTabChange( wxNotebookEvent& event ){ event.Skip(); }
 		virtual void OnTypeChoosen( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnFirstBtnClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnPreviousBtnClick( wxCommandEvent& event ){ event.Skip(); }
