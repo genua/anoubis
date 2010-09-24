@@ -794,7 +794,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	psMainSizer->Add( psHeadSizer, 0, wxEXPAND, 5 );
 	
-	psList = new AnListCtrl( tb_PsBrowser, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_VIRTUAL );
+	psList = new AnListCtrl( tb_PsBrowser, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_SINGLE_SEL|wxLC_VIRTUAL );
 	psMainSizer->Add( psList, 2, wxALL|wxEXPAND, 5 );
 	
 	psInfoBook = new wxNotebook( tb_PsBrowser, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
@@ -983,6 +983,8 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	bSizer39->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	alfUserEditButton = new wxButton( psAlfPage, wxID_ANY, _("Edit..."), wxDefaultPosition, wxDefaultSize, 0 );
+	alfUserEditButton->Enable( false );
+	
 	bSizer39->Add( alfUserEditButton, 0, wxALL, 5 );
 	
 	psAlfPageSizer->Add( bSizer39, 1, wxEXPAND, 5 );
@@ -1001,6 +1003,8 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	bSizer40->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	alfAdminEditButton = new wxButton( psAlfPage, wxID_ANY, _("Edit..."), wxDefaultPosition, wxDefaultSize, 0 );
+	alfAdminEditButton->Enable( false );
+	
 	bSizer40->Add( alfAdminEditButton, 0, wxALL, 5 );
 	
 	psAlfPageSizer->Add( bSizer40, 1, wxEXPAND, 5 );
@@ -1039,6 +1043,8 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	bSizer41->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	sbUserEditButton = new wxButton( psSbPage, wxID_ANY, _("Edit..."), wxDefaultPosition, wxDefaultSize, 0 );
+	sbUserEditButton->Enable( false );
+	
 	bSizer41->Add( sbUserEditButton, 0, wxALL, 5 );
 	
 	psSbPageSizer->Add( bSizer41, 1, wxEXPAND, 5 );
@@ -1057,6 +1063,8 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	bSizer42->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	sbAdminEditButton = new wxButton( psSbPage, wxID_ANY, _("Edit..."), wxDefaultPosition, wxDefaultSize, 0 );
+	sbAdminEditButton->Enable( false );
+	
 	bSizer42->Add( sbAdminEditButton, 0, wxALL, 5 );
 	
 	psSbPageSizer->Add( bSizer42, 1, wxEXPAND, 5 );
@@ -1095,6 +1103,8 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	bSizer43->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	ctxUserEditButton = new wxButton( psCtxPage, wxID_ANY, _("Edit..."), wxDefaultPosition, wxDefaultSize, 0 );
+	ctxUserEditButton->Enable( false );
+	
 	bSizer43->Add( ctxUserEditButton, 0, wxALL, 5 );
 	
 	psCtxPageSizer->Add( bSizer43, 1, wxEXPAND, 5 );
@@ -1113,6 +1123,8 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	bSizer44->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	ctxAdminEditButton = new wxButton( psCtxPage, wxID_ANY, _("Edit..."), wxDefaultPosition, wxDefaultSize, 0 );
+	ctxAdminEditButton->Enable( false );
+	
 	bSizer44->Add( ctxAdminEditButton, 0, wxALL, 5 );
 	
 	psCtxPageSizer->Add( bSizer44, 1, wxEXPAND, 5 );

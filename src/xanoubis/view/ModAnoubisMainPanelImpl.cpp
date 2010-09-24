@@ -1870,6 +1870,15 @@ ModAnoubisMainPanelImpl::updatePSDetails(void)
 	psSbAdminPolicy->Clear();
 	psCtxUserPolicy->Clear();
 	psCtxAdminPolicy->Clear();
+
+	/* Enable edit-buttons only if you have an entry */
+	alfUserEditButton->Enable(entry != 0);
+	alfAdminEditButton->Enable(entry != 0);
+	sbUserEditButton->Enable(entry != 0);
+	sbAdminEditButton->Enable(entry != 0);
+	ctxUserEditButton->Enable(entry != 0);
+	ctxAdminEditButton->Enable(entry != 0);
+
 	if (entry) {
 		uint64_t	pgid = entry->getPlaygroundId();
 
