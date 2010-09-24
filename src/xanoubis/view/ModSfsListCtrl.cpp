@@ -230,8 +230,8 @@ ModSfsListCtrl::scanUpdate(unsigned int visited, unsigned int total)
 	/* Create the progress-dialog, if not already created. */
 	if (scanProgressDlg_ == 0) {
 		scanProgressDlg_ = new wxProgressDialog(
-		    _("Filesystem is scanned..."),
-		    _("Please wait while the filesystem is scanned."),
+		    _("Scanning filesystem..."),
+		    _("Please wait while the filesystem is being scanned."),
 		    total, this, wxPD_APP_MODAL|wxPD_AUTO_HIDE|wxPD_CAN_ABORT);
 	}
 
