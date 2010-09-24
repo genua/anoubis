@@ -167,6 +167,7 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase,
 
 		void OnPSListItemSelected(wxListEvent &);
 		void OnPSListItemDeselected(wxListEvent &);
+		void OnPSListError(wxCommandEvent &);
 
 		void OnPSListColumnButtonClick(wxCommandEvent&);
 

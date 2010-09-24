@@ -156,6 +156,7 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 	    NULL, this);
 	anEvents->Connect(anEVT_ANOUBISOPTIONS_UPDATE, wxCommandEventHandler(
 	    ModAnoubisMainPanelImpl::OnAnoubisOptionsUpdate), NULL, this);
+
 	tb_MainAnoubisNotify->Connect(wxEVT_COMMAND_NOTEBOOK_PAGE_CHANGED,
 	    wxNotebookEventHandler(
 	       ModAnoubisMainPanelImpl::OnNotebookTabChanged),
@@ -175,6 +176,8 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 	ADDCOLUMN("Command", getProcessName, const wxString, NULL, 300);
 
 	psListCtrl = PSListCtrl::instance();
+	psListCtrl->Connect(anEVT_PSLIST_ERROR, wxCommandEventHandler(
+	    ModAnoubisMainPanelImpl::OnPSListError), NULL, this);
 	psList->setRowProvider(psListCtrl->getPSListProvider());
 
 	update();
@@ -243,6 +246,9 @@ ModAnoubisMainPanelImpl::~ModAnoubisMainPanelImpl(void)
 	    NULL, this);
 	anEvents->Disconnect(anEVT_ANOUBISOPTIONS_UPDATE, wxCommandEventHandler(
 	    ModAnoubisMainPanelImpl::OnAnoubisOptionsUpdate), NULL, this);
+	PSListCtrl::instance()->Disconnect(anEVT_PSLIST_ERROR,
+	    wxCommandEventHandler(ModAnoubisMainPanelImpl::OnPSListError),
+	    NULL, this);
 
 	/*
 	 * Disconnect page changing event from notebook to prevent segfault
@@ -1804,6 +1810,26 @@ ModAnoubisMainPanelImpl::OnPSListItemDeselected(wxListEvent &event)
 	event.Skip();
 	updatePSDetails();
 }
+
+void
+ModAnoubisMainPanelImpl::OnPSListError(wxCommandEvent &event)
+{
+	const std::vector<wxString> &errors =
+	    PSListCtrl::instance()->getErrors();
+	event.Skip();
+
+	for (unsigned int i=0; i<errors.size(); i++) {
+		wxLogError(errors[i]);
+	}
+
+	if (errors.size() > 1) {
+		wxLogError(_("Multiple errors occured while fetching the "
+		    "process list"));
+	}
+	PSListCtrl::instance()->clearErrors();
+}
+
+
 
 /* Expects an empty rule set. */
 static void
