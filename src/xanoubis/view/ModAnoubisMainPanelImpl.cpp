@@ -56,6 +56,7 @@
 #include "AlertNotify.h"
 #include "AnEvents.h"
 #include "AnListColumn.h"
+#include "AnListProperty.h"
 #include "ApnVersion.h"
 #include "DlgProfileSelection.h"
 #include "EscalationNotify.h"
@@ -106,9 +107,64 @@
 		AnListColumn            *col; \
 		col = psList->addColumn( \
 		    new AnFmtListProperty<PSEntry, type>( \
-		    _(title), &PSEntry::function, NULL, conversion)); \
+		    title, &PSEntry::function, NULL, conversion)); \
 		col->setWidth(width); \
 	} while (0)
+
+#define ADDRULECOLUMN(title, user, admin, width) \
+	do { \
+		AnListColumn *col; \
+		col = psList->addColumn(new RuleIdListProperty( \
+		    title, &PSEntry::user, &PSEntry::admin)); \
+		col->setWidth(width); \
+	} while (0)
+
+class RuleIdListProperty : public AnListProperty
+{
+	public:
+		RuleIdListProperty(const wxString &header,
+		    unsigned long (PSEntry::*um)(void) const,
+		    unsigned long (PSEntry::*am)(void) const)
+		{
+			header_ = header;
+			um_ = um;
+			am_ = am;
+		}
+
+		wxString getHeader(void) const
+		{
+			return (header_);
+		}
+
+		wxString getText(AnListClass *obj) const
+		{
+			PSEntry *entry = dynamic_cast<PSEntry *>(obj);
+
+			if (entry != 0 && um_ != 0 && am_ != 0) {
+				unsigned long userId = (entry->*um_)();
+				unsigned long adminId = (entry->*am_)();
+
+				if (userId > 0 && adminId > 0)
+					return _("User/Admin");
+				else if (userId > 0 && adminId == 0)
+					return _("User");
+				else if (userId == 0 && adminId > 0)
+					return _("Admin");
+			}
+
+			return (wxEmptyString);
+		}
+
+		AnIconList::IconId getIcon(AnListClass *) const
+		{
+			return (AnIconList::ICON_NONE);
+		}
+
+	private:
+		wxString header_;
+		unsigned long (PSEntry::*um_)(void) const;
+		unsigned long (PSEntry::*am_)(void) const;
+};
 
 ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
     wxWindowID id) : ModAnoubisMainPanelBase(parent, id), Observer(NULL)
@@ -166,14 +222,14 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 	addSubject(listPerspective_);
 
 	/* configure Process List tab */
-	ADDCOLUMN("Process ID", getProcessId, const wxString, NULL, 80);
-	ADDCOLUMN("User", getEUID, long, &uidToString, 100);
-	ADDCOLUMN("ALF", getAlfRuleUser, unsigned long, NULL, 50);
-	ADDCOLUMN("SB", getSbRuleUser, unsigned long, NULL, 50);
-	ADDCOLUMN("CTX", getCtxRuleUser, unsigned long, NULL, 50);
-	ADDCOLUMN("Playground ID", getPlaygroundId, uint64_t,
+	ADDCOLUMN(_("Process ID"), getProcessId, const wxString, NULL, 80);
+	ADDCOLUMN(_("User"), getEUID, long, &uidToString, 100);
+	ADDRULECOLUMN(_("ALF"), getAlfRuleUser, getAlfRuleAdmin, 90);
+	ADDRULECOLUMN(_("SB"), getSbRuleUser, getSbRuleAdmin, 90);
+	ADDRULECOLUMN(_("CTX"), getCtxRuleUser, getCtxRuleAdmin, 90);
+	ADDCOLUMN(_("Playground ID"), getPlaygroundId, uint64_t,
 	    &pgidToString, 90);
-	ADDCOLUMN("Command", getProcessName, const wxString, NULL, 300);
+	ADDCOLUMN(_("Command"), getProcessName, const wxString, NULL, 180);
 
 	psListCtrl = PSListCtrl::instance();
 	psListCtrl->Connect(anEVT_PSLIST_ERROR, wxCommandEventHandler(
