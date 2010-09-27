@@ -127,19 +127,90 @@ SuitePSList::check_ps_list(void)
 		fprintf(stderr, "\n");
 	}
 
+	/* test process 1 */
 	long proc1 = getProcessRow(pslist, wxT("2000_1.sh"));
+
 	CPPUNIT_ASSERT_MESSAGE("process 1 does not exist", proc1 != -1);
 	CPPUNIT_ASSERT_MESSAGE("process 1 invalid user",
 	    getListValue(pslist, proc1, 1).Cmp(wxT("u2000")) == 0);
 	CPPUNIT_ASSERT_MESSAGE("process 2 no playground id",
 	    getListValue(pslist, proc1, 5).Cmp(wxT("")) == 0);
 
+	pslist->SetItemState(proc1,
+	    wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
+
+	assertTextValue(ID_LABEL_PS_COMMAND, "2000_1.sh");
+	assertTextValue(ID_LABEL_PS_UID, "2000");
+	assertTextValue(ID_LABEL_PS_GID, "100");
+	assertTextValue(ID_LABEL_PS_PGID, "no");
+	assertTextValue(ID_LABEL_PS_PROCESSPATH, "/tmp/2000_1.sh");
+	assertTextValue(ID_LABEL_PS_USERPATH, "/tmp/2000_1.sh");
+	assertTextValue(ID_LABEL_PS_ADMINPATH, "/tmp/2000_1.sh");
+
+	assertRuleValue(ID_TEXT_PS_ALF_USER,  "2: ");
+	assertRuleValue(ID_TEXT_PS_ALF_ADMIN, "2: ");
+	assertRuleValue(ID_TEXT_PS_SB_USER,   "6: ");
+	assertRuleValue(ID_TEXT_PS_SB_ADMIN,  "8: ");
+	assertRuleValue(ID_TEXT_PS_CTX_USER,  "13: ");
+	assertRuleValue(ID_TEXT_PS_CTX_ADMIN, "11: ");
+
+	pslist->SetItemState(proc1, 0, wxLIST_STATE_SELECTED);
+
+	/* test process 2 */
 	long proc2 = getProcessRow(pslist, wxT("2000_2.sh"));
 	CPPUNIT_ASSERT_MESSAGE("process 2 does not exist", proc2 != -1);
 	CPPUNIT_ASSERT_MESSAGE("process 2 invalid user",
 	    getListValue(pslist, proc2, 1).Cmp(wxT("u2000")) == 0);
 	CPPUNIT_ASSERT_MESSAGE("process 2 no playground id",
 	    getListValue(pslist, proc2, 5).Cmp(wxT("")) != 0);
+
+	pslist->SetItemState(proc2,
+	    wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
+
+	assertTextValue(ID_LABEL_PS_COMMAND, "2000_2.sh");
+	assertTextValue(ID_LABEL_PS_UID, "2000");
+	assertTextValue(ID_LABEL_PS_GID, "100");
+	assertTextValue(ID_LABEL_PS_PGID, "yes (ID: 1)");
+	assertTextValue(ID_LABEL_PS_PROCESSPATH, "/tmp/2000_2.sh");
+	assertTextValue(ID_LABEL_PS_USERPATH, "/tmp/2000_2.sh");
+	assertTextValue(ID_LABEL_PS_ADMINPATH, "/tmp/2000_2.sh");
+
+	assertRuleValue(ID_TEXT_PS_ALF_USER,  "4: ");
+	assertRuleValue(ID_TEXT_PS_ALF_ADMIN, "3: ");
+	assertRuleValue(ID_TEXT_PS_SB_USER,   "10: ");
+	assertRuleValue(ID_TEXT_PS_SB_ADMIN,  "16: ");
+	assertRuleValue(ID_TEXT_PS_CTX_USER,  "12: ");
+	assertRuleValue(ID_TEXT_PS_CTX_ADMIN, "14: ");
+
+	pslist->SetItemState(proc2, 0, wxLIST_STATE_SELECTED);
+}
+
+void
+SuitePSList::assertRuleValue(long id, const char* str) {
+	wxTextCtrl* text;
+	text = dynamic_cast<wxTextCtrl*>(wxWindow::FindWindowById(id));
+
+	CPPUNIT_ASSERT_MESSAGE("Can't find text object", text);
+
+	fprintf(stderr, "label %ld:\n%ls\n", id,
+	    text->GetValue().c_str());
+
+	CPPUNIT_ASSERT_MESSAGE(
+	    "Text value does not match",
+	    text->GetValue().StartsWith(wxString::From8BitData(str)));
+}
+
+void
+SuitePSList::assertTextValue(long id, const char* str) {
+	wxStaticText *text;
+	text = dynamic_cast<wxStaticText*>(wxWindow::FindWindowById(id));
+	CPPUNIT_ASSERT_MESSAGE("Can't find text object", text);
+
+	fprintf(stderr, "label %ld has value '%ls'\n", id,
+	    text->GetLabel().c_str());
+	CPPUNIT_ASSERT_MESSAGE(
+	    "Text value does not match",
+	    text->GetLabel().Cmp(wxString::From8BitData(str)) == 0);
 }
 
 wxString

@@ -44,8 +44,9 @@ class SuitePSList : public CPPUNIT_NS::TestFixture
 		void switch_ps_tab(void);
 		void check_ps_list(void);
 
+		void assertTextValue(long id, const char* str);
+		void assertRuleValue(long id, const char* str);
 		wxString getListValue(AnListCtrl* list, long id, int col);
-
 		long getProcessRow(AnListCtrl* pslist, wxString command);
 };
 
