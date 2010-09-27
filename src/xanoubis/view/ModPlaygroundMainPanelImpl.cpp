@@ -40,7 +40,6 @@
 #include <wx/tokenzr.h>
 
 #include "AnEvents.h"
-#include "AnListColumn.h"
 #include "AnListCtrl.h"
 #include "AnMessageDialog.h"
 #include "AnPickFromFs.h"
@@ -55,10 +54,8 @@
 
 #define ADD_PROPERTY(list, type, width) \
 	do { \
-		AnListColumn *_col; \
-		_col = list->addColumn(new PlaygroundListProperty( \
-		    PlaygroundListProperty::type)); \
-		_col->setWidth(width); \
+		list->addColumn(new PlaygroundListProperty( \
+		    PlaygroundListProperty::type), width); \
 	} while (0)
 
 ModPlaygroundMainPanelImpl::ModPlaygroundMainPanelImpl(wxWindow* parent,
@@ -77,6 +74,7 @@ ModPlaygroundMainPanelImpl::ModPlaygroundMainPanelImpl(wxWindow* parent,
 	playgroundCtrl = PlaygroundCtrl::instance();
 	comEnabled_ = false;
 
+	pgList->setStateKey(wxT("/State/PGList"));
 	ADD_PROPERTY(pgList, PROPERTY_ATTENTION, 20);
 	ADD_PROPERTY(pgList, PROPERTY_ID, 55);
 	ADD_PROPERTY(pgList, PROPERTY_COMMAND, 260);

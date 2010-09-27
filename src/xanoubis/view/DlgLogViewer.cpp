@@ -34,7 +34,6 @@
 #include <wx/imaglist.h>
 
 #include "AnEvents.h"
-#include "AnListColumn.h"
 #include "AnListCtrl.h"
 #include "DlgLogViewer.h"
 #include "main.h"
@@ -108,7 +107,6 @@ DlgLogViewer::DlgLogViewer(wxWindow* parent) : DlgLogViewerBase(parent)
 	AnEvents		*anEvents;
 	NotificationCtrl	*notifyCtrl;
 	AnListProperty		*property;
-	AnListColumn		*col;
 
 	anEvents = AnEvents::instance();
 	notifyCtrl = NotificationCtrl::instance();
@@ -119,21 +117,16 @@ DlgLogViewer::DlgLogViewer(wxWindow* parent) : DlgLogViewerBase(parent)
 	logListCtrl->setStateKey(wxT("/State/DlgLogViewer"));
 
 	property = new LogViewerProperty(LogViewerProperty::PROPERTY_ICON);
-	col = logListCtrl->addColumn(property);
-	col->setWidth(24);
-	col->setAlign(wxLIST_FORMAT_CENTRE);
+	logListCtrl->addColumn(property, 24, wxLIST_FORMAT_CENTRE);
 
 	property = new LogViewerProperty(LogViewerProperty::PROPERTY_TIME);
-	col = logListCtrl->addColumn(property);
-	col->setWidth(200); /* Adjust column width (Bug #1321). */
+	logListCtrl->addColumn(property, 200);
 
 	property = new LogViewerProperty(LogViewerProperty::PROPERTY_MODULE);
-	col = logListCtrl->addColumn(property);
-	col->setWidth(wxLIST_AUTOSIZE);
+	logListCtrl->addColumn(property, wxLIST_AUTOSIZE);
 
 	property = new LogViewerProperty(LogViewerProperty::PROPERY_MESSAGE);
-	col = logListCtrl->addColumn(property);
-	col->setWidth(385); /* Adjust column width (Bug #1321). */
+	logListCtrl->addColumn(property, 385);
 
 	logListCtrl->setRowProperty(new NotificationProperty);
 

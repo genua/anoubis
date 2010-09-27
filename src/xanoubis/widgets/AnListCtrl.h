@@ -106,16 +106,6 @@ class AnListCtrl : public wxListCtrl, public Observer
 		~AnListCtrl(void);
 
 		/**
-		 * Returns the configuration key of the list.
-		 *
-		 * The list dumps its state-information below this key. If the
-		 * application is restarted, the state is restored.
-		 *
-		 * @return Configuration key containing state-information
-		 */
-		wxString getStateKey(void) const;
-
-		/**
 		 * Assigns a configuration key to the list.
 		 *
 		 * If assigned, dumping/restoring of state-information is
@@ -131,56 +121,26 @@ class AnListCtrl : public wxListCtrl, public Observer
 		 * The column is appended at the end of the column-list.
 		 *
 		 * @param property The property to be displayed at the column.
-		 * @return The new column.
+		 * @param width The width of the column.
+		 * @param align The alignment of the column.
+		 * @return The logical index of the column. Use this for
+		 *     subsequent calls to functions that expect a column
+		 *     index.
 		 * @note The column is now the owner of the specified property.
 		 *       If the column is removed or the complete list is
 		 *       destroyed, the property is also destroyed.
 		 */
-		AnListColumn *addColumn(AnListProperty *);
-
-		/**
-		 * Returns the column at the specified index.
-		 *
-		 * @param idx The index of the column to be returned.
-		 * @return Column at the specified index. If the index is out
-		 *         of range, NULL is returned.
-		 */
-		AnListColumn *getColumn(unsigned int) const;
-
-		/**
-		 * Removes a column from the list.
-		 *
-		 * Note, that the assigned AnListProperty is also destroyed!
-		 *
-		 * @param idx Index of column to be removed.
-		 * @return true on success, false if the specified index is out
-		 *         of range.
-		 */
-		bool removeColumn(unsigned int);
-
-		/**
-		 * Returns the number of assigned columns.
-		 *
-		 * @return Number of columns.
-		 */
-		unsigned int getColumnCount(void) const;
-
-		/**
-		 * Tests whether the specified column is visible.
-		 *
-		 * @param col Column to test
-		 * @return true if visible, false otherwise.
-		 */
-		bool isColumnVisible(const AnListColumn *) const;
+		void addColumn(AnListProperty *, int width,
+		    wxListColumnFormat align = wxLIST_FORMAT_LEFT);
 
 		/**
 		 * Shows/hides the specified column.
 		 *
-		 * @param col Column to show/hide
+		 * @param idx Index of the column to show/hide
 		 * @param visible If set to true, the column is shown,
 		 *                otherwise it is hidden.
 		 */
-		void setColumnVisible(AnListColumn *, bool);
+		void setColumnVisible(unsigned int idx, bool visible);
 
 		/**
 		 * Returns the number of assigned rows.
@@ -331,6 +291,14 @@ class AnListCtrl : public wxListCtrl, public Observer
 		void onRowUpdate(wxCommandEvent &event);
 
 		/**
+		 * Handle a column size change event.
+		 *
+		 * @param event The event sent by the list control.
+		 * @return None.
+		 */
+		void onColumnSize(wxListEvent &event);
+
+		/**
 		 * Path of key, where state-information are dumped.
 		 */
 		wxString stateKey_;
@@ -387,11 +355,6 @@ class AnListCtrl : public wxListCtrl, public Observer
 		 *         value is not stored in the list.
 		 */
 		int removeVisible(unsigned int);
-
-		/**
-		 * Returns the selected index or -1 if nothing is selected.
-		 */
-		long getSelectedIndex(void);
 
 		/**
 		 * Implementation of the Observer interface.

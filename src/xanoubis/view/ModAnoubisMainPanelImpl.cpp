@@ -55,7 +55,6 @@
 
 #include "AlertNotify.h"
 #include "AnEvents.h"
-#include "AnListColumn.h"
 #include "AnListProperty.h"
 #include "ApnVersion.h"
 #include "DlgProfileSelection.h"
@@ -104,19 +103,15 @@
 
 #define ADDCOLUMN(title, function, type, conversion, width) \
 	do { \
-		AnListColumn            *col; \
-		col = psList->addColumn( \
+		psList->addColumn( \
 		    new AnFmtListProperty<PSEntry, type>( \
-		    title, &PSEntry::function, NULL, conversion)); \
-		col->setWidth(width); \
+		    title, &PSEntry::function, NULL, conversion), width); \
 	} while (0)
 
 #define ADDRULECOLUMN(title, user, admin, width) \
 	do { \
-		AnListColumn *col; \
-		col = psList->addColumn(new RuleIdListProperty( \
-		    title, &PSEntry::user, &PSEntry::admin)); \
-		col->setWidth(width); \
+		psList->addColumn(new RuleIdListProperty( \
+		    title, &PSEntry::user, &PSEntry::admin), width); \
 	} while (0)
 
 class RuleIdListProperty : public AnListProperty
@@ -193,10 +188,6 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 	/* Initialize list of versions */
 	versionListUpdate();
 
-	/* Adjust column width (Bug #1321). */
-	versionListCtrl->getColumn(1)->setWidth(205);
-	versionListCtrl->getColumn(2)->setWidth(205);
-
 	anEvents->Connect(anEVT_ESCALATIONS_SHOW,
 	    wxCommandEventHandler(ModAnoubisMainPanelImpl::OnEscalationsShow),
 	    NULL, this);
@@ -221,6 +212,7 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 	pathKeep_ = minPathKeep_ = 0;
 	addSubject(listPerspective_);
 
+	psList->setStateKey(wxT("/State/PSListCtrl"));
 	/* configure Process List tab */
 	ADDCOLUMN(_("Process ID"), getProcessId, const wxString, NULL, 80);
 	ADDCOLUMN(_("User"), getEUID, long, &uidToString, 100);
@@ -459,7 +451,6 @@ ModAnoubisMainPanelImpl::onConnectionStateChange(wxCommandEvent &event)
 	} else {
 		PSListCtrl::instance()->clearPSList();
 	}
-
 	event.Skip();
 }
 

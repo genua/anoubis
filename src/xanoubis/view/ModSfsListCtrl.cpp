@@ -27,7 +27,6 @@
 
 #include <wx/filename.h>
 
-#include <AnListColumn.h>
 #include <SfsCtrl.h>
 #include <SfsEntry.h>
 
@@ -42,14 +41,12 @@ ModSfsListCtrl::ModSfsListCtrl(wxWindow *parent, wxWindowID id,
 	sfsCtrl_ = 0;
 	currentSelection_ = -1;
 
-	/* Add columns to list */
-	AnListColumn *col;
-
-	col = addColumn(new ModSfsListProperty(ModSfsListProperty::PATH));
-	col->setWidth(360);
-
-	addColumn(new ModSfsListProperty(ModSfsListProperty::CHECKSUM));
-	addColumn(new ModSfsListProperty(ModSfsListProperty::SIGNATURE));
+	setStateKey(wxT("/State/SfsListCtrl"));
+	addColumn(new ModSfsListProperty(ModSfsListProperty::PATH), 360);
+	addColumn(new ModSfsListProperty(ModSfsListProperty::CHECKSUM),
+	    wxLIST_AUTOSIZE);
+	addColumn(new ModSfsListProperty(ModSfsListProperty::SIGNATURE),
+	    wxLIST_AUTOSIZE);
 
 	/* Initialize popup-menu */
 

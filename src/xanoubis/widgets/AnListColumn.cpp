@@ -31,137 +31,67 @@
 #include "AnListCtrl.h"
 #include "AnListProperty.h"
 
-unsigned int
-AnListColumn::getIndex(void) const
-{
-	return (this->columnIdx_);
-}
+static const wxString		visiblekey = wxT("visible");
+static const wxString		widthkey = wxT("width");
 
 AnListProperty *
 AnListColumn::getProperty(void) const
 {
-	return (property_);
-}
-
-bool
-AnListColumn::isVisible(void) const
-{
-	if (parent_ != 0)
-		return (parent_->isColumnVisible(this));
-	else
-		return (false);
+	return property_;
 }
 
 void
 AnListColumn::setVisible(bool visible)
 {
-	if (parent_ != 0)
-		parent_->setColumnVisible(this, visible);
-}
-
-int
-AnListColumn::getWidth(void) const
-{
-	return (columnInfo_.GetWidth());
+	visible_ = visible;
+	if (!configPath_.IsEmpty())
+		wxConfig::Get()->Write(configPath_ + visiblekey, visible_);
 }
 
 void
-AnListColumn::setWidth(int width, bool force)
+AnListColumn::setWidth(int width)
 {
-	if (!haveState(wxT("width")) || force) {
-		columnInfo_.SetWidth(width);
-		updateColumn();
+	if (!configPath_.IsEmpty()) {
+		width_ = width;
+		wxConfig::Get()->Write(configPath_ + widthkey, width);
 	}
 }
 
-wxListColumnFormat
-AnListColumn::getAlign(void) const
+AnListColumn::AnListColumn(AnListProperty *property, wxString key,
+    int width, wxListColumnFormat align)
 {
-	return (columnInfo_.GetAlign());
-}
+	property_ = property;
+	configPath_ = key;
+	if (configPath_ != wxEmptyString && !configPath_.EndsWith(wxT("/")))
+		configPath_ += wxT("/");
 
-void
-AnListColumn::setAlign(wxListColumnFormat align)
-{
-	columnInfo_.SetAlign(align);
-	updateColumn();
-}
-
-AnListColumn::AnListColumn(AnListProperty *property, AnListCtrl *parent)
-{
-	this->parent_ = parent;
-	this->property_ = property;
-
-	if (parent_ != 0)
-		columnIdx_ = parent->GetColumnCount();
-	else
-		columnIdx_ = 0;
-
-	columnInfo_.SetWidth(getState(wxT("width"), wxLIST_AUTOSIZE));
-	columnInfo_.SetAlign(wxLIST_FORMAT_LEFT);
-	columnInfo_.SetText(property->getHeader());
-
-	setVisible(true);
+	visible_ = true;
+	if (configPath_ != wxEmptyString) {
+		wxConfig::Get()->Read(configPath_ + widthkey, &width, width);
+		wxConfig::Get()->Read(configPath_ + visiblekey,
+		    &visible_, true);
+	}
+	width_ = width;
+	align_ = align;
 }
 
 AnListColumn::~AnListColumn(void)
 {
 	/* Save state of column */
-	if (parent_ != 0) {
-		putState(wxT("width"), parent_->GetColumnWidth(columnIdx_));
+	if (configPath_ != wxEmptyString) {
+		wxConfig::Get()->Write(configPath_ + widthkey, width_);
+		wxConfig::Get()->Write(configPath_ + visiblekey, visible_);
 	}
-
 	if (property_ != 0)
 		delete property_;
 }
 
-void
-AnListColumn::setIndex(unsigned int idx)
+wxListItem &
+AnListColumn::getColumnInfo(void)
 {
-	this->columnIdx_ = idx;
-}
+	colInfo_.SetWidth(width_);
+	colInfo_.SetAlign(align_);
+	colInfo_.SetText(property_->getHeader());
 
-void
-AnListColumn::updateColumn(void)
-{
-	if (parent_ != 0)
-		parent_->SetColumn(columnIdx_, columnInfo_);
-}
-
-bool
-AnListColumn::haveState(const wxString &property) const
-{
-	if ((parent_ != 0) && !parent_->getStateKey().IsEmpty()) {
-		wxString key = wxString::Format(wxT("%ls/%i/%ls"),
-		    parent_->getStateKey().c_str(), columnIdx_,
-		    property.c_str());
-		return (wxConfig::Get()->HasEntry(key));
-	} else
-		return (false);
-}
-
-long
-AnListColumn::getState(const wxString &property, long def) const
-{
-	long value = def;
-
-	if ((parent_ != 0) && !parent_->getStateKey().IsEmpty()) {
-		wxString key = wxString::Format(wxT("%ls/%i/%ls"),
-		    parent_->getStateKey().c_str(), columnIdx_,
-		    property.c_str());
-		wxConfig::Get()->Read(key, &value);
-	}
-
-	return (value);
-}
-
-void
-AnListColumn::putState(const wxString &property, long value)
-{
-	if ((parent_ != 0) && !parent_->getStateKey().IsEmpty()) {
-		wxString key = wxString::Format(wxT("%ls/%i/%ls"),
-		    parent_->getStateKey().c_str(), columnIdx_,
-		    property.c_str());
-		wxConfig::Get()->Write(key, value);
-	}
+	return colInfo_;
 }

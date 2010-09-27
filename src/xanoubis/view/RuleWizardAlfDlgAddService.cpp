@@ -25,7 +25,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <AnListColumn.h>
 #include <AnListCtrl.h>
 #include <Service.h>
 #include <ServiceList.h>
@@ -44,14 +43,20 @@ RuleWizardAlfDlgAddService::RuleWizardAlfDlgAddService(wxWindow *parent)
 {
 	int		 width;
 
+	/*
+	 * Substract 10 here, because GetClientSize() does not deliver
+	 * size without scrollbars.
+	 */
+	width = (serviceListCtrl->GetClientSize().GetWidth() / 3) - 10;
+
 	serviceListCtrl->addColumn(new AnFmtListProperty<Service>(
-	     _("Servicename"), &Service::getName));
+	     _("Servicename"), &Service::getName), width);
 	serviceListCtrl->addColumn(
 	    new AnFmtListProperty<Service, unsigned int>(
-	    _("Portnumber"), &Service::getPort));
+	    _("Portnumber"), &Service::getPort), width);
 	serviceListCtrl->addColumn(
-	    new AnFmtListProperty<Service, unsigned int>(
-	    _("Protocol"), &Service::getPort, NULL, &protoToString));
+	    new AnFmtListProperty<Service, unsigned int>(_("Protocol"),
+	    &Service::getPort, NULL, &protoToString), width);
 
 	/* The model, fill with system-services */
 	serviceList_ = new ServiceList;
@@ -64,16 +69,6 @@ RuleWizardAlfDlgAddService::RuleWizardAlfDlgAddService(wxWindow *parent)
 	 */
 	selection_ = new ServiceList;
 	selection_->SetEvtHandlerEnabled(false);
-
-	/*
-	 * Update column width.
-	 * Substract 10 here, because GetClientSize() does not deliver
-	 * size without scrollbars.
-	 */
-	width = (serviceListCtrl->GetClientSize().GetWidth() / 3) - 10;
-	serviceListCtrl->getColumn(0)->setWidth(width);
-	serviceListCtrl->getColumn(1)->setWidth(width);
-	serviceListCtrl->getColumn(2)->setWidth(width);
 
 	searchTextCtrl->SetFocus();
 	Layout();

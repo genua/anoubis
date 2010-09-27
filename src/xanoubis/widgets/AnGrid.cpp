@@ -104,9 +104,9 @@ AnGrid::onLabelRightClick(wxGridEvent &event)
 		selections = multiChoiceDlg->GetSelections();
 		for (i=0; i<table->getColumnCount(); i++) {
 			if (selections.Index(i) == wxNOT_FOUND) {
-				table->setColumnVisability(i, false);
+				table->setColumnVisibility(i, false);
 			} else {
-				table->setColumnVisability(i, true);
+				table->setColumnVisibility(i, true);
 			}
 		}
 		table->assignColumnWidth();

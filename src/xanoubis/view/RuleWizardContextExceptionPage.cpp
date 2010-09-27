@@ -31,7 +31,6 @@
 #include <wx/arrstr.h>
 #include <wx/msgdlg.h>
 
-#include <AnListColumn.h>
 #include <AnListCtrl.h>
 #include <AnListProperty.h>
 
@@ -75,9 +74,8 @@ RuleWizardContextExceptionPage::RuleWizardContextExceptionPage(wxWindow *parent,
 	history_ = history;
 
 	/* List has one column, expanded over complete list */
-	AnListColumn *col = exceptionList->addColumn(
-	    new ContextExceptionProperty);
-	col->setWidth(exceptionList->GetSize().GetWidth());
+	exceptionList->addColumn(new ContextExceptionProperty(),
+	    exceptionList->GetSize().GetWidth());
 
 	/* Row-provider is context-exception-model */
 	exceptionList->setRowProvider(history->getContextExceptions());

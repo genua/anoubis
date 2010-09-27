@@ -41,14 +41,16 @@ AnListCtrl::AnListCtrl(wxWindow *parent, wxWindowID id, const wxPoint &pos,
     const wxString &name)
     : wxListCtrl(parent, id, pos, size, style, validator, name), Observer(NULL)
 {
-	this->stateKey_ = wxEmptyString;
-	this->rowProperty_ = 0;
-	this->itemAttr_ = new wxListItemAttr;
+	stateKey_ = wxEmptyString;
+	rowProperty_ = NULL;
+	itemAttr_ = new wxListItemAttr;
 	hasSelectionResult_ = 0;
 	SetItemCount(0);
 	rowProvider_ = NULL;
 
 	SetImageList(AnIconList::instance(), wxIMAGE_LIST_SMALL);
+	Connect(wxEVT_COMMAND_LIST_COL_END_DRAG, wxListEventHandler(
+	    AnListCtrl::onColumnSize), NULL, this);
 }
 
 void
@@ -85,8 +87,10 @@ AnListCtrl::setRowProvider(AnRowProvider *provider)
 AnListCtrl::~AnListCtrl(void)
 {
 	setRowProvider(NULL);
-	if (this->rowProperty_ != 0)
-		delete this->rowProperty_;
+	Disconnect(wxEVT_COMMAND_LIST_COL_END_DRAG, wxListEventHandler(
+	    AnListCtrl::onColumnSize), NULL, this);
+	if (rowProperty_ != 0)
+		delete rowProperty_;
 
 	delete this->itemAttr_;
 
@@ -98,62 +102,35 @@ AnListCtrl::~AnListCtrl(void)
 	}
 }
 
-wxString
-AnListCtrl::getStateKey(void) const
-{
-	return (this->stateKey_);
-}
-
 void
 AnListCtrl::setStateKey(const wxString &key)
 {
-	this->stateKey_ = key;
+	stateKey_ = key;
+	if (stateKey_ != wxEmptyString && !stateKey_.EndsWith(wxT("/")))
+		stateKey_ += wxT("/");
 }
 
-AnListColumn *
-AnListCtrl::addColumn(AnListProperty *property)
+void
+AnListCtrl::addColumn(AnListProperty *property, int width,
+    wxListColumnFormat align)
 {
-	AnListColumn *col = new AnListColumn(property, this);
+	AnListColumn	*col;
+	unsigned int	 idx = columnList_.size();
+	wxString	 key = stateKey_;
+
+	if (key != wxEmptyString)
+		key += wxString::Format(wxT("%d"), idx);
+	col = new AnListColumn(property, key, width, align);
 	columnList_.push_back(col);
-
-	return (col);
-}
-
-AnListColumn *
-AnListCtrl::getColumn(unsigned int idx) const
-{
-	if (idx < columnList_.size())
-		return (columnList_[idx]);
-	else
-		return (0);
-}
-
-bool
-AnListCtrl::removeColumn(unsigned int idx)
-{
-	if (idx < columnList_.size()) {
-		std::vector<AnListColumn *>::iterator it = columnList_.begin();
-		it += idx;
-
-		AnListColumn *col = (*it);
-		columnList_.erase(it);
-		delete col;
-
-		/* Adapt position of any following columns */
-		for (unsigned int i = idx; i < columnList_.size(); i++) {
-			AnListColumn *col = columnList_[i];
-			col->setIndex(col->getIndex() - 1);
-		}
-
-		return (true);
-	} else
-		return (false);
-}
-
-unsigned int
-AnListCtrl::getColumnCount(void) const
-{
-	return (columnList_.size());
+	/*
+	 * Do _NOT_ use setColumnVisible. It assumes that the visibility
+	 * state tracked in the column already matches the view which is
+	 * not the case for a new column.
+	 */
+	if (col->isVisible()) {
+		visibleColumns_.push_back(idx);
+		InsertColumn(visibleColumns_.size()-1, col->getColumnInfo());
+	}
 }
 
 unsigned int
@@ -162,34 +139,23 @@ AnListCtrl::getRowCount(void) const
 	return rowProvider_->getSize();
 }
 
-bool
-AnListCtrl::isColumnVisible(const AnListColumn *col) const
-{
-	for (unsigned int idx = 0; idx < visibleColumns_.size(); idx++) {
-		if (visibleColumns_[idx] == col->getIndex())
-			return (true);
-	}
-
-	return (false);
-}
-
 void
-AnListCtrl::setColumnVisible(AnListColumn *col, bool visible)
+AnListCtrl::setColumnVisible(unsigned int colidx, bool visible)
 {
-	if (isColumnVisible(col) == visible) {
-		/* Nothing to do */
+	if (colidx >= columnList_.size())
 		return;
-	}
-
+	if (columnList_[colidx]->isVisible() == visible)
+		return;
+	columnList_[colidx]->setVisible(visible);
 	if (visible) {
 		/* Insert into list of visible columns */
-		unsigned int idx = insertVisible(col->getIndex());
+		unsigned int idx = insertVisible(colidx);
 
 		/* Insert column into view */
-		InsertColumn(idx, col->columnInfo_);
+		InsertColumn(idx, columnList_[colidx]->getColumnInfo());
 	} else {
 		/* Remove from list of visible columns */
-		int idx = removeVisible(col->getIndex());
+		int idx = removeVisible(colidx);
 
 		/* Remove column from view */
 		if (idx >= 0)
@@ -264,33 +230,33 @@ AnListCtrl::getNextSelection(int previous) const
 wxString
 AnListCtrl::OnGetItemText(long row, long column) const
 {
-	unsigned int columnIndex = visibleColumns_[column];
-	AnListColumn *col = getColumn(columnIndex);
+	unsigned int		 columnIndex = visibleColumns_[column];
+	AnListProperty		*property;
+	AnListClass		*item;
 
-	if (col != 0) {
-		AnListProperty *property = col->getProperty();
-		AnListClass *item = rowProvider_->getRow(row);
-
-		if (property && item)
-			return property->getText(item);
-	}
+	if (columnIndex >= columnList_.size())
+		return wxEmptyString;
+	property = columnList_[columnIndex]->getProperty();
+	item = rowProvider_->getRow(row);
+	if (property && item)
+		return property->getText(item);
 	return wxEmptyString;
 }
 
 int
 AnListCtrl::OnGetItemColumnImage(long row, long column) const
 {
-	unsigned int columnIndex = visibleColumns_[column];
-	AnListColumn *col = getColumn(columnIndex);
+	unsigned int		 columnIndex = visibleColumns_[column];
+	AnListProperty		*property;
+	AnListClass		*item;
 
-	if (col != 0) {
-		AnListProperty *property = col->getProperty();
-		AnListClass *item = rowProvider_->getRow(row);
-
-		if (property && item)
-			return property->getIcon(item);
-	}
-	return (AnIconList::ICON_NONE);
+	if (columnIndex >= columnList_.size())
+		return AnIconList::ICON_NONE;
+	property = columnList_[columnIndex]->getProperty();
+	item = rowProvider_->getRow(row);
+	if (property && item)
+		return property->getIcon(item);
+	return AnIconList::ICON_NONE;
 }
 
 wxListItemAttr *
@@ -353,12 +319,6 @@ AnListCtrl::removeVisible(unsigned int value)
 	return (-1);
 }
 
-long
-AnListCtrl::getSelectedIndex(void)
-{
-	return GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
-}
-
 void
 AnListCtrl::onSizeChange(wxCommandEvent &event)
 {
@@ -395,6 +355,17 @@ AnListCtrl::onRowUpdate(wxCommandEvent &event)
 }
 
 void
+AnListCtrl::onColumnSize(wxListEvent &event)
+{
+	int		idx = event.GetColumn();
+
+	event.Skip();
+	if (idx < 0 || idx >= (int)visibleColumns_.size())
+		return;
+	columnList_[visibleColumns_[idx]]->setWidth(GetColumnWidth(idx));
+}
+
+void
 AnListCtrl::showColumnVisibilityDialog()
 {
 	unsigned            col;
@@ -404,14 +375,12 @@ AnListCtrl::showColumnVisibilityDialog()
 	AnListColumn        *column;
 
 	/* prepare column information */
-	for (col=0; col<getColumnCount(); col++) {
-		column = getColumn(col);
-
+	for (col=0; col<columnList_.size(); col++) {
+		column = columnList_[col];
 		choices.Add(column->getProperty()->getHeader());
-		if (column->isVisible()) {
-			selections.Add(col);
-		}
 	}
+	for (unsigned int i=0; i<visibleColumns_.size(); ++i)
+		selections.Add(visibleColumns_[i]);
 
 	/* create the dialog */
 	columnDialog = new wxMultiChoiceDialog(this, _("Table columns"),
@@ -423,10 +392,8 @@ AnListCtrl::showColumnVisibilityDialog()
 	if (columnDialog->ShowModal() == wxID_OK) {
 		/* apply result */
 		selections = columnDialog->GetSelections();
-		for (col=0; col<getColumnCount(); col++) {
-			column = getColumn(col);
-
-			setColumnVisible(column,
+		for (col=0; col<columnList_.size(); col++) {
+			setColumnVisible(col,
 			    (selections.Index(col) != wxNOT_FOUND));
 		}
 

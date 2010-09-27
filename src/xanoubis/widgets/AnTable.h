@@ -34,7 +34,7 @@
 
 #include <vector>
 
-#include "AnGridColumn.h"
+#include "AnListColumn.h"
 #include "AnListProperty.h"
 #include "AnRowProvider.h"
 #include "Observer.h"
@@ -75,9 +75,9 @@ class AnTable : public wxGridTableBase, public wxEvtHandler, public Observer
 		 * represents the order in the grid.
 		 * @param[in] 1st The new property.
 		 * @param[in] 2nd The width of the concerning column.
-		 * @return Nothing.
+		 * @return The (virtual) column index the new column.
 		 */
-		void addProperty(AnListProperty *, int);
+		unsigned int addProperty(AnListProperty *, int);
 
 		/**
 		 * Get column count.
@@ -103,7 +103,7 @@ class AnTable : public wxGridTableBase, public wxEvtHandler, public Observer
 		 * @param[in] 1st The index of column in question.
 		 * @param[in] 2nd The new visibility.
 		 */
-		void setColumnVisability(unsigned int, bool);
+		void setColumnVisibility(unsigned int, bool);
 
 		/**
 		 * Set column width.
@@ -199,7 +199,7 @@ class AnTable : public wxGridTableBase, public wxEvtHandler, public Observer
 		/**
 		 * List of all known properties.
 		 */
-		std::vector<AnGridColumn *> columnList_;
+		std::vector<AnListColumn *> columnList_;
 
 		/**
 		 * List of visible colums indices to indices in property list.

@@ -28,21 +28,17 @@
 #include "ProfileListCtrl.h"
 #include "PolicyCtrl.h"
 #include "ModAnoubisMainPanelImpl.h"
-#include "AnListColumn.h"
 
 ProfileListCtrl::ProfileListCtrl(wxWindow *w, wxWindowID id,
     const wxPoint &p, const wxSize &sz, long type)
     : AnListCtrl(w, id, p, sz, type | wxLC_VIRTUAL)
 {
 	setRowProvider(PolicyCtrl::instance());
+	setStateKey(wxT("/State/ProfileListCtrl"));
 
 	/* Setup properties of the view */
-	addColumn(new ProfilePermissionProperty);
-	addColumn(new ProfileNameProperty);
-
-	/* Adjust column width (Bug #1321). */
-	getColumn(0)->setWidth(140);
-	getColumn(1)->setWidth(384);
+	addColumn(new ProfilePermissionProperty, 140);
+	addColumn(new ProfileNameProperty, 384);
 }
 
 AnIconList::IconId

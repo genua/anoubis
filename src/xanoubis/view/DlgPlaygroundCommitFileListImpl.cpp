@@ -32,7 +32,6 @@
 #include <wx/log.h>
 
 #include "AnListCtrl.h"
-#include "AnListColumn.h"
 #include "DlgPlaygroundCommitFileListImpl.h"
 #include "PlaygroundCtrl.h"
 #include "JobCtrl.h"
@@ -40,26 +39,23 @@
 #include "PlaygroundFileEntry.h"
 #include "PlaygroundInfoEntry.h"
 
-#define ADD_PROPERTY(list, type, width) \
-	do { \
-		AnListColumn *_col; \
-		_col = fileList->addColumn(new PlaygroundListProperty( \
-		    PlaygroundListProperty::type)); \
-		_col->setWidth(width, true); \
-	} while(0);
-
 DlgPlaygroundCommitFileListImpl::DlgPlaygroundCommitFileListImpl(
     PlaygroundInfoEntry *entry) : DlgPlaygroundCommitFileListBase(NULL)
 {
 	PlaygroundCtrl	*playgroundCtrl = PlaygroundCtrl::instance();
 	JobCtrl		*jobctrl = JobCtrl::instance();
 
-	ADD_PROPERTY(fileList, PROPERTY_DEV, 80);
-	ADD_PROPERTY(fileList, PROPERTY_INODE, 80);
-	ADD_PROPERTY(fileList, PROPERTY_FILENAME, 440);
+	fileList->setStateKey(wxT("/State/PlaygroundFileList"));
 
-	fileList->getColumn(0)->setVisible(false);
-	fileList->getColumn(1)->setVisible(false);
+	fileList->addColumn(new PlaygroundListProperty(
+	    PlaygroundListProperty::PROPERTY_DEV), 80);
+	fileList->addColumn(new PlaygroundListProperty(
+	    PlaygroundListProperty::PROPERTY_INODE), 80);
+	fileList->addColumn(new PlaygroundListProperty(
+	    PlaygroundListProperty::PROPERTY_FILENAME), 4440);
+
+	fileList->setColumnVisible(0, false);
+	fileList->setColumnVisible(1, false);
 
 	fileList->setRowProvider(playgroundCtrl->getFileProvider());
 

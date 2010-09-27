@@ -29,15 +29,17 @@
 #include "AnEvents.h"
 #include <wx/event.h>
 
-AnTable::AnTable(const wxString & configPath) : Observer(NULL)
+AnTable::AnTable(const wxString &configPath) : Observer(NULL)
 {
 	configPath_  = configPath;
+	if (configPath_ != wxEmptyString && !configPath_.EndsWith(wxT("/")))
+		configPath_ += wxT("/");
 	rowProvider_ = NULL;
 }
 
 AnTable::~AnTable(void)
 {
-	AnGridColumn	*column = NULL;
+	AnListColumn	*column = NULL;
 
 	setRowProvider(NULL);
 	visibilityList_.clear();
@@ -53,7 +55,7 @@ wxArrayString
 AnTable::getColumnName(void) const
 {
 	wxArrayString					 list;
-	std::vector<AnGridColumn *>::const_iterator	 it;
+	std::vector<AnListColumn *>::const_iterator	 it;
 	AnListProperty					*property;
 
 	for (it=columnList_.begin(); it!=columnList_.end(); it++) {
@@ -64,24 +66,23 @@ AnTable::getColumnName(void) const
 	return (list);
 }
 
-void
+unsigned int
 AnTable::addProperty(AnListProperty *property, int width)
 {
-	wxString	 key;
-	AnGridColumn	*column;
+	wxString		 key = configPath_;
+	AnListColumn		*column;
+	unsigned int		 idx = columnList_.size();
 
-	if (!configPath_.EndsWith(wxT("/"))) {
-		configPath_.Append(wxT("/"));
-	}
-	key = wxString::Format(wxT("%ls%d/"), configPath_.c_str(),
-	    columnList_.size());
-	column = new AnGridColumn(property, key, width);
+	if (key != wxEmptyString)
+		key += wxString::Format(wxT("%d"), idx);
+	column = new AnListColumn(property, key, width);
 
 	columnList_.push_back(column);
 	if (column->isVisible()) {
-		visibilityList_.push_back(columnList_.size() - 1);
+		visibilityList_.push_back(idx);
 		fireColsInserted(visibilityList_.size() - 1, 1);
 	}
+	return idx;
 }
 
 size_t
@@ -100,7 +101,7 @@ AnTable::isColumnVisible(unsigned int idx) const
 }
 
 void
-AnTable::setColumnVisability(unsigned int idx, bool visibility)
+AnTable::setColumnVisibility(unsigned int idx, bool visibility)
 {
 	std::vector<int>::iterator	it;
 	int				col;
@@ -115,19 +116,19 @@ AnTable::setColumnVisability(unsigned int idx, bool visibility)
 	}
 
 	if (!visibility) {
-		/* Visability turn off. Remove column. */
+		/* Visibility turn off. Remove column. */
 		for (col=0, it=visibilityList_.begin();
 		     it!=visibilityList_.end(); it++,col++) {
 			if ((*it) == (int)idx) {
-				columnList_[idx]->setVisibility(visibility);
+				columnList_[idx]->setVisible(visibility);
 				visibilityList_.erase(it);
 				fireColsRemoved(col, 1);
 				return;
 			}
 		}
 	} else {
-		/* Visability turn on. Add column. */
-		columnList_[idx]->setVisibility(visibility);
+		/* Visibility turn on. Add column. */
+		columnList_[idx]->setVisible(visibility);
 		for (col=0, it=visibilityList_.begin();
 		     it!=visibilityList_.end(); it++,col++) {
 			if ((*it) > (int)idx) {

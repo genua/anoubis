@@ -29,33 +29,64 @@
 #define _ANLISTCOLUMN_H_
 
 #include <wx/listctrl.h>
+#include <wx/grid.h>
 
-class AnListCtrl;
-class AnListProperty;
+#include "AnListProperty.h"
 
 /**
- * A column of an AnListCtrl.
+ * A column of an AnListCtrl or an AnGrid/AnTable.
  *
- * This is a single column and needs to be inserted into the list. The property
- * (getProperty()) defines the data to be displayed in the column. There are
- * several options, which defines the look of the column.
+ * This is a single column and needs to be inserted into the list or grid.
+ * The property (getProperty()) defines the data to be displayed in the
+ * column. There are several options, which define the look of the column.
  *
- * The column takes over the owership of the assigned property. It means, when
- * the column is removed, the assigned property is also destroyed.
+ * The column takes over the owership of the assigned property. This means,
+ * when the column is removed, the assigned property is also destroyed.
  */
 class AnListColumn
 {
 	public:
 		/**
-		 * Returns the index of the column.
+		 * Tests whether the column should be visible.
 		 *
-		 * This is not necessarily the index of a visible column. This
-		 * is the index you specified while fetching the column-object
-		 * (AnListCtrl::getColumn()).
-		 *
-		 * @return Index of column
+		 * @return true if visible, false otherwise.
 		 */
-		unsigned int getIndex(void) const;
+		bool isVisible(void) const {
+			return visible_;
+		}
+
+		/**
+		 * Inform the column that is now is visible/hidden.
+		 * Call this to make sure that a modified visibility
+		 * state is written to the xanouis.conf file. This is
+		 * not actually change the visibility status of the column
+		 * in the view. This must be done by the caller.
+		 *
+		 * @param visible True if the column is visible, false if
+		 *     it is hidden.
+		 */
+		void setVisible(bool);
+
+		/**
+		 * Return the current width of the column as stored in
+		 * the column object.
+		 *
+		 * @param None.
+		 * @return The current width.
+		 */
+		int getWidth(void) const {
+			return width_;
+		}
+
+		/**
+		 * Tell the column that its column width was changed. The
+		 * column will make sure that the updated with makes it
+		 * to the config file.
+		 *
+		 * @param width The new width of the column.
+		 * @return None.
+		 */
+		void setWidth(int width);
 
 		/**
 		 * Returns the assigned property of the column.
@@ -67,142 +98,75 @@ class AnListColumn
 		AnListProperty *getProperty(void) const;
 
 		/**
-		 * Tests whether the column is visible.
+		 * Return information about the column in the form of
+		 * a wxListItem that can be used in a wxListCtrl.
 		 *
-		 * @return true if visible, false otherwise.
+		 * @param None.
+		 * @return The wxListItem describing the column.
 		 */
-		bool isVisible(void) const;
-
-		/**
-		 * Shows/hides the column.
-		 *
-		 * @param visible If set to true, the column is shown,
-		 *                otherwise it is hidden.
-		 */
-		void setVisible(bool);
-
-		/**
-		 * Returns the width of the column.
-		 *
-		 * @return Width of the column
-		 */
-		int getWidth(void) const;
-
-		/**
-		 * Updates the width of the column.
-		 *
-		 * If the list has saved the width of the column, the new width
-		 * is ignored unless force is set to true.
-		 *
-		 * @param width Can be a width in pixels or wxLIST_AUTOSIZE
-		 *              (-1) or wxLIST_AUTOSIZE_USEHEADER (-2).
-		 *              wxLIST_AUTOSIZE will resize the column to the
-		 *              length of its longest item.
-		 * @param force If set to true, the saved width is ignored
-		 */
-		void setWidth(int, bool force = false);
-
-		/**
-		 * Returns the alignment of the column.
-		 *
-		 * Can be one of wxLIST_FORMAT_LEFT, wxLIST_FORMAT_RIGHT or
-		 * wxLIST_FORMAT_CENTRE.
-		 *
-		 * @return The alignment of the column.
-		 */
-		wxListColumnFormat getAlign(void) const;
-
-		/**
-		 * Updates the alignment of the column.
-		 *
-		 * @param align The new alignment. Can be one of
-		 *              wxLIST_FORMAT_LEFT, wxLIST_FORMAT_RIGHT or
-		 *              wxLIST_FORMAT_CENTRE.
-		 */
-		void setAlign(wxListColumnFormat);
+		wxListItem &getColumnInfo(void);
 
 	private:
 		/**
-		 * C'tor made private.
+		 * Private constructor. Only AnListCtrl and AnTable are
+		 * allowed to create column objects.
 		 *
 		 * Only AnListCtrl is allowed to create instances of the class.
 		 *
 		 * @param property The property to be assigned
-		 * @param parent The parent (owner) list
+		 * @param configKey The Key that should be used to store
+		 *     the column width an visibility in the config file.
+		 *     Use wxEmptyString if you do not want to store the
+		 *     this data permanently.
+		 * @param width The default width of the column. A configured
+		 *     value for the width stored in the config file
+		 *     takes precedence.
+		 * @param align The column alignmnet. Defaults to LEFT.
+		 *     NOTE: Currenty, this parameter is not used for Grids.
 		 */
-		AnListColumn(AnListProperty *, AnListCtrl *);
+		AnListColumn(AnListProperty *, wxString configKey,
+		    int width, wxListColumnFormat align = wxLIST_FORMAT_LEFT);
 
 		/**
-		 * D'tor.
-		 *
-		 * Made private because only AnListCtrl is allowed to destroy
-		 * instances of the class.
+		 * Private Destructor. Only AnListCtrl and AnTable are
+		 * allowed to destroy column objects.
 		 */
 		~AnListColumn(void);
 
 		/**
-		 * Updates the index of the column.
-		 *
-		 * @param idx The new index
-		 */
-		void setIndex(unsigned int);
-
-		/**
-		 * Updates the corresponding column in wxListCtrl.
-		 *
-		 * This method should be called after modifying the column.
-		 */
-		void updateColumn(void);
-
-		/**
-		 * Tests whether the list has saved the given property.
-		 *
-		 * @param property The property to test
-		 * @return true if the property is saved, false otherwise.
-		 */
-		bool haveState(const wxString &) const;
-
-		/**
-		 * Returns the saved value of the given property.
-		 *
-		 * @param property The name of the property
-		 * @param def Default value to be returned, if no value exists
-		 * @return Value of saved property
-		 */
-		long getState(const wxString &, long) const;
-
-		/**
-		 * Saves the value of a property.
-		 *
-		 * With the next start of the application, the property is
-		 * restored.
-		 *
-		 * @param property Name of property
-		 * @param value Value of property
-		 */
-		void putState(const wxString &, long);
-		
-		/**
-		 * The parent list.
-		 */
-		AnListCtrl *parent_;
-
-		/**
 		 * The assigned property.
 		 */
-		AnListProperty *property_;
+		AnListProperty			*property_;
 
 		/**
-		 * Several information about the column.
+		 * The width of the column.
 		 */
-		wxListItem columnInfo_;
+		int				 width_;
 
 		/**
-		 * Index of column.
+		 * The alignment of the column.
 		 */
-		unsigned int columnIdx_;
+
+		wxListColumnFormat		 align_;
+		/**
+		 * The visibility status of the column.
+		 */
+		bool				 visible_;
+
+		/**
+		 * The configuration key that is used to store the column
+		 * with and visibility.
+		 */
+		wxString configPath_;
+
+		/**
+		 * The column information for the column. This is filled
+		 * on demand and only used for AnListCtrls.
+		 */
+		wxListItem	colInfo_;
 
 	friend class AnListCtrl;
+	friend class AnTable;
 };
 
 #endif	/* _ANLISTCOLUMN_H_ */

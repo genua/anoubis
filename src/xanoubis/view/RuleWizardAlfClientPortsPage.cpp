@@ -25,7 +25,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <AnListColumn.h>
 #include <AnListCtrl.h>
 #include <AnListProperty.h>
 #include <Service.h>
@@ -50,7 +49,6 @@ RuleWizardAlfClientPortsPage::RuleWizardAlfClientPortsPage(wxWindow *parent,
     RuleWizardHistory *history) : RuleWizardAlfServicePageBase(parent)
 {
 	int		width;
-	AnListColumn	*col;
 
 	history->get();
 	history_ = history;
@@ -59,25 +57,18 @@ RuleWizardAlfClientPortsPage::RuleWizardAlfClientPortsPage(wxWindow *parent,
 	width = portListCtrl->GetClientSize().GetWidth() / 4;
 
 	/* Create columns */
-	col = portListCtrl->addColumn(new AnFmtListProperty<Service>(
-	    _("Servicename"), &Service::getName));
-	col->setWidth(width);
-
-	col = portListCtrl->addColumn(
+	portListCtrl->addColumn(new AnFmtListProperty<Service>(
+	    _("Servicename"), &Service::getName), width);
+	portListCtrl->addColumn(
 	    new AnFmtListProperty<Service, unsigned int>(
-	    _("Portnumber"), &Service::getPort));
-	col->setWidth(width);
-
-	col = portListCtrl->addColumn(
+	    _("Portnumber"), &Service::getPort), width);
+	portListCtrl->addColumn(
 	    new AnFmtListProperty<Service, unsigned int>(
-	    _("Protocol"), &Service::getPort, NULL, &protoToString));
-	col->setWidth(width);
-
-	col = portListCtrl->addColumn(
+	    _("Protocol"), &Service::getPort, NULL, &protoToString), width);
+	portListCtrl->addColumn(
 	    new AnFmtListProperty<Service, bool, bool>(
 	    _("Standard"), &Service::isDefault, &Service::isDefault,
-	    &DefaultConversions::toEmpty, &defaultToIcon));
-	col->setWidth(width);
+	    &DefaultConversions::toEmpty, &defaultToIcon), width);
 
 	/* Assign model */
 	portListCtrl->setRowProvider(history_->getAlfClientPortList());

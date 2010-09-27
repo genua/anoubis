@@ -45,17 +45,18 @@ VersionListCtrl::VersionListCtrl(wxWindow *w, wxWindowID id,
 
 	/* Setup properties of the view */
 	addColumn(new AnFmtListProperty<ApnVersion, bool>(
-	    _("Type"), &ApnVersion::isAutoStore, NULL, &getAutoStore));
+	    _("Type"), &ApnVersion::isAutoStore, NULL, &getAutoStore),
+	    wxLIST_AUTOSIZE);
 	addColumn(new AnFmtListProperty<ApnVersion, wxDateTime>(
 	    _("Date"), &ApnVersion::getTimestamp, NULL,
-	    &DefaultConversions::toDate));
+	    &DefaultConversions::toDate), 205);
 	addColumn(new AnFmtListProperty<ApnVersion, wxDateTime>(
 	    _("Time"), &ApnVersion::getTimestamp, NULL,
-	    &DefaultConversions::toTime));
+	    &DefaultConversions::toTime), 205);
 	addColumn(new AnFmtListProperty<ApnVersion>(
-	    _("User"), &ApnVersion::getUsername));
+	    _("User"), &ApnVersion::getUsername), wxLIST_AUTOSIZE);
 	addColumn(new AnFmtListProperty<ApnVersion, int>(
-	    _("Version"), &ApnVersion::getVersionNo));
+	    _("Version"), &ApnVersion::getVersionNo), wxLIST_AUTOSIZE);
 }
 
 void

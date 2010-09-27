@@ -29,7 +29,6 @@
 #include <wx/dirdlg.h>
 #include <wx/filename.h>
 
-#include <AnListColumn.h>
 #include <AnListCtrl.h>
 #include <SbEntry.h>
 #include <SbModel.h>
@@ -50,18 +49,13 @@ RuleWizardSandboxExecuteFilesPage::RuleWizardSandboxExecuteFilesPage(
 	/* The initial column width */
 	int width = fileListCtrl->GetClientSize().GetWidth() / 3;
 
-	AnListColumn *col;
-
 	/* Create columns */
-	col = fileListCtrl->addColumn(new RuleWizardSandboxProperty(
-	    RuleWizardSandboxProperty::PATH));
-	col->setWidth(width);
-	col = fileListCtrl->addColumn(new RuleWizardSandboxProperty(
-	    RuleWizardSandboxProperty::FILE));
-	col->setWidth(width);
-	col = fileListCtrl->addColumn(new RuleWizardSandboxProperty(
-	    RuleWizardSandboxProperty::STD));
-	col->setWidth(width);
+	fileListCtrl->addColumn(new RuleWizardSandboxProperty(
+	    RuleWizardSandboxProperty::PATH), width);
+	fileListCtrl->addColumn(new RuleWizardSandboxProperty(
+	    RuleWizardSandboxProperty::FILE), width);
+	fileListCtrl->addColumn(new RuleWizardSandboxProperty(
+	    RuleWizardSandboxProperty::STD), width);
 
 	/* Assign row-provider to list */
 	rowProvider_ = new SbModelRowProvider(

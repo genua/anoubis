@@ -507,8 +507,6 @@ xanoubis_SOURCES= \
 	widgets/AnGenericRowProvider.h \
 	widgets/AnGrid.cpp \
 	widgets/AnGrid.h \
-	widgets/AnGridColumn.cpp \
-	widgets/AnGridColumn.h \
 	widgets/AnIconList.cpp \
 	widgets/AnIconList.h \
 	widgets/AnListClass.h \
