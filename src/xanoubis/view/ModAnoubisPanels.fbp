@@ -5964,7 +5964,7 @@
                                     <object class="sizeritem" expanded="1">
                                         <property name="border">5</property>
                                         <property name="flag">wxALL|wxEXPAND</property>
-                                        <property name="proportion">2</property>
+                                        <property name="proportion">4</property>
                                         <object class="wxListCtrl" expanded="1">
                                             <property name="bg"></property>
                                             <property name="context_help"></property>
@@ -6033,7 +6033,7 @@
                                     <object class="sizeritem" expanded="1">
                                         <property name="border">5</property>
                                         <property name="flag">wxEXPAND | wxALL</property>
-                                        <property name="proportion">0</property>
+                                        <property name="proportion">3</property>
                                         <object class="wxNotebook" expanded="0">
                                             <property name="bg"></property>
                                             <property name="bitmapsize"></property>

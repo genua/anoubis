@@ -795,7 +795,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	psMainSizer->Add( psHeadSizer, 0, wxEXPAND, 5 );
 	
 	psList = new AnListCtrl( tb_PsBrowser, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_SINGLE_SEL|wxLC_VIRTUAL );
-	psMainSizer->Add( psList, 2, wxALL|wxEXPAND, 5 );
+	psMainSizer->Add( psList, 4, wxALL|wxEXPAND, 5 );
 	
 	psInfoBook = new wxNotebook( tb_PsBrowser, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
 	psDetailsPage = new wxScrolledWindow( psInfoBook, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL );
@@ -1143,7 +1143,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	psCtxPageSizer->Fit( psCtxPage );
 	psInfoBook->AddPage( psCtxPage, _("CTX rules"), false );
 	
-	psMainSizer->Add( psInfoBook, 0, wxEXPAND | wxALL, 5 );
+	psMainSizer->Add( psInfoBook, 3, wxEXPAND | wxALL, 5 );
 	
 	tb_PsBrowser->SetSizer( psMainSizer );
 	tb_PsBrowser->Layout();
