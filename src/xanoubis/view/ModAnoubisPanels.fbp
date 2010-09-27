@@ -156,7 +156,7 @@
                         <property name="fg"></property>
                         <property name="font"></property>
                         <property name="hidden">0</property>
-                        <property name="id">wxID_ANY</property>
+                        <property name="id">ID_ANOUBIS_MAIN_NOTEBOOK</property>
                         <property name="maximum_size"></property>
                         <property name="minimum_size"></property>
                         <property name="name">tb_MainAnoubisNotify</property>
@@ -5972,7 +5972,7 @@
                                             <property name="fg"></property>
                                             <property name="font"></property>
                                             <property name="hidden">0</property>
-                                            <property name="id">wxID_ANY</property>
+                                            <property name="id">ID_PSLIST</property>
                                             <property name="maximum_size"></property>
                                             <property name="minimum_size"></property>
                                             <property name="name">psList</property>
@@ -6202,7 +6202,7 @@
                                                                 <property name="fg"></property>
                                                                 <property name="font"></property>
                                                                 <property name="hidden">0</property>
-                                                                <property name="id">wxID_ANY</property>
+                                                                <property name="id">ID_LABEL_PS_COMMAND</property>
                                                                 <property name="label"></property>
                                                                 <property name="maximum_size"></property>
                                                                 <property name="minimum_size"></property>
@@ -6324,7 +6324,7 @@
                                                                 <property name="fg"></property>
                                                                 <property name="font"></property>
                                                                 <property name="hidden">0</property>
-                                                                <property name="id">wxID_ANY</property>
+                                                                <property name="id">ID_LABEL_PS_PID</property>
                                                                 <property name="label"></property>
                                                                 <property name="maximum_size"></property>
                                                                 <property name="minimum_size"></property>
@@ -6528,7 +6528,7 @@
                                                                 <property name="fg"></property>
                                                                 <property name="font"></property>
                                                                 <property name="hidden">0</property>
-                                                                <property name="id">wxID_ANY</property>
+                                                                <property name="id">ID_LABEL_PS_UID</property>
                                                                 <property name="label"></property>
                                                                 <property name="maximum_size"></property>
                                                                 <property name="minimum_size"></property>
@@ -6630,7 +6630,7 @@
                                                                 <property name="fg"></property>
                                                                 <property name="font"></property>
                                                                 <property name="hidden">0</property>
-                                                                <property name="id">wxID_ANY</property>
+                                                                <property name="id">ID_LABEL_PS_GID</property>
                                                                 <property name="label"></property>
                                                                 <property name="maximum_size"></property>
                                                                 <property name="minimum_size"></property>
@@ -7038,7 +7038,7 @@
                                                                 <property name="fg"></property>
                                                                 <property name="font"></property>
                                                                 <property name="hidden">0</property>
-                                                                <property name="id">wxID_ANY</property>
+                                                                <property name="id">ID_LABEL_PS_PGID</property>
                                                                 <property name="label"></property>
                                                                 <property name="maximum_size"></property>
                                                                 <property name="minimum_size"></property>
@@ -7203,7 +7203,7 @@
                                                                 <property name="fg"></property>
                                                                 <property name="font"></property>
                                                                 <property name="hidden">0</property>
-                                                                <property name="id">wxID_ANY</property>
+                                                                <property name="id">ID_LABEL_PS_PROCESSPATH</property>
                                                                 <property name="label"></property>
                                                                 <property name="maximum_size"></property>
                                                                 <property name="minimum_size"></property>
@@ -7505,7 +7505,7 @@
                                                                 <property name="fg"></property>
                                                                 <property name="font"></property>
                                                                 <property name="hidden">0</property>
-                                                                <property name="id">wxID_ANY</property>
+                                                                <property name="id">ID_LABEL_PS_USERPATH</property>
                                                                 <property name="label"></property>
                                                                 <property name="maximum_size"></property>
                                                                 <property name="minimum_size"></property>
@@ -7807,7 +7807,7 @@
                                                                 <property name="fg"></property>
                                                                 <property name="font"></property>
                                                                 <property name="hidden">0</property>
-                                                                <property name="id">wxID_ANY</property>
+                                                                <property name="id">ID_LABEL_PS_ADMINPATH</property>
                                                                 <property name="label"></property>
                                                                 <property name="maximum_size"></property>
                                                                 <property name="minimum_size"></property>
@@ -8320,7 +8320,7 @@
                                                                 <property name="fg"></property>
                                                                 <property name="font"></property>
                                                                 <property name="hidden">0</property>
-                                                                <property name="id">wxID_ANY</property>
+                                                                <property name="id">ID_TEXT_PS_ALF_USER</property>
                                                                 <property name="maximum_size"></property>
                                                                 <property name="maxlength">0</property>
                                                                 <property name="minimum_size"></property>
@@ -8424,7 +8424,7 @@
                                                                 <property name="fg"></property>
                                                                 <property name="font"></property>
                                                                 <property name="hidden">0</property>
-                                                                <property name="id">wxID_ANY</property>
+                                                                <property name="id">ID_TEXT_PS_ALF_ADMIN</property>
                                                                 <property name="maximum_size"></property>
                                                                 <property name="maxlength">0</property>
                                                                 <property name="minimum_size"></property>
@@ -8839,7 +8839,7 @@
                                                                 <property name="fg"></property>
                                                                 <property name="font"></property>
                                                                 <property name="hidden">0</property>
-                                                                <property name="id">wxID_ANY</property>
+                                                                <property name="id">ID_TEXT_PS_SB_USER</property>
                                                                 <property name="maximum_size"></property>
                                                                 <property name="maxlength">0</property>
                                                                 <property name="minimum_size"></property>
@@ -8943,7 +8943,7 @@
                                                                 <property name="fg"></property>
                                                                 <property name="font"></property>
                                                                 <property name="hidden">0</property>
-                                                                <property name="id">wxID_ANY</property>
+                                                                <property name="id">ID_TEXT_PS_SB_ADMIN</property>
                                                                 <property name="maximum_size"></property>
                                                                 <property name="maxlength">0</property>
                                                                 <property name="minimum_size"></property>
@@ -9358,7 +9358,7 @@
                                                                 <property name="fg"></property>
                                                                 <property name="font"></property>
                                                                 <property name="hidden">0</property>
-                                                                <property name="id">wxID_ANY</property>
+                                                                <property name="id">ID_TEXT_PS_CTX_USER</property>
                                                                 <property name="maximum_size"></property>
                                                                 <property name="maxlength">0</property>
                                                                 <property name="minimum_size"></property>
@@ -9462,7 +9462,7 @@
                                                                 <property name="fg"></property>
                                                                 <property name="font"></property>
                                                                 <property name="hidden">0</property>
-                                                                <property name="id">wxID_ANY</property>
+                                                                <property name="id">ID_TEXT_PS_CTX_ADMIN</property>
                                                                 <property name="maximum_size"></property>
                                                                 <property name="maxlength">0</property>
                                                                 <property name="minimum_size"></property>

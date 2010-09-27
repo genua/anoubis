@@ -49,7 +49,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	sz_MainAnoubisMain->Add( tx_MainHeadline, 0, wxALIGN_CENTER_HORIZONTAL|wxALL|wxEXPAND, 5 );
 	
-	tb_MainAnoubisNotify = new wxNotebook( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	tb_MainAnoubisNotify = new wxNotebook( this, ID_ANOUBIS_MAIN_NOTEBOOK, wxDefaultPosition, wxDefaultSize, 0 );
 	tb_MainAnoubisNotification = new wxScrolledWindow( tb_MainAnoubisNotify, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTAB_TRAVERSAL|wxVSCROLL );
 	tb_MainAnoubisNotification->SetScrollRate( 5, 5 );
 	wxBoxSizer* sz_MainAnoubisNotify;
@@ -794,7 +794,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	psMainSizer->Add( psHeadSizer, 0, wxEXPAND, 5 );
 	
-	psList = new AnListCtrl( tb_PsBrowser, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_SINGLE_SEL|wxLC_VIRTUAL );
+	psList = new AnListCtrl( tb_PsBrowser, ID_PSLIST, wxDefaultPosition, wxDefaultSize, wxLC_HRULES|wxLC_REPORT|wxLC_SINGLE_SEL|wxLC_VIRTUAL );
 	psMainSizer->Add( psList, 4, wxALL|wxEXPAND, 5 );
 	
 	psInfoBook = new wxNotebook( tb_PsBrowser, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
@@ -811,7 +811,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	psDetailsCommandLabel->Wrap( -1 );
 	psDetailsSizer->Add( psDetailsCommandLabel, 0, wxALL, 5 );
 	
-	psDetailsCommandText = new wxStaticText( psDetailsPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	psDetailsCommandText = new wxStaticText( psDetailsPage, ID_LABEL_PS_COMMAND, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
 	psDetailsCommandText->Wrap( -1 );
 	psDetailsSizer->Add( psDetailsCommandText, 0, wxALL, 5 );
 	
@@ -825,7 +825,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	psDetailsPidLabel->Wrap( -1 );
 	psDetailsSizer->Add( psDetailsPidLabel, 0, wxALL, 5 );
 	
-	psDetailsPidText = new wxStaticText( psDetailsPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	psDetailsPidText = new wxStaticText( psDetailsPage, ID_LABEL_PS_PID, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
 	psDetailsPidText->Wrap( -1 );
 	psDetailsSizer->Add( psDetailsPidText, 0, wxALL, 5 );
 	
@@ -841,7 +841,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	psDetailsRealUidLabel->Wrap( -1 );
 	psDetailsSizer->Add( psDetailsRealUidLabel, 0, wxALL, 5 );
 	
-	psDetailsRealUidText = new wxStaticText( psDetailsPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	psDetailsRealUidText = new wxStaticText( psDetailsPage, ID_LABEL_PS_UID, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
 	psDetailsRealUidText->Wrap( -1 );
 	psDetailsSizer->Add( psDetailsRealUidText, 0, wxALL, 5 );
 	
@@ -849,7 +849,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	psDetailsRealGidLabel->Wrap( -1 );
 	psDetailsSizer->Add( psDetailsRealGidLabel, 0, wxALL, 5 );
 	
-	psDetailsRealGidText = new wxStaticText( psDetailsPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	psDetailsRealGidText = new wxStaticText( psDetailsPage, ID_LABEL_PS_GID, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
 	psDetailsRealGidText->Wrap( -1 );
 	psDetailsSizer->Add( psDetailsRealGidText, 0, wxALL, 5 );
 	
@@ -881,7 +881,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	psDetailsPlaygroundLabel->Wrap( -1 );
 	psDetailsSizer->Add( psDetailsPlaygroundLabel, 0, wxALL, 5 );
 	
-	psDetailsPlaygroundText = new wxStaticText( psDetailsPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	psDetailsPlaygroundText = new wxStaticText( psDetailsPage, ID_LABEL_PS_PGID, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
 	psDetailsPlaygroundText->Wrap( -1 );
 	psDetailsSizer->Add( psDetailsPlaygroundText, 0, wxALL, 5 );
 	
@@ -902,7 +902,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	psPathAppLabel->Wrap( -1 );
 	psPathSizer->Add( psPathAppLabel, 0, wxTOP|wxRIGHT|wxLEFT, 5 );
 	
-	psPathAppText = new wxStaticText( psPathPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	psPathAppText = new wxStaticText( psPathPage, ID_LABEL_PS_PROCESSPATH, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
 	psPathAppText->Wrap( -1 );
 	psPathSizer->Add( psPathAppText, 0, wxTOP|wxRIGHT|wxLEFT, 5 );
 	
@@ -924,7 +924,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	psPathUserCtxPathLabel->Wrap( -1 );
 	psPathSizer->Add( psPathUserCtxPathLabel, 0, wxTOP|wxRIGHT|wxLEFT, 5 );
 	
-	psPathUserCtxPathText = new wxStaticText( psPathPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	psPathUserCtxPathText = new wxStaticText( psPathPage, ID_LABEL_PS_USERPATH, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
 	psPathUserCtxPathText->Wrap( -1 );
 	psPathSizer->Add( psPathUserCtxPathText, 0, wxTOP|wxRIGHT|wxLEFT, 5 );
 	
@@ -946,7 +946,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	psPathAdminCtxPathLabel->Wrap( -1 );
 	psPathSizer->Add( psPathAdminCtxPathLabel, 0, wxTOP|wxRIGHT|wxLEFT, 5 );
 	
-	psPathAdminCtxPathText = new wxStaticText( psPathPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	psPathAdminCtxPathText = new wxStaticText( psPathPage, ID_LABEL_PS_ADMINPATH, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
 	psPathAdminCtxPathText->Wrap( -1 );
 	psPathSizer->Add( psPathAdminCtxPathText, 0, wxTOP|wxRIGHT|wxLEFT, 5 );
 	
@@ -1009,13 +1009,13 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	psAlfPageSizer->Add( bSizer40, 1, wxEXPAND, 5 );
 	
-	psAlfUserPolicy = new wxTextCtrl( psAlfPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTE_MULTILINE|wxTE_READONLY );
+	psAlfUserPolicy = new wxTextCtrl( psAlfPage, ID_TEXT_PS_ALF_USER, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTE_MULTILINE|wxTE_READONLY );
 	psAlfPageSizer->Add( psAlfUserPolicy, 1, wxALL|wxEXPAND, 5 );
 	
 	m_staticline8 = new wxStaticLine( psAlfPage, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL );
 	psAlfPageSizer->Add( m_staticline8, 0, wxALL|wxEXPAND, 5 );
 	
-	psAlfAdminPolicy = new wxTextCtrl( psAlfPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTE_MULTILINE|wxTE_READONLY );
+	psAlfAdminPolicy = new wxTextCtrl( psAlfPage, ID_TEXT_PS_ALF_ADMIN, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTE_MULTILINE|wxTE_READONLY );
 	psAlfPageSizer->Add( psAlfAdminPolicy, 1, wxALL|wxEXPAND, 5 );
 	
 	psAlfPage->SetSizer( psAlfPageSizer );
@@ -1069,13 +1069,13 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	psSbPageSizer->Add( bSizer42, 1, wxEXPAND, 5 );
 	
-	psSbUserPolicy = new wxTextCtrl( psSbPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTE_MULTILINE|wxTE_READONLY );
+	psSbUserPolicy = new wxTextCtrl( psSbPage, ID_TEXT_PS_SB_USER, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTE_MULTILINE|wxTE_READONLY );
 	psSbPageSizer->Add( psSbUserPolicy, 1, wxALL|wxEXPAND, 5 );
 	
 	m_staticline10 = new wxStaticLine( psSbPage, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL );
 	psSbPageSizer->Add( m_staticline10, 0, wxEXPAND | wxALL, 5 );
 	
-	psSbAdminPolicy = new wxTextCtrl( psSbPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTE_MULTILINE|wxTE_READONLY );
+	psSbAdminPolicy = new wxTextCtrl( psSbPage, ID_TEXT_PS_SB_ADMIN, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTE_MULTILINE|wxTE_READONLY );
 	psSbPageSizer->Add( psSbAdminPolicy, 1, wxALL|wxEXPAND, 5 );
 	
 	psSbPage->SetSizer( psSbPageSizer );
@@ -1129,13 +1129,13 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	psCtxPageSizer->Add( bSizer44, 1, wxEXPAND, 5 );
 	
-	psCtxUserPolicy = new wxTextCtrl( psCtxPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTE_MULTILINE|wxTE_READONLY );
+	psCtxUserPolicy = new wxTextCtrl( psCtxPage, ID_TEXT_PS_CTX_USER, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTE_MULTILINE|wxTE_READONLY );
 	psCtxPageSizer->Add( psCtxUserPolicy, 1, wxALL|wxEXPAND, 5 );
 	
 	m_staticline12 = new wxStaticLine( psCtxPage, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL );
 	psCtxPageSizer->Add( m_staticline12, 0, wxEXPAND | wxALL, 5 );
 	
-	psCtxAdminPolicy = new wxTextCtrl( psCtxPage, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTE_MULTILINE|wxTE_READONLY );
+	psCtxAdminPolicy = new wxTextCtrl( psCtxPage, ID_TEXT_PS_CTX_ADMIN, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxTE_MULTILINE|wxTE_READONLY );
 	psCtxPageSizer->Add( psCtxAdminPolicy, 1, wxALL|wxEXPAND, 5 );
 	
 	psCtxPage->SetSizer( psCtxPageSizer );

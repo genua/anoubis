@@ -65,7 +65,23 @@ class VersionListCtrl;
 
 ///////////////////////////////////////////////////////////////////////////
 
-#define MAIN_CONNECTBUTTON 13100
+#define ID_ANOUBIS_MAIN_NOTEBOOK 13100
+#define ID_PSLIST 13101
+#define ID_LABEL_PS_COMMAND 13102
+#define ID_LABEL_PS_PID 13103
+#define ID_LABEL_PS_UID 13104
+#define ID_LABEL_PS_GID 13105
+#define ID_LABEL_PS_PGID 13106
+#define ID_LABEL_PS_PROCESSPATH 13107
+#define ID_LABEL_PS_USERPATH 13108
+#define ID_LABEL_PS_ADMINPATH 13109
+#define ID_TEXT_PS_ALF_USER 13110
+#define ID_TEXT_PS_ALF_ADMIN 13111
+#define ID_TEXT_PS_SB_USER 13112
+#define ID_TEXT_PS_SB_ADMIN 13113
+#define ID_TEXT_PS_CTX_USER 13114
+#define ID_TEXT_PS_CTX_ADMIN 13115
+#define MAIN_CONNECTBUTTON 13116
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class ModAnoubisMainPanelBase

@@ -46,6 +46,7 @@ void
 SuitePlayground::do_playground_testsuite(void)
 {
 	/* Note: these 'testcases' are _not_ independent */
+	fprintf(stderr, "----------------------------------------\n");
 	connect();
 	startPlayground();
 	checkPlaygroundInfo();
