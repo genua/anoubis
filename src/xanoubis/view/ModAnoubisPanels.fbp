@@ -4918,7 +4918,7 @@
                                                                             <event name="OnSetFocus"></event>
                                                                             <event name="OnSize"></event>
                                                                             <event name="OnSpinCtrl">OnEscalationTimeout</event>
-                                                                            <event name="OnSpinCtrlText"></event>
+                                                                            <event name="OnSpinCtrlText">OnEscalationTimeoutText</event>
                                                                             <event name="OnUpdateUI"></event>
                                                                         </object>
                                                                     </object>
@@ -5189,7 +5189,7 @@
                                                                             <event name="OnSetFocus"></event>
                                                                             <event name="OnSize"></event>
                                                                             <event name="OnSpinCtrl">OnAlertTimeout</event>
-                                                                            <event name="OnSpinCtrlText"></event>
+                                                                            <event name="OnSpinCtrlText">OnAlertTimeoutText</event>
                                                                             <event name="OnUpdateUI"></event>
                                                                         </object>
                                                                     </object>
@@ -5536,7 +5536,7 @@
                                                         <property name="border">5</property>
                                                         <property name="flag">wxEXPAND</property>
                                                         <property name="proportion">1</property>
-                                                        <object class="wxBoxSizer" expanded="1">
+                                                        <object class="wxBoxSizer" expanded="0">
                                                             <property name="minimum_size"></property>
                                                             <property name="name">bSizer191</property>
                                                             <property name="orient">wxVERTICAL</property>
@@ -5568,7 +5568,7 @@
                                                                     <property name="window_name"></property>
                                                                     <property name="window_style"></property>
                                                                     <event name="OnChar"></event>
-                                                                    <event name="OnCheckBox"></event>
+                                                                    <event name="OnCheckBox">OnAutoConnect</event>
                                                                     <event name="OnEnterWindow"></event>
                                                                     <event name="OnEraseBackground"></event>
                                                                     <event name="OnKeyDown"></event>

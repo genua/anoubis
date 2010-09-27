@@ -328,13 +328,16 @@ class ModAnoubisMainPanelBase : public wxPanel
 		virtual void OnEscalationDisable( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnEscalationNoTimeout( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnEscalationTimeout( wxSpinEvent& event ){ event.Skip(); }
+		virtual void OnEscalationTimeoutText( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAlertDisable( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAlertNoTimeout( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnAlertTimeout( wxSpinEvent& event ){ event.Skip(); }
+		virtual void OnAlertTimeoutText( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnEnableUpgradeMsg( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnEnableKernelMsg( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnEnableInformationMsg( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnDoAutostart( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnAutoConnect( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnToolTipCheckBox( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnToolTipSpinCtrl( wxSpinEvent& event ){ event.Skip(); }
 		virtual void OnToolTipSpinCtrlText( wxCommandEvent& event ){ event.Skip(); }
