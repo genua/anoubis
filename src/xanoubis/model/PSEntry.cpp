@@ -68,7 +68,7 @@ PSEntry::PSEntry(const Anoubis_ProcRecord* psrec,
 		euid_ = psinfo->euid;
 		gid_ =  psinfo->rgid;
 		egid_ = psinfo->egid;
-		process_name_ = wxString::FromAscii(psinfo->comm);
+		process_name_ = wxString::FromAscii(psinfo->command);
 	} else {
 		ppid_ = -1;
 		uid_ = -1;

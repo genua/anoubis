@@ -60,7 +60,8 @@ struct		anoubis_proc_handle;
  * sgid: The saved group ID
  * ngroups: The number of entries in the groups array
  * groups: The list of supplementary group IDs
- * comm: The command.
+ * comm: The short form of the command.
+ * command: The full version of the command (without command line arguments)
  */
 struct anoubis_proc {
 	uint32_t		 pid;
@@ -74,6 +75,7 @@ struct anoubis_proc {
 	uint32_t		 ngroups;
 	int			*groups;
 	char			*comm;
+	char			*command;
 };
 
 __BEGIN_DECLS
@@ -92,6 +94,8 @@ anoubis_proc_destroy(struct anoubis_proc *p)
 		free(p->groups);
 	if (p->comm)
 		free(p->comm);
+	if (p->command)
+		free(p->command);
 	free(p);
 }
 

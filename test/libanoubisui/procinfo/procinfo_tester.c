@@ -38,7 +38,8 @@
  * - parent process ID
  * - real, effective and saved user ID
  * - real, effective and saved group ID
- * - The command
+ * - The short command
+ * - The program part of the long command
  */
 int
 main(int argc, char **argv)
@@ -60,9 +61,9 @@ main(int argc, char **argv)
 		if (p == NULL)
 			continue;
 #define INT "%" PRId32 " "
-		printf(INT INT INT INT INT INT INT INT "%s\n",
+		printf(INT INT INT INT INT INT INT INT "%s %s\n",
 		    p->pid, p->ppid, p->ruid, p->euid, p->suid,
-		    p->rgid, p->egid, p->sgid, p->comm);
+		    p->rgid, p->egid, p->sgid, p->comm, p->command);
 #undef INT
 		anoubis_proc_destroy(p);
 	}

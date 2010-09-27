@@ -90,6 +90,8 @@ anoubis_proc_get(struct anoubis_proc_handle *handle, pid_t pid)
 	struct anoubis_proc		*p;
 	struct kinfo_proc2		*kp;
 	int				 cnt = 0;
+	char				**argv;
+
 	if (!handle || handle->kd == NULL)
 		return NULL;
 	kp = kvm_getproc2(handle->kd, KERN_PROC_PID, pid,
@@ -101,6 +103,7 @@ anoubis_proc_get(struct anoubis_proc_handle *handle, pid_t pid)
 		return NULL;
 	p->groups = NULL;
 	p->comm = NULL;
+	p->command = NULL;
 	p->pid = kp->p_pid;
 	p->ppid = kp->p_ppid;
 	p->ruid = kp->p_ruid;
@@ -124,6 +127,8 @@ anoubis_proc_get(struct anoubis_proc_handle *handle, pid_t pid)
 	p->comm = strdup(kp->p_comm);
 	if (p->comm == NULL)
 		goto nomem;
+	argv = kvm_getargv2(handle->kd, kp, 0);
+	p->command = strdup(argv[0]);
 	return p;
 nomem:
 	anoubis_proc_destroy(p);
@@ -173,6 +178,7 @@ anoubis_proc_get(struct anoubis_proc_handle *handle __attribute__((unused)),
 	struct anoubis_proc	*p;
 	char			 pid = 0, ppid = 0, uid = 0, gid = 0;
 	char			 groups = 0, name = 0;
+	char			*ret;
 
 	snprintf(buf, 1024, "/proc/%d/status", searchpid);
 	fp = fopen(buf, "r");
@@ -183,6 +189,7 @@ anoubis_proc_get(struct anoubis_proc_handle *handle __attribute__((unused)),
 		return NULL;
 	p->groups = NULL;
 	p->comm = NULL;
+	p->command = NULL;
 	while (1) {
 		char		*arg;
 
@@ -257,6 +264,19 @@ anoubis_proc_get(struct anoubis_proc_handle *handle __attribute__((unused)),
 	if (!pid || !ppid || !uid || !gid || !groups || !name) {
 		anoubis_proc_destroy(p);
 		return NULL;
+	}
+	/* Return available info even if we fail to parse /proc/.../cmdline */
+	snprintf(buf, 1024, "/proc/%d/cmdline", searchpid);
+	fp = fopen(buf, "r");
+	if (fp == NULL)
+		return p;
+	ret = fgets(buf, sizeof(buf), fp);
+	fclose(fp);
+	if (ret && strlen(buf)) {
+		p->command = strdup(buf);
+	} else {
+		/* Fall back to short command name, e.g. for kernel threads */
+		p->command = strdup(p->comm);
 	}
 	return p;
 }
