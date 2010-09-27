@@ -132,7 +132,7 @@ START_TEST(testcase_en)
 		"No such file or directory",
 		"undefined anoubis error code",
 		"undefined anoubis error code",
-		"Operation not permitted: no certificate found"
+		"Operation not permitted: Client certificate is not known to the daemon"
 	};
 
 	printf("testing english error codes\n");
@@ -147,14 +147,14 @@ START_TEST(testcase_de)
 		"Datei oder Verzeichnis nicht gefunden",
 		"Unbekannte Anoubis-Fehlernummer",
 		"Unbekannte Anoubis-Fehlernummer",
-		"Operation nicht erlaubt: Kein Zertifikat gefunden"
+		"Operation nicht erlaubt: Clientzertifikat ist dem Daemon unbekannt"
 	};
 	char	*predicted_error_string_utf8[] = {
 		"Ung\xc3\xbcltige Fehlernummer",
 		"Datei oder Verzeichnis nicht gefunden",
 		"Unbekannte Anoubis-Fehlernummer",
 		"Unbekannte Anoubis-Fehlernummer",
-		"Operation nicht erlaubt: Kein Zertifikat gefunden"
+		"Operation nicht erlaubt: Clientzertifikat ist dem Daemon unbekannt"
 	};
 
 	char	*locale = setlocale(LC_ALL, NULL);

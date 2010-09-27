@@ -43,7 +43,6 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: src/libanoubis/anoubiserrorcode/anoubis_errno.c:36
-#, fuzzy
 msgid "Operation not permitted: Client certificate is not known to the daemon"
 msgstr "Operation nicht erlaubt: Clientzertifikat ist dem Daemon unbekannt"
 
