@@ -28,7 +28,7 @@
 #ifndef _ANMULTIROWPROVIDER_H_
 #define _ANMULTIROWPROVIDER_H_
 
-#include <list>
+#include <vector>
 
 #include "AnRowProvider.h"
 
@@ -59,7 +59,20 @@ class AnMultiRowProvider : public AnRowProvider
 		void addRowProvider(AnRowProvider *);
 
 		/**
-		 * Remove all row provider to the list of providerts.
+		 * Return the index of a row provider in the list of
+		 * providers. This is useful if you want to search
+		 * for a particular item, e.g. an application rule and
+		 * highlight it by its current index.
+		 *
+		 * @param provider The row provider.
+		 * @return The index of the first row that is governed
+		 *     by this row provider. Negative if the provider is
+		 *     not part of the multi row provider.
+		 */
+		int getIndexOf(const AnRowProvider *provider) const;
+
+		/**
+		 * Remove all row providers from the list of providers.
 		 * @param None.
 		 * @return Nothing.
 		 */
@@ -83,7 +96,7 @@ class AnMultiRowProvider : public AnRowProvider
 		/**
 		 * List of row providers.
 		 */
-		std::list<AnRowProvider *> rowProviderList_;
+		std::vector<AnRowProvider *> rowProviderList_;
 };
 
 #endif	/* _ANMULTIROWPROVIDER_H_ */

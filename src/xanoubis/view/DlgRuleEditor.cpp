@@ -312,7 +312,7 @@ DlgRuleEditor::onShowRule(wxCommandEvent& event)
 	FilterPolicy	*filter;
 	AppPolicy	*app;
 	PolicyRuleSet	*rs;
-	int		 idx;
+	int		 idx1, idx2;
 
 	policyCtrl = PolicyCtrl::instance();
 	event.Skip();
@@ -325,9 +325,8 @@ DlgRuleEditor::onShowRule(wxCommandEvent& event)
 	} else {
 		rs = policyCtrl->getRuleSet(userRuleSetId_);
 	}
-	if (rs == NULL) {
+	if (rs == NULL)
 		return;
-	}
 
 	apnrule = apn_find_rule(rs->getApnRuleSet(), event.GetExtraLong());
 	if (apnrule == NULL) {
@@ -342,10 +341,10 @@ DlgRuleEditor::onShowRule(wxCommandEvent& event)
 	} else {
 		app = filter->getParentPolicy();
 	}
-	idx = rs->getIndexOfPolicy(app);
-	if (idx < 0) {
+	idx1 = multiRowProvider_.getIndexOf(rs->getRowProvider());
+	idx2 = rs->getIndexOfPolicy(app);
+	if (idx1 < 0 || idx2 < 0)
 		return;
-	}
 
 	if (!IsShown()) {
 		wxCommandEvent	ev(anEVT_RULEEDITOR_SHOW);
@@ -354,12 +353,11 @@ DlgRuleEditor::onShowRule(wxCommandEvent& event)
 	}
 	this->Raise();
 
-	selectRow(appGrid, idx);
+	selectRow(appGrid, idx1+idx2);
 	if (filter) {
-		idx = app->getIndexOfFilterPolicy(filter);
-		if (idx >= 0) {
+		int	idx = app->getIndexOfFilterPolicy(filter);
+		if (idx >= 0)
 			selectRow(filterGrid, idx);
-		}
 	}
 }
 

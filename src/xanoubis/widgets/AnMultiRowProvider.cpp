@@ -44,47 +44,45 @@ AnMultiRowProvider::addRowProvider(AnRowProvider *newRowProvider)
 	rowProviderList_.push_back(newRowProvider);
 }
 
+int
+AnMultiRowProvider::getIndexOf(const AnRowProvider *provider) const
+{
+	int		ret = 0;
+
+	for(unsigned int i=0; i<rowProviderList_.size(); ++i) {
+		if (rowProviderList_[i] == provider)
+			return ret;
+		ret += rowProviderList_[i]->getSize();
+	}
+	return -1;
+}
+
 void
 AnMultiRowProvider::clear(void)
 {
-	/*
-	 * We manually iterate through the list, because clean() will also
-	 * delete the elements.
-	 */
-	while (!rowProviderList_.empty()) {
-		rowProviderList_.pop_back();
-	}
+	rowProviderList_.clear();
 }
 
 AnListClass *
 AnMultiRowProvider::getRow(unsigned int idx) const
 {
-	std::list<AnRowProvider *>::const_iterator	it;
-
-	for (it=rowProviderList_.begin(); it!=rowProviderList_.end(); it++) {
-		if (idx < (unsigned int)(*it)->getSize()) {
-			return ((*it)->getRow(idx));
+	for (unsigned int i=0; i<rowProviderList_.size(); i++) {
+		if (idx < (unsigned int)rowProviderList_[i]->getSize()) {
+			return rowProviderList_[i]->getRow(idx);
 		} else {
-			idx -= (*it)->getSize();
+			idx -= rowProviderList_[i]->getSize();
 		}
 	}
-
-	return (NULL);
+	return NULL;
 }
 
 int
 AnMultiRowProvider::getSize(void) const
 {
 	int						size = 0;
-	std::list<AnRowProvider *>::const_iterator	it;
 
-	if (rowProviderList_.empty()) {
-		return (0);
-	}
+	for (unsigned int i=0; i<rowProviderList_.size(); ++i)
+		size += rowProviderList_[i]->getSize();
 
-	for (it=rowProviderList_.begin(); it!=rowProviderList_.end(); it++) {
-		size += (*it)->getSize();
-	}
-
-	return (size);
+	return size;
 }
