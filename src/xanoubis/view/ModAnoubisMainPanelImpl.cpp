@@ -237,48 +237,8 @@ ModAnoubisMainPanelImpl::~ModAnoubisMainPanelImpl(void)
 
 	anEvents = AnEvents::instance();
 
-	if (listPerspective_ != NULL) {
+	if (listPerspective_ != NULL)
 		removeSubject(listPerspective_);
-	}
-
-	/* write Escalations Settings */
-	wxConfig::Get()->Write(wxT("/Options/SendEscalations"),
-	    cb_SendEscalations->IsChecked());
-	wxConfig::Get()->Write(wxT("/Options/NoEscalationsTimeout"),
-	    cb_NoEscalationTimeout->IsChecked());
-	wxConfig::Get()->Write(wxT("/Options/EscalationTimeout"),
-	    m_spinEscalationNotifyTimeout->GetValue());
-
-	/* write Alert Settings */
-	wxConfig::Get()->Write(wxT("/Options/SendAlerts"),
-	    cb_SendAlerts->IsChecked());
-	wxConfig::Get()->Write(wxT("/Options/NoAlertTimeout"),
-	    cb_NoAlertTimeout->IsChecked());
-	wxConfig::Get()->Write(wxT("/Options/AlertTimeout"),
-	    m_spinAlertNotifyTimeout->GetValue());
-	wxConfig::Get()->Write(wxT("/Options/AutoConnect"),
-	    autoConnectBox->IsChecked());
-	if (loadedProfile != wxEmptyString) {
-		wxConfig::Get()->Write(wxT("/Options/LoadedProfile"),
-		    loadedProfile);
-	}
-
-	/* write Autostart Settings */
-	wxConfig::Get()->Write(wxT("/Options/Autostart"),
-	    cb_DoAutostart->IsChecked());
-
-	/* write Notification of Upgrade Settings */
-	wxConfig::Get()->Write(wxT("/Options/ShowUpgradeMessage"),
-	    cb_ShowUpgradeMsg->GetValue());
-	wxConfig::Get()->Write(wxT("/Options/ShowKernelUpgradeMessage"),
-	    cb_ShowKernelMsg->GetValue());
-
-
-	/* write ToolTip Settings */
-	wxConfig::Get()->Write(wxT("/Options/EnableToolTips"),
-	    toolTipCheckBox->GetValue());
-	wxConfig::Get()->Write(wxT("/Options/ToolTipTimeout"),
-	    toolTipSpinCtrl->GetValue());
 
 	anEvents->Disconnect(anEVT_ESCALATIONS_SHOW,
 	    wxCommandEventHandler(ModAnoubisMainPanelImpl::OnEscalationsShow),
@@ -366,12 +326,12 @@ ModAnoubisMainPanelImpl::readOptions(void)
 	toolTipParamsUpdate();
 
 	/* set widgets visability and send options event */
-	setOptionsWidgetsVisability();
+	setOptionsWidgetsVisibility();
 	sendNotifierOptions();
 }
 
 void
-ModAnoubisMainPanelImpl::setOptionsWidgetsVisability(void)
+ModAnoubisMainPanelImpl::setOptionsWidgetsVisibility(void)
 {
 	/* synchronize Escalation widgets */
 	if (!cb_SendEscalations->IsChecked()) {
@@ -479,12 +439,15 @@ ModAnoubisMainPanelImpl::OnProfileDeleteClicked(wxCommandEvent &event)
 }
 
 void
-ModAnoubisMainPanelImpl::OnProfileLoadClicked(wxCommandEvent &)
+ModAnoubisMainPanelImpl::OnProfileLoadClicked(wxCommandEvent &event)
 {
 	PolicyCtrl *policyCtrl = PolicyCtrl::instance();
 
+	event.Skip();
 	if (policyCtrl->importFromProfile(selectedProfile)) {
 		loadedProfile = selectedProfile;
+		wxConfig::Get()->Write(wxT("/Options/LoadedProfile"),
+		    loadedProfile);
 		profileTabUpdate();
 	} else {
 		anMessageBox(
@@ -495,11 +458,12 @@ ModAnoubisMainPanelImpl::OnProfileLoadClicked(wxCommandEvent &)
 }
 
 void
-ModAnoubisMainPanelImpl::OnProfileSaveClicked(wxCommandEvent &)
+ModAnoubisMainPanelImpl::OnProfileSaveClicked(wxCommandEvent &event)
 {
 	int errnum;
 	wxString error_msg;
 
+	event.Skip();
 	DlgProfileSelection *dlg =
 	    new DlgProfileSelection(loadedProfile, this);
 
@@ -533,12 +497,13 @@ ModAnoubisMainPanelImpl::OnProfileSaveClicked(wxCommandEvent &)
 }
 
 void
-ModAnoubisMainPanelImpl::OnProfileActivateClicked(wxCommandEvent &)
+ModAnoubisMainPanelImpl::OnProfileActivateClicked(wxCommandEvent &event)
 {
 	PolicyCtrl *policyCtrl = PolicyCtrl::instance();
 	PolicyCtrl::PolicyResult polRes;
 	long userId;
 
+	event.Skip();
 	if (!policyCtrl->importFromProfile(selectedProfile)) {
 		anMessageBox(
 		    wxString::Format(_("Failed to import from \"%ls\"."),
@@ -570,6 +535,7 @@ ModAnoubisMainPanelImpl::OnProfileActivateClicked(wxCommandEvent &)
 	}
 
 	loadedProfile = selectedProfile;
+	wxConfig::Get()->Write(wxT("/Options/LoadedProfile"), loadedProfile);
 	profileTabUpdate();
 }
 
@@ -699,14 +665,13 @@ ModAnoubisMainPanelImpl::sendNotifierOptions(void)
 	    timeout);
 
 	/* handle and pass Alert Options */
-	 show = cb_SendAlerts->IsChecked();
-	 if (show && cb_NoAlertTimeout->IsChecked()) {
-		 timeout = 0;
-	 } else {
-		 timeout = m_spinAlertNotifyTimeout->GetValue();
-	 }
-	 sendNotifierOptionsEvents(anEVT_ALERTNOTIFY_OPTIONS, show,
-			 timeout);
+	show = cb_SendAlerts->IsChecked();
+	if (show && cb_NoAlertTimeout->IsChecked()) {
+		timeout = 0;
+	} else {
+		timeout = m_spinAlertNotifyTimeout->GetValue();
+	}
+	sendNotifierOptionsEvents(anEVT_ALERTNOTIFY_OPTIONS, show, timeout);
 }
 
 void
@@ -1008,10 +973,11 @@ ModAnoubisMainPanelImpl::OnTypeChoosen(wxCommandEvent& event)
 }
 
 void
-ModAnoubisMainPanelImpl::OnFirstBtnClick(wxCommandEvent&)
+ModAnoubisMainPanelImpl::OnFirstBtnClick(wxCommandEvent &event)
 {
 	NotificationCtrl	*notifyCtrl;
 
+	event.Skip();
 	notifyCtrl = NotificationCtrl::instance();
 	if (listPerspective_ != NULL) {
 		elementNoHash_[listPerspective_] = 0;
@@ -1025,10 +991,11 @@ ModAnoubisMainPanelImpl::OnFirstBtnClick(wxCommandEvent&)
 }
 
 void
-ModAnoubisMainPanelImpl::OnPreviousBtnClick(wxCommandEvent&)
+ModAnoubisMainPanelImpl::OnPreviousBtnClick(wxCommandEvent &event)
 {
 	NotificationCtrl	*notifyCtrl;
 
+	event.Skip();
 	notifyCtrl = NotificationCtrl::instance();
 	if (elementNoHash_[listPerspective_] != 0) {
 		elementNoHash_[listPerspective_] -= 1;
@@ -1043,10 +1010,11 @@ ModAnoubisMainPanelImpl::OnPreviousBtnClick(wxCommandEvent&)
 }
 
 void
-ModAnoubisMainPanelImpl::OnNextBtnClick(wxCommandEvent&)
+ModAnoubisMainPanelImpl::OnNextBtnClick(wxCommandEvent &event)
 {
 	NotificationCtrl	*notifyCtrl;
 
+	event.Skip();
 	notifyCtrl = NotificationCtrl::instance();
 	if (elementNoHash_[listPerspective_] <
 	    listPerspective_->getSize() - 1)
@@ -1063,10 +1031,11 @@ ModAnoubisMainPanelImpl::OnNextBtnClick(wxCommandEvent&)
 }
 
 void
-ModAnoubisMainPanelImpl::OnLastBtnClick(wxCommandEvent&)
+ModAnoubisMainPanelImpl::OnLastBtnClick(wxCommandEvent &event)
 {
 	NotificationCtrl	*notifyCtrl;
 
+	event.Skip();
 	notifyCtrl = NotificationCtrl::instance();
 
 	if (listPerspective_ != NULL) {
@@ -1216,84 +1185,124 @@ ModAnoubisMainPanelImpl::answerEscalation(bool permit)
 }
 
 void
-ModAnoubisMainPanelImpl::OnAllowBtnClick(wxCommandEvent&)
+ModAnoubisMainPanelImpl::OnAllowBtnClick(wxCommandEvent &event)
 {
+	event.Skip();
 	answerEscalation(true);
 }
 
 void
-ModAnoubisMainPanelImpl::OnDenyBtnClick(wxCommandEvent&)
+ModAnoubisMainPanelImpl::OnDenyBtnClick(wxCommandEvent &event)
 {
+	event.Skip();
 	answerEscalation(false);
 }
 
 void
-ModAnoubisMainPanelImpl::OnEscalationOnceButton(wxCommandEvent&)
+ModAnoubisMainPanelImpl::OnEscalationOnceButton(wxCommandEvent &event)
 {
+	event.Skip();
 	setPathLabel();
 	editOptionsEnable();
 }
 
 void
-ModAnoubisMainPanelImpl::OnEscalationProcessButton(wxCommandEvent&)
+ModAnoubisMainPanelImpl::OnEscalationProcessButton(wxCommandEvent &event)
 {
+	event.Skip();
 	setPathLabel();
 	editOptionsEnable();
 }
 
 void
-ModAnoubisMainPanelImpl::OnEscalationTimeoutButton(wxCommandEvent&)
+ModAnoubisMainPanelImpl::OnEscalationTimeoutButton(wxCommandEvent &event)
 {
+	event.Skip();
 	setPathLabel();
 	editOptionsEnable();
 }
 
 void
-ModAnoubisMainPanelImpl::OnEscalationAlwaysButton(wxCommandEvent&)
+ModAnoubisMainPanelImpl::OnEscalationAlwaysButton(wxCommandEvent &event)
 {
+	event.Skip();
 	setPathLabel();
 	editOptionsEnable();
 }
 
 void
-ModAnoubisMainPanelImpl::OnEscalationDisable(wxCommandEvent&)
+ModAnoubisMainPanelImpl::OnEscalationDisable(wxCommandEvent &event)
 {
-	setOptionsWidgetsVisability();
+	event.Skip();
+	wxConfig::Get()->Write(wxT("/Options/SendEscalations"),
+	    cb_SendEscalations->IsChecked());
+	setOptionsWidgetsVisibility();
 	sendNotifierOptions();
 }
 
 void
-ModAnoubisMainPanelImpl::OnAlertDisable(wxCommandEvent&)
+ModAnoubisMainPanelImpl::OnAlertDisable(wxCommandEvent &event)
 {
-	setOptionsWidgetsVisability();
+	event.Skip();
+	wxConfig::Get()->Write(wxT("/Options/SendAlerts"),
+	    cb_SendAlerts->IsChecked());
+	setOptionsWidgetsVisibility();
 	sendNotifierOptions();
 }
 
 void
-ModAnoubisMainPanelImpl::OnEscalationNoTimeout(wxCommandEvent&)
+ModAnoubisMainPanelImpl::OnEscalationNoTimeout(wxCommandEvent &event)
 {
-	setOptionsWidgetsVisability();
+	event.Skip();
+	wxConfig::Get()->Write(wxT("/Options/NoEscalationsTimeout"),
+	    cb_NoEscalationTimeout->IsChecked());
+	setOptionsWidgetsVisibility();
 	sendNotifierOptions();
 }
 
 void
-ModAnoubisMainPanelImpl::OnAlertNoTimeout(wxCommandEvent&)
+ModAnoubisMainPanelImpl::OnAlertNoTimeout(wxCommandEvent &event)
 {
-	setOptionsWidgetsVisability();
+	event.Skip();
+	wxConfig::Get()->Write(wxT("/Options/NoAlertTimeout"),
+	    cb_NoAlertTimeout->IsChecked());
+	setOptionsWidgetsVisibility();
 	sendNotifierOptions();
 }
 
 void
-ModAnoubisMainPanelImpl::OnEscalationTimeout(wxSpinEvent&)
+ModAnoubisMainPanelImpl::OnEscalationTimeout(wxSpinEvent &event)
 {
-	setOptionsWidgetsVisability();
+	event.Skip();
+	wxConfig::Get()->Write(wxT("/Options/EscalationTimeout"),
+	    m_spinEscalationNotifyTimeout->GetValue());
 	sendNotifierOptions();
 }
 
 void
-ModAnoubisMainPanelImpl::OnAlertTimeout(wxSpinEvent&)
+ModAnoubisMainPanelImpl::OnEscalationTimeoutText(wxCommandEvent &event)
 {
-	setOptionsWidgetsVisability();
+	event.Skip();
+	wxConfig::Get()->Write(wxT("/Options/EscalationTimeout"),
+	    m_spinEscalationNotifyTimeout->GetValue());
+	sendNotifierOptions();
+}
+
+void
+ModAnoubisMainPanelImpl::OnAlertTimeout(wxSpinEvent &event)
+{
+	event.Skip();
+	wxConfig::Get()->Write(wxT("/Options/AlertTimeout"),
+	    m_spinAlertNotifyTimeout->GetValue());
+	sendNotifierOptions();
+}
+
+void
+ModAnoubisMainPanelImpl::OnAlertTimeoutText(wxCommandEvent &event)
+{
+	event.Skip();
+	wxConfig::Get()->Write(wxT("/Options/AlertTimeout"),
+	    m_spinAlertNotifyTimeout->GetValue());
 	sendNotifierOptions();
 }
 
@@ -1332,29 +1341,44 @@ ModAnoubisMainPanelImpl::OnAnoubisOptionShow(wxCommandEvent& event)
 }
 
 void
-ModAnoubisMainPanelImpl::OnEnableUpgradeMsg(wxCommandEvent&)
+ModAnoubisMainPanelImpl::OnEnableUpgradeMsg(wxCommandEvent &event)
 {
+	event.Skip();
 	wxConfig::Get()->Write(wxT("/Options/ShowUpgradeMessage"),
 	    cb_ShowUpgradeMsg->GetValue());
 }
 
 void
-ModAnoubisMainPanelImpl::OnEnableKernelMsg(wxCommandEvent&)
+ModAnoubisMainPanelImpl::OnEnableKernelMsg(wxCommandEvent &event)
 {
+	event.Skip();
 	wxConfig::Get()->Write(wxT("/Options/ShowKernelUpgradeMessage"),
 	    cb_ShowKernelMsg->GetValue());
 }
 
 void
-ModAnoubisMainPanelImpl::OnEnableInformationMsg(wxCommandEvent&)
+ModAnoubisMainPanelImpl::OnEnableInformationMsg(wxCommandEvent &event)
 {
+	event.Skip();
 	wxConfig::Get()->Write(wxT("/Options/ShowCertMessage"),
 	    cb_ShowKeyGenInfoMsg->GetValue());
 }
 
-void ModAnoubisMainPanelImpl::OnDoAutostart(wxCommandEvent& event)
+void
+ModAnoubisMainPanelImpl::OnDoAutostart(wxCommandEvent &event)
 {
+	event.Skip();
+	wxConfig::Get()->Write(wxT("/Options/Autostart"),
+	    cb_DoAutostart->IsChecked());
 	MainUtils::instance()->autoStart(event.IsChecked());
+}
+
+void
+ModAnoubisMainPanelImpl::OnAutoConnect(wxCommandEvent &event)
+{
+	event.Skip();
+	wxConfig::Get()->Write(wxT("/Options/AutoConnect"),
+	    autoConnectBox->IsChecked());
 }
 
 /*
@@ -1396,10 +1420,11 @@ ModAnoubisMainPanelImpl::OnNotebookTabChanged(wxNotebookEvent &event)
 }
 
 void
-ModAnoubisMainPanelImpl::OnVersionListCtrlSelected(wxListEvent&)
+ModAnoubisMainPanelImpl::OnVersionListCtrlSelected(wxListEvent &event)
 {
 	int idx = versionListCtrl->getFirstSelection();
 
+	event.Skip();
 	if (idx == -1)
 		return;
 
@@ -1413,7 +1438,7 @@ ModAnoubisMainPanelImpl::OnVersionListCtrlSelected(wxListEvent&)
 }
 
 void
-ModAnoubisMainPanelImpl::OnVersionRestoreButtonClick(wxCommandEvent&)
+ModAnoubisMainPanelImpl::OnVersionRestoreButtonClick(wxCommandEvent &event)
 {
 	VersionCtrl	*versionCtrl = VersionCtrl::instance();
 	PolicyCtrl	*policyCtrl = PolicyCtrl::instance();
@@ -1421,6 +1446,7 @@ ModAnoubisMainPanelImpl::OnVersionRestoreButtonClick(wxCommandEvent&)
 	wxString	profile;
 	int		idx = versionListCtrl->getFirstSelection();
 
+	event.Skip();
 	if (idx == -1)
 		return;
 
@@ -1481,10 +1507,11 @@ ModAnoubisMainPanelImpl::OnVersionRestoreButtonClick(wxCommandEvent&)
 }
 
 void
-ModAnoubisMainPanelImpl::OnVersionExportButtonClick(wxCommandEvent&)
+ModAnoubisMainPanelImpl::OnVersionExportButtonClick(wxCommandEvent &event)
 {
 	int idx = versionListCtrl->getFirstSelection();
 
+	event.Skip();
 	if (idx == -1)
 		return;
 
@@ -1512,11 +1539,12 @@ ModAnoubisMainPanelImpl::OnVersionExportButtonClick(wxCommandEvent&)
 }
 
 void
-ModAnoubisMainPanelImpl::OnVersionDeleteButtonClick(wxCommandEvent&)
+ModAnoubisMainPanelImpl::OnVersionDeleteButtonClick(wxCommandEvent &event)
 {
 	VersionCtrl	*versionCtrl = VersionCtrl::instance();
 	int		selection = -1;
 
+	event.Skip();
 	while (true) {
 		selection = versionListCtrl->getNextSelection(selection);
 
@@ -1537,7 +1565,7 @@ ModAnoubisMainPanelImpl::OnVersionDeleteButtonClick(wxCommandEvent&)
 }
 
 void
-ModAnoubisMainPanelImpl::OnVersionShowButtonClick(wxCommandEvent&)
+ModAnoubisMainPanelImpl::OnVersionShowButtonClick(wxCommandEvent &event)
 {
 	/*
 	 * XXX RD
@@ -1552,6 +1580,7 @@ ModAnoubisMainPanelImpl::OnVersionShowButtonClick(wxCommandEvent&)
 	 * Show-button is hidden.
 	 */
 
+	event.Skip();
 	/*VersionCtrl *versionCtrl = VersionCtrl::instance();
 
 	wxCommandEvent showEvent(anEVT_RULEEDITOR_SHOW);
@@ -1563,35 +1592,53 @@ ModAnoubisMainPanelImpl::OnVersionShowButtonClick(wxCommandEvent&)
 }
 
 void
-ModAnoubisMainPanelImpl::OnVersionActivePolicyClicked(wxCommandEvent &)
+ModAnoubisMainPanelImpl::OnVersionActivePolicyClicked(wxCommandEvent &event)
 {
+	event.Skip();
 	VersionProfileChoice->Enable(false);
 	versionListUpdateFromSelection();
 }
 
 void
-ModAnoubisMainPanelImpl::OnVersionProfilePolicyClicked(wxCommandEvent &)
+ModAnoubisMainPanelImpl::OnVersionProfilePolicyClicked(wxCommandEvent &event)
 {
+	event.Skip();
 	VersionProfileChoice->Enable(true);
 	versionListUpdateFromSelection();
 }
 
 void
-ModAnoubisMainPanelImpl::OnVersionProfileChoice(wxCommandEvent &)
+ModAnoubisMainPanelImpl::OnVersionProfileChoice(wxCommandEvent &event)
 {
+	event.Skip();
 	versionListUpdateFromSelection();
 }
 
 
 void
-ModAnoubisMainPanelImpl::OnToolTipCheckBox(wxCommandEvent &)
+ModAnoubisMainPanelImpl::OnToolTipCheckBox(wxCommandEvent &event)
 {
+	event.Skip();
+	wxConfig::Get()->Write(wxT("/Options/EnableToolTips"),
+	    toolTipCheckBox->GetValue());
 	toolTipParamsUpdate();
 }
 
 void
-ModAnoubisMainPanelImpl::OnToolTipSpinCtrl(wxSpinEvent &)
+ModAnoubisMainPanelImpl::OnToolTipSpinCtrl(wxSpinEvent &event)
 {
+	event.Skip();
+	wxConfig::Get()->Write(wxT("/Options/ToolTipTimeout"),
+	    toolTipSpinCtrl->GetValue());
+	toolTipParamsUpdate();
+}
+
+void
+ModAnoubisMainPanelImpl::OnToolTipSpinCtrlText(wxCommandEvent &event)
+{
+	event.Skip();
+	wxConfig::Get()->Write(wxT("/Options/ToolTipTimeout"),
+	    toolTipSpinCtrl->GetValue());
 	toolTipParamsUpdate();
 }
 
@@ -1745,29 +1792,33 @@ ModAnoubisMainPanelImpl::initPathLabel(void)
 }
 
 void
-ModAnoubisMainPanelImpl::OnEscalationSfsPathLeft(wxCommandEvent &)
+ModAnoubisMainPanelImpl::OnEscalationSfsPathLeft(wxCommandEvent &event)
 {
+	event.Skip();
 	pathKeep_--;
 	setPathLabel();
 }
 
 void
-ModAnoubisMainPanelImpl::OnEscalationSfsPathRight(wxCommandEvent &)
+ModAnoubisMainPanelImpl::OnEscalationSfsPathRight(wxCommandEvent &event)
 {
+	event.Skip();
 	pathKeep_++;
 	setPathLabel();
 }
 
 void
-ModAnoubisMainPanelImpl::OnEscalationSbPathLeft(wxCommandEvent &)
+ModAnoubisMainPanelImpl::OnEscalationSbPathLeft(wxCommandEvent &event)
 {
+	event.Skip();
 	pathKeep_--;
 	setPathLabel();
 }
 
 void
-ModAnoubisMainPanelImpl::OnEscalationSbPathRight(wxCommandEvent &)
+ModAnoubisMainPanelImpl::OnEscalationSbPathRight(wxCommandEvent &event)
 {
+	event.Skip();
 	pathKeep_++;
 	setPathLabel();
 }
@@ -1841,8 +1892,9 @@ ModAnoubisMainPanelImpl::OnAnoubisOptionsUpdate(wxCommandEvent& event)
 }
 
 void
-ModAnoubisMainPanelImpl::onPsReloadClicked(wxCommandEvent &)
+ModAnoubisMainPanelImpl::onPsReloadClicked(wxCommandEvent &event)
 {
+	event.Skip();
 	psList->clearSelection();
 	PSListCtrl::instance()->updatePSList();
 }

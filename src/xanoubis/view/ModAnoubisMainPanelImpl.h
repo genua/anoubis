@@ -88,7 +88,7 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase,
 		void sendNotifierOptionsEvents(WXTYPE, bool, long);
 		void sendNotifierOptions(void);
 		void readOptions(void);
-		void setOptionsWidgetsVisability(void);
+		void setOptionsWidgetsVisibility(void);
 		void versionListUpdate(void);
 		void versionListUpdateFromSelection(void);
 		void profileTabInit(void);
@@ -130,7 +130,9 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase,
 		void OnEscalationNoTimeout(wxCommandEvent&);
 		void OnAlertNoTimeout(wxCommandEvent&);
 		void OnEscalationTimeout(wxSpinEvent&);
+		void OnEscalationTimeoutText(wxCommandEvent&);
 		void OnAlertTimeout(wxSpinEvent&);
+		void OnAlertTimeoutText(wxCommandEvent&);
 
 		void OnEscalationsShow(wxCommandEvent&);
 		void OnAnoubisOptionShow(wxCommandEvent&);
@@ -139,6 +141,7 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase,
 		void OnEnableInformationMsg(wxCommandEvent&);
 
 		void OnDoAutostart(wxCommandEvent&);
+		void OnAutoConnect(wxCommandEvent&);
 
 		void OnProfileDeleteClicked(wxCommandEvent &);
 		void OnProfileLoadClicked(wxCommandEvent &);
@@ -158,6 +161,7 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase,
 
 		void OnToolTipCheckBox(wxCommandEvent &);
 		void OnToolTipSpinCtrl(wxSpinEvent &);
+		void OnToolTipSpinCtrlText(wxCommandEvent &);
 
 		void OnEscalationSfsPathLeft(wxCommandEvent &);
 		void OnEscalationSfsPathRight(wxCommandEvent &);

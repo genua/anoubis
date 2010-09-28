@@ -237,6 +237,11 @@ ModSfsMainPanelImpl::checkKeyConfiguration(void)
 		keyWarningText->SetLabel(msg);
 		keyWarningPanel->Show();
 	}
+	/*
+	 * Always save Options to the config file anyway. This is
+	 * consistent with the behaviour if xanoubis terminates.
+	 */
+	saveSfsOptions();
 	Layout();
 	Refresh();
 }
