@@ -222,7 +222,7 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 	ADDRULECOLUMN(_("CTX"), getCtxRuleUser, getCtxRuleAdmin, 90);
 	ADDCOLUMN(_("Playground ID"), getPlaygroundId, uint64_t,
 	    &pgidToString, 90);
-	ADDCOLUMN(_("Command"), getProcessName, const wxString, NULL, 180);
+	ADDCOLUMN(_("Command"), getShortProcessName, const wxString, NULL, 180);
 
 	psListCtrl = PSListCtrl::instance();
 	psListCtrl->Connect(anEVT_PSLIST_ERROR, wxCommandEventHandler(
@@ -2121,7 +2121,7 @@ ModAnoubisMainPanelImpl::updatePSDetails(void)
 	    wxString::Format(wxT("%d"), entry->METHOD()):	\
 	    wxT(""));	\
 } while (0)
-	S(psDetailsCommandText, getProcessName);
+	S(psDetailsCommandText, getLongProcessName);
 	S(psDetailsPidText, getProcessId);
 	S(psDetailsPpidText, getParentProcessId);
 	L(psDetailsRealUidText, getUID);

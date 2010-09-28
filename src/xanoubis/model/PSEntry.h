@@ -106,10 +106,16 @@ class PSEntry : public AnListClass
 		long getEGID(void) const;
 
 		/**
-		 * Get the process name (as in 'ps').
+		 * Get the short process name (as in 'ps').
 		 * @return the process name
 		 */
-		const wxString getProcessName(void) const;
+		const wxString getShortProcessName(void) const;
+
+		/**
+		 * Get the long process name including command line arguments.
+		 * @return the full commandline.
+		 */
+		const wxString getLongProcessName(void) const;
 
 		/**
 		 * Get SecureExec flag.
@@ -203,7 +209,8 @@ class PSEntry : public AnListClass
 		long gid_;	/**< real gid */
 		long egid_;	/**< effective gid */
 
-		wxString process_name_;	/**< Process name as in 'ps' */
+		wxString shortname_;	/**< Short process name as in 'ps' */
+		wxString longname_;	/**< Long process name as in 'ps' */
 
 		uint64_t pgid_;		/**< Playground ID, 0 if not in PG */
 		bool     secure_exec_;	/**< Secure exec flag */

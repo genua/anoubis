@@ -66,14 +66,16 @@ START_TEST(psentry_test)
 	info.ngroups = 0;
 	info.groups = NULL;
 	info.comm = (char*)"d"; // ugly cast to make compiler happy
+	info.command = (char*)"e";
 
 	/* create an instance */
 	fprintf(stderr, "now creating PSEntry\n");
 
 	entry = new PSEntry(proc, &info);
 
-	fprintf(stderr, "dump new entry %ls\n",
-	    entry->getProcessName().c_str());
+	fprintf(stderr, "dump new entry %ls %ls\n",
+	    entry->getShortProcessName().c_str(),
+	    entry->getLongProcessName().c_str());
 	fprintf(stderr, "pid=%ls, ppid=%ls, secex=%d\n",
 	    entry->getProcessId().c_str(), entry->getParentProcessId().c_str(),
 	    entry->getSecureExec());
@@ -97,7 +99,8 @@ START_TEST(psentry_test)
 	fail_if(entry->getEUID() != 22);
 	fail_if(entry->getGID() != 24);
 	fail_if(entry->getEGID() != 25);
-	fail_if(entry->getProcessName().Cmp(wxT("d")) != 0);
+	fail_if(entry->getShortProcessName().Cmp(wxT("d")) != 0);
+	fail_if(entry->getLongProcessName().Cmp(wxT("e")) != 0);
 
 	fail_if(entry->getSecureExec() != true);
 	fail_if(entry->getPathAdminContext().Cmp(wxT("a")) != 0);

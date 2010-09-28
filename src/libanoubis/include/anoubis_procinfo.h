@@ -61,7 +61,7 @@ struct		anoubis_proc_handle;
  * ngroups: The number of entries in the groups array
  * groups: The list of supplementary group IDs
  * comm: The short form of the command.
- * command: The full version of the command (without command line arguments)
+ * command: The full version of the command (including command line arguments)
  */
 struct anoubis_proc {
 	uint32_t		 pid;

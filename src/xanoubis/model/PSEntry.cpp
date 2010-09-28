@@ -68,14 +68,16 @@ PSEntry::PSEntry(const Anoubis_ProcRecord* psrec,
 		euid_ = psinfo->euid;
 		gid_ =  psinfo->rgid;
 		egid_ = psinfo->egid;
-		process_name_ = wxString::FromAscii(psinfo->command);
+		shortname_ = wxString::FromAscii(psinfo->comm);
+		longname_ = wxString::FromAscii(psinfo->command);
 	} else {
 		ppid_ = -1;
 		uid_ = -1;
 		euid_ = -1;
 		gid_ = -1;
 		egid_ = -1;
-		process_name_ = wxEmptyString;
+		shortname_ = wxEmptyString;
+		longname_ = wxEmptyString;
 	}
 }
 
@@ -122,9 +124,15 @@ PSEntry::getEGID(void) const
 }
 
 const wxString
-PSEntry::getProcessName(void) const
+PSEntry::getShortProcessName(void) const
 {
-	return process_name_;
+	return shortname_;
+}
+
+const wxString
+PSEntry::getLongProcessName(void) const
+{
+	return longname_;
 }
 
 bool

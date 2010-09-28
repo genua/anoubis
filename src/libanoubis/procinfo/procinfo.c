@@ -87,10 +87,12 @@ anoubis_proc_close(struct anoubis_proc_handle *handle)
 struct anoubis_proc *
 anoubis_proc_get(struct anoubis_proc_handle *handle, pid_t pid)
 {
-	struct anoubis_proc		*p;
-	struct kinfo_proc2		*kp;
-	int				 cnt = 0;
+	struct anoubis_proc		 *p;
+	struct kinfo_proc2		 *kp;
+	int				  cnt = 0;
 	char				**argv;
+	size_t				  arglen, offset;
+	int				  i;
 
 	if (!handle || handle->kd == NULL)
 		return NULL;
@@ -128,7 +130,29 @@ anoubis_proc_get(struct anoubis_proc_handle *handle, pid_t pid)
 	if (p->comm == NULL)
 		goto nomem;
 	argv = kvm_getargv2(handle->kd, kp, 0);
-	p->command = strdup(argv[0]);
+	if (argv == NULL)
+		return p;
+	for (i=arglen=0; argv[i]; ++i)
+		arglen += strlen(argv[i]) + 1;
+	if (arglen == 0)
+		return p;
+	p->command = malloc(arglen);
+	if (p->command == NULL)
+		return p;
+	p->command[0] = 0;
+	for (i=offset=0; offset < arglen && argv[i] != NULL; ++i) {
+		int		len = strlen(argv[i])+1;
+
+		if (offset + len > arglen)
+			len = arglen - offset;
+		/* Replace terminating NUL-byte with a space and append. */
+		if (offset)
+			p->command[offset-1] = ' ';
+		memcpy(p->command+offset, argv[i], len);
+		offset += len;
+	}
+	if (offset)
+		p->command[offset-1] = 0;
 	return p;
 nomem:
 	anoubis_proc_destroy(p);
@@ -178,7 +202,7 @@ anoubis_proc_get(struct anoubis_proc_handle *handle __attribute__((unused)),
 	struct anoubis_proc	*p;
 	char			 pid = 0, ppid = 0, uid = 0, gid = 0;
 	char			 groups = 0, name = 0;
-	char			*ret;
+	size_t			 len;
 
 	snprintf(buf, 1024, "/proc/%d/status", searchpid);
 	fp = fopen(buf, "r");
@@ -270,9 +294,27 @@ anoubis_proc_get(struct anoubis_proc_handle *handle __attribute__((unused)),
 	fp = fopen(buf, "r");
 	if (fp == NULL)
 		return p;
-	ret = fgets(buf, sizeof(buf), fp);
+	len = 0;
+	while (len < sizeof(buf)) {
+		int ret = fread(buf+len, 1, sizeof(buf)-len, fp);
+		if (ret <= 0)
+			break;
+		len += ret;
+	}
 	fclose(fp);
-	if (ret && strlen(buf)) {
+	if (len > 0 && strlen(buf)) {
+		unsigned int		i;
+
+		if (len < sizeof(buf) && buf[len-1])
+			len++;
+		for (i=0; i<len-1; ++i) {
+			if (buf[i] == 0)
+				buf[i] = ' ';
+			/* Escape special characters similar to ps. */
+			if (buf[i] == '\n' || buf[i] == '\r' || buf[i] == '\t')
+				buf[i] = '?';
+		}
+		buf[i] = 0;
 		p->command = strdup(buf);
 	} else {
 		/* Fall back to short command name, e.g. for kernel threads */
