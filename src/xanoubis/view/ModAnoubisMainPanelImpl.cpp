@@ -73,6 +73,7 @@
 #include "VersionCtrl.h"
 #include "VersionListCtrl.h"
 #include "PolicyCtrl.h"
+#include "PolicyRuleSet.h"
 #include "ProfileListCtrl.h"
 #include "PSListCtrl.h"
 #include "PSEntry.h"
@@ -1185,6 +1186,126 @@ ModAnoubisMainPanelImpl::answerEscalation(bool permit)
 }
 
 void
+ModAnoubisMainPanelImpl::onAlfUserEditClicked( wxCommandEvent& event )
+{
+	unsigned long		ruleid = 0;
+	const PSEntry		*entry = NULL;
+	wxCommandEvent		showEvent(anEVT_SHOW_RULE);
+
+	entry = PSListCtrl::instance()->getEntry(psList->getFirstSelection());
+	event.Skip();
+	ruleid = entry->getAlfRuleUser();
+
+	if (ruleid == 0 ){
+		alfUserEditButton->Disable();
+	} else {
+	    showEvent.SetInt(0); /* != Admin */
+	    showEvent.SetExtraLong(ruleid);
+	    wxPostEvent(AnEvents::instance(), showEvent);
+	}
+}
+
+void
+ModAnoubisMainPanelImpl::onAlfAdminEditClicked( wxCommandEvent& event )
+{
+	unsigned long		ruleid = 0;
+	const PSEntry		*entry = NULL;
+	wxCommandEvent		showEvent(anEVT_SHOW_RULE);
+
+	entry = PSListCtrl::instance()->getEntry(psList->getFirstSelection());
+	event.Skip();
+	ruleid = entry->getAlfRuleAdmin();
+
+	if (ruleid == 0 ){
+		alfAdminEditButton->Disable();
+	} else {
+	    showEvent.SetInt(1); /* is Admin */
+	    showEvent.SetExtraLong(ruleid);
+	    wxPostEvent(AnEvents::instance(), showEvent);
+	}
+}
+
+void
+ModAnoubisMainPanelImpl::onSbUserEditClicked( wxCommandEvent& event )
+{
+	unsigned long		ruleid = 0;
+	const PSEntry		*entry = NULL;
+	wxCommandEvent		showEvent(anEVT_SHOW_RULE);
+
+	entry = PSListCtrl::instance()->getEntry(psList->getFirstSelection());
+	event.Skip();
+	ruleid = entry->getSbRuleUser();
+
+	if (ruleid == 0 ){
+		sbUserEditButton->Disable();
+	} else {
+		showEvent.SetInt(0); /* != Admin */
+		showEvent.SetExtraLong(ruleid);
+		wxPostEvent(AnEvents::instance(), showEvent);
+	}
+}
+
+void
+ModAnoubisMainPanelImpl::onSbAdminEditClicked( wxCommandEvent& event )
+{
+	unsigned long		ruleid = 0;
+	const PSEntry		*entry = NULL;
+	wxCommandEvent		showEvent(anEVT_SHOW_RULE);
+
+	entry = PSListCtrl::instance()->getEntry(psList->getFirstSelection());
+	event.Skip();
+	ruleid = entry->getSbRuleAdmin();
+
+	if (ruleid == 0 ){
+		sbAdminEditButton->Disable();
+	} else {
+		showEvent.SetInt(1); /* is Admin */
+		showEvent.SetExtraLong(ruleid);
+		wxPostEvent(AnEvents::instance(), showEvent);
+	}
+}
+
+void
+ModAnoubisMainPanelImpl::onCtxUserEditClicked( wxCommandEvent& event )
+{
+	unsigned long		ruleid = 0;
+	const PSEntry		*entry = NULL;
+	wxCommandEvent		showEvent(anEVT_SHOW_RULE);
+
+	entry = PSListCtrl::instance()->getEntry(psList->getFirstSelection());
+	event.Skip();
+	ruleid = entry->getCtxRuleUser();
+
+	if (ruleid == 0 ){
+		ctxUserEditButton->Disable();
+	} else {
+		showEvent.SetInt(0); /* != Admin */
+		showEvent.SetExtraLong((unsigned long)ruleid);
+		wxPostEvent(AnEvents::instance(), showEvent);
+	}
+}
+
+void
+ModAnoubisMainPanelImpl::onCtxAdminEditClicked( wxCommandEvent& event )
+{
+	unsigned long		ruleid = 0;
+	const PSEntry		*entry = NULL;
+	wxCommandEvent		showEvent(anEVT_SHOW_RULE);
+
+	entry = PSListCtrl::instance()->getEntry(psList->getFirstSelection());
+	event.Skip();
+	ruleid = entry->getCtxRuleAdmin();
+
+	if (ruleid == 0 ){
+		ctxAdminEditButton->Disable();
+	} else {
+		showEvent.SetInt(1); /* is Admin */
+		showEvent.SetExtraLong(ruleid);
+		wxPostEvent(AnEvents::instance(), showEvent);
+	}
+}
+
+void
 ModAnoubisMainPanelImpl::OnAllowBtnClick(wxCommandEvent &event)
 {
 	event.Skip();
@@ -1973,13 +2094,13 @@ ModAnoubisMainPanelImpl::updatePSDetails(void)
 	psCtxUserPolicy->Clear();
 	psCtxAdminPolicy->Clear();
 
-	/* Enable edit-buttons only if you have an entry */
-	alfUserEditButton->Enable(entry != 0);
-	alfAdminEditButton->Enable(entry != 0);
-	sbUserEditButton->Enable(entry != 0);
-	sbAdminEditButton->Enable(entry != 0);
-	ctxUserEditButton->Enable(entry != 0);
-	ctxAdminEditButton->Enable(entry != 0);
+	/* Enable edit-buttons only if you have an entry + corresponding rule */
+	alfUserEditButton->Enable(entry != 0 && entry->getAlfRuleUser() != 0);
+	alfAdminEditButton->Enable(entry != 0 && entry->getAlfRuleAdmin() != 0);
+	sbUserEditButton->Enable(entry != 0 && entry->getSbRuleUser() != 0);
+	sbAdminEditButton->Enable(entry != 0 && entry->getSbRuleAdmin() != 0);
+	ctxUserEditButton->Enable(entry != 0 && entry->getCtxRuleUser() != 0);
+	ctxAdminEditButton->Enable(entry != 0 && entry->getCtxRuleAdmin() != 0);
 
 	if (entry) {
 		uint64_t	pgid = entry->getPlaygroundId();

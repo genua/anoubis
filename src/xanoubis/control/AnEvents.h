@@ -346,9 +346,9 @@ BEGIN_DECLARE_EVENT_TYPES()
 	 * Show Rule event.
 	 * Request the visability / selection of a given rule within RuleEditor.
 	 *
-	 * @param GetInt() Visability of DlgRuleEditor:
-	 *	- = 0 : hide
-	 *	- > 0 : show
+	 * @param GetInt() 'user' or 'admin' rule:
+	 *	- = 0 : user
+	 *	- > 0 : admin
 	 * @param GetExtraLong() The id of the rule to be selected.
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_SHOW_RULE, wxNewEventType())

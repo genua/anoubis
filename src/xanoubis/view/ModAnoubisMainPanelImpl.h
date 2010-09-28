@@ -118,6 +118,14 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase,
 		void OnPreviousBtnClick(wxCommandEvent&);
 		void OnNextBtnClick(wxCommandEvent&);
 		void OnLastBtnClick(wxCommandEvent&);
+
+		void onAlfUserEditClicked(wxCommandEvent &);
+		void onAlfAdminEditClicked(wxCommandEvent &);
+		void onSbUserEditClicked(wxCommandEvent &);
+		void onSbAdminEditClicked(wxCommandEvent &);
+		void onCtxUserEditClicked(wxCommandEvent &);
+		void onCtxAdminEditClicked(wxCommandEvent &);
+
 		void OnAllowBtnClick(wxCommandEvent&);
 		void OnDenyBtnClick(wxCommandEvent&);
 		void OnEscalationOnceButton(wxCommandEvent&);
