@@ -196,28 +196,6 @@ class ModAnoubisMainPanelBase : public wxPanel
 		wxButton* VersionDeleteButton;
 		wxButton* VersionShowButton;
 		
-		wxScrolledWindow* tb_MainAnoubisOptions;
-		wxCheckBox* cb_SendEscalations;
-		
-		wxCheckBox* cb_NoEscalationTimeout;
-		
-		wxSpinCtrl* m_spinEscalationNotifyTimeout;
-		wxStaticText* tx_EscalationNotifyTimeoutLabel;
-		wxCheckBox* cb_SendAlerts;
-		
-		wxCheckBox* cb_NoAlertTimeout;
-		
-		wxSpinCtrl* m_spinAlertNotifyTimeout;
-		wxStaticText* tx_AlertNotifyTimeoutLabel;
-		wxCheckBox* cb_ShowUpgradeMsg;
-		wxCheckBox* cb_ShowKernelMsg;
-		wxCheckBox* cb_ShowKeyGenInfoMsg;
-		wxCheckBox* cb_DoAutostart;
-		
-		wxCheckBox* autoConnectBox;
-		wxCheckBox* toolTipCheckBox;
-		wxSpinCtrl* toolTipSpinCtrl;
-		wxStaticText* m_staticText411;
 		wxScrolledWindow* tb_PsBrowser;
 		
 		wxButton* psReloadButton;
@@ -295,6 +273,28 @@ class ModAnoubisMainPanelBase : public wxPanel
 		wxTextCtrl* psCtxUserPolicy;
 		wxStaticLine* m_staticline12;
 		wxTextCtrl* psCtxAdminPolicy;
+		wxScrolledWindow* tb_MainAnoubisOptions;
+		wxCheckBox* cb_SendEscalations;
+		
+		wxCheckBox* cb_NoEscalationTimeout;
+		
+		wxSpinCtrl* m_spinEscalationNotifyTimeout;
+		wxStaticText* tx_EscalationNotifyTimeoutLabel;
+		wxCheckBox* cb_SendAlerts;
+		
+		wxCheckBox* cb_NoAlertTimeout;
+		
+		wxSpinCtrl* m_spinAlertNotifyTimeout;
+		wxStaticText* tx_AlertNotifyTimeoutLabel;
+		wxCheckBox* cb_ShowUpgradeMsg;
+		wxCheckBox* cb_ShowKernelMsg;
+		wxCheckBox* cb_ShowKeyGenInfoMsg;
+		wxCheckBox* cb_DoAutostart;
+		
+		wxCheckBox* autoConnectBox;
+		wxCheckBox* toolTipCheckBox;
+		wxSpinCtrl* toolTipSpinCtrl;
+		wxStaticText* m_staticText411;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnTypeChoosen( wxCommandEvent& event ){ event.Skip(); }
@@ -325,6 +325,16 @@ class ModAnoubisMainPanelBase : public wxPanel
 		virtual void OnVersionExportButtonClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnVersionDeleteButtonClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnVersionShowButtonClick( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onPsReloadClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnPSListColumnButtonClick( wxCommandEvent& event ){ event.Skip(); }
+		virtual void OnPSListItemDeselected( wxListEvent& event ){ event.Skip(); }
+		virtual void OnPSListItemSelected( wxListEvent& event ){ event.Skip(); }
+		virtual void onAlfUserEditClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onAlfAdminEditClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onSbUserEditClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onSbAdminEditClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onCtxUserEditClicked( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onCtxAdminEditClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnEscalationDisable( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnEscalationNoTimeout( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnEscalationTimeout( wxSpinEvent& event ){ event.Skip(); }
@@ -341,16 +351,6 @@ class ModAnoubisMainPanelBase : public wxPanel
 		virtual void OnToolTipCheckBox( wxCommandEvent& event ){ event.Skip(); }
 		virtual void OnToolTipSpinCtrl( wxSpinEvent& event ){ event.Skip(); }
 		virtual void OnToolTipSpinCtrlText( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onPsReloadClicked( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnPSListColumnButtonClick( wxCommandEvent& event ){ event.Skip(); }
-		virtual void OnPSListItemDeselected( wxListEvent& event ){ event.Skip(); }
-		virtual void OnPSListItemSelected( wxListEvent& event ){ event.Skip(); }
-		virtual void onAlfUserEditClicked( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onAlfAdminEditClicked( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onSbUserEditClicked( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onSbAdminEditClicked( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onCtxUserEditClicked( wxCommandEvent& event ){ event.Skip(); }
-		virtual void onCtxAdminEditClicked( wxCommandEvent& event ){ event.Skip(); }
 		
 	
 	public:
