@@ -2109,8 +2109,8 @@ ModAnoubisMainPanelImpl::updatePSDetails(void)
 		if (pgid == 0) {
 			pgidstr = _("no");
 		} else {
-			pgidstr = wxString::Format(_("yes (ID: %"PRIx64")"),
-			    pgid);
+			pgidstr = wxString::Format(_("yes (ID: %llx)"),
+			    (long long)pgid);
 		}
 	}
 #define	S(NAME,METHOD) do {					\
