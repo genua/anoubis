@@ -100,7 +100,7 @@ SuitePSList::switch_ps_tab(void)
 	notebook = dynamic_cast<wxNotebook*>
 	    (wxWindow::FindWindowById(ID_ANOUBIS_MAIN_NOTEBOOK));
 	CPPUNIT_ASSERT_MESSAGE("Can't find main notebook", notebook != NULL);
-	wxTst::EventSimulationHelper::SelectNotebookPage(notebook, 4);
+	wxTst::EventSimulationHelper::SelectNotebookPage(notebook, 3);
 	wxTst::WxGuiTestHelper::FlushEventQueue();
 }
 
@@ -108,7 +108,6 @@ void
 SuitePSList::check_ps_list(void)
 {
 	/* get the list */
-	/* Note: this should even work if switch_ps_tab failed ... */
 	AnListCtrl *pslist;
 	pslist = dynamic_cast<AnListCtrl*>
 	    //(mainFrame->FindWindow(ID_PSLIST));
@@ -133,15 +132,15 @@ SuitePSList::check_ps_list(void)
 	CPPUNIT_ASSERT_MESSAGE("process 1 does not exist", proc1 != -1);
 	CPPUNIT_ASSERT_MESSAGE("process 1 invalid user",
 	    getListValue(pslist, proc1, 1).Cmp(wxT("u2000")) == 0);
-	CPPUNIT_ASSERT_MESSAGE("process 2 no playground id",
+	CPPUNIT_ASSERT_MESSAGE("process 1 has pg id",
 	    getListValue(pslist, proc1, 5).Cmp(wxT("")) == 0);
 
 	pslist->SetItemState(proc1,
 	    wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
 
-	assertTextValue(ID_LABEL_PS_COMMAND, "2000_1.sh");
-	assertTextValue(ID_LABEL_PS_UID, "2000");
-	assertTextValue(ID_LABEL_PS_GID, "100");
+	assertTextValue(ID_LABEL_PS_COMMAND, "/bin/sh /tmp/2000_1.sh");
+	assertTextValue(ID_LABEL_PS_UID, "u2000");
+	assertTextValue(ID_LABEL_PS_GID, "users");
 	assertTextValue(ID_LABEL_PS_PGID, "no");
 	assertTextValue(ID_LABEL_PS_PROCESSPATH, "/tmp/2000_1.sh");
 	assertTextValue(ID_LABEL_PS_USERPATH, "/tmp/2000_1.sh");
@@ -153,7 +152,6 @@ SuitePSList::check_ps_list(void)
 	assertRuleValue(ID_TEXT_PS_SB_ADMIN,  "8: ");
 	assertRuleValue(ID_TEXT_PS_CTX_USER,  "13: ");
 	assertRuleValue(ID_TEXT_PS_CTX_ADMIN, "11: ");
-
 	pslist->SetItemState(proc1, 0, wxLIST_STATE_SELECTED);
 
 	/* test process 2 */
@@ -167,9 +165,9 @@ SuitePSList::check_ps_list(void)
 	pslist->SetItemState(proc2,
 	    wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
 
-	assertTextValue(ID_LABEL_PS_COMMAND, "2000_2.sh");
-	assertTextValue(ID_LABEL_PS_UID, "2000");
-	assertTextValue(ID_LABEL_PS_GID, "100");
+	assertTextValue(ID_LABEL_PS_COMMAND, "/bin/sh /tmp/2000_2.sh");
+	assertTextValue(ID_LABEL_PS_UID, "u2000");
+	assertTextValue(ID_LABEL_PS_GID, "users");
 	assertTextValue(ID_LABEL_PS_PGID, "yes (ID: 1)");
 	assertTextValue(ID_LABEL_PS_PROCESSPATH, "/tmp/2000_2.sh");
 	assertTextValue(ID_LABEL_PS_USERPATH, "/tmp/2000_2.sh");

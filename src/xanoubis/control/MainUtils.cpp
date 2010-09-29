@@ -32,6 +32,7 @@
 #include <sys/types.h>
 
 #include <pwd.h>
+#include <grp.h>
 
 #include <wx/stdpaths.h>
 
@@ -111,6 +112,23 @@ MainUtils::getUserNameById(uid_t uid) const
 		}
 	}
 	return lastname;
+}
+
+/*
+ * Get the group name for the specified gid.
+ */
+wxString
+MainUtils::getGroupNameById(gid_t gid) const
+{
+	struct group	*group;
+
+	group = getgrgid(gid);
+	if (group && group->gr_name) {
+		return wxString::From8BitData(
+		    group->gr_name, strlen(group->gr_name));
+	} else {
+		return wxEmptyString;
+	}
 }
 
 wxString

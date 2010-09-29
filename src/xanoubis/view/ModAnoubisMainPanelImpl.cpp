@@ -221,7 +221,7 @@ ModAnoubisMainPanelImpl::ModAnoubisMainPanelImpl(wxWindow* parent,
 	ADDRULECOLUMN(_("SB"), getSbRuleUser, getSbRuleAdmin, 90);
 	ADDRULECOLUMN(_("CTX"), getCtxRuleUser, getCtxRuleAdmin, 90);
 	ADDCOLUMN(_("Playground ID"), getPlaygroundId, uint64_t,
-	    &pgidToString, 90);
+	    &pgidToString, 100);
 	ADDCOLUMN(_("Command"), getShortProcessName, const wxString, NULL, 180);
 
 	psListCtrl = PSListCtrl::instance();
@@ -2116,18 +2116,21 @@ ModAnoubisMainPanelImpl::updatePSDetails(void)
 #define	S(NAME,METHOD) do {					\
 	NAME->SetLabel(entry?entry->METHOD():wxT(""));		\
 } while(0)
-#define L(NAME,METHOD) do {					\
-	NAME->SetLabel(entry?					\
-	    wxString::Format(wxT("%d"), entry->METHOD()):	\
-	    wxT(""));	\
+#define U(NAME,METHOD) do {					\
+	NAME->SetLabel(entry?MainUtils::instance()->		\
+	    getUserNameById(entry->METHOD()): wxT(""));		\
+} while (0)
+#define G(NAME,METHOD) do {                                     \
+	NAME->SetLabel(entry?MainUtils::instance()->            \
+	    getGroupNameById(entry->METHOD()): wxT(""));        \
 } while (0)
 	S(psDetailsCommandText, getLongProcessName);
 	S(psDetailsPidText, getProcessId);
 	S(psDetailsPpidText, getParentProcessId);
-	L(psDetailsRealUidText, getUID);
-	L(psDetailsRealGidText, getGID);
-	L(psDetailsEffectiveUidText, getEUID);
-	L(psDetailsEffectiveGidText, getEGID);
+	U(psDetailsRealUidText, getUID);
+	G(psDetailsRealGidText, getGID);
+	U(psDetailsEffectiveUidText, getEUID);
+	G(psDetailsEffectiveGidText, getEGID);
 	psDetailsSecureExecText->SetLabel(secure);
 	psDetailsPlaygroundText->SetLabel(pgidstr);
 	S(psPathAppText, getPathProcess);
@@ -2137,7 +2140,9 @@ ModAnoubisMainPanelImpl::updatePSDetails(void)
 	S(psPathAdminCtxPathText, getPathAdminContext);
 	S(psPathAdminCtxCsumText, getChecksumAdminContext);
 #undef S
-#undef L
+#undef U
+#undef G
+
 	if (entry == NULL)
 		return;
 	admin = pctrl->getRuleSet(pctrl->getAdminId(geteuid()));
