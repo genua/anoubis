@@ -35,10 +35,10 @@ struct anoubis_server;
 struct anoubis_policy_comm;
 
 typedef int (*anoubis_policy_comm_dispatcher_t)(struct anoubis_policy_comm *,
-    u_int64_t token, u_int32_t uid, void * buf, size_t len, void * arg,
+    u_int64_t token, u_int32_t uid, const void * buf, size_t len, void * arg,
     int flags);
 typedef int (*anoubis_policy_reply_callback_t)(void *cbdata, int error,
-    void *data, int len, int flags);
+    const void *data, int len, int flags);
 
 /*@null@*/ /*@only@*/
 struct anoubis_policy_comm * anoubis_policy_comm_create(
@@ -54,7 +54,7 @@ int anoubis_policy_comm_addrequest(struct anoubis_policy_comm *comm,
     anoubis_policy_comm_dispatcher_t dispatch, void *cbdata, u_int64_t *tokenp);
 
 int anoubis_policy_comm_answer(struct anoubis_policy_comm * comm,
-    u_int64_t token, int error, void * data, int len, int end);
+    u_int64_t token, int error, const void * data, int len, int end);
 
 void anoubis_policy_comm_destroy(struct anoubis_policy_comm * comm,
     /*@notnull@*/ struct achat_channel * chan);

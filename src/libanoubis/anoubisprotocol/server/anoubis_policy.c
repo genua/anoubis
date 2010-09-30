@@ -58,7 +58,7 @@ struct anoubis_policy_comm {
 };
 
 static int	anoubis_policy_request_callback(void *cbdata, int error,
-		    void *data, int len, int flags);
+		    const void *data, int len, int flags);
 
 /*
  * The following code utilizes list functions from BSD queue.h, which
@@ -148,7 +148,7 @@ int anoubis_policy_comm_process(struct anoubis_policy_comm * comm,
 }
 
 int anoubis_policy_comm_answer(struct anoubis_policy_comm * comm,
-    u_int64_t token, int error, void * data, int len, int end)
+    u_int64_t token, int error, const void * data, int len, int end)
 {
 	struct policy_request		*req;
 	int				 err;
@@ -188,7 +188,7 @@ int anoubis_policy_comm_answer(struct anoubis_policy_comm * comm,
 }
 
 static int anoubis_policy_request_callback(void *cbdata, int error,
-    void *data, int len, int flags)
+    const void *data, int len, int flags)
 {
 	int			 ret;
 	struct anoubis_msg	*m;

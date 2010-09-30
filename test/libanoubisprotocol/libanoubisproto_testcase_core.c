@@ -285,8 +285,9 @@ static void do_notify(struct anoubis_notify_group * grp)
 		anoubis_notify_destroy_head(head);
 }
 
-int policy_dispatch(struct anoubis_policy_comm * policy, u_int64_t token,
-    u_int32_t uid __used, void * buf __used,  size_t len __used,
+int
+policy_dispatch(struct anoubis_policy_comm * policy, u_int64_t token,
+    u_int32_t uid __used, const void * buf __used,  size_t len __used,
     void *arg __used, int flags __used)
 {
 	return anoubis_policy_comm_answer(policy, token, 0, NULL, 0, 1);
