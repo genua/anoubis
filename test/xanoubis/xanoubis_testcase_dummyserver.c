@@ -99,6 +99,23 @@ auth_dummy(struct anoubis_server *server, struct anoubis_msg *m __used,
 	auth->finish_callback(auth->cbdata);
 }
 
+static void
+list_dummy(struct anoubis_server *server, struct anoubis_msg *m __used,
+    uid_t auth_uid __used, void *arg __used)
+{
+	struct anoubis_msg *answer;
+
+	answer = anoubis_msg_new(sizeof(Anoubis_ListMessage));
+	set_value(answer->u.listreply->type, ANOUBIS_P_LISTREP);
+	set_value(answer->u.listreply->flags, POLICY_FLAG_START|POLICY_FLAG_END);
+	set_value(answer->u.listreply->error, 0);
+	set_value(answer->u.listreply->nrec, 0);
+	set_value(answer->u.listreply->rectype,
+	    get_value(m->u.listreq->listtype));
+	anoubis_msg_send(anoubis_server_getchannel(server), answer);
+	anoubis_msg_free(answer);
+}
+
 void
 tc_Communicator_lud_server(const char *sockname)
 {
@@ -145,6 +162,7 @@ tc_Communicator_lud_server(const char *sockname)
 	server = anoubis_server_create(s, policy);
 	fail_if(server == NULL, "Failed to create server protocol");
 	anoubis_dispatch_create(server, ANOUBIS_C_AUTHDATA, &auth_dummy, NULL);
+	anoubis_dispatch_create(server, ANOUBIS_P_LISTREQ, &list_dummy, NULL);
 	mark_point();
 
 	/* assemble status notify */
