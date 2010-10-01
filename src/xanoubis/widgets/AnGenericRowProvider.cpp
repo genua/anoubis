@@ -25,22 +25,29 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <algorithm>
+
 #include "AnGenericRowProvider.h"
 
 AnGenericRowProvider::AnGenericRowProvider(void) : Observer(NULL)
 {
-	rows_.clear();
-	reverseRows_.clear();
+	allrows_.clear();
+	visiblerows_.clear();
+	sortProperty_ = NULL;
+	filterProperty_ = NULL;
+	filterString_ = wxEmptyString;
 }
 
 AnGenericRowProvider::~AnGenericRowProvider(void)
 {
-	unsigned int	i;
-	for (i=0; i<rows_.size(); ++i) {
-		removeSubject(rows_[i]);
+	for (unsigned int i=0; i<allrows_.size(); ++i) {
+		removeSubject(allrows_[i]);
 	}
-	rows_.clear();
-	reverseRows_.clear();
+	allrows_.clear();
+	visiblerows_.clear();
+	/* Using the setter methods ensures that removeSubject is called: */
+	setSortProperty(NULL);
+	setFilterProperty(NULL);
 }
 
 void
@@ -48,188 +55,167 @@ AnGenericRowProvider::setRowData(const std::vector<AnListClass *> &rowData)
 {
 	clearRows();
 
-	rows_.reserve(rowData.size());
-	std::vector<AnListClass *>::const_iterator it = rowData.begin();
-	for (; it != rowData.end(); ++it) {
-		AnListClass *c = (*it);
-		addSubject(c); /* Register at observer */
-
-		rows_.push_back(c);
-		reverseRows_[c] = rows_.size() - 1; /* Last index */
+	std::vector<AnListClass *>::const_iterator	it;
+	for (it = rowData.begin(); it != rowData.end(); ++it) {
+		addSubject(*it);
+		allrows_.push_back(*it);
 	}
-	rowChangeEvent(0, -1);
-}
-
-void
-AnGenericRowProvider::setRowData(const std::list<AnListClass *> &rowData)
-{
-	clearRows();
-
-	rows_.reserve(rowData.size());
-	std::list<AnListClass *>::const_iterator it = rowData.begin();
-	for (; it != rowData.end(); ++it) {
-		AnListClass *c = (*it);
-		addSubject(c); /* Register at observer */
-
-		rows_.push_back(c);
-		reverseRows_[c] = rows_.size() - 1; /* Last index */
-	}
-	rowChangeEvent(0, -1);
+	updateVisible();
 }
 
 void
 AnGenericRowProvider::addRow(AnListClass *row)
 {
-	int	idx = rows_.size();
-
-	rows_.push_back(row);
-	reverseRows_[row] = idx;
+	allrows_.push_back(row);
 	addSubject(row); /* Register at observer */
-	rowChangeEvent(idx, -1);
-}
-
-void
-AnGenericRowProvider::addRow(AnListClass *row, unsigned int before)
-{
-	if (before < rows_.size()) {
-		std::vector<AnListClass *>::iterator it = rows_.begin();
-		it += before;
-
-		rows_.insert(it, row);
-		reverseRows_[row] = before;
-
-		addSubject(row); /* Register at observer */
-
-		/* Any following rows are advanced by one position */
-		for (unsigned int i = before + 1; i < rows_.size(); i++) {
-			AnListClass *c = rows_[i];
-			reverseRows_[c] = reverseRows_[c] + 1;
-		}
-
-		rowChangeEvent(before, -1);
-	} else {
-		/* Out of range, append to the end */
-		addRow(row);
-	}
+	updateVisible();
 }
 
 bool
-AnGenericRowProvider::removeRow(unsigned int idx)
+AnGenericRowProvider::removeRawRow(unsigned int idx)
 {
-	if (idx < rows_.size()) {
-		removeSubject(rows_[idx]); /* Deregister from observer */
-
-		std::vector<AnListClass *>::iterator it = rows_.begin();
-		it += idx;
-
-		rows_.erase(it);
-
-		for (unsigned int i = idx; i < rows_.size(); i++) {
-			AnListClass *c = rows_[idx];
-			reverseRows_[c] = reverseRows_[c] - 1;
-		}
-
-		rowChangeEvent(idx, -1);
-
-		return (true);
-	} else
-		return (false);
-}
-
-bool
-AnGenericRowProvider::removeRows(unsigned int first, unsigned int last)
-{
-	int	diff = last - first  + 1;
-	if (diff > 0 && last < rows_.size()) {
-		/* Deregister from observer */
-		for (unsigned int idx = first; idx <= last; idx++) {
-			removeSubject(rows_[idx]);
-		}
-
-		std::vector<AnListClass *>::iterator it1 = rows_.begin();
-		std::vector<AnListClass *>::iterator it2 = rows_.begin();
-
-		it1 += first;
-		it2 += last;
-
-		rows_.erase(it1, it2);
-
-		for (unsigned int idx = first; idx < rows_.size(); idx++) {
-			AnListClass *c = rows_[idx];
-			reverseRows_[c] = reverseRows_[c] - diff;
-		}
-
-		rowChangeEvent(first, -1);
-
-		return (true);
-	} else
-		return (false);
+	if (idx >= allrows_.size())
+		return false;
+	removeSubject(allrows_[idx]);
+	allrows_.erase(allrows_.begin()+idx);
+	updateVisible();
+	return true;
 }
 
 void
 AnGenericRowProvider::clearRows(void)
 {
-	while (!rows_.empty()) {
-		AnListClass *c = rows_.back();
-		rows_.pop_back();
-
-		removeSubject(c); /* Deregister from observer */
-	}
-	reverseRows_.clear();
+	for (unsigned int i=0; i<allrows_.size(); ++i)
+		removeSubject(allrows_[i]);
+	allrows_.clear();
+	visiblerows_.clear();
 	sizeChangeEvent(0);
-}
-
-int
-AnGenericRowProvider::getRowIndex(AnListClass *row) const
-{
-	if (reverseRows_.count(row) > 0) {
-		std::map<AnListClass *, unsigned int>::const_iterator it =
-		    reverseRows_.find(row);
-
-		return ((*it).second);
-	} else
-		return (-1);
 }
 
 AnListClass *
 AnGenericRowProvider::getRow(unsigned int idx) const
 {
-	if (idx < rows_.size())
-		return rows_[idx];
+	if (idx < visiblerows_.size())
+		return allrows_[visiblerows_[idx]];
 	return NULL;
 }
 
 int
 AnGenericRowProvider::getSize(void) const
 {
-	return rows_.size();
+	return visiblerows_.size();
 }
 
+/* NOTE: Does not change row order. */
 void
 AnGenericRowProvider::update(Subject *subject)
 {
-	AnListClass *c = dynamic_cast<AnListClass*>(subject);
+	AnListClass	*row = dynamic_cast<AnListClass*>(subject);
 
-	if (c != 0) {
-		int	idx = getRowIndex(c);
-		rowChangeEvent(idx, idx);
+	if (row == NULL)
+		return;
+	for (unsigned int i=0; i<visiblerows_.size(); ++i) {
+		if (allrows_[visiblerows_[i]] == row) {
+			rowChangeEvent(i, i);
+			break;
+		}
 	}
 }
 
 void
 AnGenericRowProvider::updateDelete(Subject *subject)
 {
-	AnListClass *c = dynamic_cast<AnListClass*>(subject);
+	AnListClass		*row;
 
-	if (c != 0) {
-		int idx = getRowIndex(c);
-
-		if (idx != -1) {
-			/*
-			 * AnListClass-instance removed,
-			 * remove also from view.
-			 */
-			removeRow(idx);
+	/* NOTE: Both sortProperty_ == filterProperty_ is possible! */
+	if (subject == sortProperty_)
+		sortProperty_ = NULL;
+	if (subject == filterProperty_)
+		filterProperty_ = NULL;
+	row = dynamic_cast<AnListClass*>(subject);
+	if (row == NULL)
+		return;
+	for (unsigned int idx=0; idx < allrows_.size(); ++idx) {
+		if (allrows_[idx] == row) {
+			removeRawRow(idx);
+			break;
 		}
 	}
+}
+
+void
+AnGenericRowProvider::setFilterProperty(AnListProperty *filter)
+{
+	if (filterProperty_)
+		removeSubject(filterProperty_);
+	filterProperty_ = filter;
+	if (filterProperty_)
+		addSubject(filterProperty_);
+	filterString_ = wxEmptyString;
+	updateVisible();
+}
+
+void
+AnGenericRowProvider::setFilterString(const wxString &filter)
+{
+	filterString_ = filter.Lower();
+	updateVisible();
+}
+
+void
+AnGenericRowProvider::setSortProperty(AnListProperty *sortprop)
+{
+	if (sortProperty_)
+		removeSubject(sortProperty_);
+	sortProperty_ = sortprop;
+	if (sortProperty_)
+		addSubject(sortProperty_);
+	updateVisible();
+}
+
+class AnGenericRowProviderComp {
+private:
+	const AnGenericRowProvider	&provider_;
+public:
+	AnGenericRowProviderComp(const AnGenericRowProvider *p)
+	    : provider_(*p) { }
+	bool operator() (unsigned int i, unsigned int j) const {
+		return provider_(i, j);
+	}
+};
+
+void
+AnGenericRowProvider::updateVisible(void)
+{
+	AnGenericRowProviderComp	comp(this);
+
+	visiblerows_.clear();
+	/* Apply the filter (if any) */
+	if (filterProperty_ && filterString_ != wxEmptyString) {
+		for (unsigned int i=0; i<allrows_.size(); ++i) {
+			wxString		text;
+
+			text = (filterProperty_->getText(allrows_[i])).Lower();
+			if (text.Find(filterString_.c_str()) != wxNOT_FOUND)
+				visiblerows_.push_back(i);
+		}
+	} else {
+		for (unsigned int i=0; i<allrows_.size(); ++i)
+			visiblerows_.push_back(i);
+	}
+	if (sortProperty_)
+		sort(visiblerows_.begin(), visiblerows_.end(), comp);
+	rowChangeEvent(0, -1);
+}
+
+bool
+AnGenericRowProvider::operator() (unsigned int i, unsigned int j) const
+{
+	wxString	s1, s2;
+
+	if (sortProperty_ == NULL)
+		return i<j;
+	s1 = (sortProperty_->getText(allrows_[i])).Lower();
+	s2 = (sortProperty_->getText(allrows_[j])).Lower();
+	return (s1.Cmp(s2) < 0);
 }

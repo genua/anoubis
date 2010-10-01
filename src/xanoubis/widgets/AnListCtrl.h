@@ -122,6 +122,8 @@ class AnListCtrl : public wxListCtrl, public Observer
 		 *
 		 * @param property The property to be displayed at the column.
 		 * @param width The width of the column.
+		 * @param visible True if the column should be visible by
+		 *     default.
 		 * @param align The alignment of the column.
 		 * @return The logical index of the column. Use this for
 		 *     subsequent calls to functions that expect a column
@@ -130,7 +132,7 @@ class AnListCtrl : public wxListCtrl, public Observer
 		 *       If the column is removed or the complete list is
 		 *       destroyed, the property is also destroyed.
 		 */
-		void addColumn(AnListProperty *, int width,
+		void addColumn(AnListProperty *, int width, bool visible = true,
 		    wxListColumnFormat align = wxLIST_FORMAT_LEFT);
 
 		/**
@@ -150,12 +152,24 @@ class AnListCtrl : public wxListCtrl, public Observer
 		unsigned int getRowCount(void) const;
 
 		/**
-		 * Returns the property used to format the rows of the table.
-		 *
-		 * @return Property used to format the rows. If NULL is
-		 *         returned, the default formatting options are used.
+		 * Return the property of the column with the given index.
+		 * @param col The column index. Only visible columns are
+		 *     counted!
+		 * @return The property associated with the column. The
+		 *     property will be invalidated if the list ctrl or
+		 *     the column is destoyed.
 		 */
-		AnListClassProperty *getRowProperty(void) const;
+		AnListProperty *getProperty(unsigned int col) const;
+
+		/**
+		 * Return the property of the column with the given index.
+		 * @param col The column index. Both visible and invisible
+		 *     columns are counted.
+		 * @return The property associated with the column. The
+		 *     property will be invalidated if the list ctrl or
+		 *     the column is destoyed.
+		 */
+		AnListProperty *getRawProperty(unsigned int col) const;
 
 		/**
 		 * Assigns a row-property to the table.
@@ -169,7 +183,7 @@ class AnListCtrl : public wxListCtrl, public Observer
 		 *       property. If the list is removed, the property is also
 		 *       destroyed.
 		 */
-		void setRowProperty(AnListClassProperty *);
+		void setRowAttrProperty(AnListClassProperty *);
 
 		/**
 		 * Refreshes the visible area of the list.
@@ -318,7 +332,7 @@ class AnListCtrl : public wxListCtrl, public Observer
 		/**
 		 * Row-property (if any).
 		 */
-		AnListClassProperty *rowProperty_;
+		AnListClassProperty *rowAttrProperty_;
 
 		/**
 		 * The item-attribute setup and returned by OnGetItemAttr().

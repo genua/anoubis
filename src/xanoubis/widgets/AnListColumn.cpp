@@ -58,18 +58,18 @@ AnListColumn::setWidth(int width)
 }
 
 AnListColumn::AnListColumn(AnListProperty *property, wxString key,
-    int width, wxListColumnFormat align)
+    int width, bool visible, wxListColumnFormat align)
 {
 	property_ = property;
 	configPath_ = key;
 	if (configPath_ != wxEmptyString && !configPath_.EndsWith(wxT("/")))
 		configPath_ += wxT("/");
 
-	visible_ = true;
+	visible_ = visible;
 	if (configPath_ != wxEmptyString) {
 		wxConfig::Get()->Read(configPath_ + widthkey, &width, width);
 		wxConfig::Get()->Read(configPath_ + visiblekey,
-		    &visible_, true);
+		    &visible_, visible);
 	}
 	width_ = width;
 	align_ = align;

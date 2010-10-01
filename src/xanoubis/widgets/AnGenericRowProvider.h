@@ -29,11 +29,11 @@
 #define _ANGENERICROWPROVIDER_H_
 
 #include <vector>
-#include <list>
 #include <map>
 
 #include <AnListClass.h>
 #include <AnRowProvider.h>
+#include <AnListProperty.h>
 
 /**
  * This class implements a row provider that exposes an interface to
@@ -42,7 +42,10 @@
  * will handle the communication with AnListCtrl.
  *
  * This interface may be useful for lists that do not change very often
- * and that are known to be of small size.
+ * and that are known to be of small size. Additionally, this provider
+ * adds functions that allow the suer to sort the list based on different
+ * criteria. Filtering is supported, too. However, the implementation is
+ * not suited for very large lists.
  *
  * Objects in the list are monitored individually with the subject/observer
  * pattern.
@@ -73,16 +76,6 @@ class AnGenericRowProvider : public AnRowProvider, private Observer
 		void setRowData(const std::vector<AnListClass *> &);
 
 		/**
-		 * Assigns rows to the list.
-		 *
-		 * Any previously assigned rows are removed before.
-		 *
-		 * @param rowData Data to be assigned to the list
-		 * @see clearRows()
-		 */
-		void setRowData(const std::list<AnListClass *> &);
-
-		/**
 		 * Appends a row at the end of the list.
 		 *
 		 * @param row Row to be appended
@@ -90,72 +83,98 @@ class AnGenericRowProvider : public AnRowProvider, private Observer
 		void addRow(AnListClass *);
 
 		/**
-		 * Appends a row <i>before</i> the specified index.
-		 *
-		 * @param row Row to be appended
-		 * @param before Index of row-list. The new index is inserted
-		 *               this index. If the indexis out of range,
-		 *               the row is appended at the end of the list.
-		 */
-		void addRow(AnListClass *, unsigned int);
-
-		/**
 		 * Removes a single row from the list.
 		 *
-		 * @param idx Index of row to be removed.
+		 * @param idx Index of row to be removed. This is _not_ the
+		 *     index in the visible list but in the unordered over all
+		 *     list. Do not use this function if this is avoidable.
 		 * @return On success true is returned. If the index is out
-		 *         of range, nothing is removed  and false is returned.
+		 *     of range, nothing is removed  and false is returned.
 		 * @note The corresponding AnListClass instance is <i>not</i>
-		 *       destroyed!
+		 *     destroyed!
 		 */
-		bool removeRow(unsigned int);
-
-		/**
-		 * Removes a range of rows from the list.
-		 *
-		 * first needs to be smaller than last and last must not be out
-		 * of range. If the condition is not fulfilled, nothing is
-		 * removed from the list.
-		 *
-		 * @param first First index of range
-		 * @param last Last index of range
-		 * @return On success true is returned. If
-		 *         <code>first > last</code> or last is out of range,
-		 *         nothing is removed and false is returned.
-		 * @note The corresponding AnListClass instances are <i>not</i>
-		 *       destroyed!
-		 */
-		bool removeRows(unsigned int, unsigned int);
+		bool removeRawRow(unsigned int);
 
 		/**
 		 * Removes all rows from the list.
 		 *
 		 * @note The corresponding AnListClass instances are <i>not</i>
-		 *       destroyed!
+		 *     destroyed!
 		 */
 		void clearRows(void);
 
 		/**
 		 * Implementation of AnRowProvider::getRow()
-		 * @param idx The row index.
+		 * @param idx The row index in the list of _visible_ rows.
 		 * @return The AnListClass object associated with the index.
 		 */
 		AnListClass *getRow(unsigned int idx) const;
 
 		/**
 		 * Implementation of AnRowProvider::getSize()
-		 * @return The total number of rows managed by this class.
+		 * @return The total number of rows currently visible.
 		 */
 		int getSize(void) const;
 
 		/**
-		 * Returns the row-index of the specified AnListClass instance.
-		 *
-		 * @param c The requested AnListClass instance
-		 * @return Index of specified AnListClass instance. If the
-		 *         object is not registered here, -1 is returned.
+		 * Return the total number of rows, visible or not.
 		 */
-		int getRowIndex(AnListClass *) const;
+		int getRawSize(void) const {
+			return allrows_.size();
+		}
+
+		/**
+		 * Return the row with the given index from the
+		 * list of all rows (visible or not). You are probably
+		 * interested in getRow instead.
+		 *
+		 * @param idx The raw index of the row.
+		 * @return The row object with the given index.
+		 */
+		AnListClass *getRawRow(unsigned int idx) const {
+			if (idx >= allrows_.size())
+				return NULL;
+			return allrows_[idx];
+		}
+
+		/**
+		 * Set the filter property. This is mandatory for the
+		 * filter to work reliably. Setting the property resets
+		 * the filter string, i.e. all rows are initially visible.
+		 * The caller must make sure that the property lives as
+		 * long as the provider.
+		 *
+		 * @param[in] 1st The filter property.
+		 * @return None.
+		 */
+		void setFilterProperty(AnListProperty *);
+
+		/**
+		 * Set the filter String. This string is used to filter
+		 * rows. Rows are only visible if the string extracted by
+		 * filterProperty matches the current filter String.
+		 * An empty filter String implies no filtering.
+		 *
+		 * @param[in] 1st The new filter string.
+		 * @return None.
+		 */
+		void setFilterString(const wxString &);
+
+		/**
+		 * Set the property that is used to sort the rows.
+		 * If no sort property is set the list is not sorted. The
+		 * caller must make sure that the property lives as long
+		 * as the provider.
+		 *
+		 * @param[in] 1st The new sort property.
+		 * @return None.
+		 */
+		void setSortProperty(AnListProperty *);
+
+		/**
+		 * Implementation of the StrictWeakOrdering Model.
+		 */
+		bool operator() (unsigned int, unsigned int) const;
 
 	private:
 		/**
@@ -173,21 +192,46 @@ class AnGenericRowProvider : public AnRowProvider, private Observer
 		void updateDelete(Subject *);
 
 		/**
-		 * List of rows.
+		 * Update the list of visible columns after the sorting
+		 * changes or filtering changes.
+		 *
+		 * @params None.
+		 * @return None.
+		 */
+		void updateVisible(void);
+		/**
+		 * List of all rows.
 		 *
 		 * Used to select a row of the list in constant time.
 		 */
-		std::vector<AnListClass *>	rows_;
+		std::vector<AnListClass *>	allrows_;
 
 		/**
-		 * Reverse map of rows.
-		 *
-		 * Maps an AnListClass instance to an index in rows_-attribute.
-		 * For efficiency a map is used. You can find out the index by
-		 * walking through the rows_-list in linear time. But searching
-		 * for an index in a map only takes logarithmical time.
+		 * List of visible rows. Visible rows can differ from
+		 * all rows if a search string is given or if the or if
+		 * the list is sorted.
 		 */
-		std::map<AnListClass *, unsigned int> reverseRows_;
+		std::vector<unsigned int>	visiblerows_;
+
+		/**
+		 * This property (if any) is used to extract a text
+		 * version of each row for filtering.
+		 */
+		AnListProperty			*filterProperty_;
+
+		/**
+		 * This filter is applied to all rows. A row is visible iff
+		 * the string extracted by filterProperty_ from the row matches
+		 * filterString_.
+		 */
+		wxString			 filterString_;
+
+		/**
+		 * It set this property is used to sort all visible rows
+		 * according to the string extracted from each row by
+		 * this property.
+		 */
+		AnListProperty			*sortProperty_;
 };
 
 #endif	/* _ANGENERICROWPROVIDER_H_ */

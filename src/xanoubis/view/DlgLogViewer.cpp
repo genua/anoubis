@@ -117,7 +117,7 @@ DlgLogViewer::DlgLogViewer(wxWindow* parent) : DlgLogViewerBase(parent)
 	logListCtrl->setStateKey(wxT("/State/DlgLogViewer"));
 
 	property = new LogViewerProperty(LogViewerProperty::PROPERTY_ICON);
-	logListCtrl->addColumn(property, 24, wxLIST_FORMAT_CENTRE);
+	logListCtrl->addColumn(property, 24, true, wxLIST_FORMAT_CENTRE);
 
 	property = new LogViewerProperty(LogViewerProperty::PROPERTY_TIME);
 	logListCtrl->addColumn(property, 200);
@@ -128,7 +128,7 @@ DlgLogViewer::DlgLogViewer(wxWindow* parent) : DlgLogViewerBase(parent)
 	property = new LogViewerProperty(LogViewerProperty::PROPERY_MESSAGE);
 	logListCtrl->addColumn(property, 385);
 
-	logListCtrl->setRowProperty(new NotificationProperty);
+	logListCtrl->setRowAttrProperty(new NotificationProperty);
 
 	anEvents->Connect(anEVT_LOGVIEWER_SHOW,
 	    wxCommandEventHandler(DlgLogViewer::onShow), NULL, this);

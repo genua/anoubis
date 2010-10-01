@@ -79,7 +79,7 @@ class PlaygroundCtrl : public GenericCtrl, public Singleton<PlaygroundCtrl>
 		 * @param None.
 		 * @return row provider for playground files
 		 */
-		AnRowProvider * getFileProvider(void);
+		AnGenericRowProvider * getFileProvider(void);
 
 		/**
 		 * Command: Update the list of playground files.

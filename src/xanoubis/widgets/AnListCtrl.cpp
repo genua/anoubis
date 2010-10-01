@@ -42,7 +42,7 @@ AnListCtrl::AnListCtrl(wxWindow *parent, wxWindowID id, const wxPoint &pos,
     : wxListCtrl(parent, id, pos, size, style, validator, name), Observer(NULL)
 {
 	stateKey_ = wxEmptyString;
-	rowProperty_ = NULL;
+	rowAttrProperty_ = NULL;
 	itemAttr_ = new wxListItemAttr;
 	hasSelectionResult_ = 0;
 	SetItemCount(0);
@@ -89,8 +89,8 @@ AnListCtrl::~AnListCtrl(void)
 	setRowProvider(NULL);
 	Disconnect(wxEVT_COMMAND_LIST_COL_END_DRAG, wxListEventHandler(
 	    AnListCtrl::onColumnSize), NULL, this);
-	if (rowProperty_ != 0)
-		delete rowProperty_;
+	if (rowAttrProperty_ != 0)
+		delete rowAttrProperty_;
 
 	delete this->itemAttr_;
 
@@ -112,7 +112,7 @@ AnListCtrl::setStateKey(const wxString &key)
 
 void
 AnListCtrl::addColumn(AnListProperty *property, int width,
-    wxListColumnFormat align)
+    bool visible, wxListColumnFormat align)
 {
 	AnListColumn	*col;
 	unsigned int	 idx = columnList_.size();
@@ -120,7 +120,7 @@ AnListCtrl::addColumn(AnListProperty *property, int width,
 
 	if (key != wxEmptyString)
 		key += wxString::Format(wxT("%d"), idx);
-	col = new AnListColumn(property, key, width, align);
+	col = new AnListColumn(property, key, width, visible, align);
 	columnList_.push_back(col);
 	/*
 	 * Do _NOT_ use setColumnVisible. It assumes that the visibility
@@ -163,16 +163,10 @@ AnListCtrl::setColumnVisible(unsigned int colidx, bool visible)
 	}
 }
 
-AnListClassProperty *
-AnListCtrl::getRowProperty(void) const
-{
-	return this->rowProperty_;
-}
-
 void
-AnListCtrl::setRowProperty(AnListClassProperty *property)
+AnListCtrl::setRowAttrProperty(AnListClassProperty *property)
 {
-	this->rowProperty_ = property;
+	this->rowAttrProperty_ = property;
 }
 
 bool
@@ -262,7 +256,7 @@ AnListCtrl::OnGetItemColumnImage(long row, long column) const
 wxListItemAttr *
 AnListCtrl::OnGetItemAttr(long row) const
 {
-	if (rowProperty_ != 0) {
+	if (rowAttrProperty_ != 0) {
 		AnListClass *item = rowProvider_->getRow(row);
 
 		if (item != 0) {
@@ -270,16 +264,17 @@ AnListCtrl::OnGetItemAttr(long row) const
 			 * XXX CEH: Nur ein itemAttr fuer alle Zeilen,
 			 * XXX CEH: ob das wirklich gut geht???
 			 */
-			itemAttr_->SetTextColour(rowProperty_->getColor(item));
+			itemAttr_->SetTextColour(
+			    rowAttrProperty_->getColor(item));
 			itemAttr_->SetBackgroundColour(
-			    rowProperty_->getBackgroundColor(item));
-			itemAttr_->SetFont(rowProperty_->getFont(item));
+			    rowAttrProperty_->getBackgroundColor(item));
+			itemAttr_->SetFont(rowAttrProperty_->getFont(item));
 
 			return itemAttr_;
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 unsigned int
@@ -413,4 +408,20 @@ AnListCtrl::updateDelete(Subject *subject)
 {
 	if (subject == rowProvider_)
 		setRowProvider(NULL);
+}
+
+AnListProperty *
+AnListCtrl::getProperty(unsigned int col) const
+{
+	if (col >= visibleColumns_.size())
+		return NULL;
+	return columnList_[visibleColumns_[col]]->getProperty();
+}
+
+AnListProperty *
+AnListCtrl::getRawProperty(unsigned int col) const
+{
+	if (col >= columnList_.size())
+		return NULL;
+	return columnList_[col]->getProperty();
 }

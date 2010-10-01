@@ -80,7 +80,7 @@ PlaygroundCtrl::updatePlaygroundInfo(void)
 	return (createListTask());
 }
 
-AnRowProvider *
+AnGenericRowProvider *
 PlaygroundCtrl::getFileProvider(void)
 {
 	return (&playgroundFiles_);
@@ -612,10 +612,10 @@ PlaygroundCtrl::extractFilesTask(PlaygroundFilesTask *task)
 void
 PlaygroundCtrl::clearPlaygroundInfo(void)
 {
-	while (playgroundInfo_.getSize() > 0) {
-		int idx = playgroundInfo_.getSize() - 1;
-		AnListClass *obj = playgroundInfo_.getRow(idx);
-		playgroundInfo_.removeRow(idx);
+	while (playgroundInfo_.getRawSize() > 0) {
+		int idx = playgroundInfo_.getRawSize() - 1;
+		AnListClass *obj = playgroundInfo_.getRawRow(idx);
+		playgroundInfo_.removeRawRow(idx);
 
 		delete obj;
 	}
@@ -627,10 +627,10 @@ PlaygroundCtrl::clearPlaygroundInfo(void)
 void
 PlaygroundCtrl::clearPlaygroundFiles(void)
 {
-	while (playgroundFiles_.getSize() > 0) {
-		int idx = playgroundFiles_.getSize() - 1;
-		AnListClass *obj = playgroundFiles_.getRow(idx);
-		playgroundFiles_.removeRow(idx);
+	while (playgroundFiles_.getRawSize() > 0) {
+		int idx = playgroundFiles_.getRawSize() - 1;
+		AnListClass *obj = playgroundFiles_.getRawRow(idx);
+		playgroundFiles_.removeRawRow(idx);
 
 		delete obj;
 	}

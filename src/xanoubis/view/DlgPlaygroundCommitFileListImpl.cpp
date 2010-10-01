@@ -42,22 +42,22 @@
 DlgPlaygroundCommitFileListImpl::DlgPlaygroundCommitFileListImpl(
     PlaygroundInfoEntry *entry) : DlgPlaygroundCommitFileListBase(NULL)
 {
-	PlaygroundCtrl	*playgroundCtrl = PlaygroundCtrl::instance();
-	JobCtrl		*jobctrl = JobCtrl::instance();
+	PlaygroundCtrl		*playgroundCtrl = PlaygroundCtrl::instance();
+	JobCtrl			*jobctrl = JobCtrl::instance();
+	AnGenericRowProvider	*provider;
 
 	fileList->setStateKey(wxT("/State/PlaygroundFileList"));
 
 	fileList->addColumn(new PlaygroundListProperty(
-	    PlaygroundListProperty::PROPERTY_DEV), 80);
+	    PlaygroundListProperty::PROPERTY_DEV), 80, false);
 	fileList->addColumn(new PlaygroundListProperty(
-	    PlaygroundListProperty::PROPERTY_INODE), 80);
+	    PlaygroundListProperty::PROPERTY_INODE), 80, false);
 	fileList->addColumn(new PlaygroundListProperty(
 	    PlaygroundListProperty::PROPERTY_FILENAME), 4440);
 
-	fileList->setColumnVisible(0, false);
-	fileList->setColumnVisible(1, false);
-
-	fileList->setRowProvider(playgroundCtrl->getFileProvider());
+	provider = playgroundCtrl->getFileProvider();
+	provider->setFilterProperty(fileList->getRawProperty(2));
+	fileList->setRowProvider(provider);
 
 	commitButton->Enable(
 	    jobctrl->isConnected() && entry && !entry->isActive());
@@ -179,4 +179,47 @@ DlgPlaygroundCommitFileListImpl::onTaskProgress(TaskEvent &event)
 
 	event.Skip();
 	progressText->SetLabel(task->getProgressText());
+}
+
+void
+DlgPlaygroundCommitFileListImpl::onCommitListColClick(wxListEvent &event)
+{
+	AnGenericRowProvider		*p;
+
+	event.Skip();
+	p = PlaygroundCtrl::instance()->getFileProvider();
+	fileList->clearSelection();
+	p->setSortProperty(fileList->getProperty(event.GetColumn()));
+}
+
+void
+DlgPlaygroundCommitFileListImpl::onCommitSearchKillFocus(wxFocusEvent &event)
+{
+	AnGenericRowProvider		*p;
+
+	event.Skip();
+	p = PlaygroundCtrl::instance()->getFileProvider();
+	if (listSearchEntry->IsModified()) {
+		fileList->clearSelection();
+		p->setFilterString(listSearchEntry->GetValue());
+		listSearchEntry->DiscardEdits();
+	}
+}
+
+/*
+ * NOTE: The event is _not_ skipped intentionally. If we do skip it the
+ * dialog will consume the return event for its default action (close), too.
+ */
+void
+DlgPlaygroundCommitFileListImpl::onCommitSearchEnter(wxCommandEvent &event)
+{
+	AnGenericRowProvider		*p;
+
+	event.Skip(false);
+	p = PlaygroundCtrl::instance()->getFileProvider();
+	if (listSearchEntry->IsModified()) {
+		fileList->clearSelection();
+		p->setFilterString(listSearchEntry->GetValue());
+		listSearchEntry->DiscardEdits();
+	}
 }

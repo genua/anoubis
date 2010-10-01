@@ -85,7 +85,7 @@ ModPlaygroundMainPanelImpl::ModPlaygroundMainPanelImpl(wxWindow* parent,
 
 	pgList->setStateKey(wxT("/State/ModPlaygroundMainPanelImpl"));
 	pgList->setRowProvider(playgroundCtrl->getInfoProvider());
-	pgList->setRowProperty(new ModPlaygroundRowProperty);
+	pgList->setRowAttrProperty(new ModPlaygroundRowProperty);
 
 	playgroundCtrl->Connect(anEVT_PLAYGROUND_ERROR, wxCommandEventHandler(
 	    ModPlaygroundMainPanelImpl::onPlaygroundError), NULL, this);

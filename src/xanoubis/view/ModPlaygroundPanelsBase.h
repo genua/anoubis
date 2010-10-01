@@ -52,6 +52,7 @@ class AnListCtrl;
 #include <wx/image.h>
 #include <wx/notebook.h>
 #include <wx/statbmp.h>
+#include <wx/textctrl.h>
 #include <wx/dialog.h>
 
 ///////////////////////////////////////////////////////////////////////////
@@ -134,6 +135,9 @@ class DlgPlaygroundCommitFileListBase : public wxDialog
 		wxStaticText* descriptionText;
 		wxStaticText* listTitleText;
 		
+		wxStaticText* m_staticText13;
+		wxTextCtrl* listSearchEntry;
+		
 		wxButton* columnButton;
 		AnListCtrl* fileList;
 		wxStaticText* progressText;
@@ -143,7 +147,10 @@ class DlgPlaygroundCommitFileListBase : public wxDialog
 		wxButton* closeButton;
 		
 		// Virtual event handlers, overide them in your derived class
+		virtual void onCommitSearchKillFocus( wxFocusEvent& event ){ event.Skip(); }
+		virtual void onCommitSearchEnter( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onColumnButtonClick( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onCommitListColClick( wxListEvent& event ){ event.Skip(); }
 		virtual void onCommitClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onDeleteClicked( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onCloseClicked( wxCommandEvent& event ){ event.Skip(); }

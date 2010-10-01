@@ -102,6 +102,31 @@ class DlgPlaygroundCommitFileListImpl : public DlgPlaygroundCommitFileListBase
 		void onPlaygroundCompleted(wxCommandEvent &event);
 
 		/**
+		 * Called when the user clicks on one of the list column
+		 * headers. This is used to sort the list entries based
+		 * on this column.
+		 *
+		 * @param event The list event.
+		 */
+		void onCommitListColClick(wxListEvent &event);
+
+		/**
+		 * Called when the focus leave the search text box
+		 * in the playground commit window.
+		 *
+		 * @param event The focus event.
+		 */
+		void onCommitSearchKillFocus(wxFocusEvent &event);
+
+		/**
+		 * Called when the user presses enter in the search text
+		 * box in the playground commit window.
+		 *
+		 * @param event The event.
+		 */
+		void onCommitSearchEnter(wxCommandEvent &event);
+
+		/**
 		 * Begin activity.
 		 * Things we want to do wenn an activity has begun. This is:
 		 *	- disable buttons

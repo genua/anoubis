@@ -30,9 +30,11 @@
 
 #include <wx/string.h>
 #include <wx/datetime.h>
+#include <wx/intl.h>
 
 #include "AnIconList.h"
 #include "DefaultConversions.h"
+#include "Subject.h"
 
 class AnListClass;
 
@@ -42,7 +44,7 @@ class AnListClass;
  * An AnListClass consists of several properties. A property must fulfill the
  * following interface to let someone other ask for data of the property.
  */
-class AnListProperty
+class AnListProperty : public Subject
 {
 	public:
 		/**

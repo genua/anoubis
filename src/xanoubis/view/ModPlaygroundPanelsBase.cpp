@@ -191,6 +191,16 @@ DlgPlaygroundCommitFileListBase::DlgPlaygroundCommitFileListBase( wxWindow* pare
 	listHeaderSizer->Add( listTitleText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
 	
+	listHeaderSizer->Add( 0, 0, 3, wxEXPAND, 5 );
+	
+	m_staticText13 = new wxStaticText( this, wxID_ANY, _("Search:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText13->Wrap( -1 );
+	listHeaderSizer->Add( m_staticText13, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	
+	listSearchEntry = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_NO_VSCROLL|wxTE_PROCESS_ENTER );
+	listHeaderSizer->Add( listSearchEntry, 20, wxALL, 5 );
+	
+	
 	listHeaderSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	columnButton = new wxButton( this, wxID_ANY, _("..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
@@ -240,7 +250,10 @@ DlgPlaygroundCommitFileListBase::DlgPlaygroundCommitFileListBase( wxWindow* pare
 	this->Layout();
 	
 	// Connect Events
+	listSearchEntry->Connect( wxEVT_KILL_FOCUS, wxFocusEventHandler( DlgPlaygroundCommitFileListBase::onCommitSearchKillFocus ), NULL, this );
+	listSearchEntry->Connect( wxEVT_COMMAND_TEXT_ENTER, wxCommandEventHandler( DlgPlaygroundCommitFileListBase::onCommitSearchEnter ), NULL, this );
 	columnButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgPlaygroundCommitFileListBase::onColumnButtonClick ), NULL, this );
+	fileList->Connect( wxEVT_COMMAND_LIST_COL_CLICK, wxListEventHandler( DlgPlaygroundCommitFileListBase::onCommitListColClick ), NULL, this );
 	commitButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgPlaygroundCommitFileListBase::onCommitClicked ), NULL, this );
 	delButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgPlaygroundCommitFileListBase::onDeleteClicked ), NULL, this );
 	closeButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgPlaygroundCommitFileListBase::onCloseClicked ), NULL, this );

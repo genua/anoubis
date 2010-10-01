@@ -121,11 +121,15 @@ class AnListColumn
 		 * @param width The default width of the column. A configured
 		 *     value for the width stored in the config file
 		 *     takes precedence.
+		 * @param visible True if the column should be visible by
+		 *     default. An explicit value in the config file
+		 *     overwrites this.
 		 * @param align The column alignmnet. Defaults to LEFT.
 		 *     NOTE: Currenty, this parameter is not used for Grids.
 		 */
 		AnListColumn(AnListProperty *, wxString configKey,
-		    int width, wxListColumnFormat align = wxLIST_FORMAT_LEFT);
+		    int width, bool visible = true,
+		    wxListColumnFormat align = wxLIST_FORMAT_LEFT);
 
 		/**
 		 * Private Destructor. Only AnListCtrl and AnTable are

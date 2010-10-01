@@ -54,11 +54,11 @@ PSListCtrl::~PSListCtrl(void)
 void
 PSListCtrl::clearPSList()
 {
-	while (psinfo_.getSize() > 0) {
-		int			 idx = psinfo_.getSize()-1;
-		AnListClass		*obj = psinfo_.getRow(idx);
+	while (psinfo_.getRawSize() > 0) {
+		int			 idx = psinfo_.getRawSize()-1;
+		AnListClass		*obj = psinfo_.getRawRow(idx);
 
-		psinfo_.removeRow(idx);
+		psinfo_.removeRawRow(idx);
 		delete obj;
 	}
 	psinfo_.clearRows();
