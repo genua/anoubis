@@ -231,11 +231,11 @@ START_TEST(unlink_activePg)
 	mark_point();
 
 	if (unlinkTask.getComTaskResult() != ComTask::RESULT_REMOTE_ERROR ||
-	    unlinkTask.getResultDetails() != EINPROGRESS) {
+	    unlinkTask.getResultDetails() != EBUSY) {
 		fail("UnlinkTask returned with %d/%s - but %d/%s expected",
 		    unlinkTask.getResultDetails(),
 		    anoubis_strerror(unlinkTask.getResultDetails()),
-		    EINPROGRESS, strerror(EINPROGRESS));
+		    EBUSY, strerror(EBUSY));
 	}
 }
 END_TEST
@@ -318,12 +318,10 @@ START_TEST(unlink_listEmpty)
 	eventSpy.waitForInvocation(1);
 	mark_point();
 
-	if (unlinkTask.getComTaskResult() != ComTask::RESULT_LOCAL_ERROR ||
-	    unlinkTask.getResultDetails() != EBUSY) {
-		fail("UnlinkTask returned with %d/%s - but %d/%s expected",
+	if (unlinkTask.getComTaskResult() != ComTask::RESULT_SUCCESS) {
+		fail("UnlinkTask returned with %d/%s - but success expected",
 		    unlinkTask.getResultDetails(),
-		    anoubis_strerror(unlinkTask.getResultDetails()),
-		    EBUSY, strerror(EBUSY));
+		    anoubis_strerror(unlinkTask.getResultDetails()));
 	}
 	CHECK_REGENT("/home/u2000/.plgr.13.h1");
 	CHECK_DIRENT("/home/u2000/.plgr.13.pgTest");
