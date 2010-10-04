@@ -158,26 +158,6 @@ pe_proc_init(void)
 }
 
 /**
- * Free all memory allocated with the process tracking. This is
- * called in response to a HUP signal.
- *
- * @param None.
- * @return None.
- */
-void
-pe_proc_flush(void)
-{
-	struct pe_proc	*p, *pnext;
-
-	for (p = TAILQ_FIRST(&tracker); p != TAILQ_END(&tracker); p = pnext) {
-		pnext = TAILQ_NEXT(p, entry);
-		TAILQ_REMOVE(&tracker, p, entry);
-		p->instances = 0;
-		pe_proc_put(p);
-	}
-}
-
-/**
  * Return the process structure for the given task cookie. If a process
  * with the given task cookie exists, a reference to its proc structure is
  * acquired and a pointer to the structure is returned.
@@ -289,12 +269,12 @@ static struct pe_proc *
 pe_proc_alloc(uid_t uid, anoubis_cookie_t cookie, struct pe_proc_ident *pident,
     anoubis_cookie_t pgid)
 {
-	struct pe_proc	*proc;
+	struct pe_proc		*proc;
+	unsigned int		 i;
 
 	if ((proc = abuf_zalloc_type(struct pe_proc)) == NULL)
 		goto oom;
 	proc->task_cookie = cookie;
-	proc->borrow_cookie = 0;
 	proc->pid = (pid_t)-1;
 	proc->uid = uid;
 	proc->flags = 0;
@@ -313,6 +293,11 @@ pe_proc_alloc(uid_t uid, anoubis_cookie_t cookie, struct pe_proc_ident *pident,
 	DEBUG(DBG_PE_TRACKER, "pe_proc_alloc: proc %p uid %u cookie 0x%08"
 	    PRIx64 " ", proc, uid, proc->task_cookie);
 	pe_proc_set_playgroundid(proc, pgid);
+	for (i=0; i<PE_PRIO_MAX; ++i) {
+		proc->borrow_cookie[i] = 0;
+		proc->context[i] = NULL;
+		proc->saved_ctx[i] = NULL;
+	}
 
 	return (proc);
 oom:
@@ -514,11 +499,13 @@ pe_proc_dump(void)
 	TAILQ_FOREACH(proc, &tracker, entry) {
 		ctx0 = proc->context[0];
 		ctx1 = proc->context[1];
-		log_info("proc %p token 0x%08" PRIx64 " borrow token 0x%08"
-		    PRIx64 " pgid 0x%08" PRIx64 " pid %d pathhint \"%s\" "
+		log_info("proc %p token 0x%08" PRIx64
+		    "borrow token 0x%08" PRIx64 "0x%08" PRIx64
+		    " pgid 0x%08" PRIx64 " pid %d pathhint \"%s\" "
 		    "ctx %p %p alfrules %p %p sbrules %p %p flags 0x%x",
 		    proc, proc->task_cookie,
-		    proc->borrow_cookie, proc->pgid, (int)proc->pid,
+		    proc->borrow_cookie[0], proc->borrow_cookie[1],
+		    proc->pgid, (int)proc->pid,
 		    proc->ident.pathhint ? proc->ident.pathhint : "",
 		    ctx0, ctx1,
 		    pe_context_get_alfrule(ctx0), pe_context_get_alfrule(ctx1),
@@ -889,7 +876,7 @@ pe_proc_save_ctx(struct pe_proc *proc, int prio, anoubis_cookie_t cookie)
 
 	proc->saved_ctx[prio] = proc->context[prio];
 	proc->context[prio] = NULL;
-	proc->borrow_cookie = cookie;
+	proc->borrow_cookie[prio] = cookie;
 }
 
 /**
@@ -912,7 +899,7 @@ pe_proc_restore_ctx(struct pe_proc *proc, int prio, anoubis_cookie_t cookie)
 		return;
 	if (proc->saved_ctx[prio] == NULL)
 		return;
-	if (proc->borrow_cookie != cookie)
+	if (proc->borrow_cookie[prio] != cookie)
 		return;
 
 	ctx = proc->saved_ctx[prio];

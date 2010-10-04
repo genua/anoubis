@@ -32,11 +32,65 @@
 
 #ifdef _PE_PROC_INTERNALS_H_
 
+/* Process flags. */
 #define PE_PROC_FLAGS_UPGRADE		0x0001U
 #define PE_PROC_FLAGS_UPGRADE_PARENT	0x0002U
 #define PE_PROC_FLAGS_HOLD		0x0004U
 #define PE_PROC_FLAGS_SECUREEXEC	0x0008U
 
+/**
+ * This structure describes a single process. Its fields are private to
+ * pe_proc.c and should not be accessed outside of that file. It is only
+ * exported in this header file for the benefit of unit tests.
+ *
+ * On Linux this structure does not really track processes (or threads).
+ * Instead it in fact tracks credentials structures. The total number of
+ * credentials structures that share a particular task cookie are counted
+ * in the field instances and pe_proc structure is only freed after all
+ * instances are freed, too.
+ *
+ * Processes (or threads) that use that actually use one of these
+ * credentials are counted in the threads field and all threads that
+ * share the same credentials, i.e. they share the same task cookie are
+ * assumed to be the same process for the purpose of the policy engine.
+ *
+ * Fields:
+ * entry: Used to link all processes in a list.
+ * refcount: The reference count of this sturcture. The structure is
+ *     kept alive as long as there is at least one reference count
+ *     remaining.
+ * instances: The total number of credential structures that use the
+ *     same task cookie.
+ * threads: The total number of actual threads that use the credentials
+ *     tracked by this pe_proc structure. On OpenBSD this is always set
+ *     to one as OpenBSD tracks processes directly.
+ * pid: The process ID of the process being tracked. This is not always
+ *     known and may be -1 in this case.
+ * uid: The user ID of the process.
+ * flags: The process flags. Possible values are:
+ *     - PE_PROC_FLAGS_UPGRADE: The process takes part in an ongoing
+ *       upgrade.
+ *     - PE_PROC_FLAGS_UPGRADE_PARENT: This is the process that started
+ *       the current upgrade.
+ *     - PE_PROC_FLAGS_HOLD: Answers to event triggered by this process
+ *       should be held back and delayed until the current upgrade finishes.
+ *     - PE_PROC_FLAGS_SECUREEXEC: The process die a secure exec. The
+ *       nosfs flag on a process context is only honoured if the process
+ *       did a secure exec (the policy engine enforces this if the process
+ *       does a context switch).
+ * ident: The path/checksum of the process.
+ * task_cookie: The task cookie of the current process.
+ * borrow_cookie: The cookie of connection that we used to borrow our
+ *     context from. The saved context will be restored as soon as the
+ *     connection with this cookie closes.
+ * pgid: The playground ID of the process, zero if the process is not
+ *     in a playground.
+ * context: The admin and user contexts that are currently active for
+ *     the process.
+ * saved_ctx: The saved admin and user contexts. These contexts will
+ *     be restored if connection to the task closes that we borrow our
+ *     context from. This is NULL if the current context is not borrowed.
+ */
 struct pe_proc {
 	TAILQ_ENTRY(pe_proc)	 entry;
 	int			 refcount;
@@ -48,10 +102,10 @@ struct pe_proc {
 
 	struct pe_proc_ident	 ident;
 	anoubis_cookie_t	 task_cookie;
-	anoubis_cookie_t	 borrow_cookie;
 	anoubis_cookie_t	 pgid;
 
 	/* Per priority contexts */
+	anoubis_cookie_t	 borrow_cookie[PE_PRIO_MAX];
 	struct pe_context	*context[PE_PRIO_MAX];
 	struct pe_context	*saved_ctx[PE_PRIO_MAX];
 };

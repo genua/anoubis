@@ -90,13 +90,13 @@ static int		 pe_addrmatch_host(struct apn_host *, void *,
 static int		 pe_addrmatch_port(struct apn_port *, void *,
 			     unsigned short);
 
-anoubisd_reply_t *
+struct anoubisd_reply *
 pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 {
 	static char		 prefix[] = "ALF";
 	static char		*verdict[3] = { "allowed", "denied", "asked" };
 	struct alf_event	*msg;
-	anoubisd_reply_t	*reply;
+	struct anoubisd_reply	*reply;
 	int			 i, ret, decision, log, prio;
 	u_int32_t		 rule_id = 0;
 	char			*dump = NULL;
@@ -194,7 +194,6 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 		reply->ctxident = pe_context_get_ident(
 		    pe_proc_get_context(proc, reply->prio));
 	}
-	reply->len = 0;
 	reply->sfsmatch = ANOUBIS_SFS_NONE;
 
 	return (reply);

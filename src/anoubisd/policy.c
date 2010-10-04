@@ -624,7 +624,7 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 	struct reply_wait			*msg_wait;
 	struct anoubisd_msg			*msg;
 	struct anoubisd_msg			*msg_reply;
-	anoubisd_reply_t			*reply;
+	struct anoubisd_reply			*reply;
 	struct event_info_policy		*ev_info = arg;
 	struct eventdev_hdr			*hdr;
 	struct eventdev_reply			*rep;

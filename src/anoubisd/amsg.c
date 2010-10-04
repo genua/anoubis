@@ -356,8 +356,24 @@ _flush_buf(struct msg_buf *mbp)
 	size = write(mbp->fd, ((void*)mbp->wmsg)+mbp->woff,
 	    mbp->wmsg->size - mbp->woff);
 	if (size < 0) {
-		if (errno != EAGAIN && errno != EINTR)
-			log_warn("write error");
+		switch(errno) {
+		case EAGAIN: case EINTR:
+			return;
+		case EPIPE: case EINVAL: case EBADF: case EIO: case EFAULT:
+			/*
+			 * Non recoverable errors. Drop data to prevent an
+			 * endless loop during shutdown. Note that we cannot
+			 * just terminate because we might want to use this
+			 * for user connections, too.
+			 */
+			log_warn("write error dropping %sdata",
+			    (mbp->woff ? "incomplete " : ""));
+			free(mbp->wmsg);
+			mbp->wmsg = NULL;
+			mbp->woff = 0;
+			return;
+		}
+		log_warn("write error");
 		return;
 	}
 	mbp->woff += size;

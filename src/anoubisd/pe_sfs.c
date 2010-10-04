@@ -190,11 +190,11 @@ pe_sfs_getrules(uid_t uid, int prio, const char *path,
 	return pe_prefixhash_getrules(sfsrules->userdata, path, rulesp);
 }
 
-anoubisd_reply_t *
+struct anoubisd_reply *
 pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent)
 {
 	static const char	*verdict[3] = { "allowed", "denied", "asked" };
-	anoubisd_reply_t	*reply = NULL;
+	struct anoubisd_reply	*reply = NULL;
 	int			 secure = 0;
 	int			 decision = -1;
 	int			 sfsmatch = ANOUBIS_SFS_NONE;
@@ -328,7 +328,6 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent)
 		reply->reply = EPERM;
 	else
 		reply->reply = 0;
-	reply->len = 0;
 	if (decision == APN_ACTION_ASK) {
 		reply->ask = 1;
 		reply->timeout = 300;

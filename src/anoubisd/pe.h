@@ -42,50 +42,109 @@
 #include <anoubis_alloc.h>
 #include "aqueue.h"
 
+/* Priority levels for policy. */
 #define PE_PRIO_ADMIN	0
 #define PE_PRIO_USER1	1
 #define PE_PRIO_MAX	2
 
+/* Opaque data types that are only defined inside the respective C-file. */
 struct pe_proc;
 struct pe_context;
 struct pe_policy_db;
 struct pe_user;
 struct pe_pubkey_db;
 
-/*
- * Return type for the policy engine function. DO NOT use for anything else.
- * In particular, this structure must not be sent to other daemon processes
- * as an struct anoubisd_msg payload.
+/**
+ * Description (identification) of a process or context. This consists of a
+ * checksum and a path. Memory for these fields is dynamically allocated,
+ * the structure itself is usually allocated statically as part of
+ * another structure. Fields:
+ * csum: A buffer containing the checksum of the process/context
+ *     (might be empty!).
+ * pathhint: The path of the process/context (might be empty).
  */
-struct anoubisd_reply {
-	char		ask;		/* flag - ask GUI */
-	char		hold;		/* Flag hold back answer until
-					 * upgrade end. */
-	time_t		timeout;	/* from policy engine, if ask GUI */
-	int		reply;		/* result code */
-	int		log;		/* Loglevel for the result of an ASK */
-	u_int32_t	rule_id;	/* Rule ID if ask is true */
-	u_int32_t	prio;		/* Priority of the rule. */
-	u_int32_t	sfsmatch;	/* The type of match in SFS rules. */
-	struct pe_proc_ident *pident;	/* Ident of active program */
-	struct pe_proc_ident *ctxident;	/* Ident of active context */
-	short		len;		/* of following msg */
-	char		msg[0];
-};
-typedef struct anoubisd_reply anoubisd_reply_t;
-
-/* Policy Engine main entry point. */
-struct anoubisd_reply *policy_engine(struct anoubisd_msg *request);
-
-
 struct pe_proc_ident {
 	struct abuf_buffer	 csum;
 	char			*pathhint;
 };
 
+/**
+ * Return type for the policy engine function in response to a kernel event.
+ * DO NOT use for anything else. In particular, this structure must not be
+ * sent to other daemon processes as an struct anoubisd_msg payload.
+ * Fields:
+ * ask: True if the event should be escalated to the UI.
+ * hold: True if the reply to the event should be held back until the
+ *     upgrade that is currently in progress end.
+ * timeout: The timeout for the event. The policy process should deny
+ *     the event if this timeout expires without an answer from the user.
+ * reply: The error code for the event (zero if the event is allowed).
+ * log: The result of the event is logged with this log level. Possible
+ *     values are the APN_LOG_* defines from apn.h (i.e. the same values
+ *     that can be used in policies, too).
+ * rule_id: The rule ID that decided this event.
+ * prio: the priorty of the rule that decided this event.
+ * sfsmatch: If the matching rule is an SFS rule, this field can be used
+ *     to determine which part of the SFS rule (valid, invalid or unknown)
+ *     matched. Possible values are the ANOUBIS_SFS_* defines from
+ *     anoubis_protocol.h.
+ * pident: The process identification (path and checksum) of the active
+ *     process.
+ * ctxident: The process identification (path and checksum) of the context
+ *     that is active for the program (at the priority given by the prio
+ *     field).
+ *
+ * NOTE: The pident and ctxident fields point into the pe_proc structure
+ * of the current process. The pointers will be invalidated if the process
+ * is changed, i.e. the caller must copy this data if required and must
+ * not pass pointers to it around.
+ */
+struct anoubisd_reply {
+	char		ask;
+	char		hold;
+	time_t		timeout;
+	int		reply;
+	int		log;
+	u_int32_t	rule_id;
+	u_int32_t	prio;
+	u_int32_t	sfsmatch;
+	struct pe_proc_ident *pident;
+	struct pe_proc_ident *ctxident;
+};
+
+
 #define PE_UPGRADE_TOUCHED	0x0001
 #define PE_UPGRADE_WRITEOK	0x0002
 
+/**
+ * This structure is a parsed version of a file access event received
+ * from the kernel. It contains information about the event that is
+ * used in policy processing. The fields path and csum are usually
+ * allocated dynamically, the rawhdr fields points to the original
+ * message. Fields:
+ *
+ * cookie: The cookie of the process that triggered the event.
+ * path: The path of the file that is accessed (may be NULL).
+ * csum: The checksum of the file that is accessed (may be empty).
+ * amask: This is a combination of APN_SBA_* flags from apn.h
+ *     (READ, WRITE and  EXEC).
+ * uid: The user-ID of the user that triggered the event.
+ * upgrade_flags: Usually empty but may be a combination of
+ *     the following flags:
+ *     - PE_UPGRADE_TOUCHED: This flag is set iff the current upgrade
+ *       modified this file and at least one user has a checksum for the
+ *       file. As this checksum will be updated after the update anyway,
+ *       all available checksum are assumed to match as long as the access
+ *       is for read.
+ *     - PE_UPGRADE_WRITEOK: This flag is set iff the file has the
+ *       "touched" flag set and the current process is itself an upgrade
+ *       process. Upgrade processes are allowed to write to the touched
+ *       files regardless of the checksum.
+ * rawhdr: A pointer to the raw unparsed event as received from the
+ *     kernel. Some function need this to extract logging information etc.
+ *     This field usually points to pre-allocated data and is not owned
+ *     by the pe_file_event structure.
+ */
 struct pe_file_event {
 	anoubis_cookie_t	 cookie;
 	char			*path;
@@ -96,12 +155,39 @@ struct pe_file_event {
 	struct eventdev_hdr	*rawhdr;
 };
 
+/*
+ * This structure is a parsed version of a path access event received
+ * from the kernel. It contains information about the event that is
+ * used in policy processing. The path fields are allocated dynamically
+ * and ownd by the pe_path_event structure.
+ *
+ * Path events are generated by the kernel for things like hard link
+ * creation and renames. They are generally allowed provided that the
+ * source and the destination path matches the same SFS and/or sandbox
+ * rules. These events are not escalated to the user.
+ *
+ * Some events only come with one path. In particular, this is the case
+ * for LOCK and UNLOCK events that are used to track updates. Most of
+ * the path operations trigger a write event for the target and potentially
+ * for the source path in addition to the path event.
+ *
+ * Fields:
+ * cookie: The task cookie of the task that does the path operation.
+ * op: The operation that is reported in this event. Possible values
+ *     are the ANOUBIS_PATH_OP_* defines in anoubis_sfs.h.
+ * uid: The user ID of the user that triggers this event.
+ * path: Pointers to the two path names involved in the operation. The
+ *     second path name can be NULL for some operations.
+ */
 struct pe_path_event {
 	anoubis_cookie_t	 cookie;
 	unsigned int		 op;
 	int			 uid;
 	char			*path[2];
 };
+
+/* Policy Engine main entry point. Documention is in pe.c */
+struct anoubisd_reply	*policy_engine(struct anoubisd_msg *request);
 
 /* Proc Ident management functions. */
 void			 pe_proc_ident_set(struct pe_proc_ident *,
@@ -111,7 +197,6 @@ void			 pe_proc_ident_put(struct pe_proc_ident *);
 /* pe_proc access functions */
 void			 pe_proc_init(void);
 void			 pe_proc_dump(void);
-void			 pe_proc_flush(void);
 struct pe_proc		*pe_proc_get(anoubis_cookie_t cookie);
 void			 pe_proc_put(struct pe_proc *proc);
 void			 pe_proc_fork(uid_t, anoubis_cookie_t cookie,
@@ -209,8 +294,6 @@ int			 pe_pubkey_verifysig(const char *, uid_t);
 /* General policy evaluation functions */
 int			 pe_in_scope(struct apn_scope *,
 			     anoubis_cookie_t, time_t);
-int			 pe_compare(struct pe_proc *proc,
-			     struct pe_path_event *, int, time_t);
 
 /* Upgrade related functions. */
 void			 pe_set_upgrade_ok(int);
@@ -222,10 +305,10 @@ void			 pe_upgrade_filelist_next(void);
 struct pe_file_node	*pe_upgrade_filelist_get(void);
 
 /* Subsystem entry points for Policy decisions. */
-anoubisd_reply_t	*pe_decide_alf(struct pe_proc *, struct eventdev_hdr *);
-anoubisd_reply_t	*pe_decide_sfs(struct pe_proc *,
+struct anoubisd_reply	*pe_decide_alf(struct pe_proc *, struct eventdev_hdr *);
+struct anoubisd_reply	*pe_decide_sfs(struct pe_proc *,
 			     struct pe_file_event *);
-anoubisd_reply_t	*pe_decide_sandbox(struct pe_proc *proc,
+struct anoubisd_reply	*pe_decide_sandbox(struct pe_proc *proc,
 			     struct pe_file_event *);
 int			 pe_sfs_getrules(uid_t, int, const char *,
 			     struct apnarr_array *);
@@ -283,6 +366,6 @@ void			 pe_playground_notify_forced(struct pe_proc_ident *,
  * DO NOT USE THESE FROM NORMAL CODE.
  */
 
-anoubisd_reply_t	*test_pe_handle_sfs(struct eventdev_hdr *hdr);
+struct anoubisd_reply	*test_pe_handle_sfs(struct eventdev_hdr *hdr);
 
 #endif	/* _PE_H_ */

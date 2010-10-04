@@ -290,7 +290,7 @@ pe_sb_dumpevent(struct pe_file_event *sbevent)
  * given. This can be changed be writing an explicit Policy with
  * a default deny rule.
  */
-anoubisd_reply_t *
+struct anoubisd_reply *
 pe_decide_sandbox(struct pe_proc *proc, struct pe_file_event *sbevent)
 {
 	struct result		 res[3];

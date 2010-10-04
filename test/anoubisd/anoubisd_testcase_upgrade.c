@@ -115,7 +115,7 @@ touch(int cookie, const char *path, int fake_csum, unsigned int flags)
 	struct eventdev_hdr	*hdr;
 	int			 size, ret;
 	struct sfs_open_message	*sfs;
-	anoubisd_reply_t	*reply;
+	struct anoubisd_reply	*reply;
 
 	size = sizeof(struct eventdev_hdr) + sizeof(struct sfs_open_message)
 	    + strlen(path);

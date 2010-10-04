@@ -69,27 +69,68 @@
 #include "sfs.h"
 #include "cert.h"
 
-static anoubisd_reply_t	*pe_dispatch_event(struct eventdev_hdr *);
-static anoubisd_reply_t	*pe_handle_process(struct eventdev_hdr *);
-static anoubisd_reply_t	*pe_handle_sfsexec(struct eventdev_hdr *);
-static anoubisd_reply_t	*pe_handle_alf(struct eventdev_hdr *);
-static anoubisd_reply_t	*pe_handle_ipc(struct eventdev_hdr *);
-static anoubisd_reply_t	*pe_handle_sfs(struct eventdev_hdr *);
-static anoubisd_reply_t *pe_handle_playgroundask(struct eventdev_hdr *);
-static anoubisd_reply_t *pe_handle_playgroundproc(struct eventdev_hdr *);
-static anoubisd_reply_t *pe_handle_playgroundfile(struct eventdev_hdr *);
+/* Prototypes */
+static struct anoubisd_reply	*pe_dispatch_event(struct eventdev_hdr *);
+static struct anoubisd_reply	*pe_handle_process(struct eventdev_hdr *);
+static struct anoubisd_reply	*pe_handle_sfsexec(struct eventdev_hdr *);
+static struct anoubisd_reply	*pe_handle_alf(struct eventdev_hdr *);
+static struct anoubisd_reply	*pe_handle_ipc(struct eventdev_hdr *);
+static struct anoubisd_reply	*pe_handle_sfs(struct eventdev_hdr *);
+static struct anoubisd_reply	*pe_handle_playgroundask(struct eventdev_hdr *);
+static struct anoubisd_reply	*pe_handle_playgroundproc(
+				     struct eventdev_hdr *);
+static struct anoubisd_reply	*pe_handle_playgroundfile(
+				     struct eventdev_hdr *);
+static struct pe_file_event	*pe_parse_file_event(struct eventdev_hdr *hdr);
+static int			 pe_compare(struct pe_proc *proc,
+				     struct pe_path_event *event, time_t now);
 
-static struct pe_file_event *pe_parse_file_event(struct eventdev_hdr *hdr);
 #ifdef ANOUBIS_SOURCE_SFSPATH
-static anoubisd_reply_t	*pe_handle_sfspath(struct eventdev_hdr *);
-static struct pe_path_event *pe_parse_path_event(struct eventdev_hdr *hdr);
+static struct anoubisd_reply	*pe_handle_sfspath(struct eventdev_hdr *);
+static struct pe_path_event	*pe_parse_path_event(struct eventdev_hdr *hdr);
 #endif
 
-static struct pe_file_tree *upgrade_tree = NULL;
-static int upgrade_counter = 0;
-static struct pe_file_node *upgrade_iterator = NULL;
-static int upgrade_ok = 1;
+/**
+ * A file tree that stores all files that have at least one checksum and
+ * were modified by the upgrade that is currently in progress.
+ */
+static struct pe_file_tree	*upgrade_tree = NULL;
 
+/**
+ * The total number of running upgrade parent processes, i.e. processes
+ * that idependently lock the configured upgrade file. The upgrade is
+ * considered to be in progress until the last of these processes
+ * terminates its upgrade.
+ */
+static int			 upgrade_counter = 0;
+
+/**
+ * An iterator that points into the upgrade_tree. Requests from the
+ * upgrade process for files that need checksum updates use this iterator.
+ */
+static struct pe_file_node	*upgrade_iterator = NULL;
+
+/**
+ * This variable is true if it is currently ok to start a new upgrade.
+ * It is controlled by the master process via upgrade message of type
+ * ANOUBISD_UPGRADE_OK and depends on configuration settings and internal
+ * state in the master.
+ */
+static int			 upgrade_ok = 1;
+
+/**
+ * This file descriptor is used to open and lock the sfs version file
+ * during an upgrade.  anoubisctl uses this to delay daemon restart
+ * until the upgrade is over.
+ */
+static int			 sfsversionfd = -1;
+
+/**
+ * Initialize the policy engine.
+ *
+ * @param None.
+ * @return None.
+ */
 void
 pe_init(void)
 {
@@ -99,14 +140,27 @@ pe_init(void)
 	pe_user_init();
 }
 
+/**
+ * Shutdown the policy engine and free allocated memory.
+ *
+ * @param None.
+ * @return None.
+ */
 void
 pe_shutdown(void)
 {
-	pe_proc_flush();
 	pe_user_flush_db(NULL);
 	sfshash_flush();
 }
 
+/**
+ * Reconfigure the policy engine. This is called in response to a
+ * HUP signal. It reloads the policy and certificate database and
+ * deletes all entries from the sfs hash.
+ *
+ * @param None.
+ * @return None.
+ */
 void
 pe_reconfigure(void)
 {
@@ -115,14 +169,33 @@ pe_reconfigure(void)
 	pe_user_reconfigure();
 }
 
+/**
+ * Set the ugprade_ok variable the the given value.
+ *
+ * @param value The new value.
+ * @return None.
+ */
 void
 pe_set_upgrade_ok(int value)
 {
 	upgrade_ok = value;
 }
 
-static int	sfsversionfd = -1;
-
+/**
+ * Try to start a new upgrade with the given process as the upgrade
+ * parent. This function marks the current process as an upgrade parent,
+ * initializes the upgrade file tree and locks the sfs version file
+ * using sfsversionfd.
+ *
+ * Child processes will inherit the upgrade but not the upgrade parent
+ * mark.
+ *
+ * If an old upgrade is complete but not all checksums have been updated
+ * the task is put on hold and cannot start an upgrade right now.
+ *
+ * @param proc The new upgrade parent.
+ * @return None.
+ */
 void
 pe_upgrade_start(struct pe_proc *proc)
 {
@@ -160,6 +233,23 @@ pe_upgrade_start(struct pe_proc *proc)
 	    ", counter now %d", pe_proc_task_cookie(proc), upgrade_counter);
 }
 
+/**
+ * Remove the ugprade mark from a process. If this is not an upgrade
+ * parent, or it is not the last upgrade partent to terminate its upgrade,
+ * this is all that happens.
+ *
+ * If the upgrade actually ends now, the upgrade file tree is pruned of all
+ * files that have been modified by processes that live longer than the
+ * upgrade lasts and all remaining upgrade marks on upgrade child processes
+ * are removed.
+ *
+ * Finally, the master is notified of the upgrade end. The upgrade process
+ * will now start to request chunks of upgraded files' names and adjust
+ * checksums and signatures as configured.
+ *
+ * @param proc The process that just ended its upgrade.
+ * @return None.
+ */
 void
 pe_upgrade_end(struct pe_proc *proc)
 {
@@ -205,6 +295,13 @@ pe_upgrade_end(struct pe_proc *proc)
 	send_upgrade_start();
 }
 
+/**
+ * Initialize the upgrade iterator and let it point to the first
+ * element of the upgrade file tree.
+ *
+ * @param None.
+ * @return None.
+ */
 void
 pe_upgrade_filelist_start(void)
 {
@@ -215,6 +312,13 @@ pe_upgrade_filelist_start(void)
 	}
 }
 
+/**
+ * Advance the upgrade file list iterator to the next iterm in the
+ * upgrade file tree.
+ *
+ * @param None.
+ * @return None.
+ */
 void
 pe_upgrade_filelist_next(void)
 {
@@ -226,6 +330,14 @@ pe_upgrade_filelist_next(void)
 	}
 }
 
+/**
+ * Return a pointer to the current pe_file_node in the upgrade file tree.
+ * The current node is determined by the upgrade file list iterator.
+ *
+ * @param None.
+ * @return A pointer to the current node. Must not be modified by the
+ *     caller.
+ */
 struct pe_file_node *
 pe_upgrade_filelist_get(void)
 {
@@ -234,6 +346,16 @@ pe_upgrade_filelist_get(void)
 	return upgrade_iterator;
 }
 
+/**
+ * This finishes an upgrade after all checksums have been updated.
+ * It flushes the sfs checksum cache, frees the upgrade file list tree
+ * and closes the sfsversionfd descriptor. However, it does not
+ * release processes that have been put on hold. This must be done by
+ * the caller.
+ *
+ * @param None.
+ * @return None.
+ */
 void
 pe_upgrade_finish(void)
 {
@@ -254,13 +376,26 @@ pe_upgrade_finish(void)
 	}
 }
 
-/*
+/**
+ * This is the main external entry point for the policy engine. All
+ * kernel events that require a policy decision or other types of
+ * attention from the policy engine go through this function.
+ *
  * NOTE: Basic length verification has been done by amsg_verify.
+ *
+ * @param request The request message from the master (must be of type
+ *     ANOUBISD_MSG_EVENTDEV).
+ * @return An anoubisd_reply structure that describes the action to
+ *     take for this event. The reply structure is allocated by this
+ *     function and must be freed by the caller. The pointer fields in
+ *     this structure point to memory owned by the current process and
+ *     not by the anobuisd_reply structure. The caller should copy this
+ *     data immediately if required.
  */
-anoubisd_reply_t *
+struct anoubisd_reply *
 policy_engine(struct anoubisd_msg *request)
 {
-	anoubisd_reply_t	*reply;
+	struct anoubisd_reply	*reply;
 	struct eventdev_hdr	*hdr;
 
 	DEBUG(DBG_TRACE, ">policy_engine");
@@ -278,10 +413,21 @@ policy_engine(struct anoubisd_msg *request)
 	return reply;
 }
 
-static anoubisd_reply_t *
+/**
+ * This is the internal function to handle the different types of kernel
+ * events. It is used by policy_engine and dispatches different types
+ * of kernel events to different dispatcher functions.
+ *
+ * @param hdr The eventdev header of the kernel event (followed by the
+ *     event payload data.
+ * @return An anoubisd_reply structure that tells the caller how to proceed
+ *     with the event. The caller must make sure that the memory of this
+ *     structure is freed.
+ */
+static struct anoubisd_reply *
 pe_dispatch_event(struct eventdev_hdr *hdr)
 {
-	anoubisd_reply_t	*reply = NULL;
+	struct anoubisd_reply	*reply = NULL;
 
 	DEBUG(DBG_PE, "pe_dispatch_event: pid %u uid %u token %x %d",
 	    hdr->msg_pid, hdr->msg_uid, hdr->msg_token, hdr->msg_source);
@@ -337,7 +483,16 @@ pe_dispatch_event(struct eventdev_hdr *hdr)
 	return (reply);
 }
 
-static anoubisd_reply_t *
+/**
+ * Handle kernel events of type ANOUBIS_SOURCE_SFSEXEC. These events
+ * are used to notify the anoubisd daemon of an exec. This function
+ * extracs the new path name and checksum from the event and tells
+ * process tracking about the exec.
+ *
+ * @param hdr The eventdev header of the event.
+ * @return Always NULL. This type of events does not need a reply.
+ */
+static struct anoubisd_reply *
 pe_handle_sfsexec(struct eventdev_hdr *hdr)
 {
 	struct sfs_open_message		*msg;
@@ -364,7 +519,31 @@ pe_handle_sfsexec(struct eventdev_hdr *hdr)
 	return (NULL);
 }
 
-static anoubisd_reply_t *
+/**
+ * Handle kernel events of type ANOUBIS_SOURCE_PROCESS. The precise
+ * action depends on the subtype of the event. Possible event types
+ * depend on the operating system. Linux has some additional events,
+ * as it in fact tracks credentials with cookies instead of processes:
+ * ANOUBIS_PROCESS_OP_FORK: The tracked structure (process or credentials)
+ *     was cloned (with an new task cookie). This is where inheritance
+ *     of policies and contexts happens.
+ * ANOUBIS_PROCESS_OP_EXIT: A creditials or process structure was freed.
+ * ANOUBIS_PROCESS_OP_REPLACE: The credentials of a task have been replaced.
+ *     In this process the cookie of the new credentials was replaced with
+ *     the cookie of the victim. This means that cookie of the victim
+ *     gains an instance while the (old) cookie of the new credentials
+ *     loses an instance.
+ * ANOUBIS_PROCESS_OP_CREATE: Credentials have been assigned to a process.
+ *     The cookie in the credentials gains a thread.
+ * ANOUBIS_PROCESS_OP_DESTROY: A thread with the given credentials terminated.
+ *     The cookie of the cedentials loses a thread.
+ * This function extracts the neccessary information from the kernel
+ * events and forwards it to process tracking.
+ *
+ * @param hdr The event.
+ * @return Always NULL. No further action required.
+ */
+static struct anoubisd_reply *
 pe_handle_process(struct eventdev_hdr *hdr)
 {
 	struct ac_process_message	*msg;
@@ -412,11 +591,19 @@ pe_handle_process(struct eventdev_hdr *hdr)
 	return (NULL);
 }
 
-static anoubisd_reply_t *
+/**
+ * Process an ALF escalation, i.e. a message of type ANOUBIS_SOURCE_ALF.
+ * This functions finds the process responsible for the event (provided
+ * that it is tracked) and calls pe_decide_alf to evaluate the policy.
+ *
+ * @param hdr The event.
+ * @return The reply for the event.
+ */
+static struct anoubisd_reply *
 pe_handle_alf(struct eventdev_hdr *hdr)
 {
 	struct alf_event	*msg;
-	anoubisd_reply_t	*reply = NULL;
+	struct anoubisd_reply	*reply = NULL;
 	struct pe_proc		*proc;
 
 	if (hdr == NULL) {
@@ -448,7 +635,14 @@ pe_handle_alf(struct eventdev_hdr *hdr)
 	return (reply);
 }
 
-static anoubisd_reply_t *
+/**
+ * Handle events of type ANOUBIS_SOURCE_IPC. These are tracked by the
+ * pe_ipc.c file and might generate context switches due to borrow rules.
+ *
+ * @param hder The event.
+ * @return Always NULL, no further action required.
+ */
+static struct anoubisd_reply *
 pe_handle_ipc(struct eventdev_hdr *hdr)
 {
 	struct ac_ipc_message	*msg;
@@ -479,9 +673,31 @@ pe_handle_ipc(struct eventdev_hdr *hdr)
 	return (NULL);
 }
 
-static anoubisd_reply_t *
-reply_merge(struct eventdev_hdr *hdr, anoubisd_reply_t *sfs,
-    anoubisd_reply_t *sb)
+/**
+ * Merge two replies one from an SFS rule and the other from a sandbox
+ * rule for the same event into one. This makes sure that the user sees
+ * only one escalation per file system access.
+ *
+ * Both replies must be malloced and will (conceptually) be freed.
+ * The return value is again malloced and must be freed by the caller.
+ *
+ * Merge strategie:
+ * - Either the sandbox or the sfs reply is used.
+ * - If one reply is NULL, i.e. the module has no oppinon on the event,
+ *   the other reply is used.
+ * - If one reply out right denies the event, it is used.
+ * - Otherwise if one event has the ask flag set it is used.
+ * - If there is still a tie the SFS event is preferred.
+ *
+ * @param hdr The event in question. This is used to reset the event
+ *     source that might have changed from SFS to SANDBOX and back.
+ * @param sfs The SFS reply.
+ * @param sb The sandbox reply.
+ * @return The merged reply.
+ */
+static struct anoubisd_reply *
+reply_merge(struct eventdev_hdr *hdr, struct anoubisd_reply *sfs,
+    struct anoubisd_reply *sb)
 {
 	if (!sfs)
 		goto use_sb;
@@ -511,10 +727,20 @@ use_sb:
 	return sb;
 }
 
-static anoubisd_reply_t *
+/**
+ * Handle an event of type ANOUBIS_SOURCE_SFS. This type of kernel event
+ * is used to implement both SFS and sandbox policies. Thus this function
+ * passes the event to both the sfs and the sandbox policies and merges
+ * the reply. Additionally, it is used to handle context switches
+ * due to a context open rule and to track files modified by an upgrade.
+ *
+ * @param hdr The event.
+ * @return The merged reply from both SFS and sandbox rules.
+ */
+static struct anoubisd_reply *
 pe_handle_sfs(struct eventdev_hdr *hdr)
 {
-	anoubisd_reply_t		*reply = NULL, *reply2 = NULL;
+	struct anoubisd_reply		*reply = NULL, *reply2 = NULL;
 	struct pe_file_event		*fevent;
 	struct pe_proc			*proc;
 
@@ -616,10 +842,24 @@ pe_handle_sfs(struct eventdev_hdr *hdr)
 }
 
 #ifdef ANOUBIS_SOURCE_SFSPATH
-static anoubisd_reply_t *
+
+/**
+ * Handle an event of type ANOUBIS_SOURCE_SFSPATH. This handles two
+ * types of event:
+ * - Renames and hardlinks are denied if they would move a file such that
+ *   different path prefixes mentioned in the active rules would apply
+ *   before and after the move.
+ * - Additionally, this function tracks lock and unlock events for the
+ *   upgrade handling.
+ *
+ * @param hdr The kernel event containing an operation and one or two
+ *     path names.
+ * @return An anoubis reply for the event.
+ */
+static struct anoubisd_reply *
 pe_handle_sfspath(struct eventdev_hdr *hdr)
 {
-	anoubisd_reply_t		*reply = NULL;
+	struct anoubisd_reply		*reply = NULL;
 	struct pe_path_event		*pevent;
 	struct pe_proc			*proc;
 	time_t				now;
@@ -640,7 +880,7 @@ pe_handle_sfspath(struct eventdev_hdr *hdr)
 		return (NULL);
 	}
 
-	reply = malloc(sizeof(anoubisd_reply_t));
+	reply = malloc(sizeof(struct anoubisd_reply));
 	if (reply == NULL)
 		return(NULL);
 
@@ -665,10 +905,7 @@ pe_handle_sfspath(struct eventdev_hdr *hdr)
 	switch (pevent->op) {
 		case ANOUBIS_PATH_OP_LINK:
 		case ANOUBIS_PATH_OP_RENAME:
-			if (pe_compare(proc, pevent, APN_SFS_ACCESS, now))
-				reply->reply = EXDEV;
-			else if (pe_compare(proc, pevent, APN_SB_ACCESS, now))
-				reply->reply = EXDEV;
+			reply->reply = pe_compare(proc, pevent, now);
 			break;
 		case ANOUBIS_PATH_OP_LOCK:
 			DEBUG(DBG_UPGRADE, "Lock event for task cookie %" PRIx64
@@ -721,11 +958,11 @@ pe_handle_sfspath(struct eventdev_hdr *hdr)
  * @return An anoubis_reply structure. Currently, we ask the user for
  *     permission unconditionally.
  */
-static anoubisd_reply_t *
+static struct anoubisd_reply *
 pe_handle_playgroundask(struct eventdev_hdr *hdr)
 {
 
-	anoubisd_reply_t		*reply = NULL;
+	struct anoubisd_reply		*reply = NULL;
 	struct pg_open_message		*pgevent;
 	struct pe_proc			*proc;
 
@@ -740,7 +977,7 @@ pe_handle_playgroundask(struct eventdev_hdr *hdr)
 	}
 	pgevent = (struct pg_open_message *)(hdr+1);
 
-	reply = malloc(sizeof(anoubisd_reply_t));
+	reply = malloc(sizeof(struct anoubisd_reply));
 	if (reply == NULL)
 		return NULL;
 	proc = pe_proc_get(pgevent->common.task_cookie);
@@ -787,7 +1024,7 @@ pe_handle_playgroundask(struct eventdev_hdr *hdr)
  * @param hdr The eventdev header with the playground event.
  * @return This function always returns NULL.
  */
-static anoubisd_reply_t *
+static struct anoubisd_reply *
 pe_handle_playgroundproc(struct eventdev_hdr *hdr)
 {
 	struct pg_proc_message	*pg;
@@ -817,7 +1054,7 @@ pe_handle_playgroundproc(struct eventdev_hdr *hdr)
  * @param hdr The eventdev header with the playground event.
  * @return This function always returns NULL.
  */
-static anoubisd_reply_t *
+static struct anoubisd_reply *
 pe_handle_playgroundfile(struct eventdev_hdr *hdr)
 {
 	int				 plen;
@@ -872,6 +1109,13 @@ pe_handle_playgroundfile(struct eventdev_hdr *hdr)
 	return NULL;
 }
 
+/**
+ * Dump the current state of the policy engine to the log. If this is
+ * the system log or stderr depends on the command line options.
+ *
+ * @param None.
+ * @return None.
+ */
 void
 pe_dump(void)
 {
@@ -880,6 +1124,17 @@ pe_dump(void)
 	pe_playground_dump();
 }
 
+/**
+ * Return true if the given scope includes the process given by the
+ * task cookie. For scopes that include a timeout, it is assumed that
+ * the current time is given by now.
+ *
+ * @param scope The scope.
+ * @param task The cookie of the task in question.
+ * @param now The current time (compared with the timeout in the scope.
+ * @return True iff a rule with the given scope must be applied to the
+ *     task.
+ */
 int
 pe_in_scope(struct apn_scope *scope, anoubis_cookie_t task,
     time_t now)
@@ -893,6 +1148,18 @@ pe_in_scope(struct apn_scope *scope, anoubis_cookie_t task,
 	return 1;
 }
 
+/**
+ * Analyse a raw kernel event of type ANOUBIS_SOURCE_SFS and store its
+ * contents in a dynamically allocated structure of type pe_file_event.
+ * The structure is allocated dynamically. The same applies to pointer fields
+ * for the path name and the checksum within the structure. However,
+ * the memory pointed to the rawhdr field will point back to the original
+ * header.
+ *
+ * @param hdr The kernel event to parse.
+ * @return The parsed event. See the description of the pe_file_event
+ *     structure for further details.
+ */
 static struct pe_file_event *
 pe_parse_file_event(struct eventdev_hdr *hdr)
 {
@@ -961,6 +1228,17 @@ pe_parse_file_event(struct eventdev_hdr *hdr)
 }
 
 #ifdef ANOUBIS_SOURCE_SFSPATH
+
+/**
+ * Analyse a raw kernel event of type ANOUBIS_SOURCE_SFSPATH and store its
+ * contents in a dynamically allocated structure of type pe_path_event.
+ * The structure is allocated dynamically. The same applies to pointer fields
+ * for the path names.
+ *
+ * @param hdr The kernel event to parse.
+ * @return The parsed event. See the description of the pe_path_event
+ *     structure for further details.
+ */
 static struct pe_path_event *
 pe_parse_path_event(struct eventdev_hdr *hdr)
 {
@@ -1038,6 +1316,16 @@ err:
 }
 #endif
 
+/**
+ * Analyse the rules in the given rule block and store all path
+ * prefixes in a prefix hash. The prefix hash is saved in the userdata
+ * field of the rule and will be freed by the ruleset destructor.
+ * It is useful to lookup matching rules for a given path name efficiently.
+ *
+ * @param block The rule block to analyse.
+ * @return Zero in case of success, a negative error code if something
+ *     went wrong.
+ */
 int
 pe_build_prefixhash(struct apn_rule *block)
 {
@@ -1091,6 +1379,20 @@ pe_build_prefixhash(struct apn_rule *block)
 	return 0;
 }
 
+/**
+ * Look at the path prefixes of all rules in the rulelist. If there is at
+ * least one path prefix that applies to exactly one of the two paths in
+ * the path event, an error is returned. This is used to check hardlink
+ * and rename events.
+ *
+ * @param rulelist The rules to check.
+ * @param pevent The path event containing the two paths that are part of
+ *     the hardlink or rename operation.
+ * @param now The current time. This is used to check if any the rules are
+ *     in scope.
+ * @return Zero if the event is allowed, a negative error code if at
+ *     least one rule was found that matches exactly one of the two paths.
+ */
 static int
 pe_compare_path(struct apnarr_array rulelist, struct pe_path_event *pevent,
     time_t now)
@@ -1150,74 +1452,80 @@ pe_compare_path(struct apnarr_array rulelist, struct pe_path_event *pevent,
 
 		if (match[0] != match[1]) {
 			DEBUG(DBG_PE, "<pe_compare_path");
-			return (-1);
+			return -EXDEV;
 		}
 	}
 
 	DEBUG(DBG_PE, "<pe_compare_path");
-	return (0);
+	return 0;
 }
 
-int
-pe_compare(struct pe_proc *proc, struct pe_path_event *event, int type,
-    time_t now)
+/**
+ * This function is used to decide if a hardlink or rename operation
+ * should be allow. It calls pe_compare_path with all applicable rule
+ * lists, i.e. it checks:
+ *  - admin and user rules
+ *  - sandbox and sfs rules
+ *  - matching rules are preselected based on each path in the event.
+ *
+ * @param proc The current process.
+ * @param event The event containing both path names. The caller must
+ *     verify that
+ * @param now The current time for scope checks.
+ * @return Zero if the event is allowed, a negative error code in case
+ *     or an error.
+ */
+static int
+pe_compare(struct pe_proc *proc, struct pe_path_event *event, time_t now)
 {
-	int			 decision = APN_ACTION_ALLOW;
-	int			 i, p;
+	unsigned int		 x;
+	static int		 types[2] = { APN_SB_ACCESS, APN_SFS_ACCESS };
+	static int		 prios[PE_PRIO_MAX] = {
+				     PE_PRIO_ADMIN,  PE_PRIO_USER1
+				 };
 
 	DEBUG(DBG_PE, ">pe_compare");
-
 	if (!event)
-		return (APN_ACTION_DENY);
+		return -EPERM;
+	/* NOTE: "!!" converts zero to zero and non-zero to 1. */
+	for (x = 0; x < 8; x++) {
+		int			type = types[!!(x & 4)];
+		int			prio = prios[!!(x & 2)];
+		int			pidx = (x & 1);
+		struct apnarr_array	rulelist = apnarr_EMPTY;
+		int			error = 0;
 
-	if ((type != APN_SFS_ACCESS) && (type != APN_SB_ACCESS)) {
-		log_warnx("Called with unhandled rule type");
-		return (-1);
-	}
-
-	for (i = 0; i < PE_PRIO_MAX; i++) {
-
-		for (p = 0; p < 2; p++) {
-			struct apnarr_array	rulelist = apnarr_EMPTY;
-			int			error = 0;
-
-			if (type == APN_SFS_ACCESS)
-				error = pe_sfs_getrules(event->uid, i,
-						event->path[p], &rulelist);
-			else if (type == APN_SB_ACCESS)
-				error = pe_sb_getrules(proc, event->uid, i,
-						event->path[p], &rulelist);
-
-			DEBUG(DBG_PE, " pe_compare: prio %d rules %d for %s",
-			    i, (int)apnarr_size(rulelist), event->path[p]);
-			if (error < 0) {
-				decision = APN_ACTION_DENY;
-				break;
-			}
-			if (apnarr_size(rulelist) == 0)
-				continue;
-
-			if (pe_compare_path(rulelist, event, now) < 0)
-				decision = APN_ACTION_DENY;
-			apnarr_free(rulelist);
-
-			if (decision == APN_ACTION_DENY)
-				break;
+		if (type == APN_SFS_ACCESS) {
+			error = pe_sfs_getrules(event->uid, prio,
+			    event->path[pidx], &rulelist);
+		} else if (type == APN_SB_ACCESS) {
+			error = pe_sb_getrules(proc, event->uid, prio,
+			    event->path[pidx], &rulelist);
 		}
-		if (decision == APN_ACTION_DENY)
-			break;
+
+		DEBUG(DBG_PE, " pe_compare: prio %d rules %d for %s",
+		    prio, (int)apnarr_size(rulelist), event->path[pidx]);
+		if (error < 0)
+			return error;
+		if (apnarr_size(rulelist) == 0)
+			continue;
+
+		error = pe_compare_path(rulelist, event, now);
+		apnarr_free(rulelist);
+		if (error < 0)
+			return error;
 	}
 
 	DEBUG(DBG_PE, "<pe_compare");
-	return (decision);
+	return 0;
 }
 
 /*
  * Entry Points exported for the benefit of the policy engine unit tests.
  * DO NOT CALL THESE FUNCTIONS FROM NORMAL CODE.
  */
-anoubisd_reply_t
-*test_pe_handle_sfs(struct eventdev_hdr *hdr)
+struct anoubisd_reply *
+test_pe_handle_sfs(struct eventdev_hdr *hdr)
 {
 	return pe_handle_sfs(hdr);
 }
