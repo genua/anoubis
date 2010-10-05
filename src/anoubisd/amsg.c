@@ -54,39 +54,68 @@
 /**
  * This structure handles buffered reading of variable lenght messages
  * from pipes that connect anoubis daemon process with each other and
- * the kernel. Fields:
- * fd: The file descriptor of this buffer.
- * rmsgoff: The number of bytes that are already stored in the buffer
- *     pointed to by rmsg. Should be zero if the rmsg field is NULL.
- * woff: An offset into the message that is currently written to the pipe.
- *     The first woff bytes of the message have been written the rest must
- *     still be written.
- * rbufp: Points to a buffer used for reading data. This is where input
- *     data is first stored. It is only transfered to rmsg if the current
- *     message turns out to be incomplete. This pointer always points to
- *     the start of the buffer which need not be the start of valid data.
- * rheadp: A pointer into the read buffer. This pointer points to the start
- *     of the unprocessed data in the buffer.
- * rtailp: A pointer into the read bufffer. This pointer points one byte
- *     after the end of the unprocessed data in the buffer.
- * rmsg: If an incomplete message is found at the end of the read buffer,
- *     the new message is allocated and stored here. The partial data is
- *     copied into the message and removed from the read buffer. Subsequent
- *     data is read directly into this message until the message is complete.
- *     Once complete the message is returned to the caller.
- * wmsg: This is the message that is currently being written to the pipe.
- *     The message will be freed after it is written, i.e. the caller
- *     can forget about it.
- * iseof: True if a previous call to read returned zero. This is used to
- *     implement a side effect free end of file test.
+ * the kernel.
+ *
  */
 struct msg_buf {
+	/**
+	 * The file descriptor of this buffer.
+	 */
 	int			 fd;
+
+	/**
+	 * The number of bytes that are already stored in the buffer
+	 * pointed to by rmsg. Should be zero if the rmsg field is NULL.
+	 */
 	size_t			 rmsgoff;
+
+	/**
+	 * An offset into the message that is currently written to the pipe.
+	 * The first woff bytes of the message have been written the rest must
+	 * still be written.
+	 */
 	size_t			 woff;
-	void			*rbufp, *rheadp, *rtailp;
+
+	/**
+	 * Points to a buffer used for reading data. This is where input
+	 * data is first stored. It is only transfered to rmsg if the current
+	 * message turns out to be incomplete. This pointer always points to
+	 * the start of the buffer which need not be the start of valid data.
+	 */
+	void			*rbufp;
+
+	/**
+	 * A pointer into the read buffer. This pointer points to the start
+	 * of the unprocessed data in the buffer.
+	 */
+	void			*rheadp;
+
+	/**
+	 * A pointer into the read bufffer. This pointer points one byte
+	 * after the end of the unprocessed data in the buffer.
+	 */
+	void			*rtailp;
+
+	/**
+	 * If an incomplete message is found at the end of the read buffer,
+	 * the new message is allocated and stored here. The partial data is
+	 * copied into the message and removed from the read buffer. Subsequent
+	 * data is read directly into this message until the message is
+	 * complete. Once complete the message is returned to the caller.
+	 */
 	struct anoubisd_msg	*rmsg;
+
+	/**
+	 * This is the message that is currently being written to the pipe.
+	 * The message will be freed after it is written, i.e. the caller
+	 * can forget about it.
+	 */
 	struct anoubisd_msg	*wmsg;
+
+	/**
+	 * True if a previous call to read returned zero. This is used to
+	 *     implement a side effect free end of file test.
+	 */
 	int			 iseof;
 };
 

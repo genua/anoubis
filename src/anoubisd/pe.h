@@ -58,13 +58,18 @@ struct pe_pubkey_db;
  * Description (identification) of a process or context. This consists of a
  * checksum and a path. Memory for these fields is dynamically allocated,
  * the structure itself is usually allocated statically as part of
- * another structure. Fields:
- * csum: A buffer containing the checksum of the process/context
- *     (might be empty!).
- * pathhint: The path of the process/context (might be empty).
+ * another structure.
  */
 struct pe_proc_ident {
+	/**
+	 * A buffer containing the checksum of the process/context
+	 * (might be empty!).
+	 */
 	struct abuf_buffer	 csum;
+
+	/**
+	 * The path of the process/context (might be empty).
+	 */
 	char			*pathhint;
 };
 
@@ -72,43 +77,71 @@ struct pe_proc_ident {
  * Return type for the policy engine function in response to a kernel event.
  * DO NOT use for anything else. In particular, this structure must not be
  * sent to other daemon processes as an struct anoubisd_msg payload.
- * Fields:
- * ask: True if the event should be escalated to the UI.
- * hold: True if the reply to the event should be held back until the
- *     upgrade that is currently in progress end.
- * timeout: The timeout for the event. The policy process should deny
- *     the event if this timeout expires without an answer from the user.
- * reply: The error code for the event (zero if the event is allowed).
- * log: The result of the event is logged with this log level. Possible
- *     values are the APN_LOG_* defines from apn.h (i.e. the same values
- *     that can be used in policies, too).
- * rule_id: The rule ID that decided this event.
- * prio: the priorty of the rule that decided this event.
- * sfsmatch: If the matching rule is an SFS rule, this field can be used
- *     to determine which part of the SFS rule (valid, invalid or unknown)
- *     matched. Possible values are the ANOUBIS_SFS_* defines from
- *     anoubis_protocol.h.
- * pident: The process identification (path and checksum) of the active
- *     process.
- * ctxident: The process identification (path and checksum) of the context
- *     that is active for the program (at the priority given by the prio
- *     field).
  *
- * NOTE: The pident and ctxident fields point into the pe_proc structure
+ * @note The pident and ctxident fields point into the pe_proc structure
  * of the current process. The pointers will be invalidated if the process
  * is changed, i.e. the caller must copy this data if required and must
  * not pass pointers to it around.
  */
 struct anoubisd_reply {
+	/**
+	 * True if the event should be escalated to the UI.
+	 */
 	char		ask;
+
+	/**
+	 * hold: True if the reply to the event should be held back until the
+	 *     upgrade that is currently in progress end.
+	 */
 	char		hold;
+
+	/**
+	 * The timeout for the event. The policy process should deny
+	 * the event if this timeout expires without an answer from the user.
+	 */
 	time_t		timeout;
+
+	/**
+	 * The error code for the event (zero if the event is allowed).
+	 */
 	int		reply;
+
+	/**
+	 * The result of the event is logged with this log level. Possible
+	 * values are the APN_LOG_* defines from apn.h (i.e. the same values
+	 * that can be used in policies, too).
+	 */
 	int		log;
+
+	/**
+	 * The rule ID that decided this event.
+	 */
 	u_int32_t	rule_id;
+
+	/**
+	 * the priorty of the rule that decided this event.
+	 */
 	u_int32_t	prio;
+
+	/**
+	 * If the matching rule is an SFS rule, this field can be used
+	 * to determine which part of the SFS rule (valid, invalid or unknown)
+	 * matched. Possible values are the ANOUBIS_SFS_* defines from
+	 * anoubis_protocol.h.
+	 */
 	u_int32_t	sfsmatch;
+
+	/**
+	 * The process identification (path and checksum) of the active
+	 * process.
+	 */
 	struct pe_proc_ident *pident;
+
+	/**
+	 * The process identification (path and checksum) of the context
+	 * that is active for the program (at the priority given by the prio
+	 * field).
+	 */
 	struct pe_proc_ident *ctxident;
 };
 
@@ -121,37 +154,56 @@ struct anoubisd_reply {
  * from the kernel. It contains information about the event that is
  * used in policy processing. The fields path and csum are usually
  * allocated dynamically, the rawhdr fields points to the original
- * message. Fields:
- *
- * cookie: The cookie of the process that triggered the event.
- * path: The path of the file that is accessed (may be NULL).
- * csum: The checksum of the file that is accessed (may be empty).
- * amask: This is a combination of APN_SBA_* flags from apn.h
- *     (READ, WRITE and  EXEC).
- * uid: The user-ID of the user that triggered the event.
- * upgrade_flags: Usually empty but may be a combination of
- *     the following flags:
- *     - PE_UPGRADE_TOUCHED: This flag is set iff the current upgrade
- *       modified this file and at least one user has a checksum for the
- *       file. As this checksum will be updated after the update anyway,
- *       all available checksum are assumed to match as long as the access
- *       is for read.
- *     - PE_UPGRADE_WRITEOK: This flag is set iff the file has the
- *       "touched" flag set and the current process is itself an upgrade
- *       process. Upgrade processes are allowed to write to the touched
- *       files regardless of the checksum.
- * rawhdr: A pointer to the raw unparsed event as received from the
- *     kernel. Some function need this to extract logging information etc.
- *     This field usually points to pre-allocated data and is not owned
- *     by the pe_file_event structure.
+ * message.
  */
 struct pe_file_event {
+	/**
+	 * The cookie of the process that triggered the event.
+	 */
 	anoubis_cookie_t	 cookie;
+
+	/**
+	 * The path of the file that is accessed (may be NULL).
+	 */
 	char			*path;
+
+	/**
+	 * The checksum of the file that is accessed (may be empty).
+	 */
 	struct abuf_buffer	 csum;
+
+	/**
+	 * This is a combination of APN_SBA_* flags from apn.h
+	 * (READ, WRITE and  EXEC).
+	 */
 	unsigned int		 amask;
+
+	/**
+	 * The user-ID of the user that triggered the event.
+	 */
 	int			 uid;
+
+	/**
+	 * Usually empty but may be a combination of
+	 * the following flags.
+	 * - PE_UPGRADE_TOUCHED: This flag is set iff the current upgrade
+	 *   modified this file and at least one user has a checksum for the
+	 *   file. As this checksum will be updated after the update anyway,
+	 *   all available checksum are assumed to match as long as the access
+	 *   is for read.
+	 * - PE_UPGRADE_WRITEOK: This flag is set iff the file has the
+	 *   "touched" flag set and the current process is itself an upgrade
+	 *   process. Upgrade processes are allowed to write to the touched
+	 *   files regardless of the checksum.
+	 */
 	unsigned int		 upgrade_flags;
+
+	/**
+	 * A pointer to the raw unparsed event as received from the
+	 * kernel. Some function need this to extract logging information etc.
+	 * This field usually points to pre-allocated data and is not owned
+	 * by the pe_file_event structure.
+	 */
 	struct eventdev_hdr	*rawhdr;
 };
 

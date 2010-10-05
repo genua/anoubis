@@ -61,40 +61,69 @@
 #include "amsg_list.h"
 
 /**
- * This structure describes a single playground. Fields:
- * next: Link to the next playground structure on the playground list.
- *     The list is rooted at the global variable playgrounds.
- * pgid: The playground ID of the playground.
- * founder: The playgrond ID of the initial playground process. The
- *     playground name is derived from the command of this process and
- *     the first exec of this process changes the playground name.
- * starttime: The time that the playground was started.
- * nrprocs: The total number of running processes in the playground.
- * nrfiles: The total number of playground files that are known to this
- *     playground.
- * cmd: The command (program) that was first started in the playground.
- *     This is modified once after the first exec in the playground to
- *     make sure that anoubisctl and/or xanoubis do not show up as the
- *     playground processes.
- * uid: The user-ID of the user that starts the playground process.
- * did_exec: Initialized to zero and set to one after the first process
- *     in the playground calls exec.
- * dirfd: An open file descriptor that points to the playground directory.
- *     in /var/lib/anoubis/playground/.
+ * This structure describes a single playground.
  */
 struct playground {
+	/**
+	 * Link to the next playground structure on the playground list.
+	 * The list is rooted at the global variable playgrounds.
+	 */
 	LIST_ENTRY(playground)			 next;
+
+	/**
+	 *  The playground ID of the playground.
+	 */
 	anoubis_cookie_t			 pgid;
+
+	/**
+	 * The playgrond ID of the initial playground process. The
+	 * playground name is derived from the command of this process and
+	 * the first exec of this process changes the playground name.
+	 */
 	anoubis_cookie_t			 founder;
+
+	/**
+	 * The time that the playground was started.
+	 */
 	uint64_t				 starttime;
 	uint64_t				 scandev;
 	uint64_t				 scanino;
 	uint64_t				 scantok;
+
+	/**
+	 * The total number of running processes in the playground.
+	 */
 	int					 nrprocs;
+
+	/**
+	 * The total number of playground files that are known to this
+	 * playground.
+	 */
 	int					 nrfiles;
+
+	/**
+	 * The command (program) that was first started in the playground.
+	 * This is modified once after the first exec in the playground to
+	 * make sure that anoubisctl and/or xanoubis do not show up as the
+	 * playground processes.
+	 */
 	char					*cmd;
+
+	/**
+	 * The user-ID of the user that starts the playground process.
+	 */
 	uid_t					 uid;
+
+	/**
+	 * did_exec: Initialized to zero and set to one after the first process
+	 *     in the playground calls exec.
+	 */
 	int					 did_exec;
+
+	/**
+	 * An open file descriptor that points to the playground directory.
+	 * in /var/lib/anoubis/playground/.
+	 */
 	struct atfd				 dirfd;
 };
 

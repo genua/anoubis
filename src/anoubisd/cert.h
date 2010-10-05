@@ -41,7 +41,7 @@
 #include <openssl/evp.h>
 
 /**
- * Database which stores the certificates of the anoubis users.
+ * @file cert.h Database which stores the certificates of the anoubis users.
 
  * Each certificate holds a public key which is needed to validate signatures
  * sent by the user.  All certificates must be stored in one directory and

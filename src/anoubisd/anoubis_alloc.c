@@ -42,18 +42,21 @@
  * This structure represents the actual buffer in memory. The layout of
  * the memory returned by the allocation functions is as follows:
  *
+ * <pre>
  * +---------------------------------------------------------------+
  * | struct abuf_buffer | MAGIC_COOKIE | actual data ...           |
  * +---------------------------------------------------------------+
  *                                      ^
  *                                      |
  *                                abuf_buffer.data points here
+ * </pre>
  *
  * The abuf_buffer and the magic cookie are represented by this structure.
- * NOTE: The abuf_buffer structures used by the callers are a copy and
- * NOTE: not a reference to this structure. The abuf_free function will
- * NOTE: use the data pointer in the buffer to find the actual management
- * NOTE: structure associated with the buffer.
+ *
+ * @note The abuf_buffer structures used by the callers are a copy and
+ *       not a reference to this structure. The abuf_free function will
+ *       use the data pointer in the buffer to find the actual management
+ *       structure associated with the buffer.
  *
  * This structure is internal to the memory allocation library and must
  * never be accessed outside of this file.

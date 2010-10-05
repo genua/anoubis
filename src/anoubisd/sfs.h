@@ -47,20 +47,26 @@
  * theses structures. These structure are created during paring or the
  * request message.
  *
- * Fields:
- * @index: The index of this request. This is copied from the index field
- *     in the request message.
- * @path: The path name that this csmulti entriy applies to.
- * @csdata: The buffer that hold additional data for add requests.
- *
  * Both the pathname and the checksum data reference memory that is
  * located in the request message. This means that this data must not
  * be freed indepenently. Instead the original request message must be
  * freed.
  */
 struct sfs_csmulti_record {
+	/**
+	 * The index of this request. This is copied from the index field
+	 * in the request message.
+	 */
 	unsigned int		 index;
+
+	/**
+	 * The path name that this csmulti entriy applies to.
+	 */
 	const char		*path;
+
+	/**
+	 * The buffer that hold additional data for add requests.
+	 */
 	struct abuf_buffer	 csdata;
 };
 
@@ -72,55 +78,85 @@ struct sfs_csmulti_record {
  * Normally, the data in this structure references the request message
  * directly, i.e. the memory of field like @path or @sigbuf must not be
  * freed independently.
- *
- * Fields:
- * @op: Checksum operation (see anoubis_protocol.h).
- * @listflags: Checksum flags for a list operation (see anoubis_protocol.h
- *     for a list of possible flags. This field is only used for list
- *     operations, it is always zero for other operations (add, get, del).
- * @uid: The user-ID that this operation applies to. This field is only used
- *     is @keyid is not empty.
- * @auth_uid: The user-ID of the authenticated user that initiated the request.
- * @keyid: The (binary representation of) the keyid that this request applies
- *     to.
- * @sigbuf: This buffer contains checksum or signature data for add
- *     operations. It is only used for old style checksum operations,
- *     csmulti operations only use it temporarily. It's use is deprecated.
- * @path: The path name string for old style checksum operations. The field
- *     is only used for old style checksum operations, csmulti operations
- *     only use it temporarily. It's use is deprecated.
- * @nrec: The total number of request records in a csmulti checksum
- *     operation. Old style checksum operations do not use this field.
- * @csmulti: An array of csmulti request records. The memory for the array
- *     is allocated dynamically. The memory referenced from the records in
- *     this array is part of the request message.
  */
 struct sfs_checksumop {
+	/**
+	 * Checksum operation (see anoubis_protocol.h).
+	 */
 	int				 op;
+
+	/**
+	 * Checksum flags for a list operation (see anoubis_protocol.h
+	 * for a list of possible flags. This field is only used for list
+	 * operations, it is always zero for other operations (add, get, del).
+	 */
 	unsigned int			 listflags;
+
+	/**
+	 * The user-ID that this operation applies to. This field is only used
+	 * is @keyid is not empty.
+	 */
 	uid_t				 uid;
+
+	/**
+	 * The user-ID of the authenticated user that initiated the request.
+	 */
 	uid_t				 auth_uid;
+
+	/**
+	 * The (binary representation of) the keyid that this request applies
+	 * to.
+	 */
 	struct abuf_buffer		 keyid;
-	/* Only used for non-csmulti requests */
+
+	/**
+	 * This buffer contains checksum or signature data for add
+	 * operations. It is only used for old style checksum operations,
+	 * csmulti operations only use it temporarily. It's use is deprecated.
+	 * Only used for non-csmulti requests.
+	 */
 	struct abuf_buffer		 sigbuf;
+
+	/**
+	 * The path name string for old style checksum operations. The field
+	 * is only used for old style checksum operations, csmulti operations
+	 * only use it temporarily. It's use is deprecated.
+	 */
 	const char			*path;
-	/* Only used for cs-multi requests */
+
+	/**
+	 * The total number of request records in a csmulti checksum
+	 * operation. Old style checksum operations do not use this field.
+	 * Only used for cs-multi requests.
+	 */
 	unsigned int			 nrec;
+
+	/**
+	 * An array of csmulti request records. The memory for the array
+	 * is allocated dynamically. The memory referenced from the records in
+	 * this array is part of the request message.
+	 */
 	struct csmultiarr_array		 csmulti;
 };
 
 /**
  * This structure is used to transfer checksum and signature data to and
  * from an on disk file.
- *
- * Fields:
- * @sigdata: The signature.
- * @csdata: The unsigned checksum.
- * @upgradecsdata: The checksum from an upgrade.
  */
 struct sfs_data {
+	/**
+	 * The signature.
+	 */
 	struct abuf_buffer	sigdata;
+
+	/**
+	 * The unsigned checksum.
+	 */
 	struct abuf_buffer	csdata;
+
+	/**
+	 * The checksum from an upgrade.
+	 */
 	struct abuf_buffer	upgradecsdata;
 };
 

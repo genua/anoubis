@@ -75,27 +75,47 @@
 /**
  * This structure describes a single user session, i.e. a connection via
  * the anoubis daemon socket. All active user connections are linked in
- * a linked list. Fields:
- * uid: The authenticated user ID of the session. If the session is not
- *     authenticated, this value is (uid_t)-1.
- * channel: The communication channel for the session.
- * connfd: The saved file descriptor of the connection. This usually
- *     corresponds to session->channel->fd but session->channel->fd might
- *     be -1 before we have a change to clean up the message buffers.
- * proto: The server protocol object that handles this sesison.
- * ev_rdata: This event is used to wait for incoming data on the session.
- * ev_wdata: This event to wait until the file descriptor become ready to
- *     write outgoing data.
- * nextSession: This field is used to link allsessions in the global
- *     session list.
+ * a linked list.
  */
 struct session {
+	/**
+	 * This field is used to link allsessions in the global
+	 * session list.
+	 */
 	LIST_ENTRY(session)	 nextSession;
+
+	/**
+	 * The authenticated user ID of the session. If the session is not
+	 * authenticated, this value is (uid_t)-1.
+	 */
 	uid_t			 uid;
+
+	/**
+	 * The saved file descriptor of the connection. This usually
+	 * corresponds to session->channel->fd but session->channel->fd might
+	 * be -1 before we have a change to clean up the message buffers.
+	 */
 	int			 connfd;
+
+	/**
+	 * The communication channel for the session.
+	 */
 	struct achat_channel	*channel;
+
+	/**
+	 * The server protocol object that handles this sesison.
+	 */
 	struct anoubis_server	*proto;
+
+	/**
+	 * This event is used to wait for incoming data on the session.
+	 */
 	struct event		 ev_rdata;
+
+	/**
+	 * This event to wait until the file descriptor become ready to
+	 * write outgoing data.
+	 */
 	struct event		 ev_wdata;
 };
 
@@ -220,7 +240,7 @@ static void	dispatch_passphrase(struct anoubis_server *,
  * all client sessions and removes all signal related events from the
  * event loop. The latter is neccessary to make sure that the event
  * loop terminates eventually (with no more pending events left).
- * 
+ *
  * Note that this signal handler is sometimes called manually (without
  * an actual signal). This simulates a signal and initiates graceful
  * shutdown, too. Also note that this handler is called in response to
@@ -928,7 +948,7 @@ invalid:
  * signatures should be updated automatically in the cause of the update.
  * This function is called in response to an ANOUBIS_P_PASSPHRASE request.
  * The passphrase is stored in an ANOUBISD_MSG_PASSPHRASE message and
- * forwarded to the master. No reply messages are generated.  
+ * forwarded to the master. No reply messages are generated.
  *
  * @param The server object associated with the client session.
  * @param m The request message as received from the client.
@@ -991,7 +1011,7 @@ dispatch_passphrase(struct anoubis_server *server, struct anoubis_msg *m,
  * an acknowlegement or contains a challenge that the user must sign
  * with its private key. The challenge (if any) must be forwarded
  * to the session.
- * 
+ *
  * Invariantes ensured by the way anoubis_policy_answer is called:
  * - cbdata Points to the server object of the user connection.
  * - data points to an anoubis_msg_authchallenge and the length in this
@@ -1388,7 +1408,7 @@ dispatch_checksum_reply(void *cbdata, int error, const void *data,
  *     (POLICY_FLAG_START | POLICY_FLAG_END).
  * @return Zero if the message could be sent, a negative error code in
  *     case of an error.
- */ 
+ */
 static int
 dispatch_csmulti_reply(void *cbdata, int error, const void *data,
     int len, int flags)
@@ -1448,7 +1468,7 @@ err:
  *     (POLICY_FLAG_START | POLICY_FLAG_END).
  * @return Zero if the message could be sent, a negative error code in
  *     case of an error.
- */ 
+ */
 static int
 dispatch_list_reply(void *cbdata, int error, const void *data,
     int len, int flags)
@@ -1515,7 +1535,7 @@ err:
  *     Indicates if more data belongs to the policy request.
  * @return Zero if the message could be sent, a negative error code in
  *     case of an error.
- */ 
+ */
 static int
 dispatch_policy(struct anoubis_policy_comm *comm __used, uint64_t token,
     uint32_t uid, const void *buf, size_t len, void *arg __used, int flags)

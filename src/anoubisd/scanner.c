@@ -58,38 +58,63 @@
 
 /**
  * This structure is used to describe one active scanner child.
- * All active scanner children are maintained in a linked list. Fields are:
- *
- * next: The link to the next structure in the global scanner list
- *     (only used in the master process).
- * token: The token of the scan request that is handled by this scanner
- *     child.
- * scanfile: An open file descriptor of the file that is being scanned.
- * pipe: The pipe between the scanner child and the anoubis daemon master.
- *     The read end is held open by the master, the write end by the scanner
- *     child.
- * uid: The user ID of the user requesting the scan. There can be at most
- *     one active scanner per user.
- * childpid: The process ID of the scanner child process (only valid in the
- *     master process).
- * event: The libevent read event used to read messages from the scanner
- *     child in in the master process (only valid in the master process).
- * msgbuf: The scanner reply message is stored in this message buffer.
- *     The buffer contains at most one anoubisd_msg (only used in the
- *     master process).
- * msgoff: The offset into the msgbuf buffer where the next byte received
- *     from the scanner child must be stored (only used in the master
- *     process).
+ * All active scanner children are maintained in a linked list.
  */
 struct scanproc {
+	/**
+	 * The link to the next structure in the global scanner list
+	 * (only used in the master process).
+	 */
 	LIST_ENTRY(scanproc)		 next;
+
+	/**
+	 * The token of the scan request that is handled by this scanner
+	 * child.
+	 */
 	uint64_t			 token;
+
+	/**
+	 * An open file descriptor of the file that is being scanned.
+	 */
 	int				 scanfile;
+
+	/**
+	 * The pipe between the scanner child and the anoubis daemon master.
+	 * The read end is held open by the master, the write end by the scanner
+	 * child.
+	 */
 	int				 pipe[2];
+
+	/**
+	 * The user ID of the user requesting the scan. There can be at most
+	 * one active scanner per user.
+	 */
 	uint64_t			 uid;
+
+	/**
+	 * The process ID of the scanner child process (only valid in the
+	 * master process).
+	 */
 	pid_t				 childpid;
+
+	/**
+	 * The libevent read event used to read messages from the scanner
+	 * child in in the master process (only valid in the master process).
+	 */
 	struct event			 event;
+
+	/**
+	 * The scanner reply message is stored in this message buffer.
+	 * The buffer contains at most one anoubisd_msg (only used in the
+	 * master process).
+	 */
 	struct abuf_buffer		 msgbuf;
+
+	/**
+	 * The offset into the msgbuf buffer where the next byte received
+	 * from the scanner child must be stored (only used in the master
+	 * process).
+	 */
 	unsigned int			 msgoff;
 };
 
@@ -100,20 +125,30 @@ LIST_HEAD(, scanproc)	scanprocs = LIST_HEAD_INITIALIZER(scanproc);
 
 /**
  * This structure encapsulates the result of a single scanner. It is
- * only used internally in scanner_run and scanner_main. Fields:
- *
- * next: The next element in the scanner result list.
- * test: A buffer that contains the error text of this scanner.
- * exitcode: The exit code of the scanner sub process.
- * scanner: A pointer back to the scanner structure. This is ok because
- *     the scanner list is read only in the scanner sub-process. Only
- *     the parent process (anoubisd master) reconfigures the scanner list.
+ * only used internally in scanner_run and scanner_main.
  */
 struct scanresult {
+	/**
+	 * The next element in the scanner result list.
+	 */
 	CIRCLEQ_ENTRY(scanresult)	 next;
+
+	/**
+	 * A buffer that contains the error text of this scanner.
+	 */
 	struct abuf_buffer		 text;
 	int				 off;
+
+	/**
+	 * The exit code of the scanner sub process.
+	 */
 	int				 exitcode;
+
+	/**
+	 * A pointer back to the scanner structure. This is ok because
+	 * the scanner list is read only in the scanner sub-process. Only
+	 * the parent process (anoubisd master) reconfigures the scanner list.
+	 */
 	struct anoubisd_pg_scanner	*scanner;
 };
 

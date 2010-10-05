@@ -53,60 +53,93 @@
  * credentials are counted in the threads field and all threads that
  * share the same credentials, i.e. they share the same task cookie are
  * assumed to be the same process for the purpose of the policy engine.
- *
- * Fields:
- * entry: Used to link all processes in a list.
- * refcount: The reference count of this sturcture. The structure is
- *     kept alive as long as there is at least one reference count
- *     remaining.
- * instances: The total number of credential structures that use the
- *     same task cookie.
- * threads: The total number of actual threads that use the credentials
- *     tracked by this pe_proc structure. On OpenBSD this is always set
- *     to one as OpenBSD tracks processes directly.
- * pid: The process ID of the process being tracked. This is not always
- *     known and may be -1 in this case.
- * uid: The user ID of the process.
- * flags: The process flags. Possible values are:
- *     - PE_PROC_FLAGS_UPGRADE: The process takes part in an ongoing
- *       upgrade.
- *     - PE_PROC_FLAGS_UPGRADE_PARENT: This is the process that started
- *       the current upgrade.
- *     - PE_PROC_FLAGS_HOLD: Answers to event triggered by this process
- *       should be held back and delayed until the current upgrade finishes.
- *     - PE_PROC_FLAGS_SECUREEXEC: The process die a secure exec. The
- *       nosfs flag on a process context is only honoured if the process
- *       did a secure exec (the policy engine enforces this if the process
- *       does a context switch).
- * ident: The path/checksum of the process.
- * task_cookie: The task cookie of the current process.
- * borrow_cookie: The cookie of connection that we used to borrow our
- *     context from. The saved context will be restored as soon as the
- *     connection with this cookie closes.
- * pgid: The playground ID of the process, zero if the process is not
- *     in a playground.
- * context: The admin and user contexts that are currently active for
- *     the process.
- * saved_ctx: The saved admin and user contexts. These contexts will
- *     be restored if connection to the task closes that we borrow our
- *     context from. This is NULL if the current context is not borrowed.
  */
 struct pe_proc {
+	/**
+	 * Used to link all processes in a list.
+	 */
 	TAILQ_ENTRY(pe_proc)	 entry;
+
+	/**
+	 * The reference count of this sturcture. The structure is
+	 * kept alive as long as there is at least one reference count
+	 * remaining.
+	 */
 	int			 refcount;
+
+	/**
+	 * The total number of credential structures that use the
+	 * same task cookie.
+	 */
 	int			 instances;
+
+	/**
+	 * The total number of actual threads that use the credentials
+	 * tracked by this pe_proc structure. On OpenBSD this is always set
+	 * to one as OpenBSD tracks processes directly.
+	 */
 	int			 threads;
+
+	/**
+	 * The process ID of the process being tracked. This is not always
+	 * known and may be -1 in this case.
+	 */
 	pid_t			 pid;
+
+	/**
+	 * The user ID of the process.
+	 */
 	uid_t			 uid;
+
+	/**
+	 * The process flags. Possible values are.
+	 * - PE_PROC_FLAGS_UPGRADE: The process takes part in an ongoing
+	 *   upgrade.
+	 * - PE_PROC_FLAGS_UPGRADE_PARENT: This is the process that started
+	 *   the current upgrade.
+	 * - PE_PROC_FLAGS_HOLD: Answers to event triggered by this process
+	 *   should be held back and delayed until the current upgrade finishes.
+	 * - PE_PROC_FLAGS_SECUREEXEC: The process die a secure exec. The
+	 *   nosfs flag on a process context is only honoured if the process
+	 *   did a secure exec (the policy engine enforces this if the process
+	 *   does a context switch).
+	 */
 	unsigned int		 flags;
 
+	/**
+	 * The path/checksum of the process.
+	 */
 	struct pe_proc_ident	 ident;
+
+	/**
+	 * The task cookie of the current process.
+	 */
 	anoubis_cookie_t	 task_cookie;
+
+	/**
+	 * The playground ID of the process, zero if the process is not
+	 * in a playground.
+	 */
 	anoubis_cookie_t	 pgid;
 
-	/* Per priority contexts */
+	/**
+	 * The cookie of connection that we used to borrow our
+	 * context from. The saved context will be restored as soon as the
+	 * connection with this cookie closes.
+	 */
 	anoubis_cookie_t	 borrow_cookie[PE_PRIO_MAX];
+
+	/**
+	 * The admin and user contexts that are currently active for
+	 * the process.
+	 */
 	struct pe_context	*context[PE_PRIO_MAX];
+
+	/**
+	 * The saved admin and user contexts. These contexts will
+	 * be restored if connection to the task closes that we borrow our
+	 * context from. This is NULL if the current context is not borrowed.
+	 */
 	struct pe_context	*saved_ctx[PE_PRIO_MAX];
 };
 

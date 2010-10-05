@@ -37,34 +37,54 @@
 /**
  * This structure is used to build reply messages for user list
  * requests. It contains all the information that is needed to build
- * a reply message. Description of individual fields:
+ * a reply message.
  *
- * msg The anoubisd_msg structure that is currently under construction.
- * dmsg A pointer to the anoubis daemon header within the reply message. This
- *     header is a anoubisd_msg_listreply structure.
- * pmsg A pointer to the protocol header within the reply message. This
- *     header is of type Anoubis_ListMessage.
- * buf This buffer represents the message payload at the end of the
- *     message. The caller can use the memory in this buffer for individual
- *     reply records. Once a record is added the buffer should be modified
- *     such that it only represents the rest of the payload.
- * curlen The current length of the message without the (rest of) the payload.
- *     This is initially set to the size of the daemon header plus the size
- *     of the protocol header. The caller should adjust this value if
- *     payload data is added.
- * nrec The number of records in this message. This is initialized to zero
- *     and the caller must make sure that this value is adjusted as more
- *     records are added in the payload area.
- * flags The flags to use for the next reply. This is initialized to
- *     POLICY_FLAG_START and is cleared upon a pe_playground_send.
  */
 struct amsg_list_context {
+	/**
+	 * The anoubisd_msg structure that is currently under construction.
+	 */
 	struct anoubisd_msg			*msg;
+
+	/**
+	 * A pointer to the anoubis daemon header within the reply message. This
+	 * header is a anoubisd_msg_listreply structure.
+	 */
 	struct anoubisd_msg_listreply		*dmsg;
+
+	/**
+	 * A pointer to the protocol header within the reply message. This
+	 * header is of type Anoubis_ListMessage.
+	 */
 	Anoubis_ListMessage			*pmsg;
+
+	/**
+	 * This buffer represents the message payload at the end of the
+	 * message. The caller can use the memory in this buffer for individual
+	 * reply records. Once a record is added the buffer should be modified
+	 * such that it only represents the rest of the payload.
+	 */
 	struct abuf_buffer			 buf;
+
+	/**
+	 * The current length of the message without the (rest of) the payload.
+	 * This is initially set to the size of the daemon header plus the size
+	 * of the protocol header. The caller should adjust this value if
+	 * payload data is added.
+	 */
 	int					 curlen;
+
+	/**
+	 * The number of records in this message. This is initialized to zero
+	 * and the caller must make sure that this value is adjusted as more
+	 * records are added in the payload area.
+	 */
 	int					 nrec;
+
+	/**
+	 * The flags to use for the next reply. This is initialized to
+	 * POLICY_FLAG_START and is cleared upon a pe_playground_send.
+	 */
 	int					 flags;
 };
 

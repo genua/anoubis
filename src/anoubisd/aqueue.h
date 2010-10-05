@@ -41,15 +41,20 @@ struct queue_entry;
 
 /**
  * A fifo queue with opaque entries. The queue does not know anything
- * about the type of its elements. Fields:
- * list: The tailq of struct queue_entries.
- * ev: If this value is not NULL it must be a libevent event that will
- *     take care of flushing of the queue. Each time an entry is added
- *     to the queue, the event is added to libevents list of interesting
- *     events.
+ * about the type of its elements.
  */
 struct queue_hd {
+	/**
+	 * The tailq of struct queue_entries.
+	 */
 	TAILQ_HEAD(, queue_entry)	 list;
+
+	/**
+	 * If this value is not NULL it must be a libevent event that will
+	 * take care of flushing of the queue. Each time an entry is added
+	 * to the queue, the event is added to libevents list of interesting
+	 * events.
+	 */
 	struct event			*ev;
 };
 typedef struct queue_hd			 Queue;

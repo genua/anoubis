@@ -83,8 +83,11 @@ typedef enum {
  * can be used to find the string value of a key in an array of keys.
  */
 struct stringkey {
-	const char	*name;		/** The string name of the key */
-	long		 value;		/** The numeric value of the key */
+	/** The string name of the key */
+	const char	*name;
+
+	/** The numeric value of the key */
+	long		 value;
 };
 
 /**
