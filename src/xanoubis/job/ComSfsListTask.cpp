@@ -48,6 +48,7 @@ ComSfsListTask::ComSfsListTask(void) : dirqueue_()
 	basepath_ = NULL;
 	this->upgraded_ = false;
 	this->oneFile_ = false;
+	this->ta_ = NULL;
 }
 
 ComSfsListTask::ComSfsListTask(uid_t uid, const wxString &dir) : dirqueue_()
@@ -59,6 +60,7 @@ ComSfsListTask::ComSfsListTask(uid_t uid, const wxString &dir) : dirqueue_()
 	basepath_ = NULL;
 	this->upgraded_ = false;
 	this->oneFile_ = false;
+	this->ta_ = NULL;
 
 	setRequestParameter(uid, dir);
 }
@@ -277,7 +279,7 @@ ComSfsListTask::done(void)
 				wxString f = wxString::FromAscii(list[i]);
 
 				/* Prepend the basepath, if exists */
-				if (strlen(basepath_) > 0) {
+				if (*basepath_) {
 					wxString pp;
 					pp = wxString::FromAscii(basepath_);
 

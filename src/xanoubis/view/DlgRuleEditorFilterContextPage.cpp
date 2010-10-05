@@ -34,6 +34,7 @@ DlgRuleEditorFilterContextPage::DlgRuleEditorFilterContextPage(wxWindow *parent,
     DlgRuleEditorFilterContextPageBase(parent, id, pos, size, style)
 {
 	filterPolicy_ = NULL;
+	binaryIndex_ = 0;
 }
 
 void

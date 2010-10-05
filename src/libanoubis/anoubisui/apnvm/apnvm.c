@@ -62,7 +62,7 @@
 		return (rc)
 
 #define APNVM_CHECKSTR(str, rc)	\
-	if ((str == NULL) || (strlen(str) == 0))	\
+	if (((str) == NULL) || *(str) == '\0')	\
 		return (rc)
 
 #define APNVM_CHECKCVS(p, rc)		\

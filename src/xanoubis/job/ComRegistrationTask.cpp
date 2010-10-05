@@ -52,11 +52,17 @@ getToken(void)
 ComRegistrationTask::ComRegistrationTask(void)
 {
 	this->action_ = ACTION_REGISTER;
+	this->ta_     = NULL;
+	this->state_	 = STATE_REGISTER;
+	this->lastState_ = STATE_REGISTER;
 }
 
 ComRegistrationTask::ComRegistrationTask(Action action)
 {
 	this->action_ = action;
+	this->ta_     = NULL;
+	this->state_	 = STATE_REGISTER;
+	this->lastState_ = STATE_REGISTER;
 }
 
 ComRegistrationTask::Action

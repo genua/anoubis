@@ -56,6 +56,7 @@ PlaygroundCommitTask::PlaygroundCommitTask(uint64_t pgid,
 	progress_ = false;
 	forceOverwrite_ = false;
 	noscan_ = false;
+	gotCommitNotify_ = false;
 }
 
 PlaygroundCommitTask::~PlaygroundCommitTask(void)

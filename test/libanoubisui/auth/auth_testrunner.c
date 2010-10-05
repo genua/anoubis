@@ -105,6 +105,7 @@ setup(void)
 	    strlen(TEST_CHALLENGE));
 	set_value(inputMsg->u.authchallenge->idlen, asPrivKey->idlen);
 	memcpy(inputMsg->u.authchallenge->payload, challengeBuf, challengeLen);
+	free(challengeBuf);
 
 	fail_if(outputMsg != NULL, "Setup error: outputMsg not clean");
 }

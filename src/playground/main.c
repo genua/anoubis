@@ -1377,7 +1377,7 @@ pgcli_commit_show_scanresult(const char *file, struct anoubis_msg *m, int rc)
 			 * Avoid printing of trailing newline if the scanner
 			 * terminates its output with a newline.
 			 */
-			if (line == NULL && strlen(next) == 0)
+			if (line == NULL && *next == '\0')
 				continue;
 			fprintf(stderr, "| %s\n", next);
 		}

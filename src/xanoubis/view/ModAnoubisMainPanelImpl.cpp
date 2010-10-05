@@ -585,7 +585,6 @@ void
 ModAnoubisMainPanelImpl::versionListUpdateFromSelection(void)
 {
 	VersionCtrl	*versionCtrl;
-	PolicyCtrl	*policyCtrl;
 	wxString	profile;
 
 	if (VersionActivePolicyRadioButton->GetValue())
@@ -594,7 +593,6 @@ ModAnoubisMainPanelImpl::versionListUpdateFromSelection(void)
 		profile = VersionProfileChoice->GetStringSelection();
 
 	versionCtrl = VersionCtrl::instance();
-	policyCtrl = PolicyCtrl::instance();
 
 	if (!versionCtrl->isInitialized()) {
 		anMessageBox(_("Repository not initialized."),

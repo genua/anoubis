@@ -215,7 +215,7 @@ strip_whitespaces(char *string)
 	unsigned int i;
 	char *s;
 
-	if (string == NULL || strlen(string) == 0)
+	if (string == NULL || *string == '\0')
 		return string;
 
 	/* Strip trailing whitespace */
@@ -399,7 +399,7 @@ cfg_parse_upgrade_trigger(struct abuf_buffer valuebuf, int lineno)
 		if (token == NULL) /* End of string reached */
 			break;
 		/* Ignore empty strings */
-		if (strlen(token) == 0)
+		if (*token == '\0')
 			continue;
 
 		trigger = malloc(sizeof(struct anoubisd_upgrade_trigger));
@@ -746,7 +746,7 @@ cfg_parse_file(FILE *f)
 		/* Strip leading and trailing whitespaces */
 		line = strip_whitespaces(line);
 
-		if (strlen(line) == 0) {
+		if (*line == '\0') {
 			/* Nothing to do, continue with next line */
 			continue;
 		}

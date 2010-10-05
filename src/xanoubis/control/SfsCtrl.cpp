@@ -59,6 +59,9 @@ SfsCtrl::SfsCtrl(void) : progressTimer_(this, SFSCTRL_PROGRESS_TIMER)
 	this->sigEnabled_ = true; /* Signature support enabled */
 	this->exportEnabled_ = false;
 	this->importList_ = 0;
+	this->progressMax_ = 0;
+	this->progressDone_ = 0;
+	this->progressAbort_ = false;
 
 	JobCtrl::instance()->Connect(anTASKEVT_REGISTER,
 	    wxTaskEventHandler(SfsCtrl::OnRegistration), NULL, this);

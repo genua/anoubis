@@ -454,7 +454,7 @@ anoubis_keygen(const char *private, const char *public, const char *pass,
 		return ret;
 	if (bits < 128 || bits > 1000000)
 		return -ERANGE;
-	if (pass && strlen(pass) == 0)
+	if (pass && *pass == '\0')
 		pass = NULL;
 
 	sprintf(bitstring, "%d", bits);

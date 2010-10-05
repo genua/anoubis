@@ -64,12 +64,10 @@ NotificationCtrl::addNotification(Notification *notification)
 	id = notification->getId();
 
 	notificationHashMutex_.Lock();
-	if (notification) {
-		notificationHash_[id] = notification;
-		if (dynamic_cast<PlaygroundFileNotify *>(notification)) {
-			playgroundFileNotifyId_ = id;
-			wakeup = true;
-		}
+	notificationHash_[id] = notification;
+	if (dynamic_cast<PlaygroundFileNotify *>(notification)) {
+		playgroundFileNotifyId_ = id;
+		wakeup = true;
 	}
 	notificationHashMutex_.Unlock();
 	if (wakeup)

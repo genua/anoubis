@@ -52,7 +52,7 @@
 		return (-1);
 
 #define APNCVS_CHECKSTR(s)			\
-	if ((s == NULL) || (strlen(s) == 0))	\
+	if (((s) == NULL) || *(s) == '\0')	\
 		return (-1);
 
 #define APNCVS_CHECKAPNCVS(p)		\

@@ -61,6 +61,8 @@ StatusNotify::StatusNotify(wxString msg) : Notification(NULL)
 	module_ = wxT("xanoubis");
 	timeStamp_ = wxNow();
 	logMessage_ = msg;
+	valueNo_ = 0;
+	statMsg_ = NULL;
 }
 
 StatusNotify::StatusNotify(struct anoubis_msg *msg) : Notification(msg)

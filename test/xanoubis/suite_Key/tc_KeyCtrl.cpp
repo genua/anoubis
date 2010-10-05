@@ -98,6 +98,7 @@ class tc_KeyCtrl_Thread : public wxThread
 		    : wxThread(wxTHREAD_JOINABLE)
 		{
 			this->ctrl_ = ctrl;
+			this->result_ = KeyCtrl::RESULT_KEY_OK;
 		}
 
 		void *Entry(void)

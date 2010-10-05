@@ -35,6 +35,7 @@ ComVersionTask::ComVersionTask(void)
 {
 	this->protocolVersion_ = 0;
 	this->apnVersion_ = 0;
+	this->ta_ = NULL;
 }
 
 int

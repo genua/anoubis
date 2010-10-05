@@ -209,8 +209,10 @@ anoubis_proc_get(struct anoubis_proc_handle *handle __attribute__((unused)),
 	if (fp == NULL)
 		return NULL;
 	p = malloc(sizeof(struct anoubis_proc));
-	if (p == NULL)
+	if (p == NULL) {
+		fclose(fp);
 		return NULL;
+	}
 	p->groups = NULL;
 	p->comm = NULL;
 	p->command = NULL;

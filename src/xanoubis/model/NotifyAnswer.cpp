@@ -38,6 +38,8 @@ NotifyAnswer::NotifyAnswer(enum notifyAnswerType type, bool allow)
 	openEditor_ = false;
 	flags_ = 0;
 	prefix_ = wxEmptyString;
+	timeValue_ = 0;
+	timeUnit_ = TIMEUNIT_SECOND;
 }
 
 NotifyAnswer::NotifyAnswer(enum notifyAnswerType type, bool allow, int value,
@@ -45,6 +47,9 @@ NotifyAnswer::NotifyAnswer(enum notifyAnswerType type, bool allow, int value,
 {
 	type_ = type;
 	wasAllowed_ = allow;
+	openEditor_ = false;
+	flags_ = 0;
+	prefix_ = wxEmptyString;
 	timeValue_ = value;
 	timeUnit_ = unit;
 }

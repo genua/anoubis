@@ -125,7 +125,6 @@ PolicyRuleSet::addRuleInformation(EscalationNotify *escalation)
 	AppPolicy			*parent = NULL;
 	wxString			 hashValue;
 	bool				 canEdit = true;
-	const char *			 path;
 
 	if (isAdmin() && geteuid() != 0)
 		canEdit = false;
@@ -144,7 +143,6 @@ PolicyRuleSet::addRuleInformation(EscalationNotify *escalation)
 		canEdit = false;
 	}
 	escalation->setAllowEdit(canEdit);
-	path = NULL;
 	if (filter) {
 		escalation->setRulePath(filter->getRulePrefix());
 	}

@@ -853,12 +853,10 @@ DlgRuleEditor::onFilterListCreateButton(wxCommandEvent &)
 	wxString	 typeSelection;
 	Policy		*policy;
 	AppPolicy	*parent;
-	PolicyCtrl	*policyCtrl;
 	PolicyRuleSet	*ruleSet;
 
 	appIndex    = appGrid->GetGridCursorRow();
 	filterIndex = filterGrid->GetGridCursorRow();
-	policyCtrl  = PolicyCtrl::instance();
 
 	policy = getSelectedPolicy(appGrid);
 	parent = dynamic_cast<AppPolicy*>(policy);

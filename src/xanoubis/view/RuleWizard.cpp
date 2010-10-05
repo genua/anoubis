@@ -579,11 +579,9 @@ RuleWizard::createSandboxPolicy(PolicyRuleSet *ruleSet) const
 {
 	wxArrayString		 list;
 	SbAppPolicy		*sbApp;
-	SbAccessFilterPolicy	*sbFilter;
 	DefaultFilterPolicy	*dflFilter;
 
 	sbApp	 = NULL;
-	sbFilter = NULL;
 	dflFilter  = NULL;
 
 	if (history_->haveSandboxPolicy()) {

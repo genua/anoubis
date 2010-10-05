@@ -70,6 +70,7 @@ DlgRuleEditorFilterSubjectPage::DlgRuleEditorFilterSubjectPage(wxWindow *parent,
 	sbPolicy_  = NULL;
 	appPolicy_ = NULL;
 	ctxPolicy_ = NULL;
+	binaryIndex_ = 0;
 
 	/* Fill subjectChoice with all possible values */
 	subjectChoice->Append(_("any"), &cs_none);

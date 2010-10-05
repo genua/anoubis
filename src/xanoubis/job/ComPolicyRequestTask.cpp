@@ -38,6 +38,7 @@
 ComPolicyRequestTask::ComPolicyRequestTask(void)
 {
 	this->msg_ = 0;
+	this->ta_ = NULL;
 
 	setRequestParameter(0, 0);
 }
@@ -45,6 +46,7 @@ ComPolicyRequestTask::ComPolicyRequestTask(void)
 ComPolicyRequestTask::ComPolicyRequestTask(int prio, uid_t uid)
 {
 	this->msg_ = 0;
+	this->ta_ = NULL;
 
 	setRequestParameter(prio, uid);
 }

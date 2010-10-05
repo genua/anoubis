@@ -200,7 +200,6 @@ Notification::getTime(void)
 
 wxString
 Notification::getLogMessage(void){
-	int		type;
 	wxString	action;
 
 	if (logMessage_.IsEmpty()) {
@@ -214,7 +213,6 @@ Notification::getLogMessage(void){
 		}
 
 		logMessage_ += getOperation() + wxT(" ") + getPath();
-		type = get_value((notify_->u.notify)->type);
 	}
 	action = getAction();
 	if (action.IsEmpty()) {

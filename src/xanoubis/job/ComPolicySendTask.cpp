@@ -52,6 +52,7 @@ ComPolicySendTask::ComPolicySendTask(void)
 	this->prio_ = 0;
 	privKey_ = NULL;
 	this->ruleSetId_ = 0;
+	this->ta_ = NULL;
 }
 
 ComPolicySendTask::~ComPolicySendTask(void)
@@ -196,6 +197,7 @@ ComPolicySendTask::exec(void)
 	if (strlen(policy_content_) < 10) {
 		setComTaskResult(RESULT_LOCAL_ERROR);
 		setResultDetails(EINVAL);
+		free(ureq);
 		return;
 	}
 

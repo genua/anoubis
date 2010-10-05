@@ -1039,7 +1039,7 @@ anoubis_client_compat_checksum_msg(const char *path, int op, uid_t uid,
 		flags = ANOUBIS_CSUM_UID;
 	else
 		flags = ANOUBIS_CSUM_KEY;
-	if (!path || !strlen(path))
+	if (!path || !*path)
 		return NULL;
 	/* Everything seems fine, lets start the operation */
 	if (add) {
@@ -1156,7 +1156,7 @@ anoubis_client_csumrequest_start(struct anoubis_client *client,
 	}
 	if ((op == ANOUBIS_CHECKSUM_OP_ADDSUM) && (idlen !=0))
 		return NULL;
-	if (!path || !strlen(path))
+	if (!path || !*path)
 		return NULL;
 	if ((idlen || cslen) && payload == NULL)
 		return NULL;

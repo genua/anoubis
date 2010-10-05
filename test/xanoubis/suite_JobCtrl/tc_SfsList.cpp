@@ -71,10 +71,12 @@ create_file(const char *format, ...)
 
 	FILE *f = fopen(path, "w");
 
-	if (f == 0)
+	if (f == NULL)
 		return (false);
-	if (fflush(f) != 0)
+	if (fflush(f) != 0) {
+		fclose(f);
 		return (false);
+	}
 	fclose(f);
 
 	return (true);
