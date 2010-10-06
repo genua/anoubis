@@ -52,7 +52,7 @@ apnvm_trim(char *s)
 }
 
 char *
-apnvm_emptystring()
+apnvm_emptystring(void)
 {
 	char *s = malloc(1);
 

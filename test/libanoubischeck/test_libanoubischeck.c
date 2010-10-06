@@ -64,7 +64,7 @@ START_TEST(tc_error)
 }
 END_TEST
 
-TCase *
+static TCase *
 testcase_success(void)
 {
 	TCase *tc = tcase_create("TestCaseSuccess");
@@ -74,7 +74,7 @@ testcase_success(void)
 	return (tc);
 }
 
-TCase *
+static TCase *
 testcase_failure(void)
 {
 	TCase *tc = tcase_create("TestCaseFailure");
@@ -85,7 +85,7 @@ testcase_failure(void)
 	return (tc);
 }
 
-TCase *
+static TCase *
 testcase_error(void)
 {
 	TCase *tc = tcase_create("TestCaseError");

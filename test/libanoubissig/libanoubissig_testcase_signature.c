@@ -39,20 +39,19 @@
 #include <anoubischeck.h>
 
 
-const char pri[] = "private.pem";
-const char pub[] = "public.pem";
-const char cert[] = "key_self.crt";
-const char testfile[] = "data.txt";
+static const char pri[] = "private.pem";
+static const char pub[] = "public.pem";
+static const char cert[] = "key_self.crt";
+static const char testfile[] = "data.txt";
 
 #define WDIR_SIZE 32
 
-char	 workdir[WDIR_SIZE];
-char	*prikey = NULL,
-	*certfile = NULL,
-	*infile = NULL,
-	 pass[] = "test";
+static char	 workdir[WDIR_SIZE];
+static char	*prikey = NULL,
+		*certfile = NULL,
+		*infile = NULL;
 
-int
+static int
 libanoubis_tc_calc_sum(char *file,
     unsigned char csum[ANOUBIS_SIG_HASH_SHA256_LEN])
 {
@@ -106,7 +105,7 @@ libanoubissig_tc_exec(const char *cmd, ...)
 	return WIFEXITED(rc) ? WEXITSTATUS(rc) : -1;
 }
 
-void
+static void
 libanoubissig_tc_setup(void)
 {
 	char *s;
@@ -166,7 +165,7 @@ libanoubissig_tc_setup(void)
 		return;
 }
 
-void
+static void
 libanoubissig_tc_teardown(void)
 {
 	libanoubissig_tc_exec("rm -rf %s", workdir);

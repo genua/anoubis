@@ -39,16 +39,16 @@
 #include <anoubischeck.h>
 
 
-const char pol_pri[] = "private.pem";
-const char pol_pub[] = "public.pem";
-const char pol_cert[] = "key_self.crt";
-const char pol[] = "policy";
+static const char pol_pri[] = "private.pem";
+static const char pol_pub[] = "public.pem";
+static const char pol_cert[] = "key_self.crt";
+static const char pol[] = "policy";
 
-char	 workdir[32];
-char	*pol_prikey = NULL,
-	*pol_certfile = NULL,
-	*policy = NULL,
-	*polsig = NULL;
+static char	 workdir[32];
+static char	*pol_prikey = NULL,
+		*pol_certfile = NULL,
+		*policy = NULL,
+		*polsig = NULL;
 
 static int
 libanoubissig_tc_pol_exec(const char *cmd, ...)
@@ -73,7 +73,7 @@ libanoubissig_tc_pol_exec(const char *cmd, ...)
 	return WIFEXITED(rc) ? WEXITSTATUS(rc) : -1;
 }
 
-void
+static void
 libanoubissig_tc_pol_setup(void)
 {
 	char *s;
@@ -146,7 +146,7 @@ libanoubissig_tc_pol_setup(void)
 	libanoubissig_tc_pol_exec("touch %s", polsig);
 }
 
-void
+static void
 libanoubissig_tc_pol_teardown(void)
 {
 	/*libanoubissig_tc_pol_exec("rm -rf %s", workdir);*/

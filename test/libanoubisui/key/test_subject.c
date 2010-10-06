@@ -53,7 +53,7 @@ START_TEST(subject_default)
 	pw = getpwuid(getuid());
 	if (pw == NULL)
 		return;
- 
+
 	/* Do it several times to catch more potential memory errors. */
 	for (i=0; i<50; ++i) {
 		subject = anoubis_keysubject_defaults();
@@ -97,7 +97,7 @@ struct test_case_pair {
 };
 
 
-struct test_case_pair testcases[] = {
+static struct test_case_pair testcases[] = {
 {
 	.str = "/C=DE/ST=Some-State/L=Muc/O=Internet Widgits Pty Ltd/"
 	    "CN=Christian Ehrhardt",
@@ -264,7 +264,7 @@ START_TEST(subject_tostring)
 }
 END_TEST
 
-TCase *
+static TCase *
 subject_tcase(void)
 {
 	TCase		*tc = tcase_create("SubjectTcase");

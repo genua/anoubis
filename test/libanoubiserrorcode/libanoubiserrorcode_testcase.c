@@ -42,10 +42,11 @@
 #include <stdlib.h>
 #include <anoubis_errno.h>
 #include <anoubischeck.h>
+#include <errno.h>
 
-char *tmpdir;
+static char *tmpdir;
 
-void
+static void
 libanoubiserrorcode_tc_setup(void)
 {
 	/*
@@ -55,7 +56,6 @@ libanoubiserrorcode_tc_setup(void)
 	 * testcase_de
 	 */
 	char cmd[200], *tmp, *catalog;
-	int errno;
 
 	catalog = getenv("CATALOG");
 	if (catalog == NULL)
@@ -74,7 +74,7 @@ libanoubiserrorcode_tc_setup(void)
 	errno = system(cmd);
 }
 
-void
+static void
 libanoubiserrorcode_tc_teardown(void)
 {
 	/*
@@ -83,7 +83,6 @@ libanoubiserrorcode_tc_teardown(void)
 	 * anoubis/de_DE/LC_MESSAGES/anoubis.mo has to be 'rm -rf'ed
 	 */
 	char cmd[200];
-	int errno;
 
 	snprintf(cmd, 200, "rm -rf %s", tmpdir);
 	errno = system(cmd);

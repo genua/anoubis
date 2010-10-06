@@ -42,6 +42,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "anoubis_playground.h"
+
 #ifdef LINUX
 #include <linux/anoubis.h>
 #include <bsdcompat.h>

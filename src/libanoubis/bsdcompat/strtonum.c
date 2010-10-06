@@ -30,6 +30,8 @@
 #define TOOSMALL	2
 #define TOOLARGE	3
 
+#include "bsdcompat.h"
+
 long long
 strtonum(const char *numstr, long long minval, long long maxval,
     const char **errstrp)

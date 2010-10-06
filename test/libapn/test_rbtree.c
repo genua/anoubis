@@ -73,7 +73,7 @@ rb_count(struct rb_entry *root)
 }
 
 #define NENT	10000
-int main()
+int main(void)
 {
 	struct rb_entry *root = NULL;
 	struct rb_entry e[NENT];

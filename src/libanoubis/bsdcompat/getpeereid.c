@@ -18,8 +18,7 @@
 
 #if !defined(HAVE_GETPEEREID)
 
-/* glibc 2.8+ hides struct ucred unless _GNU_SOURCE is defined */
-#define _GNU_SOURCE
+#include "bsdcompat.h"
 #include <sys/types.h>
 #include <sys/socket.h>
 
