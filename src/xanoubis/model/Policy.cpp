@@ -287,3 +287,14 @@ Policy::getApnRule(void) const
 {
 	return (rule_);
 }
+
+extern "C" {
+
+void policy_destructor(void *arg)
+{
+	Policy	*pol = (Policy *)arg;
+
+	pol->rule_ = NULL;
+}
+
+}

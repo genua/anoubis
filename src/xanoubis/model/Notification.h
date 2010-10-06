@@ -108,13 +108,4 @@ class Notification : public AnListClass {
  */
 WX_DECLARE_LIST(Notification, NotifyList);
 
-/**
- * This declares a wxHash with\n
- *	key:	long\n
- *	value:	Notification *\n
- *	name:	NotifyHash
- */
-WX_DECLARE_HASH_MAP(long, Notification*, wxIntegerHash, wxIntegerEqual,
-    NotifyHash);
-
 #endif	/* _NOTIFICATION_H_ */

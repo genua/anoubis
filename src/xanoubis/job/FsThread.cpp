@@ -40,6 +40,7 @@ FsThread::Entry(void)
 {
 	while (!exitThread()) {
 		Task		*task = getNextTask(Task::TYPE_FS);
+		DummyTask	*dummy;
 
 		if (task == 0)
 			continue;
@@ -54,8 +55,13 @@ FsThread::Entry(void)
 			}
 		}
 
-		TaskEvent event(task, wxID_ANY);
-		sendEvent(event);
+		dummy = dynamic_cast<DummyTask *>(task);
+		if (dummy) {
+			delete dummy;
+		} else {
+			TaskEvent event(task, wxID_ANY);
+			sendEvent(event);
+		}
 	}
 
 	return (0);

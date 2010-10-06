@@ -52,6 +52,7 @@ RuleWizardSandboxOverwritePage::RuleWizardSandboxOverwritePage(wxWindow *parent,
 
 	icon = MainUtils::instance()->loadIcon(wxT("General_problem_48.png"));
 	alertIcon->SetIcon(*icon);
+	delete icon;
 
 	text = _("For this application\nsandbox policies\nalready exist.");
 	alertLabel->SetLabel(text);

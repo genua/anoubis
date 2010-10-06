@@ -53,6 +53,7 @@ RuleWizardAlfOverwritePage::RuleWizardAlfOverwritePage(wxWindow *parent,
 
 	icon = MainUtils::instance()->loadIcon(wxT("General_problem_48.png"));
 	alertIcon->SetIcon(*icon);
+	delete icon;
 
 	text = _("For this application\nalf policies\nalready exists.");
 	alertLabel->SetLabel(text);

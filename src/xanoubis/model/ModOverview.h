@@ -45,7 +45,6 @@ class ModOverview : public Module
 {
 	public:
 		ModOverview(wxWindow *);
-		~ModOverview(void);
 
 		int	getBaseId(void);
 		int	getToolbarId(void);

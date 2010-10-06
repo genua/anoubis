@@ -29,9 +29,11 @@
 #define _MODPLAYGROUNDOVERVIEWPANELIMPL_H_
 
 #include "ModPlaygroundPanelsBase.h"
+#include "Subject.h"
 #include <wx/icon.h>
 
-class ModPlaygroundOverviewPanelImpl : public ModPlaygroundOverviewPanelBase
+class ModPlaygroundOverviewPanelImpl : public ModPlaygroundOverviewPanelBase,
+    public Subject
 {
 	private:
 		wxIcon			*stateIconNormal_;

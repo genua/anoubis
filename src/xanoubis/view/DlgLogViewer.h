@@ -38,6 +38,7 @@
 #include "DlgLogViewerBase.h"
 #include "Notification.h"
 #include "Observer.h"
+#include "AnRowProvider.h"
 
 /**
  * This is the LogViewer.
@@ -87,6 +88,11 @@ class DlgLogViewer : public DlgLogViewerBase
 		 * @return Nothing.
 		 */
 		void onLogSelect(wxListEvent &);
+
+		/**
+		 * The row provider.
+		 */
+		AnRowProvider		*provider_;
 
 		ANEVENTS_IDENT_BCAST_METHOD_DECLARATION;
 };

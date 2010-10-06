@@ -68,6 +68,11 @@ class AnDetails : public wxPanel
 		    const wxString& name = wxPanelNameStr);
 
 		/**
+		 * Destructor. Destroy the icons.
+		 */
+		~AnDetails();
+
+		/**
 		 * Set the (main) sizer of this panel.
 		 * This method is an overlay to the original method inherited
 		 * from wxPanel (which is unfortuantely not virtual).

@@ -1612,7 +1612,7 @@ SfsCtrl::endSfsOp(void)
 		progress_ = NULL;
 		progressTimer_.Stop();
 		old->Hide();
-		wxSafeYield(false);
+		wxGetApp().Yield(true);
 		delete old;
 	}
 

@@ -56,18 +56,15 @@ ModSfs::ModSfs(wxWindow *parent) : Module(), Observer(NULL)
 	overviewPanel_->Hide();
 
 	addSubject(notifyCtrl->getPerspective(NotificationCtrl::LIST_STAT));
+	addSubject(dynamic_cast<ModSfsOverviewPanelImpl *>(overviewPanel_));
 }
 
 ModSfs::~ModSfs(void)
 {
-	removeSubject(NotificationCtrl::instance()->getPerspective(
-	    NotificationCtrl::LIST_STAT));
-	delete mainPanel_;
-	mainPanel_ = NULL;
-	delete overviewPanel_;
-	overviewPanel_ = NULL;
-	delete icon_;
-	icon_ = NULL;
+	if (NotificationCtrl::existingInstance()) {
+		removeSubject(NotificationCtrl::existingInstance()->
+		    getPerspective(NotificationCtrl::LIST_STAT));
+	}
 }
 
 int
@@ -114,7 +111,11 @@ ModSfs::update(Subject *subject)
 void
 ModSfs::updateDelete(Subject *subject)
 {
-	removeSubject(subject);
+	if (subject && subject ==
+	    dynamic_cast<ModSfsOverviewPanelImpl *>(overviewPanel_)) {
+		overviewPanel_ = NULL;
+		return;
+	}
 	isActive_ = false;
 	update();
 }

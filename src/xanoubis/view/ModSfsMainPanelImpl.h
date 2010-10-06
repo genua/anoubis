@@ -34,7 +34,8 @@
 
 class Policy;
 
-class ModSfsMainPanelImpl : public ModSfsMainPanelBase, private Observer
+class ModSfsMainPanelImpl : public ModSfsMainPanelBase, private Observer,
+    public Subject
 {
 
 	public:
@@ -275,13 +276,6 @@ class ModSfsMainPanelImpl : public ModSfsMainPanelBase, private Observer
 		 * @return Nothing.
 		 */
 		void initSfsMain(void);
-
-		/**
-		 * Deletes the Sfs control instance.
-		 * @param None.
-		 * @return Nothing.
-		 */
-		void destroySfsMain(void);
 
 		/**
 		 * Enables/disables buttons the Sfs browser.

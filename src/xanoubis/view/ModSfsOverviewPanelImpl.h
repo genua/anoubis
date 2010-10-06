@@ -31,8 +31,9 @@
 #include <wx/icon.h>
 
 #include "ModSfsPanelsBase.h"
+#include "Subject.h"
 
-class ModSfsOverviewPanelImpl : public ModSfsOverviewPanelBase
+class ModSfsOverviewPanelImpl : public ModSfsOverviewPanelBase, public Subject
 {
 	private:
 		wxIcon		*stateIconNormal_;

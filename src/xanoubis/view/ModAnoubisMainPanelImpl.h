@@ -36,7 +36,7 @@
 #include "NotificationCtrl.h"
 #include "Observer.h"
 
-class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase,
+class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase, public Subject,
     private Observer
 {
 	private:

@@ -48,13 +48,6 @@ ModAnoubis::ModAnoubis(wxWindow *parent) : Module(), Observer(NULL)
 	overviewPanel_->Hide();
 }
 
-ModAnoubis::~ModAnoubis(void)
-{
-	delete mainPanel_;
-	delete overviewPanel_;
-	delete icon_;
-}
-
 int
 ModAnoubis::getBaseId(void)
 {

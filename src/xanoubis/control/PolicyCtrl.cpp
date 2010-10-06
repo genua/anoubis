@@ -74,6 +74,13 @@ PolicyCtrl::~PolicyCtrl(void)
 	    wxTaskEventHandler(PolicyCtrl::OnPolicySend), NULL, this);
 	AnEvents::instance()->Disconnect(anEVT_POLICY_CHANGE,
 	    wxCommandEventHandler(PolicyCtrl::OnPolicyChange), NULL, this);
+
+	while(!profiles_.empty()) {
+		Profile		*profile = profiles_.back();
+
+		profiles_.pop_back();
+		delete profile;
+	}
 }
 
 long
@@ -243,24 +250,20 @@ PolicyCtrl::importFromProfile(const wxString &name)
 	if (wxFileExists(file))
 		rs = new PolicyRuleSet(1, geteuid(), file);
 
-	if (rs == 0) {
+	if (rs == NULL) {
 		/* Try default-profile */
 		file = getProfileFile(name, Profile::DEFAULT_PROFILE);
 		if (wxFileExists(file))
 			rs = new PolicyRuleSet(1, geteuid(), file);
 	}
 
-	if (rs != 0) {
-		bool success = importPolicy(rs);
-
-		if (!success)
-			delete rs;
-
-		return (success);
-	} else {
-		/* No such profile */
-		return (false);
+	if (rs == NULL)
+		return false;
+	if (!importPolicy(rs)) {
+		delete rs;
+		return false;
 	}
+	return true;
 }
 
 bool
@@ -497,15 +500,17 @@ PolicyCtrl::OnPolicyRequest(TaskEvent &event)
 		    wxICON_ERROR);
 
 	} else {
-		/* XXX Error-path? */
 		rs = task->getPolicy();
-		importPolicy(rs);
+		if (!importPolicy(rs)) {
+			delete rs;
+			rs = NULL;
+		}
 
 		/*
 		 * If this is a new active policy, create a version for it.
 		 * XXX CEH: Also do this for admin rule sets?
 		 */
-		if ((rs != 0) && !rs->isAdmin() && rs->getUid() == geteuid()) {
+		if (rs && !rs->isAdmin() && rs->getUid() == geteuid()) {
 			makeBackup(wxT("active"));
 		}
 	}
@@ -699,13 +704,16 @@ PolicyCtrl::scanDirectory(const wxString &path, wxArrayString &dest)
 void
 PolicyCtrl::cleanRuleSetList(RuleSetList &list, bool force)
 {
-	RuleSetList::iterator it;
+	RuleSetList::iterator it, tmp;
 
-	for (it = list.begin(); it != list.end(); ++it) {
+	it = list.begin();
+	while (it != list.end()) {
 		PolicyRuleSet *rs = (*it);
 
+		tmp = it;
+		++it;
 		if (!rs->isLocked() || force) {
-			it = list.erase(it);
+			list.erase(tmp);
 			delete rs;
 		}
 	}
@@ -760,8 +768,8 @@ PolicyCtrl::updateProfileList(void)
 
 	while(!profiles_.empty()) {
 		profile = profiles_.back();
-		delete profile;
 		profiles_.pop_back();
+		delete profile;
 	}
 
 	scanDirectory(getProfilePath(Profile::DEFAULT_PROFILE),

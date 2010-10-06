@@ -2052,6 +2052,7 @@ anoubis_client_list_start(struct anoubis_client *client,
 	set_value(m->u.listreq->type, ANOUBIS_P_LISTREQ);
 	set_value(m->u.listreq->listtype, listtype);
 	set_value(m->u.listreq->arg, arg);
+	set_value(m->u.listreq->_pad, 0);
 	t = anoubis_transaction_create(0,
 	    ANOUBIS_T_INITSELF|ANOUBIS_T_WANT_ALL,
 	    &anoubis_client_list_steps, NULL, client);

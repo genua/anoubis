@@ -40,6 +40,10 @@
 class PolicyVisitor;
 class PolicyRuleSet;
 
+extern "C" {
+extern void policy_destructor(void *);
+}
+
 /**
  * This is the base class of all policies. It carris the apn_rule and the
  * subclasses will provide getter and setter methods for the various types.
@@ -239,6 +243,7 @@ class Policy : public AnListClass
 		friend class SfsAppPolicy;
 		friend class ContextAppPolicy;
 		friend class SbAppPolicy;
+		friend void policy_destructor(void *);
 };
 
 #endif	/* _POLICY_H_ */

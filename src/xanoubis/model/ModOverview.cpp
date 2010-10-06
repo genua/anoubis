@@ -49,12 +49,6 @@ ModOverview::ModOverview(wxWindow *parent) : Module()
 	mainPanel_->Hide();
 }
 
-ModOverview::~ModOverview(void)
-{
-	delete mainPanel_;
-	delete icon_;
-}
-
 int
 ModOverview::getBaseId(void)
 {

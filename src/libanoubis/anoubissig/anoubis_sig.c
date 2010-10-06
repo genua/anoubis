@@ -637,6 +637,7 @@ anoubis_sig_cert_validity(X509 *cert, struct tm *time)
 	if ((cert == NULL) || (time == NULL)) {
 		return (-EINVAL);
 	}
+	memset(time, 0, sizeof(struct tm));
 
 	notAfter = X509_get_notAfter(cert);
 	if (notAfter == NULL) {

@@ -31,7 +31,7 @@
 #include "ModAlfPanelsBase.h"
 #include <wx/icon.h>
 
-class ModAlfOverviewPanelImpl : public ModAlfOverviewPanelBase
+class ModAlfOverviewPanelImpl : public ModAlfOverviewPanelBase, public Subject
 {
 	private:
 		wxIcon			*stateIconNormal_;

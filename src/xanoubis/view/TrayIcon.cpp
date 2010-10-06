@@ -226,7 +226,7 @@ TrayIcon::OnConnectionStateChange(wxCommandEvent& event)
 		daemon_ = wxEmptyString;
 	}
 	update(true);
-	wxGetApp().Yield(false);	/* Process pending libnotify events. */
+	wxGetApp().Yield(true);		/* Process pending libnotify events. */
 	event.Skip();
 }
 
@@ -235,7 +235,7 @@ TrayIcon::OnOpenAlerts(wxCommandEvent& event)
 {
 	messageAlertCount_ = event.GetInt();
 	update(event.GetExtraLong());
-	wxGetApp().Yield(false);	/* Process pending libnotify events. */
+	wxGetApp().Yield(true);		/* Process pending libnotify events. */
 	event.Skip();
 }
 
@@ -244,7 +244,7 @@ TrayIcon::OnOpenEscalations(wxCommandEvent& event)
 {
 	messageEscalationCount_ = event.GetInt();
 	update(event.GetExtraLong());
-	wxGetApp().Yield(false);	/* Process pending libnotify events. */
+	wxGetApp().Yield(true);		/* Process pending libnotify events. */
 	event.Skip();
 }
 
@@ -368,7 +368,7 @@ TrayIcon::update(bool increase)
 		notify_notification_close(notification, NULL);
 	}
 	/* Process pending libnotify events. */
-	wxGetApp().Yield(false);
+	wxGetApp().Yield(true);
 }
 
 static void
@@ -460,7 +460,7 @@ TrayIcon::systemNotify(const gchar *module, const gchar *message,
 		if (!notify_notification_show (notification, NULL))
 			return false;
 		/* Process pending libnotify events. */
-		wxGetApp().Yield(false);
+		wxGetApp().Yield(true);
 
 	} else {
 		return false;
@@ -524,6 +524,7 @@ TrayIcon::initDBus(void)
 			/* Do nothing with 'export' line. */
 		}
 	}
+	delete text;
 }
 
 void
@@ -691,7 +692,7 @@ TrayIcon::OnPgNotifyClosed(wxCommandEvent &ev)
 
 	notify = (NotifyNotification*)ev.GetClientData();
 	if (notify) {
-		wxGetApp().Yield(false);
+		wxGetApp().Yield(true);
 		g_object_unref(notify);
 	}
 }
@@ -726,5 +727,5 @@ TrayIcon::OnPgForced(wxCommandEvent &ev)
 	}
 #endif
 	if (notify_notification_show(notify, NULL))
-		wxGetApp().Yield(false);
+		wxGetApp().Yield(true);
 }

@@ -520,8 +520,10 @@ apnvm_count(apnvm *vm, const char *user, const char *profile, int *count)
 	}
 
 	result = apncvs_log(&vm->cvs, file, &log);
-	if (result != 0)
+	if (result != 0) {
+		apncvs_log_destroy(&log);
 		return (APNVM_VMS);
+	}
 
 	*count = log.selected_revisions;
 	apncvs_log_destroy(&log);
@@ -552,8 +554,10 @@ apnvm_list(apnvm *vm, const char *user, const char *profile,
 	}
 
 	result = apncvs_log(&vm->cvs, file, &log);
-	if (result != 0)
+	if (result != 0) {
+		apncvs_log_destroy(&log);
 		return (APNVM_VMS);
+	}
 
 	/* Collect all revisions and create versions from it */
 	TAILQ_FOREACH(rev, &log.rev_queue, entry) {
@@ -583,6 +587,7 @@ apnvm_list(apnvm *vm, const char *user, const char *profile,
 
 		TAILQ_INSERT_TAIL(version_list, version, entries);
 	}
+	apncvs_log_destroy(&log);
 
 	return (APNVM_OK);
 }
@@ -726,6 +731,8 @@ apnvm_insert(apnvm *vm, const char *user, const char *profile,
 	/* Commit the changes */
 	result = apncvs_commit(&vm->cvs, file,
 	    ((rev_comment != NULL) ? rev_comment : APNVM_DEFCOMMENT));
+	if (rev_comment)
+		free(rev_comment);
 
 	return (result == 0) ? APNVM_OK : APNVM_VMS;
 }

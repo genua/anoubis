@@ -56,15 +56,18 @@ ModAlf::ModAlf(wxWindow *parent) : Module(), Observer(NULL)
 	overviewPanel_->Hide();
 
 	addSubject(notifyCtrl->getPerspective(NotificationCtrl::LIST_STAT));
+	addSubject(dynamic_cast<ModAlfOverviewPanelImpl *>(overviewPanel_));
 }
 
 ModAlf::~ModAlf(void)
 {
-	removeSubject(NotificationCtrl::instance()->getPerspective(
-	    NotificationCtrl::LIST_STAT));
-	delete mainPanel_;
-	delete overviewPanel_;
-	delete icon_;
+	if (NotificationCtrl::existingInstance()) {
+		removeSubject(NotificationCtrl::existingInstance()->
+		    getPerspective(NotificationCtrl::LIST_STAT));
+	}
+	if (overviewPanel_)
+		removeSubject(dynamic_cast<ModAlfOverviewPanelImpl *>(
+		    overviewPanel_));
 }
 
 int
@@ -82,11 +85,12 @@ ModAlf::getToolbarId(void)
 void
 ModAlf::update(void)
 {
-	ModAlfOverviewPanelImpl *instance =
-	    (ModAlfOverviewPanelImpl*) overviewPanel_;
+	ModAlfOverviewPanelImpl		*inst = NULL;
 
-	if(instance)
-		instance->update();
+	if (overviewPanel_)
+		inst = dynamic_cast<ModAlfOverviewPanelImpl*>(overviewPanel_);
+	if(inst)
+		inst->update();
 }
 
 void
@@ -114,8 +118,13 @@ void
 ModAlf::updateDelete(Subject *subject)
 {
 	removeSubject(subject);
-	isActive_ = false;
-	update();
+	if (subject && subject ==
+	    dynamic_cast<ModAlfOverviewPanelImpl *>(overviewPanel_)) {
+		overviewPanel_ = NULL;
+	} else {
+		isActive_ = false;
+		update();
+	}
 }
 
 bool

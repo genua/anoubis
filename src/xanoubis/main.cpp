@@ -61,6 +61,8 @@
 #include "ProcCtrl.h"
 #include "TrayIcon.h"
 #include "VersionCtrl.h"
+#include "KeyCtrl.h"
+#include "PSListCtrl.h"
 #include "main.h"
 
 #ifdef USE_WXGUITESTING
@@ -99,6 +101,14 @@ bool AnoubisGuiApp::OnInit()
 		return false;
 
 	wxTheApp->SetAppName(wxT("xanoubis"));
+
+	/**
+	 * Create the config object first. Otherwise wxConfig::Get()
+	 * will allocate its own config base.
+	 */
+	AnConfig *config = new AnConfig(GetAppName());
+	wxConfig::Set(config);
+
 	/*
 	 * Make sure that a ProcCtrl Instance exists before we start any
 	 * helper threads.
@@ -149,9 +159,6 @@ bool AnoubisGuiApp::OnInit()
 
 	jobCtrl->start();
 
-	AnConfig *config = new AnConfig(GetAppName());
-	wxConfig::Set(config);
-
 	mainFrame = new MainFrame((wxWindow*)NULL, trayVisible_);
 	SetTopWindow(mainFrame);
 	mainFrame->OnInit();
@@ -174,9 +181,22 @@ bool AnoubisGuiApp::OnInit()
 int
 AnoubisGuiApp::OnExit(void)
 {
-	JobCtrl::instance()->stop();
-	/* No need to delete singletons. */
-
+	/*
+	 * In theory there is no need to delete singletons. However, doing
+	 * it significantly simplifies memory leak checking with valgrind.
+	 */
+	JobCtrl::existingInstance()->stop();
+	delete VersionCtrl::existingInstance();
+	delete NotificationCtrl::existingInstance();
+	delete MainUtils::existingInstance();
+	delete PolicyCtrl::existingInstance();
+	delete PlaygroundCtrl::existingInstance();
+	delete PSListCtrl::existingInstance();
+	delete wxConfig::Get();
+	wxConfig::Set(NULL);
+	delete KeyCtrl::existingInstance();
+	delete JobCtrl::existingInstance();
+	delete AnIconList::existingInstance();
 	return wxApp::OnExit();
 }
 

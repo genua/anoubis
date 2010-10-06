@@ -167,6 +167,9 @@ apnmd_parse(const char *content)
 		BEGIN(INITIAL);
 		apnmd_lex();
 		apnmd_md = NULL;
+#ifdef LINUX
+		apnmd_lex_destroy();
+#endif
 	}
 
 	return (md);
@@ -215,7 +218,7 @@ apnmd_serialize(apnmd *md)
 			nl = index(p, '\n');
 
 			new_content = apnvm_appendline(content, kv->key);
-			
+
 			if (new_content == NULL) {
 				free(content);
 				return (NULL);
@@ -234,9 +237,11 @@ apnmd_serialize(apnmd *md)
 				content = new_content;
 
 			if (nl != NULL)
-				new_content = apnvm_append(content, p, (nl - p));
+				new_content =
+				    apnvm_append(content, p, (nl - p));
 			else /* Last line */
-				new_content = apnvm_append(content, p, strlen(p));
+				new_content =
+				    apnvm_append(content, p, strlen(p));
 
 			if (new_content == NULL) {
 				free(content);

@@ -35,6 +35,7 @@
 #include <wx/listctrl.h>
 
 #include "AnRowProvider.h"
+#include "AnIconList.h"
 #include "Observer.h"
 
 class AnListClass;
@@ -387,6 +388,8 @@ class AnListCtrl : public wxListCtrl, public Observer
 		void updateDelete(Subject *);
 
 		AnRowProvider	*rowProvider_;
+
+		AnDynamicIconList	*iconList_;
 };
 
 #endif	/* _ANLISTCTRL_H_ */

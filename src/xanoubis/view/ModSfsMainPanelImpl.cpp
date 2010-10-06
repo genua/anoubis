@@ -131,7 +131,9 @@ ModSfsMainPanelImpl::~ModSfsMainPanelImpl(void)
 	    NULL, this);
 
 	saveSfsOptions();
-	destroySfsMain();
+	SfsMainListCtrl->setSfsCtrl(NULL);
+	delete sfsCtrl_;
+	sfsCtrl_ = NULL;
 }
 
 void
@@ -277,11 +279,12 @@ ModSfsMainPanelImpl::OnGridCellLeftDClick(wxGridEvent& event)
 }
 
 void
-ModSfsMainPanelImpl::OnSfsPathChanged(wxCommandEvent &)
+ModSfsMainPanelImpl::OnSfsPathChanged(wxCommandEvent &event)
 {
 	wxString enteredPath = SfsMainPathCtrl->GetValue();
 	wxString message = wxEmptyString;
 
+	event.Skip();
 	/* Remove whitespaces from both sides */
 	enteredPath.Trim();
 	enteredPath.Trim(false);
@@ -301,23 +304,26 @@ ModSfsMainPanelImpl::OnSfsPathChanged(wxCommandEvent &)
 }
 
 void
-ModSfsMainPanelImpl::OnSfsMainDirCtrlSelChanged(wxTreeEvent &)
+ModSfsMainPanelImpl::OnSfsMainDirCtrlSelChanged(wxTreeEvent &event)
 {
 	/* Update controller */
+	event.Skip();
 	wxBeginBusyCursor();
 	sfsCtrl_->setPath(SfsMainDirCtrl->GetPath());
 	wxEndBusyCursor();
 }
 
 void
-ModSfsMainPanelImpl::OnSfsListSelected(wxListEvent &)
+ModSfsMainPanelImpl::OnSfsListSelected(wxListEvent &event)
 {
+	event.Skip();
 	enableSfsControls(false); /* false: No operation running */
 }
 
 void
-ModSfsMainPanelImpl::OnSfsListDeselected(wxListEvent &)
+ModSfsMainPanelImpl::OnSfsListDeselected(wxListEvent &event)
 {
+	event.Skip();
 	enableSfsControls(false); /* false: No operation running */
 }
 
@@ -353,19 +359,21 @@ ModSfsMainPanelImpl::OnConnectionStateChange(wxCommandEvent &event)
 }
 
 void
-ModSfsMainPanelImpl::OnSfsOperationFinished(wxCommandEvent&)
+ModSfsMainPanelImpl::OnSfsOperationFinished(wxCommandEvent &event)
 {
 	/* Enable the controls again */
+	event.Skip();
 	enableSfsControls(false); /* false: No operation running */
 }
 
 void
-ModSfsMainPanelImpl::OnSfsDirChanged(wxCommandEvent&)
+ModSfsMainPanelImpl::OnSfsDirChanged(wxCommandEvent &event)
 {
 	/*
 	 * Directory was changed somewhere else, not by selecting the directory
 	 * in the dir-ctrl.
 	 */
+	event.Skip();
 	if (SfsMainDirCtrl->GetPath() != sfsCtrl_->getPath())
 		SfsMainDirCtrl->SetPath(sfsCtrl_->getPath());
 
@@ -374,19 +382,21 @@ ModSfsMainPanelImpl::OnSfsDirChanged(wxCommandEvent&)
 }
 
 void
-ModSfsMainPanelImpl::OnSfsMainDirTraversalChecked(wxCommandEvent&)
+ModSfsMainPanelImpl::OnSfsMainDirTraversalChecked(wxCommandEvent &event)
 {
+	event.Skip();
 	wxBeginBusyCursor();
 	sfsCtrl_->setRecursive(SfsMainDirTraversalCheckbox->GetValue());
 	wxEndBusyCursor();
 }
 
 void
-ModSfsMainPanelImpl::OnSfsError(wxCommandEvent&)
+ModSfsMainPanelImpl::OnSfsError(wxCommandEvent &event)
 {
 	const wxArrayString	&errors = sfsCtrl_->getErrors();
 	int			 needSummary = (errors.Count() > 1);
 
+	event.Skip();
 	for (unsigned int i = 0; i < errors.Count(); i++) {
 		wxLogError(errors[i]);
 	}
@@ -396,35 +406,39 @@ ModSfsMainPanelImpl::OnSfsError(wxCommandEvent&)
 }
 
 void
-ModSfsMainPanelImpl::OnSfsMainFilterButtonClicked(wxCommandEvent&)
+ModSfsMainPanelImpl::OnSfsMainFilterButtonClicked(wxCommandEvent &event)
 {
+	event.Skip();
 	wxBeginBusyCursor();
 	sfsCtrl_->setFilter(SfsMainFilterTextCtrl->GetValue());
 	wxEndBusyCursor();
 }
 
 void
-ModSfsMainPanelImpl::OnSfsMainInverseCheckboxClicked(wxCommandEvent&)
+ModSfsMainPanelImpl::OnSfsMainInverseCheckboxClicked(wxCommandEvent &event)
 {
+	event.Skip();
 	wxBeginBusyCursor();
 	sfsCtrl_->setFilterInversed(SfsMainFilterInvertCheckBox->IsChecked());
 	wxEndBusyCursor();
 }
 
 void
-ModSfsMainPanelImpl::OnSfsMainValidateButtonClicked(wxCommandEvent&)
+ModSfsMainPanelImpl::OnSfsMainValidateButtonClicked(wxCommandEvent &event)
 {
+	event.Skip();
 	enableSfsControls(true);
 	SfsCtrl::CommandResult result = sfsCtrl_->validateAll();
 	handleSfsCommandResult(result);
 }
 
 void
-ModSfsMainPanelImpl::OnSfsMainApplyButtonClicked(wxCommandEvent&)
+ModSfsMainPanelImpl::OnSfsMainApplyButtonClicked(wxCommandEvent &event)
 {
 	SfsCtrl::CommandResult result = SfsCtrl::RESULT_EXECUTE;
 	IndexArray selection = SfsMainListCtrl->getSelectedIndexes();
 
+	event.Skip();
 	enableSfsControls(true);
 	switch (SfsMainActionChoice->GetCurrentSelection()) {
 	case 0:
@@ -441,9 +455,10 @@ ModSfsMainPanelImpl::OnSfsMainApplyButtonClicked(wxCommandEvent&)
 }
 
 void
-ModSfsMainPanelImpl::OnSfsMainImportClicked(wxCommandEvent&)
+ModSfsMainPanelImpl::OnSfsMainImportClicked(wxCommandEvent &event)
 {
 	wxFileDialog dlg(this, _("Choose the import-file"));
+	event.Skip();
 	if (dlg.ShowModal() != wxID_OK) {
 		/* Operation canceled */
 		return;
@@ -456,10 +471,11 @@ ModSfsMainPanelImpl::OnSfsMainImportClicked(wxCommandEvent&)
 }
 
 void
-ModSfsMainPanelImpl::OnSfsMainExportClicked(wxCommandEvent&)
+ModSfsMainPanelImpl::OnSfsMainExportClicked(wxCommandEvent &event)
 {
 	IndexArray selection = SfsMainListCtrl->getSelectedIndexes();
 
+	event.Skip();
 	if (selection.IsEmpty()) {
 		/* No selection -> no export */
 		return;
@@ -516,10 +532,11 @@ ModSfsMainPanelImpl::handleSfsCommandResult(SfsCtrl::CommandResult result)
 }
 
 void
-ModSfsMainPanelImpl::OnSfsMainSigEnabledClicked(wxCommandEvent&)
+ModSfsMainPanelImpl::OnSfsMainSigEnabledClicked(wxCommandEvent &event)
 {
 	bool enable = SfsMainSignFilesCheckBox->IsChecked();
 
+	event.Skip();
 	if (!sfsCtrl_->setSignatureEnabled(enable)) {
 		wxString msg;
 
@@ -555,20 +572,22 @@ ModSfsMainPanelImpl::OnSfsMainDirViewChoiceSelected(wxCommandEvent &event)
 		sfsCtrl_->setEntryFilter(SfsCtrl::FILTER_UPGRADED);
 		break;
 	}
+	event.Skip();
 }
 
 void
-ModSfsMainPanelImpl::OnSfsMainKeyLoaded(wxCommandEvent&)
+ModSfsMainPanelImpl::OnSfsMainKeyLoaded(wxCommandEvent &event)
 {
 	bool keysUsable = KeyCtrl::instance()->canUseLocalKeys();
 	bool sigEnabled = sfsCtrl_->isSignatureEnabled();
 
 	SfsMainSignFilesCheckBox->Enable(keysUsable);
 	SfsMainSignFilesCheckBox->SetValue(sigEnabled);
+	event.Skip();
 }
 
 void
-ModSfsMainPanelImpl::onPrivKeyValidityChanged(wxCommandEvent&)
+ModSfsMainPanelImpl::onPrivKeyValidityChanged(wxCommandEvent &event)
 {
 	/* Test whether "Until session end" is selected */
 	int	validity = 0;
@@ -576,10 +595,11 @@ ModSfsMainPanelImpl::onPrivKeyValidityChanged(wxCommandEvent&)
 	if (privKeyValidityChoice->GetCurrentSelection() != 0)
 		validity = privKeyValiditySpinCtrl->GetValue();
 	privKeyParamsUpdate(keyPicker->getFileName(), validity);
+	event.Skip();
 }
 
 void
-ModSfsMainPanelImpl::onPrivKeyValidityPeriodChanged(wxSpinEvent&)
+ModSfsMainPanelImpl::onPrivKeyValidityPeriodChanged(wxSpinEvent &event)
 {
 	int	validity = 0;
 
@@ -587,16 +607,18 @@ ModSfsMainPanelImpl::onPrivKeyValidityPeriodChanged(wxSpinEvent&)
 	if (privKeyValidityChoice->GetCurrentSelection() != 0)
 		validity = privKeyValiditySpinCtrl->GetValue();
 	privKeyParamsUpdate(keyPicker->getFileName(), validity);
+	event.Skip();
 }
 
 void
-ModSfsMainPanelImpl::onGenerateKeyPairButton(wxCommandEvent&)
+ModSfsMainPanelImpl::onGenerateKeyPairButton(wxCommandEvent &event)
 {
 	/* Display Generate-Keypair-Dialogue */
 	ModSfsGenerateKeyDlg *dlg = new ModSfsGenerateKeyDlg(this);
 	int result = dlg->ShowModal();
 	int validity = 0;
 
+	event.Skip();
 	if (result != wxOK) {
 		/* Cancel button was used. */
 		dlg->Destroy();
@@ -666,12 +688,6 @@ ModSfsMainPanelImpl::initSfsMain(void)
 	SfsMainActionChoice->SetSelection(0);
 
 	SfsMainDirTraversalCheckbox->SetValue(sfsCtrl_->isRecursive());
-}
-
-void
-ModSfsMainPanelImpl::destroySfsMain(void)
-{
-	delete sfsCtrl_;
 }
 
 void

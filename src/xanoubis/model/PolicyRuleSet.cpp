@@ -706,6 +706,7 @@ PolicyRuleSet::create(struct apn_ruleset *ruleSet)
 	TAILQ_FOREACH(rule, &(ruleSet->sb_queue), entry) {
 		sbList_.push_back(new SbAppPolicy(this, rule));
 	}
+	ruleSet_->destructor = policy_destructor;
 }
 
 void

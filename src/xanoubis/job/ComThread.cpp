@@ -456,7 +456,6 @@ ComThread::checkNotify(struct anoubis_msg *notifyMsg)
 	int type;
 	pid_t pid;
 	NotifyAnswer *answer;
-	EscalationNotify *notify = new EscalationNotify(notifyMsg);
 
 	if (notifyMsg->u.general == NULL)
 		return false;
@@ -466,6 +465,9 @@ ComThread::checkNotify(struct anoubis_msg *notifyMsg)
 	if (type == ANOUBIS_N_ASK) {
 		pid = get_value((notifyMsg->u.notify)->pid);
 		if (ProcCtrl::instance()->findPid(pid)) {
+			EscalationNotify	*notify;
+
+			notify  = new EscalationNotify(notifyMsg);
 			answer = new NotifyAnswer(NOTIFY_ANSWER_ONCE, true);
 			notify->setAnswer(answer);
 			pushNotification(notify);
@@ -505,6 +507,7 @@ ComThread::sendNotify(struct anoubis_msg *notifyMsg)
 
 		if (!VERIFY_FIELD(notifyMsg, statusnotify, statuskey)
 		    || !VERIFY_FIELD(notifyMsg, statusnotify, statusvalue)) {
+			anoubis_msg_free(notifyMsg);
 			Debug::err(_("Dropping short message from Daemon"));
 			return;
 		}
@@ -531,9 +534,12 @@ ComThread::sendNotify(struct anoubis_msg *notifyMsg)
 			notify = Notification::factory(notifyMsg);
 			if (notify != NULL) {
 				notifyCtrl->addNotification(notify);
+				notifyMsg = NULL;
 			}
 		}
 	}
+	if (notifyMsg)
+		anoubis_msg_free(notifyMsg);
 }
 
 void

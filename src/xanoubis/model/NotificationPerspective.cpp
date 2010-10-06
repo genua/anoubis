@@ -43,6 +43,8 @@ NotificationPerspective::getSize(void) const
 long
 NotificationPerspective::getId(long index) const
 {
+	if (index < 0 || index >= (int)ids_.size())
+		return wxID_NONE;
 	return (ids_.Item(index));
 }
 

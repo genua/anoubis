@@ -143,8 +143,8 @@ ComPolicySendTask::exec(void)
 	 * policy
 	 */
 	Policy_SetByUid			*ureq = 0;
-	unsigned char			*signature;
-	unsigned int			 sig_len;
+	unsigned char			*signature = NULL;
+	unsigned int			 sig_len = 0;
 	size_t				 total = 0;
 
 	ta_ = NULL;
@@ -168,16 +168,12 @@ ComPolicySendTask::exec(void)
 		signature = anoubis_sign_policy_buf(rawkey, policy_content_,
 		    &sig_len);
 
-		if (signature == 0) {
+		if (signature == NULL) {
 			setComTaskResult(RESULT_LOCAL_ERROR);
 			setResultDetails(-sig_len);
 
 			return;
 		}
-	} else {
-		/* No signature */
-		signature = 0;
-		sig_len = 0;
 	}
 
 	/* Prepare request-message */
@@ -186,6 +182,8 @@ ComPolicySendTask::exec(void)
 
 	if (!ureq) {
 		setComTaskResult(RESULT_OOM);
+		if (signature)
+			free(signature);
 		return;
 	}
 	/*
@@ -197,6 +195,8 @@ ComPolicySendTask::exec(void)
 	if (strlen(policy_content_) < 10) {
 		setComTaskResult(RESULT_LOCAL_ERROR);
 		setResultDetails(EINVAL);
+		if (signature)
+			free(signature);
 		free(ureq);
 		return;
 	}
@@ -208,15 +208,17 @@ ComPolicySendTask::exec(void)
 
 	if (sig_len > 0)
 		memcpy(ureq->payload, signature, sig_len);
+	if (signature)
+		free(signature);
 
 	memcpy(ureq->payload + sig_len, policy_content_,
 	    strlen(policy_content_));
 
 	/* Send message */
 	ta_ = anoubis_client_policyrequest_start(getClient(), ureq, total);
-	if (!ta_) {
+	if (!ta_)
 		setComTaskResult(RESULT_COM_ERROR);
-	}
+	free(ureq);
 }
 
 bool

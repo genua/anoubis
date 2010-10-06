@@ -185,6 +185,7 @@ anoubis_csum_calc(const char *file, u_int8_t * csbuf, int *cslen)
 		ret = -errno;
 		return ret;
 	}
+	memset(&cs, 0, sizeof(cs));
 	cs.fd = fd;
 	if (ioctl(afd, ANOUBIS_GETCSUM, &cs) < 0) {
 		ret = -errno;

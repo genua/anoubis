@@ -148,15 +148,24 @@ MainFrame::~MainFrame()
 
 	jobCtrl->Disconnect(anTASKEVT_SFS_LIST,
 	    wxTaskEventHandler(MainFrame::onSfsListArrived), NULL, this);
+	ruleEditor_->Hide();
+	logViewer_->Hide();
 
 	ANEVENTS_IDENT_BCAST_DEREGISTRATION(MainFrame);
 
 	SetStatusBar(NULL);
 	delete an_statusbar;
 	delete aboutIcon_;
-
+	delete okIcon_;
+	delete errorIcon_;
+	delete alertIcon_;
+	delete escalationIcon_;
 	if (trayIcon_ != 0)
 		delete trayIcon_;
+	if (ruleEditor_ != NULL)
+		delete ruleEditor_;
+	if (logViewer_ != NULL)
+		delete logViewer_;
 }
 
 void

@@ -56,15 +56,16 @@ ModPlayground::ModPlayground(wxWindow *parent) : Module(), Observer(NULL)
 	overviewPanel_->Hide();
 
 	addSubject(notifyCtrl->getPerspective(NotificationCtrl::LIST_STAT));
+	addSubject(
+	    dynamic_cast<ModPlaygroundOverviewPanelImpl *>(overviewPanel_));
 }
 
 ModPlayground::~ModPlayground(void)
 {
-	removeSubject(NotificationCtrl::instance()->getPerspective(
-	    NotificationCtrl::LIST_STAT));
-	delete mainPanel_;
-	delete overviewPanel_;
-	delete icon_;
+	if (NotificationCtrl::existingInstance()) {
+		removeSubject(NotificationCtrl::existingInstance()->
+		    getPerspective(NotificationCtrl::LIST_STAT));
+	}
 }
 
 int
@@ -82,11 +83,15 @@ ModPlayground::getToolbarId(void)
 void
 ModPlayground::update(void)
 {
-	ModPlaygroundOverviewPanelImpl *instance =
-	    (ModPlaygroundOverviewPanelImpl*) overviewPanel_;
+	ModPlaygroundOverviewPanelImpl	*inst = NULL;
 
-	if(instance)
-		instance->update();
+	if (overviewPanel_) {
+		inst = dynamic_cast<ModPlaygroundOverviewPanelImpl *>(
+		    overviewPanel_);
+	}
+
+	if(inst)
+		inst->update();
 }
 
 void
@@ -113,7 +118,11 @@ ModPlayground::update(Subject *subject)
 void
 ModPlayground::updateDelete(Subject *subject)
 {
-	removeSubject(subject);
+	if (subject && subject ==
+	    dynamic_cast<ModPlaygroundOverviewPanelImpl *>(overviewPanel_)) {
+		overviewPanel_ = NULL;
+		return;
+	}
 	isActive_ = false;
 	update();
 }

@@ -52,18 +52,15 @@ ModSb::ModSb(wxWindow *parent) : Module(), Observer(NULL)
 	overviewPanel_->Hide();
 
 	addSubject(notifyCtrl->getPerspective(NotificationCtrl::LIST_STAT));
+	addSubject(dynamic_cast<ModSbOverviewPanelImpl *>(overviewPanel_));
 }
 
 ModSb::~ModSb()
 {
-	removeSubject(NotificationCtrl::instance()->getPerspective(
-	    NotificationCtrl::LIST_STAT));
-	delete mainPanel_;
-	mainPanel_ = NULL;
-	delete overviewPanel_;
-	overviewPanel_ = NULL;
-	delete icon_;
-	icon_ = NULL;
+	if (NotificationCtrl::existingInstance()) {
+		removeSubject(NotificationCtrl::existingInstance()->
+		    getPerspective(NotificationCtrl::LIST_STAT));
+	}
 }
 
 int
@@ -81,9 +78,12 @@ ModSb::getToolbarId(void)
 void
 ModSb::update(void)
 {
-	if (overviewPanel_ != NULL) {
-		((ModSbOverviewPanelImpl *)overviewPanel_)->update();
-	}
+	ModSbOverviewPanelImpl		*inst = NULL;
+
+	if (overviewPanel_)
+		inst = dynamic_cast<ModSbOverviewPanelImpl *>(overviewPanel_);
+	if (inst)
+		inst->update();
 }
 
 void
@@ -110,7 +110,11 @@ ModSb::update(Subject *subject)
 void
 ModSb::updateDelete(Subject *subject)
 {
-	removeSubject(subject);
+	if (subject && subject == dynamic_cast<ModSbOverviewPanelImpl *>(
+	    overviewPanel_)) {
+		overviewPanel_ = NULL;
+		return;
+	}
 	isActive_ = false;
 	update();
 }

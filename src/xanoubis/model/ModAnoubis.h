@@ -44,7 +44,6 @@ class ModAnoubis : public Module, private Observer
 
 	public:
 		ModAnoubis(wxWindow *);
-		~ModAnoubis(void);
 
 		int	getBaseId(void);
 		int	getToolbarId(void);

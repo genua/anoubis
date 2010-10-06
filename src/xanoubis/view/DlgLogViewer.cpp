@@ -113,7 +113,8 @@ DlgLogViewer::DlgLogViewer(wxWindow* parent) : DlgLogViewerBase(parent)
 
 	this->GetSizer()->Layout();
 
-	logListCtrl->setRowProvider(new LogProvider);
+	provider_ = new LogProvider();
+	logListCtrl->setRowProvider(provider_);
 	logListCtrl->setStateKey(wxT("/State/DlgLogViewer"));
 
 	property = new LogViewerProperty(LogViewerProperty::PROPERTY_ICON);
@@ -138,7 +139,7 @@ DlgLogViewer::DlgLogViewer(wxWindow* parent) : DlgLogViewerBase(parent)
 
 DlgLogViewer::~DlgLogViewer(void)
 {
-	AnEvents	*anEvents;
+	AnEvents		*anEvents;
 
 	anEvents = AnEvents::instance();
 	anEvents->Disconnect(anEVT_LOGVIEWER_SHOW,
@@ -146,6 +147,7 @@ DlgLogViewer::~DlgLogViewer(void)
 
 	ANEVENTS_IDENT_BCAST_DEREGISTRATION(DlgLogViewer);
 	logListCtrl->setRowProvider(NULL);
+	delete provider_;
 }
 
 void

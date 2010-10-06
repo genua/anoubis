@@ -29,6 +29,8 @@
 #define _ANICONLIST_H_
 
 #include <wx/imaglist.h>
+#include <vector>
+#include <map>
 
 #include "Singleton.h"
 
@@ -39,7 +41,7 @@
  *
  * AnListCtrl is assigning the image-list to receive its icon-data.
  */
-class AnIconList : public wxImageList, public Singleton<AnIconList>
+class AnIconList : public Singleton<AnIconList>
 {
 	public:
 		/**
@@ -74,8 +76,17 @@ class AnIconList : public wxImageList, public Singleton<AnIconList>
 			ICON_ANOUBIS_QUESTION_24,/*!< Anoubis question-icon */
 			ICON_ANOUBIS_QUESTION_32,/*!< Anoubis question-icon */
 			ICON_ANOUBIS_QUESTION_48,/*!< Anoubis question-icon */
+			ICON_ANOUBIS_MAX
 		};
 
+		~AnIconList(void);
+
+		wxIcon	*getIcon(AnIconList::IconId id) {
+			return icons_[id];
+		}
+		wxIcon	GetIcon(int id) {
+			return *icons_[id];
+		}
 	protected:
 		/**
 		 * Std-c'tor.
@@ -90,7 +101,24 @@ class AnIconList : public wxImageList, public Singleton<AnIconList>
 		 */
 		void addIcon(const wxString &);
 
+		std::vector<wxIcon *>		icons_;
+
 	friend class Singleton<AnIconList>;
+};
+
+class AnDynamicIconList : public wxImageList {
+public:
+	AnDynamicIconList(void) {
+	}
+	int	loadIcon(AnIconList::IconId id) {
+		if (idmap_.find(id) == idmap_.end()) {
+			wxIcon	*icon = AnIconList::instance()->getIcon(id);
+			idmap_[id] = Add(*icon);
+		}
+		return idmap_[id];
+	};
+private:
+	std::map<int, int>	idmap_;
 };
 
 #endif	/* _ANICONLIST_H_ */

@@ -226,6 +226,11 @@ apncvs_log(struct apncvs *cvs, const char *file, struct apncvs_log *log)
 	int		 fd, rc, parse_rc;
 	char		*fullpath;
 
+	/* Always initialize the log! */
+	if (log) {
+		memset(log, 0, sizeof(struct apncvs_log));
+		TAILQ_INIT(&log->rev_queue);
+	}
 	APNCVS_CHECKAPNCVS(cvs);
 	APNCVS_CHECKSTR(file);
 	APNCVS_CHECKPTR(log);

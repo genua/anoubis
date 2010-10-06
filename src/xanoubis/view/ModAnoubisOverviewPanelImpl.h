@@ -30,7 +30,8 @@
 
 #include "ModAnoubisPanelsBase.h"
 
-class ModAnoubisOverviewPanelImpl : public ModAnoubisOverviewPanelBase
+class ModAnoubisOverviewPanelImpl : public ModAnoubisOverviewPanelBase,
+    public Subject
 {
 	private:
 		void OnConnectClicked(wxCommandEvent&);

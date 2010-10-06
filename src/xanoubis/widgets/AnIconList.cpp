@@ -69,8 +69,12 @@ void
 AnIconList::addIcon(const wxString &name)
 {
 	wxIcon *icon = MainUtils::instance()->loadIcon(name);
+	icons_.push_back(icon);
+}
 
-	Add(*icon);
-
-	delete icon;
+AnIconList::~AnIconList(void)
+{
+	for (unsigned int i=0; i<icons_.size(); ++i)
+		delete icons_[i];
+	icons_.clear();
 }

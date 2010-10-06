@@ -71,6 +71,16 @@ AnDetails::AnDetails(wxWindow *parent, wxWindowID id, const wxPoint & pos,
 	    wxMouseEventHandler(AnDetails::onDetailClick), NULL, this);
 }
 
+AnDetails::~AnDetails(void)
+{
+	detailsIcon_->Disconnect(wxEVT_LEFT_UP,
+	    wxMouseEventHandler(AnDetails::onDetailClick), NULL, this);
+	detailsLabel_->Disconnect(wxEVT_LEFT_UP,
+	    wxMouseEventHandler(AnDetails::onDetailClick), NULL, this);
+	delete downArrow_;
+	delete rightArrow_;
+}
+
 void
 AnDetails::SetSizer(wxSizer *sizer, bool deleteOld)
 {

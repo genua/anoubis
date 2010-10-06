@@ -46,8 +46,11 @@ PSListCtrl::PSListCtrl(void)
 
 PSListCtrl::~PSListCtrl(void)
 {
-	JobCtrl::instance()->Disconnect(anTASKEVT_PS_LIST,
-	    wxTaskEventHandler(PSListCtrl::OnPSListArrived), NULL, this);
+	if (JobCtrl::existingInstance()) {
+		JobCtrl::existingInstance()->Disconnect(anTASKEVT_PS_LIST,
+		    wxTaskEventHandler(PSListCtrl::OnPSListArrived), NULL,
+		    this);
+	}
 	clearPSList();
 }
 
@@ -147,7 +150,8 @@ PSListCtrl::OnPSListArrived(TaskEvent &event)
 		sysproc = anoubis_proc_get(handle, pid);
 		entry = new PSEntry(daemonproc, sysproc);
 		psinfo_.addRow(entry);
-		free(sysproc);
+		if (sysproc)
+			anoubis_proc_destroy(sysproc);
 	}
 	anoubis_proc_close(handle);
 	removeTask(task);

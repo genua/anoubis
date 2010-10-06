@@ -31,7 +31,7 @@
 #include "ModSbPanelsBase.h"
 #include <wx/icon.h>
 
-class ModSbOverviewPanelImpl : public ModSbOverviewPanelBase
+class ModSbOverviewPanelImpl : public ModSbOverviewPanelBase, public Subject
 {
 	public:
 		/**

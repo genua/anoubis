@@ -45,12 +45,16 @@ template class Singleton<NotificationCtrl>;
 
 NotificationCtrl::~NotificationCtrl(void)
 {
+	std::map<long, Notification *>::iterator	it;
+
 	Disconnect(anEVT_UPDATE_PERSPECTIVE, wxCommandEventHandler(
 	    NotificationCtrl::onUpdatePerspectives), NULL, this);
 	JobCtrl::instance()->Disconnect(anEVT_COM_CONNECTION,
 	    wxCommandEventHandler(NotificationCtrl::onDaemonDisconnect),
 	    NULL, this);
 
+	for (it=notificationHash_.begin(); it!=notificationHash_.end(); ++it)
+		delete it->second;
 	notificationHash_.clear();
 }
 
@@ -98,8 +102,8 @@ NotificationCtrl::addNotification(Notification *notification)
 Notification *
 NotificationCtrl::getNotification(long id)
 {
-	NotifyHash::const_iterator	 it;
-	Notification			*ret = NULL;
+	std::map<long, Notification *>::const_iterator	 it;
+	Notification					*ret = NULL;
 
 	notificationHashMutex_.Lock();
 	it = notificationHash_.find(id);
@@ -113,16 +117,17 @@ NotificationCtrl::getNotification(long id)
 PlaygroundFileNotify *
 NotificationCtrl::getPlaygroundFileNotify(void)
 {
-	NotifyHash::const_iterator		 it;
-	Notification				*notify = NULL;
+	std::map<long, Notification *>::iterator	 it;
+	Notification					*notify = NULL;
 
 
 	notificationHashMutex_.Lock();
-	if (playgroundFileNotifyId_ != wxID_NONE)
+	if (playgroundFileNotifyId_ != wxID_NONE) {
 		it = notificationHash_.find(playgroundFileNotifyId_);
-	if (it != notificationHash_.end())
-		notify = it->second;
-	playgroundFileNotifyId_ = wxID_NONE;
+		if (it != notificationHash_.end())
+			notify = it->second;
+		playgroundFileNotifyId_ = wxID_NONE;
+	}
 	notificationHashMutex_.Unlock();
 
 	return notify ? dynamic_cast<PlaygroundFileNotify *>(notify) : NULL;

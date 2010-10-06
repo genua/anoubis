@@ -43,12 +43,9 @@ Module::Module(void)
 
 Module::~Module(void)
 {
-	if (mainPanel_ != NULL)
-		delete mainPanel_;
-	if (overviewPanel_ != NULL)
-		delete overviewPanel_;
 	if (icon_ != NULL)
 		delete icon_;
+	mainPanel_ = NULL;
 }
 
 wxString

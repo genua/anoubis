@@ -47,8 +47,9 @@ AnListCtrl::AnListCtrl(wxWindow *parent, wxWindowID id, const wxPoint &pos,
 	hasSelectionResult_ = 0;
 	SetItemCount(0);
 	rowProvider_ = NULL;
+	iconList_ = new AnDynamicIconList();
 
-	SetImageList(AnIconList::instance(), wxIMAGE_LIST_SMALL);
+	SetImageList(iconList_, wxIMAGE_LIST_SMALL);
 	Connect(wxEVT_COMMAND_LIST_COL_END_DRAG, wxListEventHandler(
 	    AnListCtrl::onColumnSize), NULL, this);
 }
@@ -76,7 +77,8 @@ AnListCtrl::setRowProvider(AnRowProvider *provider)
 		/* Provider changed, invalidate the view! */
 		newSize = provider->getSize();
 		SetItemCount(newSize);
-		RefreshItems(0, newSize-1);
+		if (newSize)
+			RefreshItems(0, newSize-1);
 		addSubject(rowProvider_);
 	} else {
 		/* No provider anymore. Invalidate the view. */
@@ -100,6 +102,8 @@ AnListCtrl::~AnListCtrl(void)
 
 		delete col;
 	}
+	SetImageList(NULL, wxIMAGE_LIST_SMALL);
+	delete iconList_;
 }
 
 void
@@ -243,13 +247,17 @@ AnListCtrl::OnGetItemColumnImage(long row, long column) const
 	unsigned int		 columnIndex = visibleColumns_[column];
 	AnListProperty		*property;
 	AnListClass		*item;
+	AnIconList::IconId	 id;
 
 	if (columnIndex >= columnList_.size())
 		return AnIconList::ICON_NONE;
 	property = columnList_[columnIndex]->getProperty();
 	item = rowProvider_->getRow(row);
-	if (property && item)
-		return property->getIcon(item);
+	if (property && item) {
+		id = property->getIcon(item);
+		if (id != AnIconList::ICON_NONE)
+			return  iconList_->loadIcon(id);
+	}
 	return AnIconList::ICON_NONE;
 }
 

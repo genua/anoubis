@@ -238,9 +238,6 @@ ModAnoubisMainPanelImpl::~ModAnoubisMainPanelImpl(void)
 
 	anEvents = AnEvents::instance();
 
-	if (listPerspective_ != NULL)
-		removeSubject(listPerspective_);
-
 	anEvents->Disconnect(anEVT_ESCALATIONS_SHOW,
 	    wxCommandEventHandler(ModAnoubisMainPanelImpl::OnEscalationsShow),
 	    NULL, this);
@@ -680,8 +677,10 @@ ModAnoubisMainPanelImpl::update(Subject *)
 }
 
 void
-ModAnoubisMainPanelImpl::updateDelete(Subject *)
+ModAnoubisMainPanelImpl::updateDelete(Subject *subject)
 {
+	if (subject == listPerspective_)
+		listPerspective_ = NULL;
 }
 
 void

@@ -35,6 +35,7 @@ ModAnoubisOverviewPanelImpl::ModAnoubisOverviewPanelImpl(wxWindow* parent, \
 	wxIcon *icon = MainUtils::instance()->loadIcon(
 	    wxT("ModAnoubis_black_48.png"));
 	anoubisStatusIcon->SetIcon(*icon);
+	delete icon;
 
 	setConnectionState(false);
 

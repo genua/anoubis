@@ -28,6 +28,7 @@
 #ifndef _NOTIFICATIONCTRL_H_
 #define _NOTIFICATIONCTRL_H_
 
+#include <map>
 #include <wx/thread.h>
 
 #include "AnEvents.h"
@@ -135,7 +136,7 @@ class NotificationCtrl : public wxEvtHandler, public Singleton<NotificationCtrl>
 		/**
 		 * The list of all received notifications.
 		 */
-		NotifyHash notificationHash_;
+		std::map<long, Notification *> notificationHash_;
 
 		/**
 		 * Mutex to protect access to notificationHash_.
