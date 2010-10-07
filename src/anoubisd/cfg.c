@@ -184,7 +184,6 @@ static struct {
 /**
  * Print a usage message for anoubisd and exit.
  *
- * @param None.
  * @return This function does exits with exit code 1.
  */
 __dead static void
@@ -201,11 +200,11 @@ usage(void)
  * Remove leading and trailing whitespaces from a string. The caller must
  * allocate the string string might be modified by this function.
  *
- * @param The original string.
- * @param A pointer to the same string with leading and trailing
+ * @param string The original string.
+ * @return A pointer to the same string with leading and trailing
  *     blanks removed.
  *
- * NOTE: If the original string is allocated from the heap, the caller
+ * @note If the original string is allocated from the heap, the caller
  *     must save a pointer to the start of the memory area and free
  *     the memory using this pointer.
  */
@@ -319,11 +318,11 @@ cfg_param_reset(struct cfg_param *param)
 }
 
 /**
- * Append the string @value to the parameter @param.
+ * Append the string <code>value</code> to the parameter <code>param</code>.
  *
- * @param An initalized cfg_param structure that contains a value that
- *     is a NUL terminated string.
- * @param Another NUL terminated string that is appended to the value
+ * @param param An initalized cfg_param structure that contains a value that
+ *     is a NULL terminated string.
+ * @param value Another NULL terminated string that is appended to the value
  *     buffer by this function.
  * @return Zero in case of success, a negative error code in case of
  *     an error. In case of errors the memory associated with the
@@ -618,7 +617,7 @@ cfg_parse_string(struct abuf_buffer value, int lineno)
 
 /**
  * Process a single configuration parameter. The current line number
- * in the configuration file is given by @lineno.
+ * in the configuration file is given by <code>lineno</code>.
  *
  * @param param The configuration parameter.
  * @param lineno The current line number in the configuration file
@@ -704,7 +703,9 @@ cfg_param_process(struct cfg_param *param, int lineno)
  *
  * In general:
  *
- * <key> = <value>
+ * <pre>
+ * &lt;key&gt; = &lt;value&gt;
+ * </pre>
  *
  * If a line end with a backslash, the value is continued in the next line.
  *
@@ -938,7 +939,6 @@ cfg_read_file(const char *file)
 /**
  * Load default configuration values.
  *
- * @param None.
  * @return True in case of success, false if an error (out of memory)
  *     occured. This function logs an error message in case of errors.
  */
@@ -993,9 +993,6 @@ cfg_initialize(int argc, char * const *argv)
 
 /**
  * Releases memory allocated for the given anoubisd_config structure.
- *
- * @param None.
- * @return None.
  */
 static void
 cfg_clear(void)
@@ -1032,7 +1029,6 @@ cfg_clear(void)
  * Perform consistency checks on the configuration and warn if any
  * inconsistencies are found.
  *
- * @param None.
  * @return True if the verification is successful, false if an inconsistency
  *     was found.
  */
@@ -1060,7 +1056,6 @@ cfg_verify(void)
  * The origin of the configuration file may be the default value
  * a custom value provided on the command line.
  *
- * @param None.
  * @return True if the configuration file could be read successfully,
  *     false if an error occured.
  */
@@ -1087,7 +1082,6 @@ cfg_read(void)
  * Clears the configuration and reads it again. This should be called
  * if a HUP signal is received in the master process.
  *
- * @param None.
  * @return True in case of success, false if an error occured. An error
  *     message is logged in case of errors.
  */
@@ -1106,8 +1100,7 @@ cfg_reread(void)
 /**
  * Write the current configuration to the file handle.
  *
- * @param The file handle.
- * @return None.
+ * @param f The file handle.
  */
 void
 cfg_dump(FILE *f)
@@ -1163,7 +1156,6 @@ cfg_dump(FILE *f)
  * - The rest of the payload contains count NUL-terminated strings. Each
  *   of these strings is an upgrade trigger.
  *
- * @param None.
  * @return A pointer to the message structure or NULL in case of an error
  *     (out of memory).
  */

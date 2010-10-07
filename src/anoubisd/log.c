@@ -133,9 +133,6 @@ dispatch_log_write(int fd __used, short event __used, void *arg __used)
  * This is used to make pending log messages available if the logger process
  * terminates unexpectedly. Note that this might not work for chrooted
  * processes.
- *
- * @param None.
- * @return None.
  */
 void
 flush_log_queue(void)
@@ -341,7 +338,7 @@ log_debug(const char *emsg, ...)
  * The log message is not formatted, the string is logged as is. Consider
  * using log_warnx plus master_terminate() instead of this function.
  *
- * @param The message to log.
+ * @param emsg The message to log.
  * @return This function never returns.
  */
 __dead void
@@ -368,7 +365,7 @@ fatal(const char *emsg)
  * an error string derived from errno. Finally the function exits with
  * exit code 1.
  *
- * @param The error message string. No format characters are allowed.
+ * @param emsg The error message string. No format characters are allowed.
  * @return This function never returns.
  */
 __dead void
@@ -392,7 +389,7 @@ early_err(const char *emsg)
  * functions unconditionally prints the message to stderr and exits
  * with exit code 1.
  *
- * @param The error message string. No format characters are allowed.
+ * @param emsg The error message string. No format characters are allowed.
  * @return This function never returns.
  */
 __dead void

@@ -144,7 +144,7 @@ static int	 check_empty_dir(const char *path);
 
 /**
  * Initialize a struct sfs_data structure.
- * @param The pre-allocated sfsdata structure.
+ * @param sfsdata The pre-allocated sfsdata structure.
  * @return None.
  */
 void
@@ -231,29 +231,31 @@ mkpath(const char *path)
 
 /**
  * Insert escape characters into a path name for the SFS-tree.
- * Each star ('*') in the path name is replaced by two stars. Is @dir is
- * false the last component of the path is prefixed with an additional star.
+ * Each star ('*') in the path name is replaced by two stars. If
+ * <code>dir</code> is false the last component of the path is prefixed with an
+ * additional star.
  * Memory for the string is allocated using malloc(3c) and must be freed
  * by the caller.
  *
- * @param The original path.
- * @dir True if the path refers to a directory. In this case the final
+ * @param path The original path.
+ * @param dir True if the path refers to a directory. In this case the final
  *     path component must not be prepended with a star. False if the
  *     path refers to a file.
  * @return The escaped path name or NULL in case of an error.
  *
- * NOTE: All paths returned from this function should be interpreted as
+ * @note All paths returned from this function should be interpreted as
  *     direcotries in the SFS tree. However, there is a difference between
  *     SFS tree directories that mirror directories in the system (e.g.
  *     /usr/bin) and SFS tree directories that correspond to regular files
  *     in the system (e.g. /usr/bin/vi).
- *     - "/usr/bin" should be converted with @dir = true. The result is
- *       is "/usr/bin", too.
- *     - "/usr/bin/vi" should be converted with @dir = false. The result is
- *       "/usr/bin/ *vi" (the  space is only there to silence a gcc warning),
- *       a directory in the SFS-tree that can contain files that store
+ *     - "/usr/bin" should be converted with <code>dir</code> = true. The
+ *       result is "/usr/bin", too.
+ *     - "/usr/bin/vi" should be converted with <code>dir</code> = false. The
+ *       result is "/usr/bin/ *vi" (the  space is only there to silence a gcc
+ *       warning), a directory in the SFS-tree that can contain files that store
  *       checksums.
- *     - in theory it is possible to convert "/usr/bin" with @dir = false.
+ *     - in theory it is possible to convert "/usr/bin" with
+ *       <code>dir</code> = false.
  *       The result would be "/usr/ *bin". Checksums and signatures for the
  *       directory "/usr/bin" would be stored in this SFS tree directory.
  *       However, at this time, checksums/signatures for directories are
@@ -439,7 +441,7 @@ __convert_user_path(const char * path, char **dir, int is_dir, int is_chroot)
 }
 
 /**
- * This function simply calls @see __convert_user_path with the is_chroot
+ * This function simply calls __convert_user_path with the is_chroot
  * parameter set to false.
  *
  * @param path The orignal path name.
@@ -651,7 +653,7 @@ err1:
  * Append a checksum record to the buffer.
  * This is a helper function for @see sfs_checksumop. It adds a
  * checksum/signature record for GET/GETSIG requests to the buffer at
- * offset @off. This is the format that is expected by the userland
+ * offset <code>off</code>. This is the format that is expected by the userland
  * utilities.
  *
  * @param dst The destination buffer.
@@ -688,13 +690,13 @@ sfs_copy_one_sig_type(struct abuf_buffer dst, unsigned int off,
 }
 
 /**
- * Perform a the checksum operation @csop. In case of a GET/GETSIG
- * request the result is returned in @buf. The contents of the
+ * Perform a the checksum operation <code>csop</code> In case of a GET/GETSIG
+ * request the result is returned in <code>buf</code> The contents of the
  * result buffer are formatted can can be used directly in csmulti reply
  * messages.
  * Even in case of csmulti message this function will only perform
  * a single checksum operation. The caller must set the sigbuf and path
- * fields of @csop to the desired values.
+ * fields of <code>csop</code>to the desired values.
  *
  * @param csop The checksum operation.
  * @param buf The result buffer. Memory for the buffer is allocated
@@ -780,9 +782,10 @@ sfs_checksumop_chroot(const struct sfs_checksumop *csop, struct sfs_data *data)
 
 /**
  * Go through the directory looking for registered uids and keyids.
- * Update all unsigned checksum for all users to the value given by @md
- * and add (or replace) an upgrade checksum for all keyids. This function
- * is used during upgrade if checksum/signature updates are configured.
+ * Update all unsigned checksum for all users to the value given by
+ * <code>md</code> and add (or replace) an upgrade checksum for all keyids.
+ * This function is used during upgrade if checksum/signature updates are
+ * configured.
  *
  * @param path The file name to be updated.
  * @param md The new checksum.
@@ -868,7 +871,8 @@ sfs_update_all(const char *path, struct abuf_buffer md)
 }
 
 /**
- * Update the signature assocated with @cert for the file @path.
+ * Update the signature assocated with <code>cert</code>for the file
+ * <code>path</code>
  * The signature is updated if the corresponding file in the sfs tree
  * exists.
  *
@@ -880,10 +884,10 @@ sfs_update_all(const char *path, struct abuf_buffer md)
  *     signature file did not exist or it could be updated successfully).
  *     If an error occurs a negative errno value is returned.
  *
- * NOTE: This function is used during a system upgrade if the passphrase
- * NOTE: for the root certificate is configured. This is a supported but
- * NOTE: potentially dangerous configuration! This function must not be
- * NOTE: used for anything else.
+ * @note This function is used during a system upgrade if the passphrase
+ *       for the root certificate is configured. This is a supported but
+ *       potentially dangerous configuration! This function must not be
+ *       used for anything else.
  */
 int
 sfs_update_signature(const char *path, struct cert *cert,
@@ -952,7 +956,7 @@ out:
 }
 
 /**
- * Write the bytes to the file given by @fd. An interrupted or
+ * Write the bytes to the file given by <code>fd</code>. An interrupted or
  * partial write is resumed. The function only returns after all bytes
  * have been written or an uncorrectable error occured.
  *
@@ -1017,7 +1021,7 @@ write_buffer(int fd, struct abuf_buffer buf)
  * key exist. The index file will only be deleted during the next list
  * operation.
  *
- * @param csum_path The path name component of @csum_file. The first
+ * @param csum_path The path name component of <code>csum_file</code>. The first
  *     index file is created in the directory that is obtained by stripping
  *     the final path component.
  * @param csum_file The full file name that an upgrade checksum was just
@@ -1084,9 +1088,9 @@ sfs_create_upgradeindex(const char *csum_path, const char *csum_file)
 }
 
 /**
- * Compare the checksum in @updata with the checksum at the
- * start of @cmpdata (usually a signature) and return true if
- * the data differs. The length of @updata determines the length
+ * Compare the checksum in <code>updata</code> with the checksum at the
+ * start of <code>cmpdata</code> (usually a signature) and return true if
+ * the data differs. The length of <code>updata</code> determines the length
  * of the comparison. If either buffer is empty the return value is false.
  * This function is used to determine if an upgrade checksum must be
  * written or not. It is not needed if the upgrade checksum does not
@@ -1124,7 +1128,6 @@ sfs_need_upgrade_data(const struct abuf_buffer updata,
  * - If the checksum changeroot directory does not yet exist, we allow
  *   a few writes (SFS_INITIAL_FREE_WRITES).
  *
- * @param None.
  * @return Zero if writing is ok, a negative error code (ENOSPC) otherwise.
  */
 static int
@@ -1187,13 +1190,14 @@ sfs_space_available(void)
 }
 
 /**
- * Write the data in @sfsdata to the disk. The complete file name
- * is in @csum_file. The directory name of that file is in @csum_path.
- * This function does not modify @sfsdata in any way.
+ * Write the data in <code>sfsdata</code> to the disk. The complete file name
+ * is in <code>csum_file</code>. The directory name of that file is in
+ * <code>csum_path</code>. This function does not modify <code>sfsdata</code>
+ * in any way.
  *
  * @param csum_file The file name that the data should be written to.
  * @param csum_path The function ensures that this directory exists before
- *     trying to open @csum_file.
+ *     trying to open <code>csum_file</code>.
  * @param sfsdata The sfs data to write. The upgrade checksum (if present)
  *     is only written if a signature is present and the checksum in the
  *     signature differs from the upgrade checksum.
@@ -1351,7 +1355,8 @@ out:
  * resumed.
  *
  * @param fd The filedescriptor to read from.
- * @param buf The data is stored in the memory area pointed to by @buf.
+ * @param buf The data is stored in the memory area pointed to by
+ *            <code>buf</code>.
  * @param bytes The number of bytes to read.
  * @return The total number of bytes that were read or a negative error
  *     code in case of an error.
@@ -1380,8 +1385,8 @@ read_bytes(int fd, void *buf, size_t bytes)
 }
 
 /**
- * Read data from the file descriptor into the buffer @buf. The number
- * of bytes to read is determined by the size of the buffer. Interrupted
+ * Read data from the file descriptor into the buffer <code>buf</code>. The
+ * number of bytes to read is determined by the size of the buffer. Interrupted
  * or partial reads are resumed.
  *
  * @param fd The file descriptor to read from.
@@ -1560,7 +1565,7 @@ err:
 }
 
 /**
- * Check if the file in @path has at least one checksum or signature
+ * Check if the file in <code>path</code> has at least one checksum or signature
  * assigned to it.
  *
  * @param path The path name.
@@ -1603,7 +1608,7 @@ sfs_haschecksum_chroot(const char *path)
 }
 
 /**
- * Delete the file @csum_file in the SFS tree. If this creates an
+ * Delete the file <code>csum_file</code> in the SFS tree. If this creates an
  * empty directory, the parent directory is removed. This happens
  * recursively.
  *
@@ -1648,8 +1653,8 @@ sfs_deletechecksum(const char *csum_file)
 }
 
 /**
- * Return true if the directory @path is empty. The directory must be
- * completely empty. A stale index file is sufficient to prevent the
+ * Return true if the directory <code>path</code> is empty. The directory must
+ * be completely empty. A stale index file is sufficient to prevent the
  * deletion of the directory. If will only be deleted after the user
  * asks for a checksum list that deletes the stale index.
  *
@@ -1679,9 +1684,10 @@ check_empty_dir(const char *path)
 }
 
 /**
- * Return true if the SFS tree file @csum_file contains an upgrade checksum.
+ * Return true if the SFS tree file <code>csum_file</code> contains an upgrade
+ * checksum.
  *
- * @param The path of the file in the SFS tree.
+ * @param csum_file The path of the file in the SFS tree.
  * @return True if the file can be read and contains an upgrade checksum.
  */
 static int
@@ -1827,10 +1833,10 @@ sfs_op_is_add(int op)
 
 /**
  * Parse a csmulti request message and store the result in the checksum
- * operation @dst. The sfs_checksumop structure must be preallocated by
- * the caller. This function will allocate memory for the csmulti array
- * in @dst. All other fields will reference the request message in @mbuf
- * directly.
+ * operation <code>dst</code> The sfs_checksumop structure must be preallocated
+ * by the caller. This function will allocate memory for the csmulti array
+ * in <code>dst</code>. All other fields will reference the request message in
+ * <code>mbuf</code> directly.
  *
  * @param dst The checksum operation.
  * @param mbuf A buffer that contains the entire request message, i.e. the
@@ -2105,9 +2111,9 @@ sfs_parse_checksumop(struct sfs_checksumop *dst, struct anoubis_msg *m,
 }
 
 /**
- * Return true if the entry @entryname in the directory @sfs_path should
- * be listed as part of a list request with the user ID @uid and the
- * list flags @listflags.
+ * Return true if the entry <code>entryname</code> in the directory
+ * <code>sfs_path</code> should be listed as part of a list request with the
+ * user ID <code>uid</code> and the list flags <code>listflags</code>.
  *
  * @param sfs_path The SFS directory that is being listed.
  * @param entryname The entry that was found in the directory.
@@ -2116,12 +2122,13 @@ sfs_parse_checksumop(struct sfs_checksumop *dst, struct anoubis_msg *m,
  *     files with an upgrade checksum. However, this function assumes
  *     that ANOUBIS_CSUM_UID is set in listflags and both
  *     ANOUBIS_CSUM_WANTIDS and ANOUBIS_CSUM_ALL are clear.
- * @param check_for_index True if the object given by @entryname refers to
+ * @param check_for_index True if the object given by  refers to
  *     a directory (i.e. it can contain index files). Directories are always
  *     part of a listing except for those cases where a missing index file
  *     tells us that the directory is not interesting (only works for
  *     upgrade checksum at this time).
- * @return True if the entry @entryname should be part of the listing.
+ * @return True if the entry <code>entryname</code> should be part of the
+ *         listing.
  */
 static int
 sfs_check_for_uid(const char *sfs_path, const char *entryname, uid_t uid,
@@ -2160,9 +2167,9 @@ sfs_check_for_uid(const char *sfs_path, const char *entryname, uid_t uid,
 }
 
 /**
- * Return true if the entry @entryname in the directory @sfs_path should
- * be listed as part of a list request with the key ID @keyid and the
- * list flags @listflags.
+ * Return true if the entry <code>entryname</code> in the directory
+ * <code>sfs_path</code> should be listed as part of a list request with the
+ * key ID <code>keyid</code> and the list flags <code>listflags</code>.
  *
  * @param sfs_path The SFS directory that is being listed.
  * @param entryname The entry that was found in the directory.
@@ -2171,12 +2178,13 @@ sfs_check_for_uid(const char *sfs_path, const char *entryname, uid_t uid,
  *     files with an upgrade checksum. However, this function assumes
  *     that ANOUBIS_CSUM_KEY is set in listflags and both
  *     ANOUBIS_CSUM_WANTIDS and ANOUBIS_CSUM_ALL are clear.
- * @param check_for_index True if the object given by @entryname refers to
- *     a directory (i.e. it can contain index files). Directories are always
- *     part of a listing except for those cases where a missing index file
- *     tells us that the directory is not interesting (only works for
+ * @param check_for_index True if the object given by <code>entryname</code>
+ *     refers to a directory (i.e. it can contain index files). Directories are
+ *     always part of a listing except for those cases where a missing index
+ *     file tells us that the directory is not interesting (only works for
  *     upgrade checksum at this time).
- * @return True if the entry @entryname should be part of the listing.
+ * @return True if the entry <code>entryname</code> should be part of the
+ *         listing.
  */
 static int
 sfs_check_for_key(const char *sfs_path, const char *entryname,
@@ -2218,11 +2226,12 @@ sfs_check_for_key(const char *sfs_path, const char *entryname,
 }
 
 /**
- * Return true if the directory entry @entryname should be part of the
- * list request @csop.
+ * Return true if the directory entry <code>entryname</code>should be part of
+ * the list request <code>csop</code>
  *
  * @param csop The checksum list operation.
- * @param sfs_path The name of the directory where @entryname was found.
+ * @param sfs_path The name of the directory where <code>entryname</code> was
+ *                 found.
  * @param entryname The name of the entry.
  * @return True if the entry should be part of the listing.
  */

@@ -66,7 +66,7 @@ struct anoubis_event_common_10004 {
  * NOTE: The old message has not yet been passed through amsg_verify!
  *
  * @param old The old message.
- * @param verion The ANOUBISCORE_VERSION reported by the kernel.
+ * @param version The ANOUBISCORE_VERSION reported by the kernel.
  * @return The converted message or NULL if an error occurs.
  */
 struct anoubisd_msg *

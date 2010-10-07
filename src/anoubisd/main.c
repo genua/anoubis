@@ -241,7 +241,6 @@ static char *omit_pid_file = NULL;
  * @param info The signal info if any.
  * @param uc The context of the call. This can be used to generate a
  *     readable backtrace.
- * @return None.
  */
 void
 segvhandler(int sig, siginfo_t *info, void *uc)
@@ -317,11 +316,10 @@ segvhandler(int sig, siginfo_t *info, void *uc)
  *
  * @param sig The signal.
  * @param event The event type (see libevent).
- * @param The callback argument of for the event handler. This is either
+ * @param arg The callback argument of for the event handler. This is either
  *     NULL or a struct event_info_main.
- * @return None.
  *
- * NOTE: This handler is sometimes called manually with arg == NULL.
+ * @note This handler is sometimes called manually with arg == NULL.
  */
 static void
 sighandler(int sig, short event __used, void *arg)
@@ -431,8 +429,7 @@ sighandler(int sig, short event __used, void *arg)
  * Initialize a singal set for sigation with all signals blocked exepct
  * for a few fatal one that we can handle.
  *
- * @param A pointer to the signal set that should be initialized.
- * @return None.
+ * @param mask A pointer to the signal set that should be initialized.
  */
 void anoubisd_defaultsigset(sigset_t *mask)
 {
@@ -451,7 +448,6 @@ void anoubisd_defaultsigset(sigset_t *mask)
  * Create and flock the pid file. If this fails the daemon is probably
  * already running.
  *
- * @param None.
  * @return A file handle to the pid file. The caller should write its
  *     pid to the file and keep the file handle open. The flock  lock will
  *     be dropped at exit time.
@@ -482,7 +478,6 @@ check_pid(void)
  * @param fp The file handle.
  * @param pid The pid to write. It is formated as a decimal number followed
  *     by a newline.
- * @return None.
  */
 static void
 save_pid(FILE *fp, pid_t pid)
@@ -503,8 +498,8 @@ save_pid(FILE *fp, pid_t pid)
  *
  * @param sig The signal number (see libevent).
  * @param event The type of event that occured (see libevent).
- * @param The event callback data. This is a pointer to struct event_info_main.
- * @return None.
+ * @param arg The event callback data. This is a pointer to
+ *            struct event_info_main.
  */
 static void
 dispatch_timer(int sig __used, short event __used, void * arg)
@@ -539,7 +534,6 @@ dispatch_timer(int sig __used, short event __used, void * arg)
 /**
  * Read the version number of the sfs tree's on disk file format.
  *
- * @param  None.
  * @return The version number (positive) or an error code (negative).
  */
 static int
@@ -574,7 +568,6 @@ read_sfsversion(void)
 /**
  * Check if the on disk sfs tree is empty.
  *
- * @param None.
  * @return Possible return values are:
  *     Positive: The sfs tree does not contain any files.
  *     Zero: The sfs tree exists and contains at least one file.
@@ -608,7 +601,6 @@ is_sfstree_empty()
  * of the anoubis daemon to the version file. This function overwrites
  * previous contents of the file.
  *
- * @param None.
  * @return The sfs tree version (positive) or a negative error code.
  */
 static int
@@ -637,7 +629,6 @@ write_sfsversion()
  * be a victim of out of memory killing.
  *
  * @param pid The pid of the process.
- * @return None. This is a best effort function.
  */
 static void
 deactivate_oom_kill(int pid)
@@ -1097,7 +1088,6 @@ main_shutdown(void)
  * it initiate a forceful termination of the anoubis daemon. Non master
  * processes do this simply by exiting. The master process calls main_shutdown.
  *
- * @param None.
  * @return This function never returns.
  */
 __dead void
@@ -1121,7 +1111,6 @@ master_terminate(void)
  * Tell dazukofs that it should not try to check file system accesses
  * done by the anoubis daemon master.
  *
- * @param None.
  * @return An open file descriptior. The caller must keep this file
  *     descriptor open as long as it wants to dazukofs to ignore us.
  *     If something goes wrong (usually because dazukofs is not active)
@@ -1145,9 +1134,6 @@ dazukofs_ignore(void)
  * Ensure that fds 0, 1 and 2 are open or redirected to /dev/null.
  * If this function fails to setup fd in this way it will exit with an
  * early error.
- *
- * @param None.
- * @return None.
  */
 static void
 sanitise_stdfd(void)
@@ -1175,9 +1161,8 @@ sanitise_stdfd(void)
  * Additionally, all processes except the master also close the anoubis
  * daemon pid file.
  *
- * @param The pipes array with PIPE_MAX elements.
+ * @param pipes The pipes array with PIPE_MAX elements.
  * @param loggers The loggers array with PROC_LOGGER elements.
- * @return None.
  */
 void
 cleanup_fds(int pipes[], int loggers[])
@@ -1209,9 +1194,6 @@ cleanup_fds(int pipes[], int loggers[])
  * file). Config options that are relevant for child processes are stored
  * in a configuration message and sent to the child processes for their
  * reconfiguration.
- *
- * @param None.
- * @return None.
  */
 static void
 reconfigure(void)
@@ -1269,7 +1251,6 @@ dispatch_m2s(int fd, short event __used, void *arg __used)
  *
  * @param path The path name of the entry to invalidate.
  * @param uid The user ID of the entry to invalidate.
- * @return None.
  */
 static void
 send_sfscache_invalidate_uid(const char *path, uid_t uid)
@@ -1296,7 +1277,6 @@ send_sfscache_invalidate_uid(const char *path, uid_t uid)
  *
  * @param path The path name of the entry to invalidate.
  * @param keyid The key ID of the entry to invalidate.
- * @return None.
  */
 static void
 send_sfscache_invalidate_key(const char *path, const struct abuf_buffer keyid)
@@ -1331,8 +1311,7 @@ send_sfscache_invalidate_key(const char *path, const struct abuf_buffer keyid)
  * This function extracts path name and user or key ID from the checksum op
  * and calls the appropriate invalidate function.
  *
- * @param The checksum operation.
- * @return None.
+ * @param csop The checksum operation.
  */
 static void
 send_sfscache_invalidate(struct sfs_checksumop *csop)
@@ -1352,8 +1331,7 @@ send_sfscache_invalidate(struct sfs_checksumop *csop)
  * Send a message to the policy engine that tells the policy engine
  * if it is ok to track upgrades.
  *
- * @param True if it is ok to track update, false otherwise.
- * @return None.
+ * @param value True if it is ok to track update, false otherwise.
  */
 static void
 send_upgrade_ok(int value)
@@ -1375,9 +1353,6 @@ send_upgrade_ok(int value)
 /**
  * Notfiy the session engine about a finished upgrade. The message
  * contains the number of upgraded files in chunksize.
- *
- * @param None.
- * @return None.
  */
 static void
 send_upgrade_notification(void)
@@ -1402,7 +1377,6 @@ send_upgrade_notification(void)
  * update signatures of root during an upgrade.
  *
  * @param passphrase The passphrase required to unlock the key.
- * return None.
  */
 static void
 init_root_key(char *passphrase)
@@ -1503,7 +1477,6 @@ create_checksumreply_msg(int type, u_int64_t token, int payloadlen)
  *
  * @param csop The details of the checksum list operation.
  * @param token The token to use for the reply message.
- * @return None.
  */
 static void
 sfs_checksumop_list(struct sfs_checksumop *csop, u_int64_t token)
@@ -1762,7 +1735,6 @@ nomem:
  *
  * @param msg The checksum request message. The message ist not freed by
  *     this function.
- * @return None.
  */
 static void
 dispatch_checksumop(struct anoubisd_msg *msg)
@@ -1821,7 +1793,6 @@ out:
  * operation structure and calls sfs_process_csmulti to handle the request.
  *
  * @param msg The request message.
- * @return None.
  */
 static void
 dispatch_csmulti_request(struct anoubisd_msg *msg)
@@ -1864,7 +1835,6 @@ err:
  * regarding this feature.
  *
  * @param msg The request message.
- * @return None.
  */
 static void
 dispatch_passphrase(struct anoubisd_msg *msg)
@@ -1892,8 +1862,7 @@ dispatch_passphrase(struct anoubisd_msg *msg)
  * signed by the user interface with the user's key and sent back to the
  * master for verification.
  *
- * @param The authentication request message.
- * @return None.
+ * @param msg The authentication request message.
  *
  * NOTE: The master process does not keep track of the authentication
  * challenges it generated. The session engine is responsible for this.
@@ -2011,7 +1980,6 @@ dispatch_auth_request(struct anoubisd_msg *msg)
  *
  * @param imsg The message with the authentication request received from
  *     the session engine.
- * @return None.
  */
 static void
 dispatch_auth_verify(struct anoubisd_msg *imsg)
@@ -2057,7 +2025,6 @@ dispatch_auth_verify(struct anoubisd_msg *imsg)
  * @param event The type of the event (see libevent, unused)
  * @param arg The event callback data. This is an event_info_main
  *     structure.
- * @return None.
  */
 static void
 dispatch_s2m(int fd, short event __used, void *arg)
@@ -2162,7 +2129,6 @@ expand_dev(dev_t dev)
  *
  * @param msg The request message from the policy engine.
  * @param evinfo The event information of the main thread.
- * @return None.
  */
 static void
 dispatch_pgcommit(struct anoubisd_msg *msg,
@@ -2235,7 +2201,6 @@ error:
  * @param event The type of the event (see libevent, unused)
  * @param arg The event callback data. This is an event_info_main
  *     structure.
- * @return None.
  */
 static void
 dispatch_p2m(int fd, short event __used, /*@dependent@*/ void *arg)
@@ -2351,7 +2316,6 @@ dispatch_m2dev(int fd, short event __used, void *arg __used)
  * @param event The type of the event (see libevent, unused)
  * @param arg The event callback data. This is an event_info_main
  *     structure.
- * @return None.
  */
 static void
 dispatch_dev2m(int fd, short event __used, void *arg)
@@ -2463,11 +2427,10 @@ dispatch_m2u(int fd, short event __used, void *arg __used)
  * Update everyones checksums and signatures (where possible) on a
  * particular file. This is called after an upgrade completes.
  *
- * @param The request message received from the upgrade process that
+ * @param msg The request message received from the upgrade process that
  *     contains the path name.
- * @return None.
  *
- * NOTE: This function does not invalidate the sfs tree cache in the
+ * @note This function does not invalidate the sfs tree cache in the
  * policy engine. The entire cache will be dropped at the end of the
  * upgrade.
  */
@@ -2535,8 +2498,8 @@ bad:
  *
  * @param fd The file descriptor to read data from.
  * @param event The type of event the occured (not useded).
- * @arg The callback argument. This is a pointer to a struct event_info_main.
- * @return None.
+ * @param arg The callback argument. This is a pointer to a
+ *            struct event_info_main.
  */
 static void
 dispatch_u2m(int fd, short event __used, void *arg)

@@ -127,9 +127,6 @@ static int			 sfsversionfd = -1;
 
 /**
  * Initialize the policy engine.
- *
- * @param None.
- * @return None.
  */
 void
 pe_init(void)
@@ -142,9 +139,6 @@ pe_init(void)
 
 /**
  * Shutdown the policy engine and free allocated memory.
- *
- * @param None.
- * @return None.
  */
 void
 pe_shutdown(void)
@@ -157,9 +151,6 @@ pe_shutdown(void)
  * Reconfigure the policy engine. This is called in response to a
  * HUP signal. It reloads the policy and certificate database and
  * deletes all entries from the sfs hash.
- *
- * @param None.
- * @return None.
  */
 void
 pe_reconfigure(void)
@@ -298,9 +289,6 @@ pe_upgrade_end(struct pe_proc *proc)
 /**
  * Initialize the upgrade iterator and let it point to the first
  * element of the upgrade file tree.
- *
- * @param None.
- * @return None.
  */
 void
 pe_upgrade_filelist_start(void)
@@ -315,9 +303,6 @@ pe_upgrade_filelist_start(void)
 /**
  * Advance the upgrade file list iterator to the next iterm in the
  * upgrade file tree.
- *
- * @param None.
- * @return None.
  */
 void
 pe_upgrade_filelist_next(void)
@@ -334,7 +319,6 @@ pe_upgrade_filelist_next(void)
  * Return a pointer to the current pe_file_node in the upgrade file tree.
  * The current node is determined by the upgrade file list iterator.
  *
- * @param None.
  * @return A pointer to the current node. Must not be modified by the
  *     caller.
  */
@@ -352,9 +336,6 @@ pe_upgrade_filelist_get(void)
  * and closes the sfsversionfd descriptor. However, it does not
  * release processes that have been put on hold. This must be done by
  * the caller.
- *
- * @param None.
- * @return None.
  */
 void
 pe_upgrade_finish(void)
@@ -639,7 +620,7 @@ pe_handle_alf(struct eventdev_hdr *hdr)
  * Handle events of type ANOUBIS_SOURCE_IPC. These are tracked by the
  * pe_ipc.c file and might generate context switches due to borrow rules.
  *
- * @param hder The event.
+ * @param hdr The event.
  * @return Always NULL, no further action required.
  */
 static struct anoubisd_reply *
@@ -1112,9 +1093,6 @@ pe_handle_playgroundfile(struct eventdev_hdr *hdr)
 /**
  * Dump the current state of the policy engine to the log. If this is
  * the system log or stderr depends on the command line options.
- *
- * @param None.
- * @return None.
  */
 void
 pe_dump(void)

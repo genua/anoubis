@@ -90,7 +90,7 @@ TAILQ_HEAD(tracker, pe_proc) tracker;
  * Fill the process identifier with a copy of the data given as parameters.
  * Any memory associated with the old process identifier is freed.
  *
- * @param A pointer to the new process identifier. The identifer must be
+ * @param pident A pointer to the new process identifier. The identifer must be
  *     valid and any memory allocated for the path or checksum data will
  *     be freed.
  * @param csum The new sha256 checksum. The memory will be copied.
@@ -147,9 +147,6 @@ pe_proc_ident_put(struct pe_proc_ident *pident)
 
 /**
  * Initailize the process tracking data structures.
- *
- * @param None.
- * @return None.
  */
 void
 pe_proc_init(void)
@@ -239,7 +236,7 @@ pe_proc_set_playgroundid(struct pe_proc *proc, anoubis_cookie_t pgid)
 /**
  * Return the playground ID of the given process.
  *
- * @param The process.
+ * @param proc The process.
  * @return The playground ID. This function returns zero if proc is NULL.
  */
 anoubis_cookie_t
@@ -311,8 +308,7 @@ oom:
  * This function takes an additional reference count on the process that
  * will be released be pe_proc_untrack.
  *
- * @param The process.
- * @return None.
+ * @param proc The process.
  */
 static void
 pe_proc_track(struct pe_proc *proc)
@@ -333,7 +329,6 @@ pe_proc_track(struct pe_proc *proc)
  * drops the reference on the process that was obtained by pe_proc_track.
  *
  * @param proc The process.
- * @return None.
  */
 static void
 pe_proc_untrack(struct pe_proc *proc)
@@ -372,6 +367,7 @@ pe_proc_get_context(struct pe_proc *proc, int prio)
  * Set the rules context of the given process to a new value.
  *
  * @param proc The process.
+ * @param prio The rule priority (PE_PRIO_USER or PE_PRIO_ADMIN).
  * @param ctx The new rules context.
  * @return None.
  *
@@ -453,7 +449,7 @@ pe_proc_ident(struct pe_proc *proc)
  * Return the process-ID of the process as recoreded in the process
  * management structure.
  *
- * @param The process.
+ * @param proc The process.
  * @return The process ID.
  */
 pid_t
@@ -485,9 +481,6 @@ void pe_proc_set_pid(struct pe_proc *proc, pid_t pid)
  * Print a summary of all processes known to the process tracking.
  * The data is printed using log_info. Where this data ends up depends on
  * the command line arguments and potentially the syslog.conf file.
- *
- * @param None.
- * @return None.
  */
 void
 pe_proc_dump(void)
@@ -612,7 +605,7 @@ void pe_proc_exit(anoubis_cookie_t cookie)
  * it is still in the task tracking and has at least one thread assigned to
  * it.
  *
- * @param The cookie of the process to check.
+ * @param cookie The cookie of the process to check.
  * @return True if the process is still running.
  */
 int
@@ -632,7 +625,6 @@ pe_proc_is_running(anoubis_cookie_t cookie)
  * alive.
  *
  * @param cookie The task cookie.
- * @return None.
  */
 void
 pe_proc_add_thread(anoubis_cookie_t cookie)
@@ -1080,8 +1072,7 @@ pe_proc_clr_flag(struct pe_proc *proc, unsigned int flag)
  * non-zero.
  *
  * @param proc The process.
- * @param The desired value of the flag.
- * @return None.
+ * @param flag The desired value of the flag.
  */
 static inline void
 pe_proc_upgrade_inherit(struct pe_proc *proc, unsigned int flag)
@@ -1115,9 +1106,6 @@ pe_proc_secure_inherit(struct pe_proc *proc, unsigned int flag)
 /**
  * Clear the upgrade and upgrade parent markers on all processes. This
  * should be called once an upgrade end is detected.
- *
- * @param None.
- * @return None.
  */
 void
 pe_proc_upgrade_clrallmarks(void)
@@ -1161,9 +1149,6 @@ pe_proc_is_hold(struct pe_proc *proc)
 /**
  * Clear the hold flags on all processes and mark them as upgrade start
  * processes.
- *
- * @param None.
- * @return None.
  */
 void
 pe_proc_release(void)
@@ -1196,7 +1181,7 @@ pe_proc_is_secure(struct pe_proc *proc)
  * Calculate the size required to store the given process identifier
  * in an Anoubis_ProcRecord.
  *
- * @param The pident.
+ * @param pident The pident.
  * @return The size.
  */
 static int

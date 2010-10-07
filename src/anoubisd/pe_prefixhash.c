@@ -90,12 +90,12 @@ struct pe_prefixhash {
 #define PREFIXHASH_MASK		((1UL<<PREFIXHASH_SHIFT)-1)
 
 /**
- * Calculate a path name hash. The hash consideres the first @cnt
+ * Calculate a path name hash. The hash consideres the first <code>cnt</code>
  * bytes of the data. The return value is between zero and PREFIXHASH_MASK
  * inclusive.
  *
  * @param data The data that should be hashed.
- * @cnt The length of the data to hash.
+ * @param cnt The length of the data to hash.
  */
 static unsigned long
 hash_fn(const char *data, int cnt)
@@ -112,7 +112,7 @@ hash_fn(const char *data, int cnt)
 }
 
 /**
- * Create a new prefix hash with @tabsize entries in the hash table.
+ * Create a new prefix hash with <code>tabsize</code> entries in the hash table.
  *
  * @param tabsize The number of entries in the hash table.
  * @return A new pe_prefixhash structure or NULL in case of an error.
@@ -142,7 +142,7 @@ pe_prefixhash_create(unsigned int tabsize)
 }
 
 /**
- * Free all memory associated with the prefixhash @hash.
+ * Free all memory associated with the prefixhash <code>hash</code>.
  *
  * @param hash The prefix hash.
  * @return None.
@@ -167,7 +167,7 @@ pe_prefixhash_destroy(struct pe_prefixhash *hash)
 }
 
 /**
- * Add the rule @rule to the prefix hash.
+ * Add the rule <code>rule</code> to the prefix hash.
  *
  * @param hash The prefix hash.
  * @param str The path prefix associated with the rule (may be NULL).
@@ -226,7 +226,7 @@ cmp_entries(const void *a, const void *b)
 }
 
 /**
- * Add all entries in a particular hash slot to the array @arr.
+ * Add all entries in a particular hash slot to the array <code>arr</code>.
  *
  * @param hash The prefix hash.
  * @param arr The result array that contains the rules. The array must be
@@ -234,10 +234,10 @@ cmp_entries(const void *a, const void *b)
  *     and the array grows as neccessary. The caller is responsible for the
  *     array and must free it if the function returns successfully.
  * @param str The path prefix that determines the hash slot. This pointer
- *     can be NULL, @len should be zero in this case.
- * @param len The length of the path prefix. Only the first @len bytes are
- *     hashed. The path name must be at least @len bytes long but it may
- *     be longer.
+ *     can be NULL, <code>len</code> should be zero in this case.
+ * @param len The length of the path prefix. Only the first <code>len</code>
+ *     bytes are hashed. The path name must be at least <code>len</code> bytes
+ *     long but it may be longer.
  * @return Zero on success, a negative error code in case of an error.
  *     In case of an error, the memory associated with the array is freed.
  */
@@ -277,9 +277,9 @@ addslot(struct pe_prefixhash *hash, struct entryarr_array *arr,
  * @param hash The prefix hash.
  * @param str The path name string.
  * @param rules An apnarr_array that contains pointers to struct apn_rules.
- *     Each rule is a candidate that might match the path @str. The caller
- *     must free the array in case of success. No memory is allocated if the
- *     function returns an error.
+ *     Each rule is a candidate that might match the path <code>str</code>. The
+ *     caller must free the array in case of success. No memory is allocated if
+ *     the function returns an error.
  * @return Zero in case of success, a negative error code in case of an error.
  */
 int

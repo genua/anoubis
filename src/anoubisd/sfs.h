@@ -76,8 +76,8 @@ struct sfs_csmulti_record {
 /**
  * This data structure encapsulates data of a checksum request.
  * Normally, the data in this structure references the request message
- * directly, i.e. the memory of field like @path or @sigbuf must not be
- * freed independently.
+ * directly, i.e. the memory of field like sfs_checksumop::path or
+ * sfs_checksumop::sigbuf must not be freed independently.
  */
 struct sfs_checksumop {
 	/**
@@ -94,7 +94,7 @@ struct sfs_checksumop {
 
 	/**
 	 * The user-ID that this operation applies to. This field is only used
-	 * is @keyid is not empty.
+	 * if sfs_checksumop::keyid is not empty.
 	 */
 	uid_t				 uid;
 

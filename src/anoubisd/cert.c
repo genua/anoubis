@@ -72,7 +72,6 @@ static struct cert		*_cert_get_by_uid(uid_t, int);
  * certificates into the database.
  *
  * @param chroot True if the process which calls this function is chrooted.
- * @return None;
  */
 void
 cert_init(int chroot)

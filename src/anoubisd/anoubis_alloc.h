@@ -219,7 +219,7 @@ extern struct abuf_buffer	abuf_alloc(unsigned int length);
  * buffer if shrinking is requested. In case of an error, an empty buffer
  * will be returned and the original buffer will be freed!
  *
- * @param BUF The buffer. Callers must assume that abuf_free is called
+ * @param buf The buffer. Callers must assume that abuf_free is called
  *     on this buffer, i.e. pointers to its memory and other buffers that
  *     reference the same memory are invalidated.
  * @param newsize The new size of the buffer.
@@ -227,7 +227,7 @@ extern struct abuf_buffer	abuf_alloc(unsigned int length);
  *     fails. The data contained in the original buffer is copied to the
  *     start of the new buffer. The rest of the buffer remains unchanged.
  *
- * NOTE: There are several differences to the libc realloc(3c) function:
+ * @note There are several differences to the libc realloc(3c) function:
  *  - realloc(3c) does not free the original buffer in case of an error.
  *  - realloc(3c) can be used to shrink an existing memory region.
  * If you need to shrink the actual memory size occupied by a buffer use
@@ -252,7 +252,7 @@ extern struct abuf_buffer	abuf_zalloc(unsigned int length);
 /**
  * Create an identical copy of a buffer and its associated data.
  *
- * @param 1st The source buffer.
+ * @param src The source buffer.
  * @return A buffer of the same length the source buffer that contains
  *     a copy of the source buffer's data. An empty buffer if memory
  *     allocation failed.
@@ -304,7 +304,7 @@ extern struct abuf_buffer	abuf_open(struct abuf_buffer buf,
  * This is mostly useful for dependent buffers that are not created by
  * abuf_alloc.
  *
- * @param bufp A _pointer_ to the buffer.
+ * @param buf A _pointer_ to the buffer.
  * @param len The new length limit of the buffer.
  * @return The actual length. This may be smaller than the length parameter
  *    if the initial buffer size is smaller.
@@ -345,6 +345,7 @@ extern int	 abuf_equal(const struct abuf_buffer b1,
  *
  * @param b1 The first buffer.
  * @param b2 The second buffer.
+ * @param cmplen Number of bytes to compare
  * @return Zero, -1 or +1 depending on the result of the comparison.
  */
 extern int	abuf_ncmp(struct abuf_buffer b1, struct abuf_buffer b2,
@@ -397,7 +398,7 @@ extern unsigned int	abuf_copy(struct abuf_buffer dst,
  * @param src The source buffer.
  * @param srcoff The offset into the source buffer where the data is copied
  *        from.
- * @len The total number of bytes to be copied.
+ * @param len The total number of bytes to be copied.
  * @return The number of bytes actually copied. If this is different from
  *     len an assertion triggers.
  */

@@ -711,7 +711,7 @@ __send_notify(struct anoubis_msg *m)
  * the anoubis daemon master process. policy_comm is used to track
  * pending requests.
  *
- * @param The server object associated with the client session.
+ * @param server The server object associated with the client session.
  * @param m The request message as received from the client.
  * @param uid The authenticated user ID of the client seesion.
  * @param arg The callback argument (unused).
@@ -768,9 +768,9 @@ invalid:
  * the policy process. policy_comm is used to track pending requests and
  * demultiplex replies.
  *
- * @param The server object associated with the client session.
+ * @param server The server object associated with the client session.
  * @param m The request message as received from the client.
- * @param uid The authenticated user ID of the client seesion.
+ * @param auth_uid The authenticated user ID of the client seesion.
  * @param arg The callback argument (unused).
  */
 static void
@@ -822,9 +822,9 @@ dispatch_list_request(struct anoubis_server *server, struct anoubis_msg *m,
  * the policy process. policy_comm is used to track pending requests and
  * demultiplex replies.
  *
- * @param The server object associated with the client session.
+ * @param server The server object associated with the client session.
  * @param m The request message as received from the client.
- * @param uid The authenticated user ID of the client seesion.
+ * @param auth_uid The authenticated user ID of the client seesion.
  * @param arg The callback argument (unused).
  */
 static void
@@ -886,7 +886,7 @@ dispatch_pgcommit(struct anoubis_server *server, struct anoubis_msg *m,
  * demultiplex replies. The callback function for replies depends on the
  * type of the checksum operation.
  *
- * @param The server object associated with the client session.
+ * @param server The server object associated with the client session.
  * @param m The request message as received from the client.
  * @param uid The authenticated user ID of the client seesion.
  * @param arg The callback argument (unused).
@@ -950,9 +950,9 @@ invalid:
  * The passphrase is stored in an ANOUBISD_MSG_PASSPHRASE message and
  * forwarded to the master. No reply messages are generated.
  *
- * @param The server object associated with the client session.
+ * @param server The server object associated with the client session.
  * @param m The request message as received from the client.
- * @param uid The authenticated user ID of the client seesion.
+ * @param auth_uid The authenticated user ID of the client seesion.
  * @param arg The callback argument (unused).
  */
 static void
@@ -1163,11 +1163,10 @@ dispatch_auth_result(void *cbdata, int error, const void *data __used,
  * master for verification. The master will reply with an authentication
  * result (ANOUBISD_AUTH_RESULT).
  *
- * @param sever The server object for the client session.
+ * @param server The server object for the client session.
  * @param m The client message.
  * @param auth_uid Unused.
  * @param arg The callback argument (unused).
- * @return None.
  */
 static void
 dispatch_authdata(struct anoubis_server *server, struct anoubis_msg *m,
@@ -1301,13 +1300,13 @@ error:
  * @param error The error code to used in the reply.
  * @param data The payload data (may be NULL).
  * @param len The length of the payload data.
- * @param orig_opcde This value is used to fill in the opcode field of
+ * @param orig_opcode This value is used to fill in the opcode field of
  *     the reply message. It tells the client which type of request we
  *     are replying to.
  * @return Zero if the message could be sent, a negative error code
  *     otherwise.
  *
- * NOTE: This function can only be used to reply to messages in the
+ * @note This function can only be used to reply to messages in the
  *     policy part of the protocol. The token value in the reply is
  *     always set to zero.
  */
@@ -2298,7 +2297,6 @@ session_destroy(struct session *session)
  * Setup the listening socket for client connections and return the
  * the achat channel of the socket.
  *
- * @param None.
  * @return The listening channel. NULL if an error occured.
  */
 static struct achat_channel *

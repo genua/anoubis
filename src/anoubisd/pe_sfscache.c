@@ -97,14 +97,15 @@ sfshash_init(void)
  * @param key The Key-ID of the key that stored this checksum. This value
  *     can be NULL. If it is not NULL it should be a string of printable hex
  *     digits. These are treated case insensitive.
+ * @param uid The user-ID of the user.
  * @return A value between zero and SFSHASH_MASK (inclusive). If the
  *     function is called with the same parameters, it will return the
  *     same value.
  *
- * NOTE: As of today not only the key-ID but also the path name is hashed
- * NOTE: case insensitive. This might be better if a file system does not
- * NOTE: use case sensitive path names and will probably not lead to
- * NOTE: more collisions.
+ * @note As of today not only the key-ID but also the path name is hashed
+ *       case insensitive. This might be better if a file system does not
+ *       use case sensitive path names and will probably not lead to
+ *       more collisions.
  */
 static unsigned long
 sfshash_fn(const char *path, const char * key, uid_t uid)
@@ -160,6 +161,7 @@ sfshash_remove_entry(struct sfshash_entry *entry)
  * freed as a side effect. Entries that have not been used for a long
  * period of time ar removed first.
  *
+ * @param slot The hash slot
  * @param entry The new entry.
  */
 static void
@@ -217,7 +219,7 @@ sfshash_flush(void)
  * Common code that inserts a new entry into the sfs hash.
  *
  * @param path The path name of the file.
- * @param The checksum. This function takes over ownership for this buffer.
+ * @param csum The checksum. This function takes over ownership for this buffer.
  *     It will be freed once the entry is removed from the hash. It will
  *     be freed in case of an error, too.
  * @param cstype The checksum type: either CSTYPE_UID or CSTYPE_KEY.
@@ -427,11 +429,11 @@ chartohex(char ch)
  * The memory associated with the buffer must be freed by the caller.
  *
  * @param path The path name of the file.
- * @cstype This is either CSTYPE_UID or CSTYPE_KEY
+ * @param cstype This is either CSTYPE_UID or CSTYPE_KEY
  * @param key The Key-ID for CSTYPE_KEY request. The key-ID is given in
  *     human readable form (i.e. a string of printable hex digits). It
  *     should be NULL if the request type is not CSTYPE_KEY.
- * @param The user-ID for CSTYPE_UID requests.
+ * @param uid The user-ID for CSTYPE_UID requests.
  * @param csum This should point to an emtpy abuf buffer. The buffer
  *     will be allocated and filled with the checksum data in case of success.
  *     The caller is responsible for the freeing of the buffer.
@@ -590,7 +592,7 @@ sfshash_get_uid(const char *path, uid_t uid, struct abuf_buffer *csum)
  * allocated by this function and must be freed by the calle.
  *
  * @param path The path of the file.
- * @param uid The Key-ID of the key that stored the checksum. The Key-ID
+ * @param key The Key-ID of the key that stored the checksum. The Key-ID
  *     is given as a human readable string of hex digits.
  * @param csum The checksum data will be returned in this buffer.
  *     The buffer will be usable but empty if an error is returned.

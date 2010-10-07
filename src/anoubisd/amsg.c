@@ -639,7 +639,7 @@ get_client_msg(int fd, struct anoubis_msg **msgp)
  * the output buffer. The message is checked using amsg_verify before it
  * is sent.
  *
- * @param The file descriptor.
+ * @param fd The file descriptor.
  * @param msg The message to send. Use NULL to just flush the message
  *     buffer.
  * @return Positive if the message was accepted, zero if the message
@@ -649,7 +649,7 @@ get_client_msg(int fd, struct anoubis_msg **msgp)
  *     message to send is NULL a positive return value implies that the
  *     buffer was flushed completely.
  *
- * NOTE: This function adds the message to the output buffer and tries
+ * @note This function adds the message to the output buffer and tries
  *     to flush the output buffer. However, if the output buffer is
  *     not empty after the function returns, it is the responsibility of
  *     the caller to flush the output buffer at a later point in time.
@@ -686,8 +686,8 @@ send_msg(int fd, struct anoubisd_msg *msg)
  * Return true if there is data sitting in the output buffer for this
  * file descriptor.
  *
- * @param The file descriptor.
- * @return True iff there is data in the output buffer.
+ * @param fd The file descriptor.
+ * @return True if there is data in the output buffer.
  */
 int
 msg_pending(int fd)

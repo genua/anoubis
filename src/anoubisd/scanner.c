@@ -787,9 +787,6 @@ anoubisd_scan_start(uint64_t token, int fd, uint64_t auth_uid, int flags)
  * should case the children to terminate in time. As this is only called
  * during daemon termination, we do not wait for the termination of the
  * scanner children. This is left to the child process run by scanner_main.
- *
- * @param None.
- * @return None.
  */
 void
 anoubisd_scanners_detach(void)

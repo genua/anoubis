@@ -139,7 +139,7 @@ static LIST_HEAD(, playground)		playgrounds =
  * return a pointer to the playground structure.
  *
  * @param pgid The playground ID to search for.
- * @return The playground structure of the playground of NULL if the
+ * @return The playground structure of the playground or NULL if the
  *     playground ID is not in use.
  */
 static struct playground *
@@ -212,8 +212,7 @@ pe_playground_create(anoubis_cookie_t pgid, int do_mkdir)
  * Try to remove a playground from the playground list. This will remove
  * the playground directory in /var/lib/anoubis/playground, too.
  *
- * @param The playground structure.
- * @return None.
+ * @param pg The playground structure.
  */
 static void
 pe_playground_trykill(struct playground *pg)
@@ -345,8 +344,8 @@ pe_playground_writefile(struct playground *pg, const char *path, char *str)
  * Initialize the fields of the playground structure that depend on
  * the first process that creates the playground.
  *
- * @param The playground structure.
- * @param The process that creates the playground.
+ * @param pg The playground structure.
+ * @param proc The process that creates the playground.
  * @return Returns true if the playground attributes have been changed,
  *     false otherwise.
  */
@@ -603,8 +602,8 @@ pe_playground_file_delete(anoubis_cookie_t pgid, uint64_t dev, uint64_t ino)
  * @param dev The device number of the file.
  * @param ino The inode number of the file.
  * @param path The path name of the file relative to root of the given
- *     device.
- * @param The user-ID of the user that requested the event.
+ *             device.
+ * @param uid The user-ID of the user that requested the event.
  */
 int
 pe_playground_file_scanrequest(anoubis_cookie_t pgid, uint64_t dev,
@@ -627,9 +626,6 @@ pe_playground_file_scanrequest(anoubis_cookie_t pgid, uint64_t dev,
 
 /**
  * Dump a list of all playgrounds to the current log file.
- *
- * @param None.
- * @return None.
  */
 void
 pe_playground_dump(void)
@@ -707,9 +703,6 @@ pe_playground_read(anoubis_cookie_t pgid)
 
 /**
  * Initialize the playground subsystem in the policy engine.
- *
- * @param None.
- * @return None.
  */
 void
 pe_playground_init(void)
@@ -861,7 +854,7 @@ pe_playground_send_pglist(uint64_t token, anoubis_cookie_t pgid,
  *
  * @param ctx The message context containing the current message. This
  *     message may or may not contain records.
- * @param dev The playground ID of the current file. This value is stored in
+ * @param pgid The playground ID of the current file. This value is stored in
  *     each ANOUBIS_REC_PGFILELIST record that is added to the message.
  * @param dev The device ID of the current file. This value is stored in
  *     each ANOUBIS_REC_PGFILELIST record that is added to the message.
@@ -1050,13 +1043,12 @@ err:
  * @param ident The process identifier of the process after a successful
  *     exec. This identifier is added to the log message for both the process
  *     and the context information.
- * @param hdr The eventdev header of the exec event. Event data is taken
+ * @param orighdr The eventdev header of the exec event. Event data is taken
  *     from this event where appropriate.
  * @param ruleid The rule ID of the block that forced this process into
  *     the playground.
  * @param prio The priority of the rule that forced this process into
  *     the playground.
- * @return None.
  */
 void
 pe_playground_notify_forced(struct pe_proc_ident *ident,
@@ -1102,7 +1094,7 @@ pe_playground_notify_forced(struct pe_proc_ident *ident,
  * This function frees (or reuses) the incoming message. It is no
  * longer available to the caller after this function returns.
  *
- * @param The playground message received from the session engine.
+ * @param msg The playground message received from the session engine.
  *     This message is either freed or reused for communication with
  *     the master.
  * @param session Messages that should go back to the session engine are
@@ -1111,7 +1103,6 @@ pe_playground_notify_forced(struct pe_proc_ident *ident,
  * @param master Messages that should go to the master process are sent to
  *     this queue. If everything is ok, the incoming message is forwarded
  *     to this queue.
- * @return None.
  */
 void
 pe_playground_dispatch_commit(struct anoubisd_msg *msg, Queue *session,

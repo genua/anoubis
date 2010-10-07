@@ -140,8 +140,8 @@ queue_delete(Queue *queue, void *data)
  * with the queue if the queue is not empty or the file descriptors
  * buffer still has pending data.
  *
- * @param The queue with anoubisd_msg structures.
- * @param The file descriptor to write the messages to.
+ * @param q The queue with anoubisd_msg structures.
+ * @param fd The file descriptor to write the messages to.
  * @return Negative if a permanent write error occured for a message.
  *     The message with the error is removed from the queue and dropped.
  *     Zero if some write is still pending. Positive if all messages
