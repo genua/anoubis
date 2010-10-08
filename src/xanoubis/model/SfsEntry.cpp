@@ -36,6 +36,9 @@ SfsEntry::SfsEntry(SfsDirectory *parent)
 	csum_[SFSENTRY_CHECKSUM] = 0;
 	csum_[SFSENTRY_SIGNATURE] = 0;
 	csum_[SFSENTRY_UPGRADE] = 0;
+	state_[SFSENTRY_CHECKSUM] = SFSENTRY_NOT_VALIDATED;
+	state_[SFSENTRY_SIGNATURE] = SFSENTRY_NOT_VALIDATED;
+	state_[SFSENTRY_UPGRADE] = SFSENTRY_NOT_VALIDATED;
 	haveLocalCsum_ = false;
 
 	setPath(wxEmptyString);
@@ -48,6 +51,10 @@ SfsEntry::SfsEntry(SfsDirectory *parent, const wxString &path)
 	this->csum_[SFSENTRY_CHECKSUM] = 0;
 	this->csum_[SFSENTRY_SIGNATURE] = 0;
 	this->csum_[SFSENTRY_UPGRADE] = 0;
+	state_[SFSENTRY_CHECKSUM] = SFSENTRY_NOT_VALIDATED;
+	state_[SFSENTRY_SIGNATURE] = SFSENTRY_NOT_VALIDATED;
+	state_[SFSENTRY_UPGRADE] = SFSENTRY_NOT_VALIDATED;
+	haveLocalCsum_ = false;
 
 	setPath(path);
 	reset();

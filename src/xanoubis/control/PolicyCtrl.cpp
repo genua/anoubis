@@ -704,17 +704,17 @@ PolicyCtrl::scanDirectory(const wxString &path, wxArrayString &dest)
 void
 PolicyCtrl::cleanRuleSetList(RuleSetList &list, bool force)
 {
-	RuleSetList::iterator it, tmp;
+	RuleSetList::iterator	it;
 
 	it = list.begin();
 	while (it != list.end()) {
 		PolicyRuleSet *rs = (*it);
 
-		tmp = it;
-		++it;
 		if (!rs->isLocked() || force) {
-			list.erase(tmp);
+			it = list.erase(it);
 			delete rs;
+		} else {
+			it++;
 		}
 	}
 }

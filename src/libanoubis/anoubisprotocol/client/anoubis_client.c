@@ -160,7 +160,7 @@ err:
 }
 
 int anoubis_client_verify(struct anoubis_client * client,
-    struct anoubis_msg * m)
+    const struct anoubis_msg * m)
 {
 	if (!VERIFY_FIELD(m,general,type)
 	    || !crc32_check(m->u.buf, m->length))
@@ -208,15 +208,19 @@ struct anoubis_client * anoubis_client_create(struct achat_channel * chan,
 
 void anoubis_client_destroy(struct anoubis_client * client)
 {
+	struct anoubis_msg		*m;
+
 	if (client->chan) {
 		acc_close(client->chan);
 		client->chan = NULL;
 	}
+	while((m=anoubis_client_getnotify(client)) != NULL)
+		anoubis_msg_free(m);
 	free(client);
 }
 
 static int anoubis_verify_reply(struct anoubis_client * client,
-    u_int32_t origop, struct anoubis_msg * m)
+    u_int32_t origop, const struct anoubis_msg * m)
 {
 	int ret = -EPROTO;
 	u_int32_t opcode;
@@ -234,12 +238,11 @@ static int anoubis_verify_reply(struct anoubis_client * client,
 		goto err;
 	ret = 0;
 err:
-	anoubis_msg_free(m);
 	return ret;
 }
 
 static int anoubis_verify_hello(struct anoubis_client * client,
-    struct anoubis_msg * m)
+    const struct anoubis_msg * m)
 {
 	int ret;
 	u_int32_t opcode;
@@ -278,12 +281,11 @@ static int anoubis_verify_hello(struct anoubis_client * client,
 	}
 	ret = 0;
 err:
-	anoubis_msg_free(m);
 	return ret;
 }
 
 static int anoubis_verify_authreply(struct anoubis_client * client,
-    struct anoubis_msg * m)
+    const struct anoubis_msg * m)
 {
 	int ret;
 	u_int32_t opcode;
@@ -302,13 +304,12 @@ static int anoubis_verify_authreply(struct anoubis_client * client,
 	client->auth_uid = get_value(m->u.authreply->uid);
 	ret = 0;
 err:
-	anoubis_msg_free(m);
 	return ret;
 }
 
 static int anoubis_verify_stringlist(struct anoubis_client * client,
     u_int32_t expected_opcode, struct proto_opt * opts, unsigned int * selopts,
-    struct anoubis_msg * m)
+    const struct anoubis_msg * m)
 {
 	struct stringlist_iterator it;
 	int ret;
@@ -329,7 +330,6 @@ static int anoubis_verify_stringlist(struct anoubis_client * client,
 		(*selopts) |= flag;
 	ret = 0;
 err:
-	anoubis_msg_free(m);
 	return ret;
 }
 
@@ -357,7 +357,7 @@ struct anoubis_connect_cbdata {
 
 /* This function will free the message @m. */
 static void anoubis_client_connect_steps(struct anoubis_transaction * t,
-    struct anoubis_msg * m)
+    const struct anoubis_msg * m)
 {
 	int ret = -EPROTO;
 	struct anoubis_msg * out = NULL;
@@ -540,7 +540,7 @@ anoubis_client_selectedversion(struct anoubis_client *client)
 }
 
 static void anoubis_client_close_steps(struct anoubis_transaction * t,
-    struct anoubis_msg * m)
+    const struct anoubis_msg * m)
 {
 	int opcode;
 	int ret;
@@ -552,7 +552,6 @@ static void anoubis_client_close_steps(struct anoubis_transaction * t,
 		goto err;
 	ret = -EPROTO;
 	opcode = get_value(m->u.general->type);
-	anoubis_msg_free(m);
 	if (opcode != ANOUBIS_C_CLOSEREQ && opcode != ANOUBIS_C_CLOSEACK)
 		goto err;
 	if (opcode == ANOUBIS_C_CLOSEREQ)
@@ -772,7 +771,7 @@ err:
 }
 
 static void anoubis_client_ack_steps(struct anoubis_transaction * t,
-    struct anoubis_msg * m)
+    const struct anoubis_msg * m)
 {
 	struct anoubis_client * client = t->cbdata;
 	int ret = anoubis_client_verify(client, m);
@@ -786,8 +785,6 @@ static void anoubis_client_ack_steps(struct anoubis_transaction * t,
 err:
 	if (m->u.ack->token == 0)
 		client->flags &= ~FLAG_POLICY_PENDING;
-	if ((t->flags & (ANOUBIS_T_WANTMESSAGE|ANOUBIS_T_WANT_ALL)) == 0)
-		anoubis_msg_free(m);
 	anoubis_transaction_done(t, -ret);
 }
 
@@ -868,7 +865,7 @@ int anoubis_client_notifyreply(struct anoubis_client * client,
 }
 
 static void anoubis_client_policy_steps(struct anoubis_transaction * t,
-    struct anoubis_msg * m)
+    const struct anoubis_msg * m)
 {
 	struct anoubis_client * client = t->cbdata;
 	int ret = anoubis_client_verify(client, m);
@@ -898,7 +895,7 @@ err:
 }
 
 static void anoubis_client_list_ack_steps(struct anoubis_transaction * t,
-    struct anoubis_msg * m)
+    const struct anoubis_msg * m)
 {
 	struct anoubis_client * client = t->cbdata;
 	int ret = anoubis_client_verify(client, m);
@@ -971,7 +968,6 @@ anoubis_client_policyrequest_start(struct anoubis_client * client,
 			flags |= POLICY_FLAG_END;
 		set_value(m->u.policyrequest->flags, flags);
 		if (anoubis_client_send(client, m) < 0) {
-			anoubis_msg_free(m);
 			anoubis_transaction_destroy(t);
 			return NULL;
 		}
@@ -1210,7 +1206,6 @@ anoubis_client_csumrequest_start(struct anoubis_client *client,
 	}
 	strlcpy(dstpath, path, strlen(path)+1);
 	if (anoubis_client_send(client, m) < 0) {
-		anoubis_msg_free(m);
 		anoubis_transaction_destroy(t);
 		return NULL;
 	}
@@ -1526,7 +1521,7 @@ anoubis_csmulti_handle_get(struct anoubis_csmulti_record *record,
  */
 static void
 anoubis_client_csmulti_steps(struct anoubis_transaction *t,
-    struct anoubis_msg *m)
+    const struct anoubis_msg *m)
 {
 	struct anoubis_csmulti_request	*request = t->cbdata;
 	struct anoubis_client		*client = request->client;
@@ -1729,6 +1724,7 @@ __anoubis_csmulti_msg(struct anoubis_csmulti_request *request, int compat)
 	set_value(m->u.csmultireq->uid, request->uid);
 	set_value(m->u.csmultireq->idlen, request->idlen);
 	set_value(m->u.csmultireq->recoff, recoff);
+	memset(m->u.csmultireq->payload, 0, recoff);
 	if (request->idlen)
 		memcpy(m->u.csmultireq->payload, request->keyid,
 		    request->idlen);
@@ -1742,6 +1738,7 @@ __anoubis_csmulti_msg(struct anoubis_csmulti_request *request, int compat)
 		/* Only request records that have not yet been asked for. */
 		if (record->error != EAGAIN)
 			continue;
+		memset(r, 0, record->length);
 		set_value(r->length, record->length);
 		set_value(r->index, record->idx);
 		if (add) {
@@ -1816,7 +1813,6 @@ anoubis_client_csmulti_start(struct anoubis_client *client,
 	}
 	if (anoubis_client_send(client, m) < 0) {
 		request->client = NULL;
-		anoubis_msg_free(m);
 		anoubis_transaction_destroy(t);
 		return NULL;
 	}
@@ -1852,7 +1848,6 @@ anoubis_client_passphrase_start(struct anoubis_client *client,
 	t = anoubis_transaction_create(0, ANOUBIS_T_INITSELF|ANOUBIS_T_DEQUEUE,
 	    &anoubis_client_ack_steps, NULL, client);
 	if (anoubis_client_send(client, m) < 0) {
-		anoubis_msg_free(m);
 		anoubis_transaction_destroy(t);
 		return NULL;
 	}
@@ -1950,7 +1945,7 @@ int anoubis_client_wait(struct anoubis_client * client)
 
 static void
 anoubis_client_version_steps(struct anoubis_transaction *t,
-    struct anoubis_msg *m)
+    const struct anoubis_msg *m)
 {
 	struct anoubis_client * client = t->cbdata;
 	int ret = anoubis_client_verify(client, m);
@@ -1992,7 +1987,6 @@ anoubis_client_version_start(struct anoubis_client *client)
 	    ANOUBIS_T_INITSELF|ANOUBIS_T_WANT_ALL,
 	    &anoubis_client_version_steps, NULL, client);
 	if (anoubis_client_send(client, m) < 0) {
-		anoubis_msg_free(m);
 		anoubis_transaction_destroy(t);
 		return NULL;
 	}
@@ -2005,7 +1999,7 @@ anoubis_client_version_start(struct anoubis_client *client)
 
 static void
 anoubis_client_list_steps(struct anoubis_transaction *t,
-    struct anoubis_msg *m)
+    const struct anoubis_msg *m)
 {
 	struct anoubis_client		*client = t->cbdata;
 	int				 ret;
@@ -2057,7 +2051,6 @@ anoubis_client_list_start(struct anoubis_client *client,
 	    ANOUBIS_T_INITSELF|ANOUBIS_T_WANT_ALL,
 	    &anoubis_client_list_steps, NULL, client);
 	if (anoubis_client_send(client, m) < 0) {
-		anoubis_msg_free(m);
 		anoubis_transaction_destroy(t);
 		return NULL;
 	}
@@ -2099,7 +2092,6 @@ anoubis_client_pgcommit_start(struct anoubis_client *client, uint64_t pgid,
 	    ANOUBIS_T_INITSELF|ANOUBIS_T_WANT_ALL|ANOUBIS_T_DEQUEUE,
 	    &anoubis_client_ack_steps, NULL, client);
 	if (anoubis_client_send(client, m) < 0) {
-		anoubis_msg_free(m);
 		anoubis_transaction_destroy(t);
 		return NULL;
 	}

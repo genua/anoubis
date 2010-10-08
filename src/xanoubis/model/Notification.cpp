@@ -68,12 +68,13 @@
 #include <wx/listimpl.cpp>
 WX_DEFINE_LIST(NotifyList);
 
-Notification::Notification(struct anoubis_msg *msg)
+Notification::Notification(struct anoubis_msg *msg, bool free)
 {
 	module_ = wxEmptyString;
 	timeStamp_ = wxEmptyString;
 	logMessage_ = wxEmptyString;
 	notify_ = msg;
+	free_ = free;
 	id_ = wxNewId();
 }
 
@@ -639,27 +640,21 @@ Notification::getId(void) const
 Notification *
 Notification::factory(struct anoubis_msg *notifyMsg)
 {
-	int	 type;
-	int	 subsystem;
-
+	int			 type;
+	int			 subsystem;
 	enum apn_log_level	 loglevel;
-	Notification		*notify;
+	Notification		*notify = NULL;
 
 	type	  = get_value((notifyMsg->u.general)->type);
-	subsystem = get_value((notifyMsg->u.notify)->subsystem);
-	loglevel  = (enum apn_log_level)get_value(
-	    (notifyMsg->u.notify)->loglevel);
-	notify	  = NULL;
-
-	if (! ANOUBIS_IS_NOTIFY(type)) {
-		return (notify);
-	}
+	if (!ANOUBIS_IS_NOTIFY(type))
+		return NULL;
 
 	switch (type) {
 	case ANOUBIS_N_ASK:
 		notify = new EscalationNotify(notifyMsg);
 		break;
 	case ANOUBIS_N_NOTIFY:
+		subsystem = get_value((notifyMsg->u.notify)->subsystem);
 		if (subsystem == ANOUBIS_SOURCE_STAT) {
 			notify = new StatusNotify(notifyMsg);
 		} else {
@@ -673,15 +668,18 @@ Notification::factory(struct anoubis_msg *notifyMsg)
 		break;
 	case ANOUBIS_N_LOGNOTIFY:
 		/* special case: PlaygroundFileNotify */
+		subsystem = get_value((notifyMsg->u.notify)->subsystem);
 		if (subsystem == ANOUBIS_SOURCE_PLAYGROUNDFILE) {
 			notify = new PlaygroundFileNotify(notifyMsg);
 			break;
 		}
 
 		/* else: 'regular' case */
+		loglevel  = (enum apn_log_level)get_value(
+		    (notifyMsg->u.notify)->loglevel);
 		switch (loglevel) {
 		case APN_LOG_NONE:
-			/* don't show notifies of loglevel 0/none */
+			/* don't show notifies of loglevel none */
 			break;
 		case APN_LOG_NORMAL:
 			notify = new LogNotify(notifyMsg);

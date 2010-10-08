@@ -76,7 +76,7 @@ __BEGIN_DECLS
  * @return 0 on success or a negative ANOUBIS_AUTHERR_* error code.
  */
 int anoubis_auth_callback(struct anoubis_sig *, struct anoubis_sig *,
-    struct anoubis_msg *, struct anoubis_msg **, int);
+    const struct anoubis_msg *, struct anoubis_msg **, int);
 
 __END_DECLS
 

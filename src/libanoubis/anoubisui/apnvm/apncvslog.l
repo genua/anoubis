@@ -201,10 +201,6 @@ apncvs_log_parse(FILE *f, struct apncvs_log *log)
 	yyrestart(yyin);
 	BEGIN(INITIAL);
 
-	/* Reset variable used by the parser */
-	memset(log, 0, sizeof(struct apncvs_log));
-	TAILQ_INIT(&log->rev_queue);
-
 	cvslog = log;
 
 	currev = NULL;

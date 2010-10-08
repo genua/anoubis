@@ -112,6 +112,8 @@ int anoubis_transaction_match(struct anoubis_transaction * t,
 void anoubis_transaction_process(struct anoubis_transaction * t,
     struct anoubis_msg * m)
 {
+	int		freemsg = 1;
+
 	if (t->process)
 		t->process(t, m);
 	if (t->flags & ANOUBIS_T_WANT_ALL) {
@@ -125,10 +127,14 @@ void anoubis_transaction_process(struct anoubis_transaction * t,
 		} else {
 			t->msg = m;
 		}
+		freemsg = 0;
 	}
 	if (t->flags & ANOUBIS_T_DONE) {
-		if (t->flags & ANOUBIS_T_WANTMESSAGE)
+		if (t->flags & ANOUBIS_T_WANTMESSAGE) {
+			m->next = NULL;
 			t->msg = m;
+			freemsg = 0;
+		}
 		if (t->finish)
 			t->finish(t);
 		if (t->flags & ANOUBIS_T_DEQUEUE)
@@ -136,6 +142,8 @@ void anoubis_transaction_process(struct anoubis_transaction * t,
 		if (t->flags & ANOUBIS_T_DESTROY)
 			anoubis_transaction_destroy(t);
 	}
+	if (freemsg)
+		anoubis_msg_free(m);
 }
 
 void anoubis_transaction_progress(struct anoubis_transaction * t,

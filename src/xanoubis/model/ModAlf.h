@@ -46,7 +46,6 @@ class ModAlf : public Module, private Observer
 
 	public:
 		ModAlf(wxWindow *);
-		~ModAlf(void);
 
 		int	getBaseId(void);
 		int	getToolbarId(void);

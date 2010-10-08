@@ -60,14 +60,6 @@ ModPlayground::ModPlayground(wxWindow *parent) : Module(), Observer(NULL)
 	    dynamic_cast<ModPlaygroundOverviewPanelImpl *>(overviewPanel_));
 }
 
-ModPlayground::~ModPlayground(void)
-{
-	if (NotificationCtrl::existingInstance()) {
-		removeSubject(NotificationCtrl::existingInstance()->
-		    getPerspective(NotificationCtrl::LIST_STAT));
-	}
-}
-
 int
 ModPlayground::getBaseId(void)
 {

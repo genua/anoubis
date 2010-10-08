@@ -59,17 +59,6 @@ ModAlf::ModAlf(wxWindow *parent) : Module(), Observer(NULL)
 	addSubject(dynamic_cast<ModAlfOverviewPanelImpl *>(overviewPanel_));
 }
 
-ModAlf::~ModAlf(void)
-{
-	if (NotificationCtrl::existingInstance()) {
-		removeSubject(NotificationCtrl::existingInstance()->
-		    getPerspective(NotificationCtrl::LIST_STAT));
-	}
-	if (overviewPanel_)
-		removeSubject(dynamic_cast<ModAlfOverviewPanelImpl *>(
-		    overviewPanel_));
-}
-
 int
 ModAlf::getBaseId(void)
 {

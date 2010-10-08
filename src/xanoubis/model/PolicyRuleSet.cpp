@@ -657,6 +657,7 @@ PolicyRuleSet::create(wxString fileName)
 		create(ruleSet);
 		break;
 	case 1:
+		hasErrors_ = true;
 		if (TAILQ_EMPTY(&(ruleSet->err_queue))) {
 			logEntry = wxString::Format(
 			    _("Failed import of policy file %ls"),
@@ -671,8 +672,7 @@ PolicyRuleSet::create(wxString fileName)
 			    errMsg->msg);
 			Debug::err(logEntry);
 		}
-		hasErrors_ = true;
-		// XXX: do we need an apn_free_ruleset here ?
+		apn_free_ruleset(ruleSet);
 		break;
 	default:
 		logEntry = wxString::Format(

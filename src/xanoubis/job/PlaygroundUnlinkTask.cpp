@@ -93,7 +93,8 @@ PlaygroundUnlinkTask::exec(void)
 bool
 PlaygroundUnlinkTask::done(void)
 {
-	struct anoubis_msg *message = NULL;
+	struct anoubis_msg	*message = NULL, *tmp;
+	bool			 ret;
 
 	if (getComTaskResult() != RESULT_INIT) {
 		/* An error occured. We are done. */
@@ -129,16 +130,15 @@ PlaygroundUnlinkTask::done(void)
 	anoubis_transaction_destroy(transaction_);
 	transaction_ = NULL;
 
+	ret = true;
 	switch (state_) {
 	case INFO:
 		if (isPlaygroundActive(message)) {
 			setComTaskResult(RESULT_REMOTE_ERROR);
 			setResultDetails(EBUSY);
-			anoubis_msg_free(message);
-			return true;
+			break;
 		}
 
-		anoubis_msg_free(message);
 		state_ = FILEFETCH;
 
 		transaction_ = anoubis_client_list_start(getClient(),
@@ -146,18 +146,20 @@ PlaygroundUnlinkTask::done(void)
 		if (transaction_ == NULL) {
 			setComTaskResult(RESULT_LOCAL_ERROR);
 			setResultDetails(ENOMEM);
-			return true;
+			break;
 		}
-		return false;
+		ret = false;
 		break;
 	case FILEFETCH:
 		extractFileList(message);
 		type_ = Task::TYPE_FS;
 		break;
 	}
-
-	anoubis_msg_free(message);
-	return true;
+	while ((tmp = message) != NULL) {
+		message = tmp->next;
+		anoubis_msg_free(tmp);
+	}
+	return ret;
 }
 
 uint64_t

@@ -69,7 +69,7 @@ struct anoubis_csmulti_request {
 };
 
 typedef int (*anoubis_client_auth_callback_t)(struct anoubis_client *,
-    struct anoubis_msg *, struct anoubis_msg **);
+    const struct anoubis_msg *, struct anoubis_msg **);
 
 __BEGIN_DECLS
 

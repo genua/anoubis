@@ -49,7 +49,7 @@
 struct anoubis_transaction;
 
 typedef void (*anoubis_transaction_process_t)(struct anoubis_transaction *,
-    struct anoubis_msg * m);
+    const struct anoubis_msg * m);
 typedef	void (*anoubis_transaction_callback_t)(struct anoubis_transaction *);
 
 struct anoubis_transaction {
@@ -70,12 +70,14 @@ struct anoubis_transaction * anoubis_transaction_create(anoubis_token_t token,
     unsigned int flags, anoubis_transaction_process_t process,
     anoubis_transaction_callback_t finish, void * cbdata);
 void anoubis_transaction_destroy(struct anoubis_transaction * t);
-void anoubis_transaction_setopcodes(struct anoubis_transaction *, const u_int32_t *);
+void anoubis_transaction_setopcodes(struct anoubis_transaction *,
+    const u_int32_t *);
 int anoubis_transaction_match(struct anoubis_transaction * t,
     anoubis_token_t token, int self, u_int32_t opcode);
 void anoubis_transaction_process(struct anoubis_transaction * t,
     struct anoubis_msg * m);
-void anoubis_transaction_progress(struct anoubis_transaction *, const u_int32_t *);
+void anoubis_transaction_progress(struct anoubis_transaction *,
+    const u_int32_t *);
 void anoubis_transaction_done(struct anoubis_transaction * t, int error);
 __END_DECLS
 

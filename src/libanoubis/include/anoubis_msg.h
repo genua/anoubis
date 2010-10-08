@@ -142,25 +142,22 @@ struct proto_opt {
 };
 
 struct stringlist_iterator {
-	/*@dependent@*/
-	struct anoubis_msg * m;
-	/*@dependent@*/
+	const struct anoubis_msg * m;
 	char * buf;
 	int len;
 	int pos;
-	/*@dependent@*/
 	struct proto_opt * opts;
 };
 
 __BEGIN_DECLS
-/*@null@*/ struct anoubis_msg * anoubis_msg_new(size_t len);
-/*@null@*/ struct anoubis_msg * anoubis_msg_clone(struct anoubis_msg * m);
+struct anoubis_msg * anoubis_msg_new(size_t len);
+struct anoubis_msg * anoubis_msg_clone(struct anoubis_msg * m);
 int anoubis_msg_resize(struct anoubis_msg * m, size_t len);
-void anoubis_msg_free(/*@only@*/ struct anoubis_msg * m);
+void anoubis_msg_free(struct anoubis_msg * m);
 int anoubis_msg_verify(const struct anoubis_msg *m);
 
-void stringlist_iterator_init(/*@out@*/ struct stringlist_iterator * it,
-    struct anoubis_msg * m, struct proto_opt * opts);
+void stringlist_iterator_init(struct stringlist_iterator * it,
+    const struct anoubis_msg * m, struct proto_opt * opts);
 int stringlist_iterator_get(struct stringlist_iterator * it);
 struct anoubis_msg * anoubis_stringlist_msg(u_int32_t type,
     struct proto_opt * opts, int * ovals);

@@ -56,11 +56,6 @@ class ModPlayground : public Module, private Observer
 		ModPlayground(wxWindow *);
 
 		/**
-		 * Destructor.
-		 */
-		~ModPlayground(void);
-
-		/**
 		 * Get ModPlayground base id.
 		 * @param None.
 		 * @return Base ID.

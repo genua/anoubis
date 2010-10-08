@@ -55,14 +55,6 @@ ModSb::ModSb(wxWindow *parent) : Module(), Observer(NULL)
 	addSubject(dynamic_cast<ModSbOverviewPanelImpl *>(overviewPanel_));
 }
 
-ModSb::~ModSb()
-{
-	if (NotificationCtrl::existingInstance()) {
-		removeSubject(NotificationCtrl::existingInstance()->
-		    getPerspective(NotificationCtrl::LIST_STAT));
-	}
-}
-
 int
 ModSb::getBaseId(void)
 {

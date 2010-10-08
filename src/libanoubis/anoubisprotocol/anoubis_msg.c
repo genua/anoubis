@@ -80,7 +80,7 @@ void anoubis_msg_free(struct anoubis_msg * m)
 }
 
 void stringlist_iterator_init(struct stringlist_iterator * it,
-    struct anoubis_msg * m, struct proto_opt * opts)
+    const struct anoubis_msg * m, struct proto_opt * opts)
 {
 	unsigned int overhead = CSUM_LEN + sizeof(Anoubis_StringListMessage);
 

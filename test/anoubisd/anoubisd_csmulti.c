@@ -259,8 +259,8 @@ static int	 err_noent[] = { 0, ENOENT, -1 };
 static int	 err_ok[] = { 0, -1 };
 
 static int
-auth_callback(struct anoubis_client *client __used, struct anoubis_msg *in,
-    struct anoubis_msg **outp)
+auth_callback(struct anoubis_client *client __used,
+    const struct anoubis_msg *in, struct anoubis_msg **outp)
 {
 	return anoubis_auth_callback(sigs, sigs, in, outp, 0);
 }

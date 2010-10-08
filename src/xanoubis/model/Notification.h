@@ -60,13 +60,14 @@ class Notification : public AnListClass {
 		wxString		 logMessage_;
 		struct anoubis_msg	*notify_;
 
-		Notification(struct anoubis_msg *);
+		Notification(struct anoubis_msg *, bool free = false);
 		wxString	assembleAddress(bool);
 		wxString	localAlfAddress(void);
 		wxString	remoteAlfAddress(void);
 		virtual bool	isRwx(unsigned long);
 
 	public:
+
 		virtual ~Notification(void);
 
 		virtual wxString getModule(void);
@@ -86,6 +87,12 @@ class Notification : public AnListClass {
 		virtual bool isRead(void);
 		virtual bool isWrite(void);
 		virtual bool isExec(void);
+		bool needFree(void) const {
+			return free_;
+		}
+		void setNeedFree(void) {
+			free_ = true;
+		}
 		int getSfsmatch(void);
 		int getType(void);
 
@@ -98,9 +105,12 @@ class Notification : public AnListClass {
 		static Notification *factory(struct anoubis_msg *);
 
 	private:
-		/**
-		 */
 		long id_;
+		/**
+		 * True iff the notification should be freed after
+		 * answering it.
+		 */
+		bool		free_;
 };
 
 /**

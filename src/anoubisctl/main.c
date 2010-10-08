@@ -1270,8 +1270,8 @@ send_passphrase(void)
 }
 
 static int
-auth_callback(struct anoubis_client *client __used, struct anoubis_msg *in,
-    struct anoubis_msg **outp)
+auth_callback(struct anoubis_client *client __used,
+    const struct anoubis_msg *in, struct anoubis_msg **outp)
 {
 	int	rc	= -1;
 	int	flags	=  0;

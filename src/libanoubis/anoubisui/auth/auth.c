@@ -53,7 +53,7 @@
 	} while (0)
 
 int anoubis_auth_callback(struct anoubis_sig *privKey,
-    struct anoubis_sig *pubKey, struct anoubis_msg *in,
+    struct anoubis_sig *pubKey, const struct anoubis_msg *in,
     struct anoubis_msg **outp, int flags)
 {
 	int	 rc		= 0;	/* different return codes */

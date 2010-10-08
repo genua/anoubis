@@ -342,7 +342,7 @@ static void pgcli_files_print_msg(struct anoubis_msg *);
  */
 static int pgcli_files_print_record(Anoubis_PgFileRecord *, int);
 
-static int auth_callback(struct anoubis_client *, struct anoubis_msg *,
+static int auth_callback(struct anoubis_client *, const struct anoubis_msg *,
     struct anoubis_msg **);
 
 static int	 opts = 0;
@@ -1237,8 +1237,8 @@ pgcli_files_print_record(Anoubis_PgFileRecord *record, int needpath)
 }
 
 static int
-auth_callback(struct anoubis_client *client __used, struct anoubis_msg *in,
-    struct anoubis_msg **outp)
+auth_callback(struct anoubis_client *client __used,
+    const struct anoubis_msg *in, struct anoubis_msg **outp)
 {
 	int	rc	= -1;
 	int	flags	=  0;

@@ -109,12 +109,13 @@ ListTask::done(void)
 void
 ListTask::reset(void)
 {
+	struct anoubis_msg	*m;
 	setComTaskResult(RESULT_INIT);
 	setResultDetails(0);
 
-	if (result_) {
-		anoubis_msg_free(result_);
-		result_ = 0;
+	while ((m=result_) != NULL) {
+		result_ = m->next;
+		anoubis_msg_free(m);
 	}
 
 	if (ta_) {

@@ -46,7 +46,6 @@ class ModSfs : public Module, private Observer
 
 	public:
 		ModSfs(wxWindow *);
-		~ModSfs(void);
 
 		int	getBaseId(void);
 		int	getToolbarId(void);

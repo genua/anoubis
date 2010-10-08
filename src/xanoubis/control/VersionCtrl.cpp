@@ -248,10 +248,13 @@ VersionCtrl::exportVersion(unsigned int no, const wxString &profile,
 	if (rs == 0)
 		return (false);
 
-	if ((fh = fopen(path.fn_str(), "w")) == 0)
+	if ((fh = fopen(path.fn_str(), "w")) == 0) {
+		apn_free_ruleset(rs);
 		return (false);
+	}
 
 	int result = apn_print_ruleset(rs, 0, fh);
+	apn_free_ruleset(rs);
 
 	if (result == 0)
 		fflush(fh);

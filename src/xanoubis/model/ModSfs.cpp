@@ -59,14 +59,6 @@ ModSfs::ModSfs(wxWindow *parent) : Module(), Observer(NULL)
 	addSubject(dynamic_cast<ModSfsOverviewPanelImpl *>(overviewPanel_));
 }
 
-ModSfs::~ModSfs(void)
-{
-	if (NotificationCtrl::existingInstance()) {
-		removeSubject(NotificationCtrl::existingInstance()->
-		    getPerspective(NotificationCtrl::LIST_STAT));
-	}
-}
-
 int
 ModSfs::getBaseId(void)
 {

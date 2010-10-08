@@ -57,8 +57,8 @@
 #define X_AUTH_NOKEY		0x8001
 
 extern "C" int
-x_auth_callback(struct anoubis_client *WXUNUSED(client), struct anoubis_msg *in,
-    struct anoubis_msg **outp)
+x_auth_callback(struct anoubis_client *WXUNUSED(client),
+    const struct anoubis_msg *in, struct anoubis_msg **outp)
 {
 	KeyCtrl *keyCtrl = KeyCtrl::instance();
 
@@ -319,6 +319,8 @@ ComThread::Entry(void)
 				anoubis_client_notifyreply(client_, token,
 				    allowed ? 0 : EPERM, 0);
 			}
+			if (notify->needFree())
+				delete notify;
 		}
 		/* Step 3: If no task is running, try to start a new one. */
 		if (current == NULL) {
@@ -381,7 +383,6 @@ ComThread::Entry(void)
 
 	return (0);
 }
-
 bool
 ComThread::readMessage(void)
 {
@@ -470,6 +471,7 @@ ComThread::checkNotify(struct anoubis_msg *notifyMsg)
 			notify  = new EscalationNotify(notifyMsg);
 			answer = new NotifyAnswer(NOTIFY_ANSWER_ONCE, true);
 			notify->setAnswer(answer);
+			notify->setNeedFree();
 			pushNotification(notify);
 			return true;
 		}
@@ -489,7 +491,7 @@ ComThread::sendNotify(struct anoubis_msg *notifyMsg)
 	notify = NULL;
 	/*
 	 * NOTE: We must not allocate the NotificationCtrl from the
-	 * NOTE: ComThrea. It must be created in the main Thread.
+	 * NOTE: ComThread. It must be created in the main Thread.
 	 * NOTE: This is particularly imporant in tests where the
 	 * NOTE: event handlers of the NotificationCtrl do not work.
 	 */
@@ -547,6 +549,8 @@ ComThread::pushNotification(Notification *notify)
 {
 	if ((notify != NULL) && IS_ESCALATIONOBJ(notify)) {
 		answerQueue_->push(notify);
+	} else if (notify->needFree()) {
+		delete notify;
 	}
 }
 

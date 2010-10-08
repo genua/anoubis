@@ -55,12 +55,6 @@ class ModSb : public Module, private Observer
 		ModSb(wxWindow *);
 
 		/**
-		 * Destructor of ModSb.
-		 * @param None.
-		 */
-		~ModSb(void);
-
-		/**
 		 * Get the BaseId of ModSb.
 		 * @param None.
 		 * @return The BaseId of ModSb.

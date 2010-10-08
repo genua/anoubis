@@ -117,12 +117,12 @@ NotificationCtrl::getNotification(long id)
 PlaygroundFileNotify *
 NotificationCtrl::getPlaygroundFileNotify(void)
 {
-	std::map<long, Notification *>::iterator	 it;
 	Notification					*notify = NULL;
-
 
 	notificationHashMutex_.Lock();
 	if (playgroundFileNotifyId_ != wxID_NONE) {
+		std::map<long, Notification *>::iterator	 it;
+
 		it = notificationHash_.find(playgroundFileNotifyId_);
 		if (it != notificationHash_.end())
 			notify = it->second;

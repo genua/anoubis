@@ -2235,8 +2235,8 @@ filter_result(struct sfs_request_node *node, int cnt, char **list, char *path)
 }
 
 static int
-auth_callback(struct anoubis_client *client __used, struct anoubis_msg *in,
-    struct anoubis_msg **outp)
+auth_callback(struct anoubis_client *client __used,
+    const struct anoubis_msg *in, struct anoubis_msg **outp)
 {
 	struct anoubis_sig	*as_auth;
 	int			need_priv;
