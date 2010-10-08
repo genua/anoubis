@@ -31,25 +31,53 @@
 #include <sys/tree.h>
 #include "pe.h"
 
-struct pe_file_node {
-	RB_ENTRY(pe_file_node)	 entry;
+/**
+ * A node in file tree. The node contains a path name and the task cookie
+ * of the task that modified the file. The path name is dynamically
+ * allocated.
+ */
+struct pe_filetree_node {
+	/**
+	 * The link for the node in the surrounding file tree.
+	 */
+	RB_ENTRY(pe_filetree_node)	 entry;
+
+	/**
+	 * The path name of the file.
+	 */
 	char			*path;
+
+	/**
+	 * The task cookie of the task that modified the file.
+	 */
 	anoubis_cookie_t	 task_cookie;
+
+	/**
+	 * A hash value of the file name. This is used to simplify
+	 * file name comparisions.
+	 */
 	unsigned long		 idx;
 };
 
+/**
+ * The root of a file tree. A file tree contains file names associated
+ * with task cookies in a red black tree that allows efficient access
+ * based on file names.
+ */
 struct pe_file_tree {
-	RB_HEAD(rb_file_tree, pe_file_node) head;
+	RB_HEAD(rb_file_tree, pe_filetree_node) head;
 };
 
-struct pe_file_tree *pe_init_filetree(void);
-int pe_insert_node(struct pe_file_tree *, char *, anoubis_cookie_t);
-struct pe_file_node *pe_find_file(struct pe_file_tree *, char *);
-struct pe_file_node *pe_filetree_next(struct pe_file_tree *,
-    struct pe_file_node *);
-struct pe_file_node *pe_filetree_start(struct pe_file_tree *);
-void pe_delete_file(struct pe_file_tree *, char *);
-void pe_delete_node(struct pe_file_tree *, struct pe_file_node *);
-void pe_filetree_destroy(struct pe_file_tree *);
+/* Prototypes */
+struct pe_file_tree	*pe_filetree_create(void);
+void			 pe_filetree_destroy(struct pe_file_tree *);
+int			 pe_filetree_insert(struct pe_file_tree *,
+			     char *, anoubis_cookie_t);
+void			 pe_filetree_remove(struct pe_file_tree *,
+			     struct pe_filetree_node *);
+struct pe_filetree_node	*pe_filetree_find(struct pe_file_tree *, char *);
+struct pe_filetree_node	*pe_filetree_start(struct pe_file_tree *);
+struct pe_filetree_node	*pe_filetree_next(struct pe_file_tree *,
+			     struct pe_filetree_node *);
 
 #endif	/* _PE_FILETREE_H_ */

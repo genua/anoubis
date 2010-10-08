@@ -269,7 +269,7 @@ static struct pe_expect_path	tc_file_expect[]  = {
 
 START_TEST(tc_files)
 {
-	struct pe_file_node	*cur;
+	struct pe_filetree_node	*cur;
 	int			 i;
 
 	pe_init();

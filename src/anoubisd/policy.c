@@ -1052,7 +1052,7 @@ policy_upgrade_fill_chunk(char *buf, int maxlen)
 	int	reallen = 0;
 
 	while (1) {
-		struct pe_file_node	*node = pe_upgrade_filelist_get();
+		struct pe_filetree_node	*node = pe_upgrade_filelist_get();
 		int len;
 
 		if (!node)

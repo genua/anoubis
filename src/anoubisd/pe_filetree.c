@@ -37,40 +37,63 @@
 #define FT_HASH_SHIFT	(24)
 #define FT_HASH_MASK	((1UL<<FT_HASH_SHIFT)-1)
 
-static int hashcmp(struct pe_file_node *, struct pe_file_node *);
-static unsigned long hash_fn(const char *data, int cnt);
+static int hashcmp(struct pe_filetree_node *, struct pe_filetree_node *);
+static unsigned long hash_fn(const char *str);
 
-RB_PROTOTYPE_STATIC(rb_file_tree, pe_file_node, entry, hashcmp);
-RB_GENERATE_STATIC(rb_file_tree, pe_file_node, entry, hashcmp);
+RB_PROTOTYPE_STATIC(rb_file_tree, pe_filetree_node, entry, hashcmp);
+RB_GENERATE_STATIC(rb_file_tree, pe_filetree_node, entry, hashcmp);
 
+/**
+ * Compare two nodes in a file tree. The comparision is first done
+ * based on the hash value. Nodes with equal hash values are
+ * compared using strcmp. This function assumes that the hash
+ * values of the paths are stored in the idx fields of the nodes.
+ *
+ * This function is used by the RED/BLACK tree implementation.
+ *
+ * @param e1 The first node.
+ * @param d2 The second node.
+ * @return The result of the comparison (negative, zero, positive as in
+ *     strcmp).
+ */
 static int
-hashcmp(struct pe_file_node *e1, struct pe_file_node *e2)
+hashcmp(struct pe_filetree_node *e1, struct pe_filetree_node *e2)
 {
 	if (e1->idx == e2->idx)
 		return strcmp(e1->path, e2->path);
 	return (e1->idx - e2->idx);
 }
 
+/**
+ * Calculate the hash value of the argument string.
+ *
+ * @param str The string.
+ * @return The hash value.
+ */
 static unsigned long
-hash_fn(const char *data, int cnt)
+hash_fn(const char *str)
 {
 	unsigned long	ret = 0;
-	int		i;
 
-	if (data == NULL)
+	if (str == NULL)
 		return 0;
 
-	for (i=0; i<cnt; ++i,++data) {
+	for (; *str; str++) {
 		ret <<= 1;
-		ret ^= *data;
+		ret ^= *str;
 		ret = (ret ^ (ret >> FT_HASH_SHIFT)) & FT_HASH_MASK;
 	}
 	return ret & FT_HASH_MASK;
 }
 
-/* Initilaize the tree */
+/**
+ * Create and initialize a new file tree. The tree structure is
+ * allocated dynamically and must be freed by the caller.
+ *
+ * @return The new tree or NULL if out of memory.
+ */
 struct pe_file_tree *
-pe_init_filetree(void)
+pe_filetree_create(void)
 {
 	struct pe_file_tree *tree;
 
@@ -81,19 +104,29 @@ pe_init_filetree(void)
 	return tree;
 }
 
-/*
- * insert a node to the tree. If a node with the same path already exists
+/**
+ * Insert a path into a file tree. If a node with the same path already exists
  * the node is not inserted. However, if the cookie of the new node has the
  * special value 0, the cookie in the existing node is modified.
+ *
+ * @param f The file tree.
+ * @param path The path to insert. The memory of the path is copied, i.e.
+ *     the caller must properly free its own copy.
+ * @param cookie The new cookie. This value is stored in the tree together
+ *     with the path name. If the value is zero, the cookie of an existing
+ *     node for the same path is set to zero, too. Otherwise an existing
+ *     node for the same path is not modified.
+ * @return Zero in case of success, a negative error code in case of an
+ *     error.
  */
 int
-pe_insert_node(struct pe_file_tree *f, char *path, anoubis_cookie_t cookie)
+pe_filetree_insert(struct pe_file_tree *f, char *path, anoubis_cookie_t cookie)
 {
-	struct pe_file_node *n = NULL, *other;
+	struct pe_filetree_node *n = NULL, *other;
 
 	if (f == NULL || path == NULL)
 		return -EINVAL;
-	n = malloc(sizeof(struct pe_file_node));
+	n = malloc(sizeof(struct pe_filetree_node));
 	if (n == NULL)
 		return -ENOMEM;
 	n->path = strdup(path);
@@ -101,7 +134,7 @@ pe_insert_node(struct pe_file_tree *f, char *path, anoubis_cookie_t cookie)
 		free(n);
 		return -ENOMEM;
 	}
-	n->idx = hash_fn(path, strlen(path));
+	n->idx = hash_fn(path);
 	n->task_cookie = cookie;
 	other = RB_INSERT(rb_file_tree, &f->head, n);
 	if (other) {
@@ -114,20 +147,16 @@ pe_insert_node(struct pe_file_tree *f, char *path, anoubis_cookie_t cookie)
 	return 0;
 }
 
-/* deletes a node by a path name */
+/**
+ * Delete a node from the file tree. The node and the memory for the
+ * path name in the node is freed. The node must exist and must be part
+ * of the given file tree.
+ *
+ * @param f The file tree.
+ * @param n The node to delete.
+ */
 void
-pe_delete_file(struct pe_file_tree *f, char *path)
-{
-	struct pe_file_node *n;
-	if (f == NULL || path == NULL)
-		return;
-	n = pe_find_file(f, path);
-	pe_delete_node(f, n);
-}
-
-/* deletes a node by a struct node */
-void
-pe_delete_node(struct pe_file_tree *f, struct pe_file_node *n)
+pe_filetree_remove(struct pe_file_tree *f, struct pe_filetree_node *n)
 {
 	if (f == NULL || n == NULL)
 		return;
@@ -137,27 +166,41 @@ pe_delete_node(struct pe_file_tree *f, struct pe_file_node *n)
 	free(n);
 }
 
-/* finds a node in a tree */
-struct pe_file_node *
-pe_find_file(struct pe_file_tree *f, char *path)
+/**
+ * Find the node for a given path in the file tree. The node is
+ * still owned by the tree and must not be freed or modified.
+ *
+ * @param f The file tree.
+ * @param path The path to search for.
+ * @return The node for the path name or NULL if the path name was not
+ *     found.
+ */
+struct pe_filetree_node *
+pe_filetree_find(struct pe_file_tree *f, char *path)
 {
-	struct pe_file_node n, *res = NULL;
+	struct pe_filetree_node	n, *res = NULL;
 
 	if (f == NULL || path == NULL)
 		return NULL;
 	n.path = path;
-	n.idx = hash_fn(path, strlen(path));
+	n.idx = hash_fn(path);
 	res = RB_FIND(rb_file_tree, &f->head, &n);
 	return res;
 }
 
-/* gets a first node in the tree. this can be used to
- * initlize a iterator:
+/**
+ * Return a pointer to the first node in the file tree. This can
+ * be used together with pe_filetree_next to implement an iterator.
+ * like this:
+ * <code>
  * for (np = pe_filetree_start(f); np != NULL; np = pe_filetree_next(f, np)) {
  *	...
  * }
+ * </code>
+ * @param f The file tree.
+ * @return The first node in the file tree. NULL if the tree is empty.
  */
-struct pe_file_node *
+struct pe_filetree_node *
 pe_filetree_start(struct pe_file_tree *f)
 {
 	if (f == NULL)
@@ -165,22 +208,31 @@ pe_filetree_start(struct pe_file_tree *f)
 	return RB_MIN(rb_file_tree, &f->head);
 }
 
-/* gets the next node in the tree from the 'last node'
- * it will return NULL if the 'last node' was the last node
+/**
+ * Return the node that immediately follows the node given node in the
+ * file tree. The given node must be part of the file tree.
+ *
+ * @param f The file tree.
+ * @param last The previous node.
+ * @return The node that immediately follows last.
  */
-struct pe_file_node *
-pe_filetree_next(struct pe_file_tree *f, struct pe_file_node *last)
+struct pe_filetree_node *
+pe_filetree_next(struct pe_file_tree *f, struct pe_filetree_node *last)
 {
 	if (f == NULL || last == NULL)
 		return NULL;
 	return RB_NEXT(rb_file_tree, &f->head, last);
 }
 
-/* clean up the tree */
+/**
+ * Destroy a file tree and all its nodes.
+ *
+ * @param f The file tree.
+ */
 void
 pe_filetree_destroy(struct pe_file_tree *f)
 {
-	struct pe_file_node *var, *nxt;
+	struct pe_filetree_node *var, *nxt;
 
 	if (f == NULL)
 		return;

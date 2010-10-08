@@ -108,7 +108,7 @@ static int			 upgrade_counter = 0;
  * An iterator that points into the upgrade_tree. Requests from the
  * upgrade process for files that need checksum updates use this iterator.
  */
-static struct pe_file_node	*upgrade_iterator = NULL;
+static struct pe_filetree_node	*upgrade_iterator = NULL;
 
 /**
  * This variable is true if it is currently ok to start a new upgrade.
@@ -195,7 +195,7 @@ pe_upgrade_start(struct pe_proc *proc)
 		return;
 	/* Initialize the tree if we currently have none. */
 	if (upgrade_tree == NULL) {
-		upgrade_tree = pe_init_filetree();
+		upgrade_tree = pe_filetree_create();
 		if (upgrade_tree == NULL)
 			return;
 	} else if (upgrade_counter == 0) {
@@ -244,7 +244,7 @@ pe_upgrade_start(struct pe_proc *proc)
 void
 pe_upgrade_end(struct pe_proc *proc)
 {
-	struct pe_file_node	*it, *next;
+	struct pe_filetree_node	*it, *next;
 	anoubis_cookie_t	 last_cookie = 0;
 	int			 isparent = pe_proc_is_upgrade_parent(proc);
 
@@ -274,7 +274,7 @@ pe_upgrade_end(struct pe_proc *proc)
 		if (pe_proc_is_running(it->task_cookie)) {
 			DEBUG(DBG_UPGRADE, "Upgraded file: %s removed",
 			    it->path);
-			pe_delete_node(upgrade_tree, it);
+			pe_filetree_remove(upgrade_tree, it);
 		} else {
 			last_cookie = it->task_cookie;
 		}
@@ -316,13 +316,13 @@ pe_upgrade_filelist_next(void)
 }
 
 /**
- * Return a pointer to the current pe_file_node in the upgrade file tree.
+ * Return a pointer to the current pe_filetree_node in the upgrade file tree.
  * The current node is determined by the upgrade file list iterator.
  *
  * @return A pointer to the current node. Must not be modified by the
  *     caller.
  */
-struct pe_file_node *
+struct pe_filetree_node *
 pe_upgrade_filelist_get(void)
 {
 	if (!upgrade_tree || upgrade_counter)
@@ -757,11 +757,12 @@ pe_handle_sfs(struct eventdev_hdr *hdr)
 			 */
 			if (pe_proc_is_upgrade_parent(proc))
 				cookie = 0;
-			pe_insert_node(upgrade_tree, fevent->path, cookie);
+			pe_filetree_insert(upgrade_tree, fevent->path, cookie);
 			fevent->upgrade_flags |= PE_UPGRADE_TOUCHED;
 		}
 	} else {
-		if (fevent->path && pe_find_file(upgrade_tree, fevent->path))
+		if (fevent->path
+		    && pe_filetree_find(upgrade_tree, fevent->path))
 			fevent->upgrade_flags |= PE_UPGRADE_TOUCHED;
 	}
 	if ((fevent->upgrade_flags & PE_UPGRADE_TOUCHED)

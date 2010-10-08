@@ -33,18 +33,18 @@
 START_TEST(tc_filetree_nomal)
 {
 	struct pe_file_tree *f = NULL;
-	struct pe_file_node *n = NULL;
+	struct pe_filetree_node *n = NULL;
 	anoubis_cookie_t c = 1234;
 	char name[] = "/var/lib/bla";
 	int rc = 0;
 
-	f = pe_init_filetree();
-	fail_if(f == NULL, "pe_init_filetree failed");
+	f = pe_filetree_create();
+	fail_if(f == NULL, "pe_filetree_create failed");
 
-	rc = pe_insert_node(f, name, c);
-	fail_if (rc < 0, "pe_insert_node failed");
+	rc = pe_filetree_insert(f, name, c);
+	fail_if (rc < 0, "pe_filetree_insert failed");
 
-	n = pe_find_file(f, name);
+	n = pe_filetree_find(f, name);
 	fail_if(n == NULL, "Couldn't find file in tree");
 
 	pe_filetree_destroy(f);
@@ -54,36 +54,36 @@ END_TEST
 START_TEST(tc_filetree_collision)
 {
 	struct pe_file_tree *f = NULL;
-	struct pe_file_node *n = NULL;
+	struct pe_filetree_node *n = NULL;
 	anoubis_cookie_t c = 1234;
 	int rc = 0;
 
-	f = pe_init_filetree();
-	fail_if(f == NULL, "pe_init_filetree failed");
+	f = pe_filetree_create();
+	fail_if(f == NULL, "pe_filetree_create failed");
 
 	/* These strings have all the same hashvalue with our
 	 * hash_fn and should be able to be insert and find.
 	 */
-	rc = pe_insert_node(f, "cy", c);
-	fail_if (rc < 0, "pe_insert_node failed");
+	rc = pe_filetree_insert(f, "cy", c);
+	fail_if (rc < 0, "pe_filetree_insert failed");
 
-	rc = pe_insert_node(f, "dw", c);
-	fail_if (rc < 0, "pe_insert_node failed");
+	rc = pe_filetree_insert(f, "dw", c);
+	fail_if (rc < 0, "pe_filetree_insert failed");
 
-	rc = pe_insert_node(f, "eu", c);
-	fail_if (rc < 0, "pe_insert_node failed");
+	rc = pe_filetree_insert(f, "eu", c);
+	fail_if (rc < 0, "pe_filetree_insert failed");
 
-	n = pe_find_file(f, "cy");
+	n = pe_filetree_find(f, "cy");
 	fail_if(n == NULL, "couldn't finde 'cy' in tree");
 
-	n = pe_find_file(f, "dw");
+	n = pe_filetree_find(f, "dw");
 	fail_if(n == NULL, "couldn't find 'dw' in tree");
 
-	n = pe_find_file(f, "eu");
+	n = pe_filetree_find(f, "eu");
 	fail_if(n == NULL, "couldn't find eu in tree");
 
 	/* where else the same string shouldn't be insert */
-	rc = pe_insert_node(f, "cy", c);
+	rc = pe_filetree_insert(f, "cy", c);
 	fail_if(rc == 0, "cy allready in the tree and shouldn't be inserted");
 
 	pe_filetree_destroy(f);
@@ -93,37 +93,37 @@ END_TEST
 START_TEST(tc_filetree_failcases)
 {
 	struct pe_file_tree *f = NULL;
-	struct pe_file_node *n = NULL;
+	struct pe_filetree_node *n = NULL;
 	anoubis_cookie_t c = 1234;
 	char name[] = "/var/lib/bla";
 	int rc = 0;
 
-	f = pe_init_filetree();
-	fail_if(f == NULL, "pe_init_filetree failed");
+	f = pe_filetree_create();
+	fail_if(f == NULL, "pe_filetree_create failed");
 
-	rc = pe_insert_node(f, NULL, c);
-	fail_if (rc == 0, "pe_insert_node should fail");
+	rc = pe_filetree_insert(f, NULL, c);
+	fail_if (rc == 0, "pe_filetree_insert should fail");
 
-	rc = pe_insert_node(NULL, name, c);
-	fail_if (rc == 0, "pe_insert_node should fail");
+	rc = pe_filetree_insert(NULL, name, c);
+	fail_if (rc == 0, "pe_filetree_insert should fail");
 
-	rc = pe_insert_node(NULL, NULL, c);
-	fail_if (rc == 0, "pe_insert_node should fail");
+	rc = pe_filetree_insert(NULL, NULL, c);
+	fail_if (rc == 0, "pe_filetree_insert should fail");
 
-	rc = pe_insert_node(f, name, c);
-	fail_if (rc < 0, "pe_insert_node failed");
+	rc = pe_filetree_insert(f, name, c);
+	fail_if (rc < 0, "pe_filetree_insert failed");
 
-	n = pe_find_file(NULL, name);
+	n = pe_filetree_find(NULL, name);
 	fail_if(n != NULL, "Shouldn't find file in tree");
 
-	n = pe_find_file(f, NULL);
+	n = pe_filetree_find(f, NULL);
 	fail_if(n != NULL, "Shouldn't find file in tree");
 
-	n = pe_find_file(NULL, NULL);
+	n = pe_filetree_find(NULL, NULL);
 	fail_if(n != NULL, "Shouldn't find file in tree");
 
-	n = pe_find_file(f, name);
-	fail_if(n == NULL, "pe_find_file failed");
+	n = pe_filetree_find(f, name);
+	fail_if(n == NULL, "pe_filetree_find failed");
 
 	pe_filetree_destroy(f);
 }
@@ -132,22 +132,22 @@ END_TEST
 START_TEST(tc_filetree_iteration)
 {
 	struct pe_file_tree *f = NULL;
-	struct pe_file_node *n = NULL;
+	struct pe_filetree_node *n = NULL;
 	anoubis_cookie_t c = 1234;
 	int rc = 0, i = 0,
 	    cy = 0, dw = 0, eu = 0;
 
-	f = pe_init_filetree();
-	fail_if(f == NULL, "pe_init_filetree failed");
+	f = pe_filetree_create();
+	fail_if(f == NULL, "pe_filetree_create failed");
 
-	rc = pe_insert_node(f, "cy", c);
-	fail_if (rc < 0, "pe_insert_node failed");
+	rc = pe_filetree_insert(f, "cy", c);
+	fail_if (rc < 0, "pe_filetree_insert failed");
 
-	rc = pe_insert_node(f, "dw", c);
-	fail_if (rc < 0, "pe_insert_node failed");
+	rc = pe_filetree_insert(f, "dw", c);
+	fail_if (rc < 0, "pe_filetree_insert failed");
 
-	rc = pe_insert_node(f, "eu", c);
-	fail_if (rc < 0, "pe_insert_node failed");
+	rc = pe_filetree_insert(f, "eu", c);
+	fail_if (rc < 0, "pe_filetree_insert failed");
 
 	for (n = pe_filetree_start(f); n != NULL; n = pe_filetree_next(f, n)) {
 		fail_if(n == NULL, "Error while iteration");
