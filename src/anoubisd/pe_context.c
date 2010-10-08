@@ -25,7 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
+/**
+ \file
  * CONTEXT CHANGE LOGIC
  *
  * Each process has two completely separate contexts:
@@ -148,17 +149,44 @@
 #include "sfs.h"
 #include "cert.h"
 
+/**
+ * The context of a rule. Contexts can be shared and must thus be
+ * reference counted.
+ */
 struct pe_context {
+	/**
+	 * The reference count of the context.
+	 */
 	int			 refcount;
+
+	/**
+	 * The alf rule block of the context.
+	 */
 	struct apn_rule		*alfrule;
+
+	/**
+	 * The sandbox rule block of the context.
+	 */
 	struct apn_rule		*sbrule;
+
+	/**
+	 * The context rule block of the rule.
+	 */
 	struct apn_rule		*ctxrule;
+
+	/**
+	 * The ruleset that the above rules point to.
+	 */
 	struct apn_ruleset	*ruleset;
+
+	/**
+	 * The path and checksum of the context. This data is used
+	 * to refresh the context, e.g. in case of a rule reload.
+	 */
 	struct pe_proc_ident	 ident;
-	anoubis_cookie_t	 conn_cookie;
 };
 
-static void			 pe_dump_dbgctx(const char *, struct pe_proc *);
+/* Prototypes */
 static struct pe_context	*pe_context_search(struct apn_ruleset *,
 				     struct pe_proc_ident *, uid_t uid, int pg);
 static int			 pe_context_decide(struct pe_proc *, int, int,
@@ -171,12 +199,15 @@ static void			 pe_context_norules(struct pe_proc *, int);
 static void			 pe_savedctx_norules(struct pe_proc *, int);
 
 
-/*
- * Set the process context if no ruleset is present to search for
- * the context.
+/**
+ * Set the process context in the case where no ruleset is present to
+ * search for the context.
  * - If the process never had a context for the priority, leave it alone.
  * - Otherwise create a norules context with the pident from the old context
  *   but without actual rules.
+ *
+ * @param The process to create a context for.
+ * @param prio The priority for of the new context.
  */
 void
 pe_context_norules(struct pe_proc *proc, int prio)
@@ -196,12 +227,15 @@ pe_context_norules(struct pe_proc *proc, int prio)
 	pe_context_put(ctx);
 }
 
-/*
+/**
  * Set the saved process context if no ruleset is present to search for a
  * replacment saved context.
  * - If the process never saved a context for the priority, leave it alone.
  * - Otherwise create  norules context with the pident from the old context
  *   but without actual rules.
+ *
+ * @param proc The process to create a context for.
+ * @param prio The priority of the new context.
  */
 void
 pe_savedctx_norules(struct pe_proc *proc, int prio)
@@ -223,7 +257,7 @@ pe_savedctx_norules(struct pe_proc *proc, int prio)
 	pe_context_put(ctx);
 }
 
-/*
+/**
  * Update a context at a rules reload.
  * - If there are no rules a norules context is used.
  * - If there is an old context we search a new one based on the search
@@ -232,6 +266,10 @@ pe_savedctx_norules(struct pe_proc *proc, int prio)
  *   the processes identifier.
  * pdb contains the database that should be used to lookup rulesets. If pdb
  * is NULL the currently active policy database is used.
+ *
+ * @param proc The process.
+ * @param prio The priority.
+ * @param pdb The policy data base to search.
  */
 void
 pe_context_refresh(struct pe_proc *proc, int prio, struct pe_policy_db *pdb)
@@ -282,9 +320,14 @@ pe_context_refresh(struct pe_proc *proc, int prio, struct pe_policy_db *pdb)
 	return;
 }
 
-/*
- * Decode a context in a printable string.  This string is allocated
- * and needs to be freed by the caller.
+/**
+ * Decode a context into a printable string. This string is allocated
+ * dynamically and must be freed by the caller.
+ *
+ * @param hdr The eventdev event. uid and pid are extracted from here.
+ * @param proc One context of this process should be dumped.
+ * @param prio The priority of the context to dump.
+ * @return The text representation of the context.
  */
 char *
 pe_context_dump(struct eventdev_hdr *hdr, struct pe_proc *proc, int prio)
@@ -321,7 +364,7 @@ pe_context_dump(struct eventdev_hdr *hdr, struct pe_proc *proc, int prio)
 	return dump;
 }
 
-/*
+/**
  * Inherit the parent process context. This happens on fork(2).
  * - If our parent was never tracked, we simulate an exec.
  * - If the parent's uid and our uid do not match we simulate an exec, too.
@@ -330,6 +373,9 @@ pe_context_dump(struct eventdev_hdr *hdr, struct pe_proc *proc, int prio)
  *   context.
  * - If there are rules for the  process, use them to find a new context
  *   based on the current process's proc->ident.
+ *
+ * @param proc The new child process.
+ * @param parent The parent process to inherit from.
  */
 void
 pe_context_fork(struct pe_proc *proc, struct pe_proc *parent)
@@ -363,9 +409,24 @@ pe_context_fork(struct pe_proc *proc, struct pe_proc *parent)
 		    pe_proc_get_uid(proc));
 		pe_proc_drop_saved_ctx(proc, i);
 	}
-	pe_dump_dbgctx("pe_context_fork", proc);
 }
 
+/**
+ * Return true if a process identification (path and checksum) matches
+ * the subject in an apn_app from an application block. This function
+ * evaluates a single application only. The caller must iterate over
+ * the application list.
+ *
+ * @note: The path name in the pident is not evaluated by this function.
+ *        It only compares checksums. The path in the application is
+ *        used to retrieve the checksum from the sfs tree.
+ *
+ * @param app A list of application structure from an application rule.
+ * @param pident The process identification. Only the checksum is used.
+ * @param uid The user ID of the process. This is used to retrieve the
+ *     checksum or key if the subject is of type UID_SELF or KEY_SELF.
+ * @return True if the process and the subject in the application match.
+ */
 static int
 pe_context_subject_match(const struct apn_app *app,
     const struct pe_proc_ident *pident, uid_t uid)
@@ -421,6 +482,21 @@ pe_context_subject_match(const struct apn_app *app,
 	return ret;
 }
 
+/**
+ * Return true if the process given by the process identifier and the
+ * given apn_app from an application rule match. If the subject in the
+ * apn_app is of type NONE, this function compares path name. If a
+ * subject is given, the subject is compared instead.
+ *
+ * @note: The caller must iterate over the list of applications. This
+ *        function only checks a single application.
+ *
+ * @param app The apn_app structure.
+ * @param pident The process identifier of the process.
+ * @param uid The user ID of the process. This is used for subjects
+ *     of type UID_SELF and KEY_SELF.
+ * @return True if apn_app and pident match.
+ */
 static int
 pe_context_app_match(const struct apn_app *app,
     const struct pe_proc_ident *pident, uid_t uid)
@@ -440,9 +516,16 @@ pe_context_app_match(const struct apn_app *app,
 	return pe_context_subject_match(app, pident, uid);
 }
 
-/*
+/**
  * Select a new context for priority prio of the process proc based on the
  * pident and uid given as parameters.
+ *
+ * @param proc The process to create a new context for.
+ * @param prio The priority of the new context.
+ * @param pident The process identification to use for the new context.
+ *     This is usually the identifier of the new binary at exec time.
+ * @param uid The user ID of the process. This is used to search for
+ *     the rule set.
  */
 static void
 pe_context_switch(struct pe_proc *proc, int prio,
@@ -471,13 +554,18 @@ pe_context_switch(struct pe_proc *proc, int prio,
 	pe_context_put(tmpctx);
 }
 
-/*
+/**
  * Change a context at exec time.
  * - If pe_context_decide forbids changing the context. Do not change it.
  * - Otherwise the context at the prio either allowed the context switch
  *   or it is still invalid (NULL) which implicitly allows us to switch
  *   contexts. In that case search a new context using pe_context_switch.
  *   This will properly handle the case where the old context is NULL.
+ *
+ * @param proc The process that did the exec.
+ * @param uid The new user ID. This is used to search for the rule set.
+ * @param pident The process identifier of the binary that is executed.
+ *     It will be used for the new context if switching contexts is allowed.
  */
 void
 pe_context_exec(struct pe_proc *proc, uid_t uid, struct pe_proc_ident *pident)
@@ -507,6 +595,15 @@ pe_context_exec(struct pe_proc *proc, uid_t uid, struct pe_proc_ident *pident)
 		pe_proc_set_uid(proc, uid);
 }
 
+/**
+ * Return true if the process will switch its context if it executes
+ * a given binary.
+ *
+ * @param proc The process.
+ * @param uid The user ID of the process.
+ * @param pident The identification of the binary to exec.
+ * @return True if the process will changes its context.
+ */
 int
 pe_context_will_transition(struct pe_proc *proc, uid_t uid,
     struct pe_proc_ident *pident)
@@ -545,6 +642,18 @@ pe_context_will_transition(struct pe_proc *proc, uid_t uid,
 	return 0;
 }
 
+/**
+ * Return true if the given process will be forced into a playground
+ * if it executes the given binary.
+ *
+ * @param proc The process.
+ * @param uid The user ID of the process.
+ * @param pident The process identification of the new binary.
+ * @param ruleidp The rule that forced the context switch is returned here.
+ * @param priop The priority of the rule that forced the context switch
+ *     is returned here.
+ * @return True if the process will be forced into a playground.
+ */
 int
 pe_context_will_pg(struct pe_proc *proc, uid_t uid,
     struct pe_proc_ident *pident, int *ruleidp, int *priop)
@@ -589,7 +698,7 @@ pe_context_will_pg(struct pe_proc *proc, uid_t uid,
 	return 0;
 }
 
-/*
+/**
  * Change context on open(2):
  * - If pe_context_decide forbids changing the context, we don't.
  * - The logic is similar to pe_context_exec: Otherwise the context at the
@@ -597,6 +706,10 @@ pe_context_will_pg(struct pe_proc *proc, uid_t uid,
  *   which implicitly allows us to switch contexts.  In that case search
  *   a new context using pe_context_switch.  Additionally the identity of the
  *   process is updated.
+ *
+ * @param proc The process,.
+ * @param hdr The eventdev event of the open.
+ * @return None.
  */
 void
 pe_context_open(struct pe_proc *proc, struct eventdev_hdr *hdr)
@@ -644,6 +757,17 @@ pe_context_open(struct pe_proc *proc, struct eventdev_hdr *hdr)
 	}
 }
 
+/**
+ * Switch contexts at a borrow event. The current context will be
+ * saved and restored once the connection identified by the connection
+ * cookie terminates. A context is only borrowed, if an appropriate
+ * rule exists. This is checked using pe_context_decide.
+ *
+ * @param proc The process that just connected to another process.
+ * @param procp The peer process to borrow from.
+ * @param cookie The cookie of the connection. When the connection
+ *     closes, it will be reported with this cookie.
+ */
 void
 pe_context_borrow(struct pe_proc *proc, struct pe_proc *procp,
     anoubis_cookie_t cookie)
@@ -675,6 +799,14 @@ pe_context_borrow(struct pe_proc *proc, struct pe_proc *procp,
 	}
 }
 
+/**
+ * Restore a context after a unix socket connection closes. If the
+ * connection has been used to borrow a context, the saved context
+ * will be restored, now.
+ *
+ * @param proc The process.
+ * @param cookie The cookie of the terminated connection.
+ */
 void
 pe_context_restore(struct pe_proc *proc, anoubis_cookie_t cookie)
 {
@@ -687,6 +819,17 @@ pe_context_restore(struct pe_proc *proc, anoubis_cookie_t cookie)
 		pe_proc_restore_ctx(proc, i, cookie);
 }
 
+/**
+ * Search an apn_chain (i.e. a list of application blocks) for the
+ * first block that matches the given process identification.
+ *
+ * @param chain The chain to search.
+ * @param pident The process identification.
+ * @param uid The user ID of the process.
+ * @param ispg True if the process runs in a playground.
+ * @return The first application rule block that matched. NULL if there is
+ *     none.
+ */
 static struct apn_rule *
 pe_context_search_chain(struct apn_chain *chain, struct pe_proc_ident *pident,
     uid_t uid, int ispg)
@@ -718,12 +861,20 @@ pe_context_search_chain(struct apn_chain *chain, struct pe_proc_ident *pident,
 	return NULL;
 }
 
-/*
+/**
  * Search for a context in the given ruleset. This function will only
  * return NULL if the ruleset is also NULL. Otherwise it will return
  * a context from the ruleset. If no such context can be found it will
  * return a non-NULL context which has no real rules but formally belongs
  * to the ruleset.
+ *
+ * @param rs The ruleset.
+ * @param pident The process identification that is used to search for
+ *     a matching application rule.
+ * @param uid The user ID of the process.
+ * @param ispg True if the process runs in a playground.
+ * @return A new context. The context is created and returned with one
+ *     reference held. It is not yet assigned to any process.
  */
 static struct pe_context *
 pe_context_search(struct apn_ruleset *rs, struct pe_proc_ident *pident,
@@ -760,8 +911,14 @@ pe_context_search(struct apn_ruleset *rs, struct pe_proc_ident *pident,
 	return (context);
 }
 
-/*
- * NOTE: rs must not be NULL.
+/**
+ * Allocate and initailize a new context. This function initializes
+ * the ruleset and the process identification of the context. The reference
+ * counter is set to one, everything else is set to NULL.
+ *
+ * @param rs The ruleset of the context.
+ * @param pident The process identification.
+ * @return The new context.
  */
 static struct pe_context *
 pe_context_alloc(struct apn_ruleset *rs, struct pe_proc_ident *pident)
@@ -785,6 +942,12 @@ pe_context_alloc(struct apn_ruleset *rs, struct pe_proc_ident *pident)
 	return (ctx);
 }
 
+/**
+ * Drop one reference to a context. If the reference counter reaches
+ * zero, the context is freed.
+ *
+ * @param ctx The context.
+ */
 void
 pe_context_put(struct pe_context *ctx)
 {
@@ -794,6 +957,11 @@ pe_context_put(struct pe_context *ctx)
 	free(ctx);
 }
 
+/**
+ * Get a reference count to an already existing context.
+ *
+ * @param ctx The context.
+ */
 void
 pe_context_reference(struct pe_context *ctx)
 {
@@ -803,13 +971,20 @@ pe_context_reference(struct pe_context *ctx)
 	ctx->refcount++;
 }
 
-/*
+/**
  * Decide, if it is ok to switch context for an application specified
- * by csum and pathhint.  Right now, pathhint is not used, only csum.
+ * by csum and pathhint.
  *
- * Returns 1 if switching is ok, 0 if not.
+ * @param proc The process that wants to switch contexts.
+ * @param type The type of the context switch (APN_CTX_*, i.e. NEW, BORROW
+ *     or OPEN).
+ * @param prio The priority of the context.
+ * @param pident The process identifier of the new context (if context
+ *     switch is allowed).
+ * @param uid The user ID of the process.
+ * @return True if context switching is allowed. No context was
+ *     allocated at this time.
  *
- * NOTE: bcmp returns 0 on match, otherwise non-zero.  Do not confuse this...
  */
 static int
 pe_context_decide(struct pe_proc *proc, int type, int prio,
@@ -821,7 +996,7 @@ pe_context_decide(struct pe_proc *proc, int type, int prio,
 	int			 ret;
 
 	ctx = pe_proc_get_context(proc, prio);
-	/* No context: Allow a context switch. */
+	/* No context: Allow a context switch for exec (APN_CTX_NEW). */
 	if (ctx == NULL)
 		return (type == APN_CTX_NEW);
 	/* Force a context switch if this  will change the user-ID, too. */
@@ -865,31 +1040,28 @@ pe_context_decide(struct pe_proc *proc, int type, int prio,
 	return 1;
 }
 
-static void
-pe_dump_dbgctx(const char *prefix, struct pe_proc *proc)
-{
-	int	i;
-
-	if (proc == NULL) {
-		DEBUG(DBG_PE_CTX, "%s: prio %d rule (null) ctx (null)",
-		    prefix, -1);
-		return;
-	}
-
-	for (i = 0; i < PE_PRIO_MAX; i++) {
-		struct pe_context *ctx = pe_proc_get_context(proc, i);
-		DEBUG(DBG_PE_CTX, "%s: prio %d alfrule %p sbrule %p "
-		    "ctxrule %p", prefix, i, ctx ? ctx->alfrule : NULL,
-		    ctx ? ctx->sbrule : NULL, ctx ? ctx->ctxrule : NULL);
-	}
-}
-
+/**
+ * Return true if the given context uses the given ruleset. If the
+ * ruleset of the context is NULL, this function returns true, too.
+ * This function is used to determine if a context refresh is required
+ * after a ruleset reload.
+ *
+ * @param ctx The context.
+ * @param rs The ruleset.
+ * @return True if a refresh is required.
+ */
 int
 pe_context_uses_rs(struct pe_context *ctx, struct apn_ruleset *rs)
 {
 	return ctx && rs && (ctx->ruleset == rs || ctx->ruleset == NULL);
 }
 
+/**
+ * Return the alf application rule block of the context.
+ *
+ * @param ctx The context.
+ * @return The ALF application rule.
+ */
 struct apn_rule *
 pe_context_get_alfrule(struct pe_context *ctx)
 {
@@ -898,6 +1070,12 @@ pe_context_get_alfrule(struct pe_context *ctx)
 	return ctx->alfrule;
 }
 
+/**
+ * Return the sandbox application rule block of the context.
+ *
+ * @param ctx The context.
+ * @return The sandbox application rule.
+ */
 struct apn_rule *
 pe_context_get_sbrule(struct pe_context *ctx)
 {
@@ -906,6 +1084,12 @@ pe_context_get_sbrule(struct pe_context *ctx)
 	return ctx->sbrule;
 }
 
+/**
+ * Return the context application rule block of the context.
+ *
+ * @param ctx The context.
+ * @return The context application rule.
+ */
 struct apn_rule *
 pe_context_get_ctxrule(struct pe_context *ctx)
 {
@@ -914,6 +1098,12 @@ pe_context_get_ctxrule(struct pe_context *ctx)
 	return ctx->ctxrule;
 }
 
+/**
+ * Return the process identification used by the context.
+ *
+ * @param ctx The context.
+ * @return The process identifcation.
+ */
 struct pe_proc_ident *
 pe_context_get_ident(struct pe_context *ctx)
 {
@@ -922,6 +1112,12 @@ pe_context_get_ident(struct pe_context *ctx)
 	return &ctx->ident;
 }
 
+/**
+ * Return true if the context has the nosfs flag set.
+ *
+ * @param ctx The context.
+ * @return  True if the nosfs flag is set.
+ */
 int
 pe_context_is_nosfs(struct pe_context *ctx)
 {
@@ -930,6 +1126,12 @@ pe_context_is_nosfs(struct pe_context *ctx)
 	return !!(ctx->ctxrule->flags & APN_RULE_NOSFS);
 }
 
+/**
+ * Return true if the context has the pgforce flag set.
+ *
+ * @param ctx The context.
+ * @return  True if the pgforce flag is set.
+ */
 int
 pe_context_is_pg(struct pe_context *ctx)
 {

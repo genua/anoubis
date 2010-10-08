@@ -886,7 +886,7 @@ pe_handle_sfspath(struct eventdev_hdr *hdr)
 	switch (pevent->op) {
 		case ANOUBIS_PATH_OP_LINK:
 		case ANOUBIS_PATH_OP_RENAME:
-			reply->reply = pe_compare(proc, pevent, now);
+			reply->reply = -pe_compare(proc, pevent, now);
 			break;
 		case ANOUBIS_PATH_OP_LOCK:
 			DEBUG(DBG_UPGRADE, "Lock event for task cookie %" PRIx64

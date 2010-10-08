@@ -74,12 +74,8 @@
 
 static int		 pe_alf_evaluate(struct pe_proc *, int, uid_t,
 			     struct alf_event *, int *, u_int32_t *);
-static int		 pe_decide_alffilt(struct apn_rule *,
+static int		 pe_alf_evaluate_rule(struct apn_rule *,
 			     struct alf_event *, int *, u_int32_t *, time_t);
-static int		 pe_decide_alfcap(struct apn_rule *, struct
-			     alf_event *, int *, u_int32_t *, time_t);
-static int		 pe_decide_alfdflt(struct apn_rule *, struct
-			     alf_event *, int *, u_int32_t *, time_t);
 static char		*pe_dump_alfmsg(struct alf_event *);
 static int		 pe_addrmatch_out(struct alf_event *, struct
 			     apn_rule *);
@@ -90,6 +86,17 @@ static int		 pe_addrmatch_host(struct apn_host *, void *,
 static int		 pe_addrmatch_port(struct apn_port *, void *,
 			     unsigned short);
 
+/**
+ * Evaluate an ALF event and decide if the event should be allow
+ * according to the relevant policies. This is the main entry point
+ * to evaluate ALF rules. This function evaluates both admin and
+ * user policies.
+ *
+ * @param proc The process that triggered the event.
+ * @hdr The event itslf. It is of type ANOUBIS_SOURCE_ALF.
+ * @return The reply for the event. The structure is alloated dynamically
+ *     and must be freed by the caller.
+ */
 struct anoubisd_reply *
 pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 {
@@ -199,6 +206,29 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 	return (reply);
 }
 
+/**
+ * Evaluate an ALF event according to the policy givne by prio and uid.
+ * If the user ID of the process is equal to the user ID in the event,
+ * the rules from the processes context are used, otherwise the rules
+ * for the application in the ruleset for the uid of the event is used.
+ *
+ * ALF rules always apply filter rules first. Capability rules are evaluate
+ * only if no filter rule matches. Finally, default rules are evaluated.
+ * Within one class of rules the evaluation order depends on the order
+ * of the rules in the rule block.
+ *
+ * @param proc The process that triggered the event.
+ * @param prio The rule set priority.
+ * @param uid The user ID of the event.
+ * @param msg The ALF event itself.
+ * ̣@param log The log level for the result is returned here. The
+ *     caller should initialize this to APN_LOG_NONE.
+ * @param rule_id The rule ID of the rule that matched the event is
+ *     returned here. The caller should initialize the rule ID to zero.
+ * @return The decision of the event. Possible values are the
+ *     APN_ACTION_* defines from apn.h. A negative value indicates that
+ *     no decision was made.
+ */
 static int
 pe_alf_evaluate(struct pe_proc *proc, int prio, uid_t uid,
     struct alf_event *msg, int *log, u_int32_t *rule_id)
@@ -223,352 +253,196 @@ pe_alf_evaluate(struct pe_proc *proc, int prio, uid_t uid,
 			rule = NULL;
 		}
 	}
-	if (rule == NULL) {
-		return (-1);
-		log_warnx("pe_alf_evaluate: empty rule");
-	}
-	if (msg == NULL) {
-		log_warnx("pe_alf_evaluate: empty alf event");
-		return (-1);
+	if (rule == NULL || msg == NULL) {
+		log_warnx("pe_alf_evaluate: empty rule or messae");
+		return -1;
 	}
 
 	if (time(&t) == (time_t)-1) {
 		log_warn("Cannot get current time");
 		master_terminate();
 	}
-	decision = pe_decide_alffilt(rule, msg, log, rule_id, t);
-	if (decision == -1)
-		decision = pe_decide_alfcap(rule, msg, log, rule_id, t);
-	if (decision == -1)
-		decision = pe_decide_alfdflt(rule, msg, log, rule_id, t);
-
+	decision = pe_alf_evaluate_rule(rule, msg, log, rule_id, t);
 	DEBUG(DBG_PE_DECALF, "pe_alf_evaluate: decision %d rule %p", decision,
 	    rule);
 
 	return (decision);
 }
 
-/*
- * ALF filter logic.
+/**
+ * Return true if capability rule appies to a packet that is
+ * sent on a particular socket type. We support three different
+ * capabilities:
+ *
+ * APN_ALF_CAPRAW: We allow packets with socket type SOCK_RAW
+ *     and SOCK_PACKET (e.g. ping, dhclient)
+ * APN_ALF_CAPOTHER: We allow all other socket types.
+ * APN_ALF_CAPALL: We allow all socket types.
+ *
+ * @param rule The capability rule.
+ * @param type The socket type.
  */
 static int
-pe_decide_alffilt(struct apn_rule *rule, struct alf_event *msg,
+pe_alf_capmatch(struct apn_rule *rule, int type)
+{
+	int		israw = 0;
+
+	if (type == SOCK_STREAM || type == SOCK_DGRAM)
+		return 0;
+#ifdef SOCK_PACKET
+	if (type == SOCK_RAW || type == SOCK_PACKET)
+		israw = 1;
+#else
+	if (type == SOCK_RAW)
+		israw = 1;
+#endif
+	switch (rule->rule.acap.capability) {
+	case APN_ALF_CAPRAW:
+		if (israw)
+			return 1;
+		break;
+	case APN_ALF_CAPOTHER:
+		if (!israw)
+			return 1;
+				break;
+	case APN_ALF_CAPALL:
+		return 1;
+	}
+	return 0;
+}
+
+/**
+ * Evaluate all ALF rules in a rule block and return the decision for
+ * the event. This function tries all filter, capability  and default
+ * rules in an ALF application rule block and returns the action of the first
+ * matching rule. A filter or capability rule always takes precedence over
+ * a default rule even if the default rule appears before the filter rule.
+ *
+ * @param rule The ALF rule block.
+ * @param msg The ALF event.
+ * ̣@param log The log level for the result is returned here. The
+ *     caller should initialize this to APN_LOG_NONE.
+ * @param rule_id The rule ID of the rule that matched the event is
+ *     returned here. The caller should initialize the rule ID to zero.
+ * @param now The current time for scope checks.
+ * @return The decision (one of APN_ACTION_* from apn.h) or -1 if no
+ *     matching rule was found. Only filter and default rules are taken
+ *     into account. If the block contains at least one default rule that
+ *     is in scope, this function must not return -1.
+ */
+static int
+pe_alf_evaluate_rule(struct apn_rule *rule, struct alf_event *msg,
     int *log, u_int32_t *rule_id, time_t now)
 {
 	struct apn_rule		*hp;
-	int			 decision;
+	int			 default_decision = -1;
+	int			 isfilter = 0;
 
-	if (rule == NULL) {
-		log_warnx("pe_decide_alffilt: empty rule");
-		return (-1);
-	}
-	if (msg == NULL) {
-		log_warnx("pe_decide_alffilt: empty alf event");
-		return (-1);
-	}
+	if (msg->protocol == IPPROTO_UDP || msg->protocol == IPPROTO_TCP ||
+	    msg->protocol == IPPROTO_SCTP)
+		isfilter = 1;
 
-	/* We only decide on UDP, TCP and SCTP. */
-	if (msg->protocol != IPPROTO_UDP && msg->protocol != IPPROTO_TCP &&
-	    msg->protocol != IPPROTO_SCTP)
-		return (-1);
-
-	/* For TCP/SCTP we validate ACCEPT/CONNECT and allow SEND/RECVMSG */
-	if ((msg->op == ALF_SENDMSG || msg->op == ALF_RECVMSG) &&
-	    (msg->protocol == IPPROTO_TCP || msg->protocol == IPPROTO_SCTP)) {
-		if (log)
-			*log = APN_LOG_NONE;
-		return APN_ACTION_ALLOW;
-	}
 	/*
-	 * For UDP, we do always allow CONNECT events as these do not really
+	 * For TCP/SCTP we validate ACCEPT/CONNECT and allow SEND/RECVMSG,
+	 * for UDP, we always allow CONNECT events as these do not really
 	 * generate network traffic.
 	 */
-	if (msg->protocol == IPPROTO_UDP && msg->op == ALF_CONNECT) {
-		if (log)
-			*log = APN_LOG_NONE;
+	if ((msg->op == ALF_SENDMSG || msg->op == ALF_RECVMSG) &&
+	    (msg->protocol == IPPROTO_TCP || msg->protocol == IPPROTO_SCTP))
 		return APN_ACTION_ALLOW;
-	}
+	if (msg->protocol == IPPROTO_UDP && msg->op == ALF_CONNECT)
+		return APN_ACTION_ALLOW;
 
-	decision = -1;
+
 	TAILQ_FOREACH(hp, &rule->rule.chain, entry) {
-		/*
-		 * Skip non-filter rules.
-		 */
-		if (hp->apn_type != APN_ALF_FILTER
-		    || !pe_in_scope(hp->scope, msg->common.task_cookie, now))
+
+		/* Skip rules that are not in scope. */
+		if (!pe_in_scope(hp->scope, msg->common.task_cookie, now))
 			continue;
 
-		DEBUG(DBG_PE_DECALF, "pe_decide_alffilt: msg family %d, "
+		/* Save result of the first default rule. */
+		if (hp->apn_type == APN_DEFAULT) {
+			if (default_decision == -1) {
+				*log = hp->rule.afilt.filtspec.log;
+				*rule_id = hp->apn_id;
+				default_decision = hp->rule.afilt.action;
+			}
+			continue;
+		}
+
+		/* Apply capability rules. */
+		if (hp->apn_type == APN_ALF_CAPABILITY) {
+			if (isfilter)
+				continue;
+			if (!pe_alf_capmatch(hp, msg->type))
+				continue;
+			*log = hp->rule.afilt.filtspec.log;
+			*rule_id = hp->apn_id;
+			return hp->rule.afilt.action;
+		}
+
+		/*
+		 * Skip other non-filter rules. From this point on we
+		 * only deal with filter rules.
+		 */
+		if (hp->apn_type != APN_ALF_FILTER)
+			continue;
+		if (!isfilter)
+			continue;
+
+		/* Check socket type and protocol. */
+		if (msg->type != SOCK_STREAM && msg->type != SOCK_DGRAM)
+			continue;
+		if (msg->protocol != hp->rule.afilt.filtspec.proto)
+			continue;
+
+		DEBUG(DBG_PE_DECALF, "pe_alf_evalute_rule: msg family %d, "
 		    "msg operation %d", msg->family, msg->op);
 		/*
-		 * Operation
-		 * NOTE CEH: Currently TCP/SCTP SEND and TCP RECEIVE events
-		 * NOTE CEH: do not reach this point at all. However, if
-		 * NOTE CEH: they do so again in the future, they should
-		 * NOTE CEH: be treated by the corresponding CONNECT/ACCEPT
-		 * NOTE CEH: rules. This is the reason for the two
-		 * NOTE CEH: SENDMSG and RECVMSG cases below.
+		 * TCP/SCTP SEND and RECEIVE events do not reach this
+		 * point at all. Other SEND and RECEIVE events should be
+		 * treated by the connect/accept rules.
 		 */
 		switch (msg->op) {
-		case ALF_ANY:
-			/* XXX HSH ? */
-			continue;
-
 		case ALF_SENDMSG:
-			if (msg->protocol == IPPROTO_TCP ||
-			    msg->protocol == IPPROTO_SCTP)
-				break;
-			/*
-			 * Treat non TCP/SCTP SENDMSG packets according to the
-			 * proper SEND rule.
-			 */
-			/* FALLTHROUGH */
 		case ALF_CONNECT:
 			if (hp->rule.afilt.filtspec.netaccess != APN_CONNECT &&
 			    hp->rule.afilt.filtspec.netaccess != APN_SEND &&
 			    hp->rule.afilt.filtspec.netaccess != APN_BOTH)
 				continue;
+			if (pe_addrmatch_out(msg, hp) == 0)
+				continue;
 			break;
 
 		case ALF_RECVMSG:
-			if (msg->protocol == IPPROTO_TCP ||
-			    msg->protocol == IPPROTO_SCTP)
-				break;
-			/*
-			 * Treat non TCP/SCTP RECVMSG packets according to the
-			 * proper RECEIVE rule.
-			 */
-			/* FALLTHROUGH */
 		case ALF_ACCEPT:
 			if (hp->rule.afilt.filtspec.netaccess != APN_ACCEPT &&
 			    hp->rule.afilt.filtspec.netaccess != APN_RECEIVE &&
 			    hp->rule.afilt.filtspec.netaccess != APN_BOTH)
 				continue;
-			break;
-		default:
-			continue;
-		}
-
-		DEBUG(DBG_PE_DECALF, "pe_decide_alffilt: socket type %d",
-		   msg->type);
-		/*
-		 * Socket type
-		 */
-		if (msg->type != SOCK_STREAM && msg->type != SOCK_DGRAM)
-			continue;
-
-		DEBUG(DBG_PE_DECALF, "pe_decide_alffilt: protocol %d",
-		    msg->protocol);
-		/*
-		 * Protocol
-		 */
-		if (msg->protocol != hp->rule.afilt.filtspec.proto)
-			continue;
-
-		/*
-		 * Check addresses.
-		 */
-		DEBUG(DBG_PE_DECALF, "pe_decide_alffilt: address check op %d",
-		    msg->op);
-		switch (msg->protocol) {
-		case IPPROTO_TCP:
-		case IPPROTO_SCTP:
-			if (msg->op == ALF_CONNECT) {
-				if (pe_addrmatch_out(msg, hp) == 0)
-					continue;
-			} else if (msg->op == ALF_ACCEPT) {
-				if (pe_addrmatch_in(msg, hp) == 0)
-					continue;
-			} else if (msg->op == ALF_SENDMSG || msg->op ==
-			    ALF_RECVMSG) {
-				/*
-				 * this case is now handled above, this code
-				 * is no longer in use
-				 */
-				if (pe_addrmatch_out(msg, hp) == 0 &&
-				    pe_addrmatch_in(msg, hp) == 0)
-					continue;
-			} else
+			if (pe_addrmatch_in(msg, hp) == 0)
 				continue;
 			break;
-
-		case IPPROTO_UDP:
-			if (msg->op == ALF_CONNECT || msg->op == ALF_SENDMSG) {
-				if (pe_addrmatch_out(msg, hp) == 0)
-					continue;
-			} else if (msg->op == ALF_ACCEPT || msg->op ==
-			    ALF_RECVMSG) {
-				if (pe_addrmatch_in(msg, hp) == 0)
-					continue;
-			} else
-				continue;
-			break;
-
 		default:
 			continue;
 		}
 
-		/*
-		 * Decide.
-		 */
-		switch (hp->rule.afilt.action) {
-		case APN_ACTION_ALLOW:
-		case APN_ACTION_DENY:
-		case APN_ACTION_ASK:
-			decision = hp->rule.afilt.action;
-			break;
-		default:
-			log_warnx("pe_decide_alffilt: invalid action %d",
-			    hp->rule.afilt.action);
-			continue;
-		}
-
-		DEBUG(DBG_PE_DECALF, "pe_decide_alffilt: decision %d",
-		    decision);
-
-		if (log)
-			*log = hp->rule.afilt.filtspec.log;
-		if (rule_id)
-			*rule_id = hp->apn_id;
-		break;
+		/* The rule matches */
+		*log = hp->rule.afilt.filtspec.log;
+		*rule_id = hp->apn_id;
+		DEBUG(DBG_PE_DECALF, "pe_alf_evalute_rule: decision %d",
+		    hp->rule.afilt.action);
+		return hp->rule.afilt.action;
 	}
-
-	return (decision);
+	return default_decision;
 }
 
-/*
- * ALF capability logic.
- */
-static int
-pe_decide_alfcap(struct apn_rule *rule, struct alf_event *msg, int *log,
-    u_int32_t *rule_id, time_t now)
-{
-	int			 decision;
-	struct apn_rule		*hp;
-
-	if (rule == NULL) {
-		log_warnx("pe_decide_alfcap: empty rule");
-		return (APN_ACTION_DENY);
-	}
-	if (msg == NULL) {
-		log_warnx("pe_decide_alfcap: empty alf event");
-		return (APN_ACTION_DENY);
-	}
-
-	/* We decide on everything except UDP, TCP and SCTP */
-	if (msg->protocol == IPPROTO_UDP || msg->protocol == IPPROTO_TCP ||
-	    msg->protocol == IPPROTO_SCTP)
-		return (-1);
-
-	decision = -1;
-	TAILQ_FOREACH(hp, &rule->rule.chain, entry) {
-		int thisdec = -1;
-		/* Skip non-capability rules. */
-		if (hp->apn_type != APN_ALF_CAPABILITY ||
-		    !pe_in_scope(hp->scope, msg->common.task_cookie, now)) {
-			continue;
-		}
-		/*
-		 * We have three types of capabilities:
-		 *
-		 * APN_ALF_CAPRAW: We allow packets with socket type SOCK_RAW
-		 * and SOCK_PACKET (ie. ping, dhclient)
-		 *
-		 * APN_ALF_CAPOTHER: We allow everything else.
-		 *
-		 * APN_ALF_CAPALL: Allow anything.
-		 */
-		thisdec = hp->rule.acap.action;
-		switch (hp->rule.acap.capability) {
-		case APN_ALF_CAPRAW:
-			if (msg->type == SOCK_RAW)
-				decision = thisdec;
-#ifdef LINUX
-			if (msg->type == SOCK_PACKET)
-				decision = thisdec;
-#endif
-			break;
-		case APN_ALF_CAPOTHER:
-#ifdef LINUX
-			if (msg->type != SOCK_RAW && msg->type != SOCK_PACKET)
-#else
-			if (msg->type != SOCK_RAW)
-#endif
-				decision = thisdec;
-			break;
-		case APN_ALF_CAPALL:
-			decision = thisdec;
-			break;
-		default:
-			log_warnx("pe_decide_alfcap: unknown capability %d",
-			    hp->rule.acap.capability);
-			decision = -1;
-		}
-
-		if (decision != -1) {
-			if (log)
-				*log = hp->rule.acap.log;
-			if (rule_id)
-				*rule_id = hp->apn_id;
-			break;
-		}
-	}
-
-	return (decision);
-}
-
-/*
- * ALF default logic.
- */
-static int
-pe_decide_alfdflt(struct apn_rule *rule, struct alf_event *msg, int *log,
-    u_int32_t *rule_id, time_t now)
-{
-	struct apn_rule		*hp;
-	int			 decision;
-
-	if (rule == NULL) {
-		log_warnx("pe_decide_alfdflt: empty rule");
-		return (-1);
-	}
-
-	decision = -1;
-	TAILQ_FOREACH(hp, &rule->rule.chain, entry) {
-		/* Skip non-default rules. */
-		if (hp->apn_type != APN_DEFAULT
-		    || !pe_in_scope(hp->scope, msg->common.task_cookie, now)) {
-			continue;
-		}
-		/*
-		 * Default rules are easy, just pick the specified action.
-		 */
-		switch (hp->rule.apndefault.action) {
-		case APN_ACTION_ALLOW:
-		case APN_ACTION_DENY:
-		case APN_ACTION_ASK:
-			decision = hp->rule.apndefault.action;
-			break;
-		default:
-			log_warnx("pe_decide_alfdflt: unknown action %d",
-			    hp->rule.apndefault.action);
-			decision = -1;
-		}
-
-		if (decision != -1) {
-			if (log)
-				*log = hp->rule.apndefault.log;
-			if (rule_id)
-				*rule_id = hp->apn_id;
-			break;
-		}
-	}
-
-	return (decision);
-}
-
-/*
- * Decode an ALF message into a printable string.  This strings is
- * allocated and needs to be freed by the caller.
+/**
+ * Decode an ALF message into a printable string. The string is
+ * allocated dynamically and must to be freed by the caller.
+ *
+ * @param msg The ALF message.
+ * @return The printable version of the ALF message.
  */
 static char *
 pe_dump_alfmsg(struct alf_event *msg)
@@ -708,8 +582,14 @@ pe_dump_alfmsg(struct alf_event *msg)
 	return (dump);
 }
 
-/*
- * Check outgoing connection. 1 on match, 0 otherwise.
+/**
+ * Match an outgoing message against an ALF filter rule. Outgoing messages
+ * compare the fromhost in the filter rule with the local address of the
+ * packet and the tohost with the remote address.
+ *
+ * @param msg The ALF message.
+ * @param rule The filter rule.
+ * @return True if the rule matches for the outgoing packet.
  */
 static int
 pe_addrmatch_out(struct alf_event *msg, struct apn_rule *rule)
@@ -718,15 +598,6 @@ pe_addrmatch_out(struct alf_event *msg, struct apn_rule *rule)
 	struct apn_port	*fromport, *toport;
 
 	DEBUG(DBG_PE_DECALF, "pe_addrmatch_out: msg %p rule %p", msg, rule);
-
-	if (rule == NULL) {
-		log_warnx("pe_addrmatch_out: empty rule");
-		return (0);
-	}
-	if (msg == NULL) {
-		log_warnx("pe_addrmatch_out: empty event");
-		return (0);
-	}
 
 	fromhost = rule->rule.afilt.filtspec.fromhost;
 	fromport = rule->rule.afilt.filtspec.fromport;;
@@ -752,8 +623,14 @@ pe_addrmatch_out(struct alf_event *msg, struct apn_rule *rule)
 	return (1);
 }
 
-/*
- * Check incoming connection. 1 on match, 0 otherwise.
+/**
+ * Match an incoming message against an ALF filter rule. Incoming messages
+ * compare the fromhost in the filter rule with the remote address of the
+ * packet and the tohost with the local address.
+ *
+ * @param msg The ALF message.
+ * @param rule The filter rule.
+ * @return True if the rule matches for the outgoing packet.
  */
 static int
 pe_addrmatch_in(struct alf_event *msg, struct apn_rule *rule)
@@ -762,15 +639,6 @@ pe_addrmatch_in(struct alf_event *msg, struct apn_rule *rule)
 	struct apn_port	*fromport, *toport;
 
 	DEBUG(DBG_PE_DECALF, "pe_addrmatch_in: msg %p rule %p", msg, rule);
-
-	if (rule == NULL) {
-		log_warnx("pe_addrmatch_out: empty rule");
-		return (0);
-	}
-	if (msg == NULL) {
-		log_warnx("pe_addrmatch_out: empty event");
-		return (0);
-	}
 
 	fromhost = rule->rule.afilt.filtspec.fromhost;
 	fromport = rule->rule.afilt.filtspec.fromport;;
@@ -792,8 +660,13 @@ pe_addrmatch_in(struct alf_event *msg, struct apn_rule *rule)
 	return (1);
 }
 
-/*
- * compare addr1 and addr2 with netmask of length len
+/**
+ * Compare two ipv6 addresses after applying a netmask of len bits.
+ *
+ * @param addr1 The first address.
+ * @param addr2 The second address.
+ * @param len The length of the netmaks.
+ * @return True if the first len bits of both addresses are equal.
  */
 static int
 compare_ip6_mask(struct in6_addr *addr1, struct in6_addr *addr2, int len)
@@ -835,8 +708,15 @@ compare_ip6_mask(struct in6_addr *addr1, struct in6_addr *addr2, int len)
 	return match;
 }
 
-/*
- * Compare addresses. 1 on match, 0 otherwise.
+/**
+ * Compare an apn_host from a filter rule to a socket address and return
+ * true if the socket address matches the apn_host.
+ *
+ * @param host The apn_host from an apn rule. This can contain
+ *     negates and netmasks.
+ * @param addr The address of the socket.
+ * @param af The address familiy of the socket address.
+ * @return True in case of a match.
  */
 static int
 pe_addrmatch_host(struct apn_host *host, void *addr, unsigned short af)
@@ -854,11 +734,6 @@ pe_addrmatch_host(struct apn_host *host, void *addr, unsigned short af)
 	/* Empty host means "any", ie. match always. */
 	if (host == NULL)
 		return (1);
-
-	if (addr == NULL) {
-		log_warnx("pe_addrmatch_host: no address specified");
-		return (0);
-	}
 
 	hp = host;
 	while (hp) {
@@ -904,6 +779,15 @@ pe_addrmatch_host(struct apn_host *host, void *addr, unsigned short af)
 		return match;
 }
 
+/**
+ * Compare an apn_port from an ALF filter rule to the port in a
+ * socket address and return true if the socket port matches the
+ * apn_port.
+ *
+ * @param port The apn_port.
+ * @param addr The socket address.
+ * @param af The address family of the socket address.
+ */
 static int
 pe_addrmatch_port(struct apn_port *port, void *addr, unsigned short af)
 {

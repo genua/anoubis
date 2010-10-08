@@ -61,13 +61,32 @@
 #include "cert.h"
 #include "pe.h"
 
+/**
+ * Result of a sandbox rule evaluation. Use internally in pe_sandbox.c
+ */
 struct result {
-	int log;
-	int rule_id;
-	int prio;
-	int decision;
+	int log;	/** The log level */
+	int rule_id;	/** The rule id that matched */
+	int prio;	/** The priority of the rule that matched */
+	int decision;	/** The decision */
 };
 
+/**
+ * Evaluate a file event according to the list of sandbox rules.
+ * The result of the evaluation is returned in the result structure.
+ * Only one access type (read, write or execute) is evaluated at a time.
+ *
+ * @param rulelist The list of rules to evalute.
+ * @param sbevent The sandbox event.
+ * @param res The result of the evaluation is returned in this structure.
+ *     As long as the verdict does not change, the log level is only
+ *     increased. If a previously stored log level exists, it is retained.
+ *     This is important for log allow rules, i.e. the user cannot suppress
+ *     logging from an admin log allow rule by specifying an allow rule
+ *     without log.
+ * @param atype The access type.
+ * @param prio The priority 
+ */
 static void
 pe_sb_evaluate(struct apnarr_array rulelist, struct pe_file_event *sbevent,
     struct result *res, unsigned int atype, int prio)
@@ -214,8 +233,22 @@ err:
 	res->log = APN_LOG_NONE;
 }
 
+/**
+ * Return a list of candidate sandbox rules of the given  process that
+ * might match the given path. The prefix hash is used to find candidate
+ * rules. It is not guaranteed that all candidate rules in fact match.
+ * This must be verified by the caller.
+ *
+ * @param proc The process
+ * @param uid The uid of the process.
+ * @param prio The rule priority.
+ * @param path The path to find candidates for.
+ * @param rulelist The rule list is returned here.
+ * @return Zero in case of success, a negative error code in case of
+ *     an error.
+ */
 int
-pe_sb_getrules (struct pe_proc *proc, uid_t uid, int prio, const char *path,
+pe_sb_getrules(struct pe_proc *proc, uid_t uid, int prio, const char *path,
     struct apnarr_array *rulelist)
 {
 	struct apn_rule	*sbrules;
@@ -265,6 +298,13 @@ pe_sb_getrules (struct pe_proc *proc, uid_t uid, int prio, const char *path,
 	return pe_prefixhash_getrules(sbrules->userdata, path, rulelist);
 }
 
+/**
+ * Return a string version of a sandbox event.
+ *
+ * @param sbevent The sandbox event.
+ * @return A readable representation of the event. The string is
+ *     allocated dynamically and must be freed by the caller.
+ */
 static char *
 pe_sb_dumpevent(struct pe_file_event *sbevent)
 {
@@ -285,10 +325,20 @@ pe_sb_dumpevent(struct pe_file_event *sbevent)
 	return ret;
 }
 
-/*
- * We use a default allow policy for the cases where no policy is
- * given. This can be changed be writing an explicit Policy with
- * a default deny rule.
+/**
+ * Decide a sandbox event. We use a default allow policy for the cases
+ * where no policy is given. This can be changed by writing an explicit
+ * Policy with a default deny rule.
+ *
+ * Merging of the different replies is tricky. There is a total of up
+ * to six different replies. One for each priority and one for each
+ * access mode. We report highest log level of those replies that have
+ * the same verdict as the final result.
+ *
+ * @param proc The process that triggered the event.
+ * @param sbevent The event itself.
+ * @return An anoubis reply structure. The structure must be freed
+ *     by the caller.
  */
 struct anoubisd_reply *
 pe_decide_sandbox(struct pe_proc *proc, struct pe_file_event *sbevent)

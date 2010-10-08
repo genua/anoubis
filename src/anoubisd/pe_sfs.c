@@ -64,6 +64,20 @@
 
 static char		*pe_dump_sfsmsg(struct pe_file_event *);
 
+/**
+ * Check if a single SFS filter or default rule applies to the given
+ * file event. Returns the apn_default structure containing verdict
+ * and log level of the match.
+ *
+ * @param rule The rule.
+ * @param fevent The file event.
+ * @param now The current time for scope checking.
+ * @param matchp This variable is used to return the sfs match if
+ *     the rule did match (ANOUBIS_SFS_*).
+ * @return The apn_default structure of the match. The pointer points
+ *     to the ruleset or to static storage. The caller must copy the
+ *     data immediately. If the rule does not match NULL is returned.
+ */
 static struct apn_default *
 pe_sfs_match_one(struct apn_rule *rule, struct pe_file_event *fevent,
     time_t now, int *matchp)
@@ -160,6 +174,19 @@ pe_sfs_match_one(struct apn_rule *rule, struct pe_file_event *fevent,
 	return &rule->rule.sfsaccess.valid;
 }
 
+/**
+ * Get a list of rule candidates that might match the given path.
+ * The prefix hash is used to get a list of candidates. The list will
+ * contain all rules that match but additional rule that do not match
+ * may be included, too. The caller must verify this.
+ *
+ * @param uid The user ID of the user.
+ * @param prio The priority of the ruleset.
+ * @param path The path prefix to find candidates for.
+ * @param rulesp The rules are returned in this array.
+ * @return Zero in case of success, a negative error code in case of
+ *     an erorr.
+ */
 int
 pe_sfs_getrules(uid_t uid, int prio, const char *path,
 	struct apnarr_array *rulesp)
@@ -190,6 +217,16 @@ pe_sfs_getrules(uid_t uid, int prio, const char *path,
 	return pe_prefixhash_getrules(sfsrules->userdata, path, rulesp);
 }
 
+/**
+ * Evaluate the SFS rules of the process and decide how to proceed with
+ * the given file event. This function evaluates both admin and user SFS
+ * rules.
+ * 
+ * @param proc The process that triggered the event.
+ * @param fevent The file event.
+ * @return An anoubis reply structure that contains the result of the
+ *     evaluation. The caller must free the structure.
+ */
 struct anoubisd_reply *
 pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent)
 {
@@ -344,9 +381,13 @@ err:
 	return reply;
 }
 
-/*
- * Decode a SFS message into a printable string.  The string is allocated
+/**
+ * Decode a SFS message into a printable string. The string is allocated
  * and needs to be freed by the caller.
+ *
+ * @param event The file system event.
+ * @return The readable string representation of the event. Must be
+ *     freed by the caller.
  */
 static char *
 pe_dump_sfsmsg(struct pe_file_event *event)
