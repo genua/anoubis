@@ -50,13 +50,18 @@
 
 #include <anoubis_protocol.h>
 
-/*
- * Apply the scope @old to all rules in @chain. Additionally
- * retrict the applicability of all rules until @timeout in seconds since
- * the epoch and to task @task.
- * @timeout and/or @task can be 0 to match all rules.
+/**
+ * Apply a scope to all rules in a chain. Additionally retrict the
+ * applicability of all rules until a particular timeout in seconds since
+ * the epoch and to a particular task.
+ * The timeout and/or task can be 0 to match all rules.
+ * 
+ * @param chain The chain.
+ * @param old The scope
+ * @param timeout The timeout
+ * @param task The task which should be matched.
  *
- * The return value is zero on success or a negative errno code on failure.
+ * @return zero on success or a negative errno code on failure.
  */
 int
 apn_escalation_addscope(struct apn_chain *chain, struct apn_scope *old,
@@ -98,7 +103,7 @@ apn_escalation_addscope(struct apn_chain *chain, struct apn_scope *old,
 	return 0;
 }
 
-/*
+/**
  * Insert the rules in @chain into the rule chain that @anchor is part
  * of. This makes sure that rules in @chain are considered before the
  * rule @anchor. In particular this means:
@@ -113,6 +118,12 @@ apn_escalation_addscope(struct apn_chain *chain, struct apn_scope *old,
  * Otherwise @rs must be NULL.
  * The rule-IDs of all rules in @chain are set to 0. If @rs is not NULL
  * this mean that new rule IDs will be assigned to all rules.
+ * 
+ * @param rs The ruleset
+ * @param anchor The anchor
+ * @param chain The rule chain
+ *
+ * @return 0 or a negative errno
  */
 int
 apn_escalation_splice(struct apn_ruleset *rs, struct apn_rule *anchor,
@@ -170,8 +181,11 @@ apn_escalation_splice(struct apn_ruleset *rs, struct apn_rule *anchor,
 	return 0;
 }
 
-/*
- * Create an otherwise empty rule set of type @type.
+/**
+ * Create an otherwise empty rule set of a particular type.
+ *
+ * @param type The ruleset type
+ * @return an initialized ruleset or NULL on error.
  */
 static struct apn_rule *
 empty_rule(int type)
@@ -211,13 +225,14 @@ empty_rule(int type)
 	return rule;
 }
 
-/*
+/**
  * Create an ALF filter rule with the given parameters.
- * @action The action and log level for the new rule
- * @access The network access (connect, accept, send, receive)
- * @peer Create a rule that only matches this peer. A copy of the structure
- *     pointed to by @peer is created.
- * @port The port that the new rule applies to. For all operations except
+ * 
+ * @param action The action and log level for the new rule
+ * @param access The network access (connect, accept, send, receive)
+ * @param peer Create a rule that only matches this peer. A copy of the
+ *     structure pointed to by @peer is created.
+ * @param port The port that the new rule applies to. For all operations except
  *     accept this is the port on the remote host. Use 0 if the rule should
  *     apply to all scopes.
  * @return The rule or NULL in case of an error.
@@ -296,10 +311,10 @@ err:
 	return NULL;
 }
 
-/*
+/**
  * Create an ALF capability rule with the given parameters.
- * @action The action and log priority for the rule
- * @cap The capability.
+ * @param action The action and log priority for the rule
+ * @param cap The capability.
  * @return The rule or NULL in case of an error.
  */
 static struct apn_rule *
@@ -316,6 +331,11 @@ alf_cap_rule(struct apn_default *action, int cap)
 	return rule;
 }
 
+/**
+ * Create an apn_host structure based on a sockaddr struct.
+ * @param addr the sockaddr struct
+ * @return The generated apn_host or NULL on error.
+ */
 static struct apn_host *
 apn_kerneladdr_to_host(struct sockaddr *addr)
 {
@@ -347,6 +367,12 @@ err:
 	return NULL;
 }
 
+/**
+ * Return the port number of a sockaddr struct.
+ * @param addr the sockaddr struct
+ * @return The port in host byteorder or 0 when the socket's 
+ *	adress family is not supported.
+ */
 static int
 apn_extract_port(struct sockaddr *addr)
 {
@@ -359,6 +385,15 @@ apn_extract_port(struct sockaddr *addr)
 	return 0;
 }
 
+/**
+ * Create a dynamic rule based on an ALF event, the default action and 
+ * flags supplied by the user.
+ * @param dst The apn rule chain
+ * @param event the ALF event
+ * @param action The default action
+ * @param flags 
+ * @return 0 or a negative ernno when errors are encoutered.
+ */
 int
 apn_escalation_rule_alf(struct apn_chain *dst, const struct alf_event *event,
     struct apn_default *action, unsigned long flags)
@@ -469,6 +504,16 @@ err:
 	return -ENOMEM;
 }
 
+/**
+ * Create a dynamic rule based on a SB event, the rule which triggered the 
+ * event, the default action and the pathname. 
+ * @param dst The apn rule chain
+ * @param trigger The rule which triggered the event.
+ * @param action The default action
+ * @param prefix The affected path
+ * @param mask The optional read/write/execute flags.
+ * @return 0 or a negative ernno when errors are encoutered.
+ */
 int
 apn_escalation_rule_sb(struct apn_chain *dst, struct apn_rule *trigger,
     struct apn_default *action, const char *prefix, unsigned long mask)
@@ -508,6 +553,16 @@ apn_escalation_rule_sb(struct apn_chain *dst, struct apn_rule *trigger,
 	return 0;
 }
 
+/**
+ * Create a dynamic rule based on a SFS event, the rule which triggered the 
+ * event, the default action and the pathname. 
+ * @param dst The apn rule chain
+ * @param trigger The rule which triggered the event.
+ * @param action The default action
+ * @param prefix The affected path
+ * @param sfsmatch The type of SFS match generated.
+ * @return 0 or a negative ernno when errors are encoutered.
+ */
 int
 apn_escalation_rule_sfs(struct apn_chain *dst, struct apn_rule *trigger,
     struct apn_default *action, const char *prefix, int sfsmatch)

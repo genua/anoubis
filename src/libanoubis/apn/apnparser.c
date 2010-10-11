@@ -94,7 +94,7 @@ static int	apn_print_rule_cleaned(struct apn_rule *, int, FILE *,
 		    int (*)(struct apn_scope *, void *), void *);
 
 
-/*
+/**
  * APN-Syntax version supported by this version of libapn.
  *
  * History:
@@ -104,7 +104,7 @@ static int	apn_print_rule_cleaned(struct apn_rule *, int, FILE *,
  */
 static int	apn_version = APN_PARSER_MKVERSION(1,3);
 
-/*
+/**
  * Parser descriptions for different APN syntax versions. The first entry
  * is always the parser for the current version.
  */
@@ -114,8 +114,10 @@ static struct apn_parser	*apn_parsers[] = {
 	NULL
 };
 
-/*
- * Retrun the current apn parser version.
+/**
+ * Return the current apn parser version.
+ *
+ * @return The current apn parser version.
  */
 int
 apn_parser_version(void)
@@ -123,9 +125,13 @@ apn_parser_version(void)
 	return apn_version;
 }
 
-/*
- * Return true if an APN rule of type child is allowed inside an APN
- * rule of type parent.
+/**
+ * Verify parent/child rule types
+ *
+ * @param parent The paret rule type
+ * @param child The child rule type
+ * @return true if an APN rule of type child is allowed inside an APN
+ * 	rule of type parent.
  */
 static int
 apn_verify_types(int parent, int child)
@@ -146,6 +152,12 @@ apn_verify_types(int parent, int child)
 	return 0;
 }
 
+/**
+ * Create an empty SFS rule.
+ *
+ * @param rs the ruleset in which the new rule should be inserted
+ * @return 0 or any other value when rule creation fails.
+ */
 static int
 init_sfs_rule(struct apn_ruleset *rs)
 {
@@ -165,16 +177,22 @@ init_sfs_rule(struct apn_ruleset *rs)
 	return apn_insert(rs, nrule, 0);
 }
 
-/*
- * Parse the specified file or iovec and return the ruleset, which is allocated
- * and which is to be freed be the caller.
+/**
+ * Parse the specified file or iovec and store the ruleset,
+ * which is allocated and needs to be freed by the caller.
  *
- * Return codes:
- * -1: a systemcall failed and errno is set
- *  0: file was parsed succesfully
- *  1: file could not be parsed or parameters are invalid
+ * @param filename The file
+ * @param iov The iovec
+ * @param iovcnt The iovec count
+ * @param rsp The location where the ruleset should be stored
+ * @param flags The flags for the ruleset
+ * @param parser The parser which should be used
+ *
+ * @return
+ * 	-1: a systemcall failed and errno is set
+ *  	0: file was parsed succesfully
+ *  	1: file could not be parsed or parameters are invalid
  */
-
 static int
 apn_parse1(const char *filename, struct iovec *iov, int iovcnt,
     struct apn_ruleset **rsp, int flags, struct apn_parser *parser)
@@ -212,6 +230,21 @@ apn_parse1(const char *filename, struct iovec *iov, int iovcnt,
 	return ret;
 }
 
+/**
+ * Parse the specified file or iovec and store the ruleset,
+ * use multiple parsers to support various policy versions.
+ *
+ * @param filename The file
+ * @param iov The iovec
+ * @param iovcnt The iovec count
+ * @param rsp The location where the ruleset should be stored
+ * @param flags The flags for the ruleset
+ *
+ * @return
+ * 	-1: a systemcall failed and errno is set
+ *  	0: file was parsed succesfully
+ *  	1: file could not be parsed or parameters are invalid
+ */
 static int
 apn_parse_common(const char *filename, struct iovec *iov, int iovcnt,
     struct apn_ruleset **rsp, int flags)
@@ -245,12 +278,37 @@ apn_parse_common(const char *filename, struct iovec *iov, int iovcnt,
 	return ret;
 }
 
+/**
+ * Parse the specified file and store the generated ruleset,
+ * which is allocated and needs to be freed by the caller.
+ *
+ * @param filename The file
+ * @param rsp The ruleset
+ * @param flags The flags for the ruleset
+ * @return
+ * 	-1: a systemcall failed and errno is set
+ *  	0: file was parsed succesfully
+ *  	1: file could not be parsed or parameters are invalid
+ */
 int
 apn_parse(const char *filename, struct apn_ruleset **rsp, int flags)
 {
 	return apn_parse_common(filename, NULL, 0, rsp, flags);
 }
 
+/**
+ * Parse the specified file and store the generated ruleset,
+ * which is allocated and needs to be freed by the caller.
+ *
+ * @param iov The iovec
+ * @param iovcnt The iovec count
+ * @param rsp The ruleset
+ * @param flags The flags for the ruleset
+ * @return
+ * 	-1: a systemcall failed and errno is set
+ *  	0: file was parsed succesfully
+ *  	1: file could not be parsed or parameters are invalid
+ */
 int
 apn_parse_iovec(const char *filename, struct iovec *vec, int count,
     struct apn_ruleset **rsp, int flags)
@@ -258,6 +316,11 @@ apn_parse_iovec(const char *filename, struct iovec *vec, int count,
 	return apn_parse_common(filename, vec, count, rsp, flags);
 }
 
+/**
+ * Check if the rulechain contains duplicate IDs.
+ * @param rule The rule
+ * @return 1 if a duplicate id was found, 0 otherwise
+ */
 static int
 apn_duplicate_ids(struct apn_rule *rule)
 {
@@ -285,15 +348,14 @@ apn_duplicate_ids(struct apn_rule *rule)
 	return 0;
 }
 
-/*
+/**
  * Add a rule or a list of rules to the ALF ruleset.
- *
- * Return codes:
- * -1: a systemcall failed and errno is set
- *  0: rule was added.
- *  1: invalid parameters
- *
  * In case of an error, no rules are added, thus caller can free them safely.
+ *
+ * @return
+ *	-1: a systemcall failed and errno is set
+ *	 0: rule was added.
+ *	 1: invalid parameters
  */
 static int
 __apn_add_block_common(struct apn_ruleset *ruleset, struct apn_chain *chain,
@@ -377,16 +439,16 @@ apn_add_ctxblock(struct apn_ruleset *ruleset, struct apn_rule *block,
 	    filename, lineno);
 }
 
-/*
- * Add rule to head of concerning queue of rule set.
+/**
+ * Add a rule to the head of a rule set's queue.
  * The IDs of the passed struct apn_rule will be updated!
  *
- * Return codes:
- * -1: a systemcall failed and errno is set
- *  0: rule was inserted.
- *  1: invalid parameters
- *
  * In case of an error, no rules are added, thus caller can free them safely.
+ *
+ * @return
+ *	-1: a systemcall failed and errno is set
+ *	 0: rule was inserted.
+ *	 1: invalid parameters
  */
 int
 apn_add(struct apn_ruleset *rs, struct apn_rule *rule)
@@ -423,18 +485,21 @@ apn_add(struct apn_ruleset *rs, struct apn_rule *rule)
 	return (0);
 }
 
-/*
- * Insert rule to rule set before rule with the identification ID.
+/**
+ * Insert a rule into a rule set before rule with the identification ID.
  * If ID is 0 and the queue to insert is empty, the rule is inserted
  * at the start of the queue. The IDs of the passed struct apn_rule
  * will be updated!
  *
- * Return codes:
- * -1: a systemcall failed and errno is set
- *  0: rule was inserted.
- *  1: invalid parameters
- *
  * In case of an error, no rules are added, thus caller can free them safely.
+ *
+ * @param rs The ruleset
+ * @param rule The rule
+ * @param id The rule id before which the rule should be inserted.
+ * @return 
+ *	-1: a systemcall failed and errno is set
+ *	0: rule was inserted.
+ *	1: invalid parameters
  */
 int
 apn_insert(struct apn_ruleset *rs, struct apn_rule *rule, unsigned int id)
@@ -486,7 +551,7 @@ apn_insert(struct apn_ruleset *rs, struct apn_rule *rule, unsigned int id)
 	return (0);
 }
 
-/*
+/**
  * Insert a filter rule @rule. If @id refers to an application block, the
  * filter rule is inserted at the beginning of that application block.
  * Otherwise, the rule is inserted before the filter rule @id.
@@ -494,12 +559,16 @@ apn_insert(struct apn_ruleset *rs, struct apn_rule *rule, unsigned int id)
  * new ID is assigned. Trying to use an ID of an existing rule will cause
  * an error.
  *
- * Return codes:
- * -1: a systemcall failed and errno is set
- *  0: rule was inserted
- *  1: invalid parameters
+ * @param rs The ruleset
+ * @param queue The queue to use
+ * @param rule The rule to insert
+ * @param id The id to use
+ * 
+ * @return
+ *	-1: a systemcall failed and errno is set
+ *	 0: rule was inserted
+ *	 1: invalid parameters
  */
-
 static int
 apn_insert_rule_common(struct apn_ruleset *rs,
     struct apn_chain *queue, struct apn_rule *rule, unsigned int id)
@@ -535,7 +604,9 @@ apn_insert_rule_common(struct apn_ruleset *rs,
 	return (0);
 }
 
-/* ALF wrapper for apn_insert_rule_common */
+/**
+ * ALF wrapper for apn_insert_rule_common
+ */
 int
 apn_insert_alfrule(struct apn_ruleset *rs, struct apn_rule *arule,
     unsigned int id)
@@ -545,7 +616,7 @@ apn_insert_alfrule(struct apn_ruleset *rs, struct apn_rule *arule,
 	return apn_insert_rule_common(rs, &rs->alf_queue, arule, id);
 }
 
-/*
+/**
  * SFS wrapper for apn_insert_rule_common. This wrapper is slightly
  * different from the other wrappers: If @id is 0, this refers to the
  * SFS block.
@@ -565,7 +636,9 @@ apn_insert_sfsrule(struct apn_ruleset *rs, struct apn_rule *srule,
 	return apn_insert_rule_common(rs, &rs->sfs_queue, srule, id);
 }
 
-/* SANDBOX wrapper for apn_insert_rule_common */
+/**
+ * SANDBOX wrapper for apn_insert_rule_common
+ */
 int
 apn_insert_sbrule(struct apn_ruleset *rs, struct apn_rule *sbrule,
     unsigned int id)
@@ -575,7 +648,9 @@ apn_insert_sbrule(struct apn_ruleset *rs, struct apn_rule *sbrule,
 	return apn_insert_rule_common(rs, &rs->sb_queue, sbrule, id);
 }
 
-/* CONTEXT wrapper for apn_insert_rule_common */
+/**
+ * CONTEXT wrapper for apn_insert_rule_common
+ */
 int
 apn_insert_ctxrule(struct apn_ruleset *rs, struct apn_rule *ctxrule,
     unsigned int id)
@@ -585,14 +660,15 @@ apn_insert_ctxrule(struct apn_ruleset *rs, struct apn_rule *ctxrule,
 	return apn_insert_rule_common(rs, &rs->ctx_queue, ctxrule, id);
 }
 
-/*
+/**
  * Copy a full application rule and insert the provided rule @nrule before
  * the original rule with ID @id in the copy. The application of the copy
  * is set to the value corresponding to @filename and @subject.
- * Return codes:
- * -1: a systemcall failed and errno is set
- *  0: rule was inserted
- *  1: invalid parameters
+ *
+ * @return
+ *	-1: a systemcall failed and errno is set
+ *	 0: rule was inserted
+ *	 1: invalid parameters
  */
 static int
 apn_copyinsert_common(struct apn_ruleset *rs, struct apn_rule *nrule,
@@ -669,7 +745,7 @@ apn_copyinsert_common(struct apn_ruleset *rs, struct apn_rule *nrule,
 	return (0);
 }
 
-/* ALF wrapper for apn_copyinsert_common */
+/** ALF wrapper for apn_copyinsert_common */
 int
 apn_copyinsert_alf(struct apn_ruleset *rs, struct apn_rule *nrule,
     unsigned int id, const char *filename, const struct apn_subject *subject)
@@ -677,7 +753,7 @@ apn_copyinsert_alf(struct apn_ruleset *rs, struct apn_rule *nrule,
 	return apn_copyinsert_common(rs, nrule, id, filename, subject, APN_ALF);
 }
 
-/* CTX wrapper for apn_copyinsert_common */
+/** CTX wrapper for apn_copyinsert_common */
 int
 apn_copyinsert_ctx(struct apn_ruleset *rs, struct apn_rule *nrule,
     unsigned int id, const char *filename, const struct apn_subject *subject)
@@ -685,7 +761,7 @@ apn_copyinsert_ctx(struct apn_ruleset *rs, struct apn_rule *nrule,
 	return apn_copyinsert_common(rs, nrule, id, filename, subject, APN_CTX);
 }
 
-/* SANDBOX wrapper for apn_copyinsert_common */
+/** SANDBOX wrapper for apn_copyinsert_common */
 int
 apn_copyinsert_sb(struct apn_ruleset *rs, struct apn_rule *nrule,
     unsigned int id, const char *filename, const struct apn_subject *subject)
@@ -715,6 +791,20 @@ apn_print_string(FILE *file, const char *string)
 	fprintf(file, "\"");
 }
 
+/**
+ * Print a chain by calling apn_rule_cleaned for each rule.
+ *
+ * @param chain The chain
+ * @param flag The flags
+ * @param file The stdio stream target
+ * @param check The check function
+ * @param data Further arguments for the check function
+ *
+ * @return
+ *	-1: a systemcall failed and errno is set
+ *	 0: rule could be printed
+ *	 1: an error occured while printing the rule
+ */
 static int
 apn_print_chain_cleaned(struct apn_chain * chain, int flags, FILE * file,
     int (*check)(struct apn_scope *, void *), void *data)
@@ -728,13 +818,18 @@ apn_print_chain_cleaned(struct apn_chain * chain, int flags, FILE * file,
 	return (0);
 }
 
-/*
+/**
  * Print a rule.
  *
- * Return codes:
- * -1: a systemcall failed and errno is set
- *  0: rule could be printed
- *  1: an error occured while printing the rule
+ * @param chain The chain
+ * @param flag The flags
+ * @param file The stdio stream target
+ * @param check The check function
+ * @param data Further arguments for the check function
+ * @return
+ *	-1: a systemcall failed and errno is set
+ *	 0: rule could be printed
+ *	 1: an error occured while printing the rule
  */
 static int
 apn_print_rule_cleaned(struct apn_rule *rule, int flags, FILE *file,
@@ -832,20 +927,24 @@ apn_print_rule_cleaned(struct apn_rule *rule, int flags, FILE *file,
 	return (ret);
 }
 
+/**
+ * Print one apn rule.
+ *
+ * @return the value generated by apn_print_rule_cleaned
+ */
 int
 apn_print_rule(struct apn_rule *rule, int flags, FILE *file)
 {
 	return apn_print_rule_cleaned(rule, flags, file, NULL, NULL);
 }
 
-/*
+/**
  * Print a full rule set.
  *
- * Return code:
- *
- * -1: a systemcall failed and errno is set
- *  0: rule could be printed
- *  1: an error occured printing the rule set
+ * @return
+ *	-1: a systemcall failed and errno is set
+ *	 0: rule could be printed
+ *	 1: an error occured printing the rule set
  */
 int
 apn_print_ruleset_cleaned(struct apn_ruleset *rs, int flags, FILE *file,
@@ -880,12 +979,29 @@ apn_print_ruleset_cleaned(struct apn_ruleset *rs, int flags, FILE *file,
 	return 0;
 }
 
+/**
+ * wrapper for apn_print_ruleset
+ *
+ * @param rs The rule set
+ * @param flags The flags for printing the ruleset
+ * @param file The stdio stream to which the rule set should be printed
+ */
 int
 apn_print_ruleset(struct apn_ruleset *rs, int flags, FILE *file)
 {
 	return apn_print_ruleset_cleaned(rs, flags, file, NULL, NULL);
 }
 
+/**
+ * wrapper for apn_verror
+ *
+ * @param ruleset The rule set
+ * @param filename The file which is being parsed
+ * @param lineno The line on which an error was encountered
+ * @param fmt The format-string for the reported error
+ *
+ * @return -1 when errors where encountered, 0 otherwise
+ */
 int
 apn_error(struct apn_ruleset *ruleset, const char * filename, int lineno,
     const char *fmt, ...)
@@ -899,6 +1015,17 @@ apn_error(struct apn_ruleset *ruleset, const char * filename, int lineno,
 	return ret;
 }
 
+/**
+ * Format and add error strings to the error queue of a rule set 
+ *
+ * @param ruleset The rule set
+ * @param filename The file which is being parsed
+ * @param lineno The line on which an error was encountered
+ * @param fmt The format string for the reported error
+ * @param args The var_args arguments for the format string
+ *
+ * @return -1 when errors where encountered, 0 otherwise
+ */
 int
 apn_verror(struct apn_ruleset *ruleset, const char *filename, int lineno,
     const char *fmt, va_list args)
@@ -927,8 +1054,14 @@ apn_verror(struct apn_ruleset *ruleset, const char *filename, int lineno,
 	return (0);
 }
 
-/*
+/**
  * Print error messages generated by libapn.
+ *
+ * @param rs The ruleset
+ * @param file The stdio stream to which the errors should be printed
+ *
+ * @return -1 when the arguments are invalid, 0 if no errors are found
+ *	and 1 when output was generated.
  */
 int
 apn_print_errors(struct apn_ruleset *rs, FILE *file)
@@ -949,8 +1082,11 @@ apn_print_errors(struct apn_ruleset *rs, FILE *file)
 	return 1;
 }
 
-/*
- * Return one error message generated by libapn.
+/**
+ * Return the first of possibly multiple error messages generated by libapn.
+ * 
+ * @param rs The ruleset
+ * @return a pointer to a string or NULL if no error was found.
  */
 char *
 apn_one_error(struct apn_ruleset *rs)
@@ -971,8 +1107,10 @@ apn_one_error(struct apn_ruleset *rs)
 	return(msg->msg);
 }
 
-/*
+/**
  * Free a full ruleset.
+ *
+ * @param rs The Ruleset
  */
 void
 apn_free_ruleset(struct apn_ruleset *rs)
@@ -1648,11 +1786,16 @@ apn_free_app(struct apn_app *app)
 	}
 }
 
-/*
- * Search for the rule with ID @id in the qeueu @queue that is part of
- * ruleset @rs.
- * Return the rule if it is found in the ruleset and a direct member of
- * @queue. Otherwise return NULL.
+/**
+ * Search for the rule with the given id in the queue that is part of
+ * ruleset rs.
+ *
+ * @param rs The rule set
+ * @param queue The queue
+ * @param id The rule identifier
+ *
+ * @return the rule if it is found in the ruleset and a direct member of
+ *	the queue, Otherwise return NULL.
  */
 static struct apn_rule *
 apn_search_rule(struct apn_ruleset *rs, struct apn_chain *queue,
@@ -1665,8 +1808,13 @@ apn_search_rule(struct apn_ruleset *rs, struct apn_chain *queue,
 	return  p;
 }
 
-/*
- * Update IDs.  In case of error, return 1.
+/**
+ * Update IDs.
+ *
+ * @param rule The rule
+ * @param rs The rule set
+ *
+ * @return 1 In case of an error, 0 otherwise.
  */
 static int
 apn_update_ids(struct apn_rule *rule, struct apn_ruleset *rs)
@@ -1693,7 +1841,7 @@ apn_update_ids(struct apn_rule *rule, struct apn_ruleset *rs)
 	return (0);
 }
 
-/*
+/**
  * Search for a filter rule with ID @id in the queue of application blocks
  * given by @queue. Return the surrounding block if the rule is found in
  * one of the block in @queue and NULL otherwise.
@@ -1835,7 +1983,7 @@ errout:
 	return NULL;
 }
 
-/*
+/**
  * Create an independant copy of a rule chain of apn_rules. The
  * copy uses the same IDs as the original rules and is _not_ part
  * of any ruleset.
@@ -2131,14 +2279,14 @@ apn_clean_ruleset(struct apn_ruleset *rs,
 	return ret;
 }
 
-/*
+/**
  * Removes the rule with the given id from a ruleset.
  *
- * Return codes:
- * -1: error
- *  0: rule was removed
- *  1: invalid parameters
- *  2: no rule was found
+ * @return
+ *	-1: error
+ *	 0: rule was removed
+ *	 1: invalid parameters
+ *	 2: no rule was found
  */
 int
 apn_remove(struct apn_ruleset *rs, unsigned int id)

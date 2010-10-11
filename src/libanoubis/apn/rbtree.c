@@ -113,6 +113,13 @@ rotate_right(struct rb_entry **root, struct rb_entry *e)
 	}
 }
 
+/**
+ * Locate an entry
+ *
+ * @param root The root of the tree
+ * @param key The key which identifies the entry
+ * @return an entry or NULL if none was found 
+ */
 struct rb_entry *
 rb_find(struct rb_entry *root, unsigned long key)
 {
@@ -127,6 +134,13 @@ rb_find(struct rb_entry *root, unsigned long key)
 	return NULL;
 }
 
+/**
+ * Insert an entry into the tree
+ *
+ * @param root The root of the tree
+ * @param n The entry
+ * @return 1 when successful, 0 if the entry already part of the tree 
+ */
 int
 rb_insert_entry(struct rb_entry **root, struct rb_entry *n)
 {
@@ -209,9 +223,13 @@ fixup:
 	return 1;
 }
 
-/*
+/**
  * Swap two rb_entry structures in the tree. This must NOT copy the user
  * data but must instead relink the affected structures.
+ * 
+ * @param root The root of the tree
+ * @param e1 The first entry
+ * @param e2 The second entry
  */
 static void
 rb_swap(struct rb_entry **root, struct rb_entry *e1, struct rb_entry *e2)
@@ -289,6 +307,12 @@ rb_swap(struct rb_entry **root, struct rb_entry *e1, struct rb_entry *e2)
 		e2->right->parent = e2;
 }
 
+/**
+ * Check if the children of an entry are black.
+ * 
+ * @param rb The entry which should be checked
+ * @return 1 if both children are black, 0 otherwise
+ */
 static int
 children_black(struct rb_entry *rb)
 {
@@ -299,6 +323,13 @@ children_black(struct rb_entry *rb)
 	return 1;
 }
 
+/**
+ * Remove an entry from the tree.
+ * 
+ * @param root The root of the tree
+ * @param e The entry which should be removed
+ * @return 1 if the removal succeeds.
+ */
 int
 rb_remove_entry(struct rb_entry **root, struct rb_entry *e)
 {
@@ -453,6 +484,13 @@ retry:
 	goto fixup;
 }
 
+/**
+ * Locate and remove an entry from the tree.
+ * 
+ * @param root The root of the tree
+ * @param key The key which identifies the entry
+ * @return 0 if no entry was found, 1 if the removal succeeds.
+ */
 int
 rb_remove(struct rb_entry **root, unsigned long key)
 {
