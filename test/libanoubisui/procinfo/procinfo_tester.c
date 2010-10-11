@@ -34,7 +34,7 @@
 /**
  * Print process information for each process given on the command
  * line. Information printed is in this order:
- * ̣- process id
+ * - process id
  * - parent process ID
  * - real, effective and saved user ID
  * - real, effective and saved group ID

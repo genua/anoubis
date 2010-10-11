@@ -221,7 +221,7 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
  * @param prio The rule set priority.
  * @param uid The user ID of the event.
  * @param msg The ALF event itself.
- * ̣@param log The log level for the result is returned here. The
+ * @param log The log level for the result is returned here. The
  *     caller should initialize this to APN_LOG_NONE.
  * @param rule_id The rule ID of the rule that matched the event is
  *     returned here. The caller should initialize the rule ID to zero.
@@ -320,7 +320,7 @@ pe_alf_capmatch(struct apn_rule *rule, int type)
  *
  * @param rule The ALF rule block.
  * @param msg The ALF event.
- * ̣@param log The log level for the result is returned here. The
+ * @param log The log level for the result is returned here. The
  *     caller should initialize this to APN_LOG_NONE.
  * @param rule_id The rule ID of the rule that matched the event is
  *     returned here. The caller should initialize the rule ID to zero.

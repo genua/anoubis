@@ -25,6 +25,16 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/**
+ * @file
+ * This file manages users and their policies. It maintains a database
+ * of all users that have policies and provides functions to load and
+ * modify these policies. This includes functions to process policy
+ * requests from the user.
+ *
+ * The special user with ID -1 is used for default policies.
+ */
+
 #include "config.h"
 
 #ifdef S_SPLINT_S
@@ -68,13 +78,36 @@
 #include "cert.h"
 #include "amsg.h"
 
+/**
+ * This structure describes one user. All users are maintained in
+ * a list of users, known as the policy database.
+ */
 struct pe_user {
+	/**
+	 * This is used to link user strutures within a policy database.
+	 */
 	TAILQ_ENTRY(pe_user)	 entry;
+
+	/**
+	 * The user ID of the user.
+	 */
 	uid_t			 uid;
+
+	/**
+	 * The admin and user policy of the user. If no policy exists, this
+	 * value is set to NULL.
+	 */
 	struct apn_ruleset	*prio[PE_PRIO_MAX];
 };
+
+/**
+ * The active user database.
+ */
 TAILQ_HEAD(pe_policy_db, pe_user) *pdb;
 
+/**
+ * String constants for the policy directories.
+ */
 static char * prio_to_string[PE_PRIO_MAX] = {
 #ifndef lint
 	[ PE_PRIO_ADMIN ] = ANOUBISD_POLICYCHROOT "/" ANOUBISD_ADMINDIR,
@@ -82,36 +115,120 @@ static char * prio_to_string[PE_PRIO_MAX] = {
 #endif
 };
 
+/**
+ * This structure is used to handle an ongoing policy request from
+ * the user. It keeps all the state that is needed to continue the
+ * request when the next message arrives. All active policy requests
+ * are linked in a global list.
+ *
+ * The strings in this structure are allocated dynamically. Additionally,
+ * the structure contains up to two open file descriptors.
+ */
 struct pe_policy_request {
+	/**
+	 * This field is used to link policy requests in the global
+	 * policy request list.
+	 */
 	LIST_ENTRY(pe_policy_request) next;
+
+	/**
+	 * The token of the request. Subsequent messages will use the
+	 * same token.
+	 */
 	u_int64_t	 token;
+
+	/**
+	 * The type of the policy request, either ANOUBIS_PTYPE_GETBYUID
+	 * or ANOUBIS_PTYPE_SETBYUID.
+	 */
 	u_int32_t	 ptype;
+
+	/**
+	 * The authenticated user ID of the user that issued the request.
+	 * All messages that belong to the same request must come with
+	 * the same authenticated user ID.
+	 */
 	u_int32_t	 authuid;
+
+	/**
+	 * An open file descriptor for the policy that is being transferred
+	 * from the user. It is unused for GET requests.
+	 */
 	int		 fd;
+
+	/**
+	 * The file descriptor that is used to write the signature
+	 * of the policy. It is unused for GET requests.
+	 */
 	int		 fdsig;
+
+	/**
+	 * The priority of the policy that is transferred.
+	 */
 	int		 prio;
+
+	/**
+	 * The user ID of the policy. The administrator is allowed to
+	 * read/write policies of other users.
+	 */
 	uid_t		 uid;
+
+	/**
+	 * The accumulated number of bytes written to the signature and
+	 * the policy file. The first siglen bytes are written to the
+	 * signature file, the rest to the  policy file.
+	 */
 	int		 written;
+
+	/**
+	 * The length of the signature as reported by the first message
+	 * in the request.
+	 */
 	int		 siglen;
+
+	/**
+	 * The temporary name of the new policy file. It will be renamed
+	 * to the realname after verification.
+	 */
 	char		*tmpname;
+
+	/**
+	 * The temporary name of the new signature file. Will be renamed
+	 * to realsig.
+	 */
 	char		*tmpsig;
+
+	/**
+	 * The final name of the new policy file.
+	 */
 	char		*realname;
+
+	/**
+	 * The final name of the new signature file.
+	 */
 	char		*realsig;
-	unsigned char	*key;
 };
+
+/**
+ * The global list of all active policy requests.
+ */
 LIST_HEAD(, pe_policy_request) preqs;
 
-void				 pe_user_init(void);
+/* Prototypes */
 static int			 pe_user_load_db(struct pe_policy_db *);
 static int			 pe_user_load_dir(const char *, unsigned int,
 				     struct pe_policy_db *);
 static struct apn_ruleset	*pe_user_load_policy(const char *name,
 				     int flags);
-static int			 pe_user_insert_rs(struct apn_ruleset *,
+static void			 pe_user_insert_rs(struct apn_ruleset *,
 				     uid_t, unsigned int,
 				     struct pe_policy_db *);
 static struct pe_user		*pe_user_get(uid_t, struct pe_policy_db *);
 
+/**
+ * Initialize the user database. This function is called at startup and
+ * assumes that the current policy database is not yes initialized.
+ */
 void
 pe_user_init(void)
 {
@@ -127,13 +244,19 @@ pe_user_init(void)
 	TAILQ_INIT(pp);
 
 	/* We die gracefully if loading fails. */
-	if ((count = pe_user_load_db(pp)) == -1)
-		fatal("pe_user_init: failed to initialize policy database");
+	count = pe_user_load_db(pp);
 	pdb = pp;
 
 	log_info("pe_user_init: %d policies loaded to pdb %p", count, pp);
 }
 
+/**
+ * Reconfigure the user database. This function tries to load the
+ * policy data from disk. If this is successful the active policy database
+ * is replaced with the new data and the old policy database is freed.
+ * Before freeing the old database all contexts in all processes are
+ * updated (pe_proc_update_db).
+ */
 void
 pe_user_reconfigure(void)
 {
@@ -145,12 +268,7 @@ pe_user_reconfigure(void)
 		master_terminate();
 	}
 	TAILQ_INIT(newpdb);
-	if ((count = pe_user_load_db(newpdb)) == -1) {
-		log_warnx("pe_user_reconfigure: "
-		    "could not reload policy database");
-		free(newpdb);
-		return;
-	}
+	count = pe_user_load_db(newpdb);
 
 	/* Switch to new policy database */
 	oldpdb = pdb;
@@ -163,6 +281,12 @@ pe_user_reconfigure(void)
 	    "flushed old pdb %p", count, newpdb, oldpdb);
 }
 
+/**
+ * Free all memory associated with a policy database.
+ *
+ * @param ppdb The policy database. The active database is used if
+ *     ppdb is NULL (only possible during shutdown).
+ */
 void
 pe_user_flush_db(struct pe_policy_db *ppdb)
 {
@@ -181,15 +305,16 @@ pe_user_flush_db(struct pe_policy_db *ppdb)
 	}
 }
 
+/**
+ * Load the policy database from disk.
+ *
+ * @param A pre-allocated empty database.
+ * @return The total number of policies loaded.
+ */
 static int
 pe_user_load_db(struct pe_policy_db *p)
 {
 	int	count = 0;
-
-	if (p == NULL) {
-		log_warnx("pe_user_load_db: bogus database pointer");
-		return (-1);
-	}
 
 	/* load admin policies */
 	count = pe_user_load_dir(ANOUBISD_POLICYCHROOT "/" ANOUBISD_ADMINDIR,
@@ -199,9 +324,26 @@ pe_user_load_db(struct pe_policy_db *p)
 	count += pe_user_load_dir(ANOUBISD_POLICYCHROOT "/" ANOUBISD_USERDIR,
 	    PE_PRIO_USER1, p);
 
-	return (count);
+	return count;
 }
 
+/**
+ * Load all policy files in a directory into the database. The user IDs
+ * of the policies are derived from the names. Files that do not have
+ * numerical names are skipped.
+ *
+ * If the user has a key the policy must be signed. Policies with missing
+ * or invalid signatures are skipped and a warning is logged.
+ *
+ * All policies are clean when they are read from disk. This means that
+ * rules that are no longer in scope are removed.
+ *
+ * @param dirname The directory to load policies from.
+ * @param prio The priority of the policies in that directory. It this is
+ *     PE_PRIO_ADMIN, the ruleset must not contain ASK rules.
+ * @param p New policies are inserted into this policy database.
+ * @return The number of policies loaded.
+ */
 static int
 pe_user_load_dir(const char *dirname, unsigned int prio, struct pe_policy_db *p)
 {
@@ -217,19 +359,9 @@ pe_user_load_dir(const char *dirname, unsigned int prio, struct pe_policy_db *p)
 
 	DEBUG(DBG_PE_POLICY, "pe_user_load_dir: %s %p", dirname, p);
 
-	if (prio >= PE_PRIO_MAX) {
-		log_warnx("pe_user_load_dir: illegal priority %d", prio);
-		return (0);
-	}
-
-	if (p == NULL) {
-		log_warnx("pe_user_load_dir: illegal database");
-		return (0);
-	}
-
 	if ((dir = opendir(dirname)) == NULL) {
 		log_warn("opendir");
-		return (0);
+		return 0;
 	}
 
 	if (prio != PE_PRIO_USER1)
@@ -305,13 +437,7 @@ pe_user_load_dir(const char *dirname, unsigned int prio, struct pe_policy_db *p)
 		/* If parsing fails, we just continue */
 		if (rs == NULL)
 			continue;
-
-		if (pe_user_insert_rs(rs, uid, prio, p) != 0) {
-			apn_free_ruleset(rs);
-			log_warnx("could not insert policy %s/%s", dirname,
-			    dp->d_name);
-			continue;
-		}
+		pe_user_insert_rs(rs, uid, prio, p);
 		count++;
 	}
 
@@ -320,15 +446,27 @@ pe_user_load_dir(const char *dirname, unsigned int prio, struct pe_policy_db *p)
 
 	DEBUG(DBG_PE_POLICY, "pe_user_load_dir: %d policies inserted", count);
 
-	return (count);
+	return count;
 }
 
+/**
+ * Check if a scope from a rule can still be valid. The scope is not
+ * valid if its timeout has expired or if its process is no longer running.
+ * This function is used as the callback for apn_clean_ruleset.
+ *
+ * @param scope The scope.
+ * @param data The callback data as passed to apn_clean_ruleset. In our
+ *     case this is a pointer to a time_t with the current time. If the
+ *     current time is zero all scopes are removed from the policy. This is
+ *     done on daemon startup where we do not want to keep scopes.
+ * @return True if the scope should be removed. False if it still applies to
+ *     at leas one process.
+ */
 static int
 pe_user_scope_check(struct apn_scope * scope, void * data)
 {
 	time_t		now = *(time_t *)data;
 
-	/* now == 0 means clean all scopes. */
 	if (!now)
 		return 1;
 	/* Clean it if the scope has a timeout and it has expired. */
@@ -345,9 +483,16 @@ pe_user_scope_check(struct apn_scope * scope, void * data)
 	return 0;
 }
 
-/*
- * This function is only called if the daemon is started or after
- * a reload. Thus we have to kill all scopes.
+/**
+ * Load a policy from disk and return its parsed version. This function
+ * is only called if the daemon is started or after a reload. Thus we have
+ * to kill all scopes.
+ *
+ * @param name The name of the policy file. No signatures are checked, this
+ *     must be done by the caller.
+ * @return The cleaned ruleset. This ruleset destructor is set to
+ *     &pe_prefixhash_destroy. In case of a parse error NULL is returned
+ *     and a warning is issued.
  */
 static struct apn_ruleset *
 pe_user_load_policy(const char *name, int flags)
@@ -362,7 +507,7 @@ pe_user_load_policy(const char *name, int flags)
 	ret = apn_parse(name, &rs, flags);
 	if (ret == -1) {
 		log_warnx("could not parse \"%s\"", name);
-		return (NULL);
+		return NULL;
 	}
 	if (ret != 0) {
 		errstr = apn_one_error(rs);
@@ -371,32 +516,38 @@ pe_user_load_policy(const char *name, int flags)
 		else
 			log_warnx("could not parse \"%s\"", name);
 		apn_free_ruleset(rs);
-		return (NULL);
+		return NULL;
 	}
 	apn_clean_ruleset(rs, &pe_user_scope_check, &now);
 	rs->destructor = (void*)&pe_prefixhash_destroy;
-	return (rs);
+	return rs;
 }
 
-static int
+/**
+ * Insert a new ruleset into the policy database replacing any previous
+ * ruleset with the same user ID and priority. If the policy database is
+ * NULL the global database is used. In this case the contexts of all
+ * processes that use the old ruleset are refreshed, too. The refresh
+ * does not happen if a database is specified explicitly.
+ *
+ * @param rs The new ruleset. This function takes over ownership of the
+ *     ruleset. It will be freed if it gets replaced or the database
+ *     is flushed.
+ * @param uid The user ID of the new ruleset.
+ * @param prio The priority of the new ruleset.
+ * @param orig_p The database or NULL if the global database should be used
+ *     and contexts should be refreshed.
+ */
+static void
 pe_user_insert_rs(struct apn_ruleset *rs, uid_t uid, unsigned int prio,
-    struct pe_policy_db *p)
+    struct pe_policy_db *orig_p)
 {
 	struct pe_user		*user;
+	struct pe_policy_db	*p = orig_p;
+	struct apn_ruleset	*oldrs;
 
-	if (rs == NULL) {
-		log_warnx("pe_user_insert_rs: empty ruleset");
-		return (1);
-	}
-	if (p == NULL) {
-		log_warnx("pe_user_insert_rs: empty database pointer");
-		return (1);
-	}
-	if (prio >= PE_PRIO_MAX) {
-		log_warnx("pe_user_insert_rs: illegal priority %d", prio);
-		return (1);
-	}
-
+	if (p == NULL)
+		p = pdb;
 	/* Find or create user */
 	if ((user = pe_user_get(uid, p)) == NULL) {
 		if ((user = calloc(1, sizeof(struct pe_user))) == NULL) {
@@ -405,53 +556,31 @@ pe_user_insert_rs(struct apn_ruleset *rs, uid_t uid, unsigned int prio,
 		}
 		user->uid = uid;
 		TAILQ_INSERT_TAIL(p, user, entry);
-	} else if (user->prio[prio]) {
-		DEBUG(DBG_PE_POLICY, "pe_user_insert_rs: freeing %p "
-		    "prio %d user %p", user->prio[prio], prio, user);
-		apn_free_ruleset(user->prio[prio]);
-		user->prio[prio] = NULL;
-	}
-
-	user->prio[prio] = rs;
-
-	DEBUG(DBG_PE_POLICY, "pe_user_insert_rs: uid %d (%p prio %p, %p)",
-	    (int)uid, user, user->prio[0], user->prio[1]);
-
-	return (0);
-}
-
-static int
-pe_user_replace_rs(struct apn_ruleset *rs, uid_t uid, unsigned int prio)
-{
-	struct apn_ruleset	*oldrs;
-	struct pe_user		*user;
-
-	if (rs == NULL) {
-		log_warnx("pe_replace_rs: empty ruleset");
-		return (1);
-	}
-	if (prio >= PE_PRIO_MAX) {
-		log_warnx("pe_user_replace_rs: illegal priority %d", prio);
-		return (1);
-	}
-	DEBUG(DBG_TRACE, ">pe_user_replace_rs");
-	if ((user = pe_user_get(uid, pdb)) == NULL) {
-		user = calloc(1, sizeof(struct pe_user));
-		if (user == NULL) {
-			log_warn("calloc");
-			master_terminate();
-		}
-		user->uid = uid;
-		TAILQ_INSERT_TAIL(pdb, user, entry);
 	}
 	oldrs = user->prio[prio];
 	user->prio[prio] = rs;
-	pe_proc_update_db_one(oldrs, prio, uid);
-	apn_free_ruleset(oldrs);
-	DEBUG(DBG_TRACE, "<pe_user_replace_rs");
-	return 0;
+	/*
+	 * Refresh even if oldrs == NULL. New contexts will be created
+	 * in this case.
+	 */
+	if (orig_p == NULL)
+		pe_proc_update_db_one(oldrs, prio, uid);
+	if (oldrs)
+		apn_free_ruleset(oldrs);
+
+	DEBUG(DBG_PE_POLICY, "pe_user_insert_rs: uid %d (%p prio %p, %p)",
+	    (int)uid, user, user->prio[0], user->prio[1]);
 }
 
+/**
+ * Return a pointer to the user structure for the given user ID.
+ *
+ * @param The user ID.
+ * @param The policy database to search. If this is NULL the active
+ *     database is used.
+ * @return A pointer to the user structure or NULL if the user is
+ *     not in the database.
+ */
 static struct pe_user *
 pe_user_get(uid_t uid, struct pe_policy_db *p)
 {
@@ -473,6 +602,16 @@ pe_user_get(uid_t uid, struct pe_policy_db *p)
 	return (user);
 }
 
+/**
+ * Return a pointer to the ruleset of a user.
+ *
+ * @param uid The user ID of the user.
+ * @param prio The priority of the ruleset.
+ * @param p The policy database to search. If this is NULL the
+ *     global database is used.
+ * @return A pointer to the ruleset or NULL if the specified ruleset
+ *     is not in the database. The ruleset is still owned by the database.
+ */
 struct apn_ruleset *
 pe_user_get_ruleset(uid_t uid, unsigned int prio, struct pe_policy_db *p)
 {
@@ -495,6 +634,18 @@ pe_user_get_ruleset(uid_t uid, unsigned int prio, struct pe_policy_db *p)
 	return user->prio[prio];
 }
 
+/**
+ * Build the filename for a policy on disk. This function concatenates
+ * the policy base directory for the priority and the policy name
+ * derived from the user ID. The string given by <code>pre</code> is
+ * inserted as a prefix to the last component of the filename. This is
+ * useful when constructing names for temporary files.
+ *
+ * @param uid The user ID. Use -1 for default policy filenames.
+ * @param prio The priority of the policy.
+ * @param pre The filename prefix. May be empty but not NULL.
+ * @return The policy path name dynamically allocated.
+ */
 static char *
 pe_policy_filename(uid_t uid, unsigned int prio, char *pre)
 {
@@ -518,6 +669,20 @@ pe_policy_filename(uid_t uid, unsigned int prio, char *pre)
 	return name;
 }
 
+/**
+ * Copy a policy to a temporary file and return an open file descriptor
+ * to the temporary file. The ruleset is cleaned while copying it, i.e.
+ * all outdated scopes are removed.
+ *
+ * The policy is read from disk not from the user database.
+ *
+ * @param uid The user ID of the policy.
+ * @param prio The priority of the policy.
+ * @return An open file descriptor that points to the temporary file.
+ *     The temporary file is already unlinked, i.e. it will go away
+ *     once the file descriptor is closed. A negative error code is returned
+ *     in case of errors.
+ */
 static int
 pe_policy_get(uid_t uid, unsigned int prio)
 {
@@ -560,8 +725,15 @@ pe_policy_get(uid_t uid, unsigned int prio)
 
 }
 
-static struct
-pe_policy_request *pe_policy_request_find(u_int64_t token)
+/**
+ * Return a pointer to the policy request with the given token.
+ *
+ * @param token The token.
+ * @return A pointer to the policy request or NULL if the token is
+ *     not in use.
+ */
+static struct pe_policy_request *
+pe_policy_request_find(u_int64_t token)
 {
 	struct pe_policy_request * req;
 	LIST_FOREACH(req, &preqs, next) {
@@ -571,6 +743,13 @@ pe_policy_request *pe_policy_request_find(u_int64_t token)
 	return NULL;
 }
 
+/**
+ * Free all resources associated with a policy request. This function closes
+ * open file descriptors in the policy request and frees memory for path
+ * names and the request itself.
+ *
+ * @param req The request.
+ */
 static void
 pe_policy_request_put(struct pe_policy_request *req)
 {
@@ -595,6 +774,9 @@ pe_policy_request_put(struct pe_policy_request *req)
 	free(req);
 }
 
+/**
+ * Dump the user database to the log file.
+ */
 void
 pe_user_dump(void)
 {
@@ -618,6 +800,20 @@ pe_user_dump(void)
 	}
 }
 
+/**
+ * Handle a policy request from the user. This function deals with new
+ * requests, ongoing request and abort requests. The latter can happen
+ * if the user closes the connection in the middle of an ongoing policy
+ * request.
+ *
+ * @param The request message. It can be of type ANOUBISD_MSG_POLREQUEST_ABORT
+ *     or ANOUBISD_MSG_POLREQUEST.
+ * @return Either NULL if the function sent all neccessary messages
+ *     itself or a message that must be sent to the session engine. The
+ *     latter happens for requests that have an error or for requests
+ *     that can be answered with a single reply message. GET requests
+ *     send their messages using send_policy_data.
+ */
 struct anoubisd_msg *
 pe_dispatch_policy(struct anoubisd_msg *msg)
 {
@@ -755,6 +951,10 @@ pe_dispatch_policy(struct anoubisd_msg *msg)
 			setbyuid = (Policy_SetByUid *)polreq->data;
 			uid = get_value(setbyuid->uid);
 			prio = get_value(setbyuid->prio);
+			if (prio >= PE_PRIO_MAX) {
+				error = EINVAL;
+				goto reply;
+			}
 			/*
 			 * XXX CEH: Do more/better permission checks here!
 			 * XXX CEH: Authorized user ID is in polreq->uid.
@@ -787,7 +987,7 @@ pe_dispatch_policy(struct anoubisd_msg *msg)
 				goto reply;
 			/* splint doesn't understand the %" PRIu64 " modifier */
 			if (asprintf(&req->tmpname, "%s.%" PRIu64, tmp,
-			    /*@i@*/ req->token) == -1) {
+			    req->token) == -1) {
 				free(tmp);
 				req->tmpname = NULL;
 				goto reply;
@@ -926,13 +1126,9 @@ pe_dispatch_policy(struct anoubisd_msg *msg)
 					goto reply;
 				}
 			}
-			DEBUG(DBG_TRACE, "    pe_user_replace_rs uid=%d "
+			DEBUG(DBG_TRACE, "    pe_user_insert_rs uid=%d "
 			    "prio=%d\n", req->uid, req->prio);
-			if (pe_user_replace_rs(ruleset, req->uid, req->prio)) {
-				error = EIO;
-				apn_free_ruleset(ruleset);
-				goto reply;
-			}
+			pe_user_insert_rs(ruleset, req->uid, req->prio, NULL);
 			send_policychange(req->uid, req->prio);
 			error = 0;
 			goto reply;

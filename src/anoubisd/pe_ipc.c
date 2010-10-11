@@ -64,9 +64,17 @@
 void	pe_ipc_connect(struct ac_ipc_message *);
 void	pe_ipc_destroy(struct ac_ipc_message *);
 
-/*
+/**
  * Change context on connect(2) for AF_UNIX:
  * - If pe_context_decide forbids changing the context, we don't.
+ * - Otherwise we borrow the context from the peer. The current
+ *   context is saved and will be restored when the connection closes.
+ * Connections are identified by a separate cookie that is assigned to
+ * the connection. It uses the same type as a task cookie but is otherwise
+ * not related to task cookies at all.
+ *
+ * @param msg The kernel event for the connect. The processes are extracted
+ *     from the event by looking at the task cookies.
  */
 void
 pe_ipc_connect(struct ac_ipc_message *msg)
@@ -87,6 +95,15 @@ pe_ipc_connect(struct ac_ipc_message *msg)
 	pe_proc_put(procp);
 }
 
+/**
+ * Handle a disconnect event for a unix domain socket. This function
+ * restores the saved context if the connect was previously used to
+ * borrow a context from the peer.
+ *
+ * @param msg The kernel event for the disconnect. The task cookies in
+ *     the event are used to find the processes, the connection cookie
+ *     is used to destinguish different connections.
+ */
 void
 pe_ipc_destroy(struct ac_ipc_message *msg)
 {
