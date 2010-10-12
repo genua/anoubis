@@ -71,45 +71,130 @@
 
 #include <anoubis_protocol.h>
 
-static void	policy_sighandler(int, short, void *);
+/* Prototypes */
 static void	dispatch_timer(int, short, void *);
 static void	dispatch_m2p(int, short, void *);
 static void	dispatch_p2m(int, short, void *);
 static void	dispatch_s2p(int, short, void *);
 static void	dispatch_p2s(int, short, void *);
-
 static int	policy_upgrade_fill_chunk(char *buf, int maxlen);
 
-static Queue	eventq_p2m;
-static Queue	eventq_p2m_hold;
-static Queue	eventq_p2s;
-
-/*
- * Keep track of messages which have been forwarded to the
- * session process. They will be timed out after a configured
- * timeout and a configured default reply will be generated.
+/**
+ * This structure is used to keep track of escalations which have been
+ * forwarded to the session process. They will be timed out after a
+ * configured timeout and a default reply will be generated.
  */
 struct reply_wait {
+	/**
+	 * This field is used to link these structures in the global
+	 * list of open escalations.
+	 */
 	TAILQ_ENTRY(reply_wait)	next;
+
+	/**
+	 * The token of the kernel event. This is used in replies and
+	 * to locate the escalation.
+	 */
 	eventdev_token		token;
+
+	/**
+	 * The anoubis eventdev reply flags to add to the reply.
+	 * These flags cannot be influenced by the user.
+	 */
 	int			flags;
+
+	/**
+	 * The start time of the event.
+	 */
 	time_t			starttime;
+
+	/**
+	 * The timeout for the event relative to the start time.
+	 */
 	time_t			timeout;
+
+	/**
+	 * The log level of the event.
+	 */
 	int			log;
 };
+
+/**
+ * The event queue for events that are sent from the policy engine
+ * to the master.
+ */
+static Queue	eventq_p2m;
+
+/**
+ * The event queue for events that must be sent from the policy
+ * engine to the master but are currently held back due to an old
+ * upgrade that is still not processed completly.
+ */
+static Queue	eventq_p2m_hold;
+
+/**
+ * The event queue for events that are sent from the policy engine
+ * to the session process.
+ */
+static Queue	eventq_p2s;
+
+/**
+ * The global list of all pending escalations.
+ */
 static TAILQ_HEAD(, reply_wait)		replyq;
 
-struct event_info_policy {
-	struct event	*ev_s2p, *ev_m2p;
-	struct event	*ev_timer;
-	struct timeval	*tv;
-	struct event	*ev_sigs[10];
-};
+/**
+ * The event for incoming messages from the session engine.
+ */
+static struct event		ev_s2p;
 
+/**
+ * The event for incoming messages from the master.
+ */
+static struct event		ev_m2p;
+
+/**
+ * The timer event that is used to timeout pending escalations.
+ */
+struct event			ev_timer;
+
+/**
+ * The value of the timeout used for the timeout event (5 seconds).
+ */
+struct timeval			tv = {
+					.tv_sec = 5,
+					.tv_usec = 0,
+				};
+
+/**
+ * Events for signals. They are stored globally, because the
+ * signal handler must be able to remove them from the event
+ * queue during shutdown.
+ */
+struct event			*ev_sigs[10];
+
+/**
+ * The current status of the daemon termination. Possible values are:
+ * 0: Policy engine is running normally.
+ * 1: Termination requested. All signals are blocked at this point and
+ *    neither signal nor timer events are active anymore.
+ * 2: End of file on the pipe from the master was received. We still wait
+ *    for the session engine to flush its queue.
+ * 3: End of file from the session engine was received. At this point all
+ *    remaining events that have not been answered are denied. This
+ *    completes the termination process.
+ */
 static int terminate = 0;
 
+/**
+ * Set the termination status to the given value. The termination level
+ * can only increase and transitions trigger certain events. Whenever
+ * the status increases, all actions tied to skipped states are performed, too.
+ *
+ * @param n The new termination status.
+ */
 static void
-set_terminate(int n, struct event_info_policy *info)
+set_terminate(int n)
 {
 	while (terminate < n) {
 		++terminate;
@@ -120,27 +205,37 @@ set_terminate(int n, struct event_info_policy *info)
 
 			sigfillset(&mask);
 			sigprocmask(SIG_SETMASK, &mask, NULL);
-			for (i=0; info->ev_sigs[i]; ++i)
-				signal_del(info->ev_sigs[i]);
-			if (terminate < 1)
-				terminate = 1;
-			event_del(info->ev_timer);
+			for (i=0; ev_sigs[i]; ++i)
+				signal_del(ev_sigs[i]);
+			event_del(&ev_timer);
 			break;
 		}
 		case 2:
 			/* No special action required. */
 			break;
 		case 3:
-			dispatch_timer(0, 0, info);
+			dispatch_timer(0, 0, NULL);
 			break;
 		}
 	}
 }
 
 
-/* ARGSUSED */
+/**
+ * The signal handler for signal events. This is never run from
+ * signal context. It is called from the event loop in response
+ * to a signal. In theory, it is legal to call this handler manually,
+ * but currently this never happens.
+ *
+ * @param sig The signal. Possible values are:
+ *     SIGUSR1: Dump policy related information to the log.
+ *     SIGINT/SIGTERM: Initiate graceful shutdown.
+ *     SIGQUIT: Forcefully terminate the policy engine.
+ * @param event The details of the event (unused).
+ * @param arg The callback argument of the event (unused).
+ */
 static void
-policy_sighandler(int sig, short event __used, void *arg)
+policy_sighandler(int sig, short event __used, void *arg __used)
 {
 	switch (sig) {
 	case SIGUSR1:
@@ -148,7 +243,7 @@ policy_sighandler(int sig, short event __used, void *arg)
 		break;
 	case SIGINT:
 	case SIGTERM:
-		set_terminate(1, arg);
+		set_terminate(1);
 		break;
 	case SIGQUIT:
 		(void)event_loopexit(NULL);
@@ -156,22 +251,38 @@ policy_sighandler(int sig, short event __used, void *arg)
 	}
 }
 
+/**
+ * This is the main entry pont of the policy engine. It starts a child
+ * process that runs the policy engine. For the master process there
+ * are no further side effects.
+ *
+ * The policy engine drops all privileges and runs chrooted. It has
+ * read only access to the SFS tree and read/write access to the policy
+ * backing store.
+ *
+ * @param pipes The file descriptors of the pipes that are used by the
+ *     anoubisd process to communicate with each other. Two consecutive
+ *     descriptors are used to describe on pipe. The array is indexed by
+ *     the PIPE_* macros defined in anoubisd.h. This function consumes
+ *     the two file descriptors: The policy end of the pipe between master
+ *     and policy and the policy end of the pipe between session and policy.
+ *     All other file descriptors are closed in the child process.
+ * @param loggers The pipes from the anoubis daemon processes to the
+ *     logger. This function uses one of the pipes in the child and closes
+ *     all others.
+ * @return In the master the pid of the child process is retruned. The
+ *     function has no other side effects on the master. In the child this
+ *     function never returns.
+ */
 pid_t
 policy_main(int pipes[], int loggers[])
 {
 	int		 masterfd, sessionfd, logfd, err;
 	struct event	 ev_sigterm, ev_sigint, ev_sigquit, ev_sigusr1;
-	struct event	 ev_m2p, ev_s2p;
-	struct event	 ev_p2m, ev_p2s;
-	struct event	 ev_timer;
-	struct timeval	 tv;
-	struct event_info_policy ev_info;
+	struct event	 ev_p2s, ev_p2m;
 	struct passwd	*pw;
 	sigset_t	 mask;
 	pid_t		 pid;
-#ifdef LINUX
-	int		 dazukofd;
-#endif
 
 	pid = fork();
 	if (pid == -1)
@@ -195,7 +306,7 @@ policy_main(int pipes[], int loggers[])
 	/* open /etc/services before chroot */
 	setservent(1);
 #ifdef LINUX
-	dazukofd = dazukofs_ignore();
+	dazukofs_ignore();
 #endif
 
 	if ((pw = getpwnam(ANOUBISD_USER)) == NULL)
@@ -227,19 +338,19 @@ policy_main(int pipes[], int loggers[])
 	    getpid(), PACKAGE_POLICYDIR);
 
 	/* We catch or block signals rather than ignoring them. */
-	signal_set(&ev_sigterm, SIGTERM, policy_sighandler, &ev_info);
-	signal_set(&ev_sigint, SIGINT, policy_sighandler, &ev_info);
+	signal_set(&ev_sigterm, SIGTERM, policy_sighandler, NULL);
+	signal_set(&ev_sigint, SIGINT, policy_sighandler, NULL);
 	signal_set(&ev_sigquit, SIGQUIT, policy_sighandler, NULL);
 	signal_set(&ev_sigusr1, SIGUSR1, policy_sighandler, NULL);
 	signal_add(&ev_sigterm, NULL);
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigquit, NULL);
 	signal_add(&ev_sigusr1, NULL);
-	ev_info.ev_sigs[0] = &ev_sigterm;
-	ev_info.ev_sigs[1] = &ev_sigint;
-	ev_info.ev_sigs[2] = &ev_sigquit;
-	ev_info.ev_sigs[3] = &ev_sigusr1;
-	ev_info.ev_sigs[4] = NULL;
+	ev_sigs[0] = &ev_sigterm;
+	ev_sigs[1] = &ev_sigint;
+	ev_sigs[2] = &ev_sigquit;
+	ev_sigs[3] = &ev_sigusr1;
+	ev_sigs[4] = NULL;
 
 	anoubisd_defaultsigset(&mask);
 	sigdelset(&mask, SIGUSR1);
@@ -248,20 +359,18 @@ policy_main(int pipes[], int loggers[])
 	queue_init(&eventq_p2m_hold, NULL);
 	TAILQ_INIT(&replyq);
 
-	/* init msg_bufs - keep track of outgoing ev_info */
+	/* init msg_bufs and setup events */
 	msg_init(masterfd);
 	msg_init(sessionfd);
 
 	/* master process */
-	event_set(&ev_m2p, masterfd, EV_READ | EV_PERSIST, dispatch_m2p,
-	    &ev_info);
+	event_set(&ev_m2p, masterfd, EV_READ | EV_PERSIST, dispatch_m2p, NULL);
 	event_add(&ev_m2p, NULL);
 
 	event_set(&ev_p2m, masterfd, EV_WRITE, dispatch_p2m, NULL);
 
 	/* session process */
-	event_set(&ev_s2p, sessionfd, EV_READ | EV_PERSIST, dispatch_s2p,
-	    &ev_info);
+	event_set(&ev_s2p, sessionfd, EV_READ | EV_PERSIST, dispatch_s2p, NULL);
 	event_add(&ev_s2p, NULL);
 
 	event_set(&ev_p2s, sessionfd, EV_WRITE, dispatch_p2s, NULL);
@@ -269,15 +378,8 @@ policy_main(int pipes[], int loggers[])
 	queue_init(&eventq_p2m, &ev_p2m);
 	queue_init(&eventq_p2s, &ev_p2s);
 
-	ev_info.ev_s2p = &ev_s2p;
-	ev_info.ev_m2p = &ev_m2p;
-
-	/* Five second timer for statistics ioctl */
-	tv.tv_sec = 5;
-	tv.tv_usec = 0;
-	ev_info.ev_timer = &ev_timer;
-	ev_info.tv = &tv;
-	evtimer_set(&ev_timer, &dispatch_timer, &ev_info);
+	/* Timer for the event timeout. */
+	evtimer_set(&ev_timer, &dispatch_timer, NULL);
 	event_add(&ev_timer, &tv);
 
 	/* Start policy engine */
@@ -296,10 +398,24 @@ policy_main(int pipes[], int loggers[])
 	_exit(0);
 }
 
+/**
+ * This is the event handler for the timer event. This function generates
+ * default deny answers for all events that have timed out. Finally it
+ * re-schedules the timer event. I.e. this function is called once every
+ * five seconds. If the termination level is three, all events are cancelled,
+ * not just those that have expired.
+ *
+ * Cancelling an event involves two action: The kernel must be informed
+ * via the master process. The error code used is EPERM. Additionally, the
+ * UIs must be notified via the session engine, too.
+ *
+ * @param sig The signal that triggered the event (unused).
+ * @param event The details of the event (unused).
+ * @param arg The callback argument of the event (unused).
+ */
 static void
-dispatch_timer(int sig __used, short event __used, void *arg)
+dispatch_timer(int sig __used, short event __used, void *arg __used)
 {
-	struct event_info_policy	*ev_info = arg;
 	struct reply_wait		*msg_wait, *msg_next;
 	struct anoubisd_msg		*msg;
 	eventdev_token			*tk;
@@ -349,12 +465,20 @@ dispatch_timer(int sig __used, short event __used, void *arg)
 		abuf_free_type(msg_wait, struct reply_wait);
 	}
 	if (terminate < 3)
-		event_add(ev_info->ev_timer, ev_info->tv);
+		event_add(&ev_timer, &tv);
 
 	DEBUG(DBG_TRACE, "<dispatch_timer");
 }
 
-/* Does not free the message */
+/**
+ * Process a request from the master to invalidate a certain entry
+ * in the cache for the SFS tree. The entry is specified by its path
+ * name and the uid or key. This function removes the corresponding
+ * entry from the SFS cache.
+ *
+ * @param The message (must be of type ANOUBISD_MSG_SFSCACHE_INVALIDATE)
+ *     The message is not freed by thios function.
+ */
 static void
 dispatch_sfscache_invalidate(struct anoubisd_msg *msg)
 {
@@ -387,6 +511,12 @@ dispatch_sfscache_invalidate(struct anoubisd_msg *msg)
 	}
 }
 
+/**
+ * Send an upgrade start message to the upgrade process (relayed via
+ * the master process) and initialize the upgrade iterator. The upgrade
+ * process will start to request chunks of file names. The message
+ * is composed in this function and sent directly to the master.
+ */
 void
 send_upgrade_start(void)
 {
@@ -416,28 +546,62 @@ send_upgrade_start(void)
 	DEBUG(DBG_UPGRADE, "<send_upgrade_start");
 }
 
+/**
+ * Copy as many filenames as possible from the upgrade file tree to the
+ * buffer. The upgrade iterator is used to determine which file names
+ * to copy. The Caller must call pe_upgrade_filelist_start before calling
+ * this for the first time.
+ * A path that does not fit into the buffer is not copied at all and will
+ * be reconsidered with the next chunk.
+ *
+ * @param buf The buffer for the path names.
+ * @param maxlen The length of the buffer.
+ * @return The number of bytes actually copied.
+ */
+static int
+policy_upgrade_fill_chunk(char *buf, int maxlen)
+{
+	int	reallen = 0;
+
+	while (1) {
+		struct pe_filetree_node	*node = pe_upgrade_filelist_get();
+		int len;
+
+		if (!node)
+			break;
+		len = strlen(node->path) + 1;
+		if (reallen + len > maxlen)
+			break;
+		memcpy(buf+reallen, node->path, len);
+		reallen += len;
+		pe_upgrade_filelist_next();
+	}
+	return reallen;
+}
+
+/**
+ * Send a chunk of filenames of upgraded files to the upgrade process
+ * (relayed via the master). This function fills a message with path names
+ * and sends it to the master process.
+ */
 static void
 send_upgrade_chunk(void)
 {
 	struct anoubisd_msg		*msg;
 	struct anoubisd_msg_upgrade	*upg;
-	char				buf[PATH_MAX];
-	int				buf_size;
 
 	DEBUG(DBG_UPGRADE, ">send_upgrade_chunk");
 
 	/*
 	 * Create the next chunk.
 	 *
-	 * buf_size can be 0! It means that no more files are available.
+	 * ->chunksize can be 0! It means that no more files are available.
 	 *
 	 * The buffer has a size of PATH_MAX to make sure, that at least
 	 * one big pathname can be transfered.
 	 */
-	buf_size = policy_upgrade_fill_chunk(buf, sizeof(buf));
-
 	msg = msg_factory(ANOUBISD_MSG_UPGRADE,
-	    sizeof(struct anoubisd_msg_upgrade) + buf_size);
+	    sizeof(struct anoubisd_msg_upgrade) + PATH_MAX);
 	if (msg == NULL) {
 		log_warnx("send_upgrade_chunk: Out of memory");
 		return;
@@ -445,8 +609,8 @@ send_upgrade_chunk(void)
 
 	upg = (struct anoubisd_msg_upgrade *)msg->msg;
 	upg->upgradetype = ANOUBISD_UPGRADE_CHUNK;
-	upg->chunksize = buf_size;
-	memcpy(upg->chunk, buf, buf_size);
+	upg->chunksize = policy_upgrade_fill_chunk(upg->chunk, PATH_MAX);
+	msg_shrink(msg, sizeof(struct anoubisd_msg_upgrade) + upg->chunksize);
 
 	DEBUG(DBG_UPGRADE, " send_upgrade_chunk: "
 	    "enqueue ANOUBISD_UPGRADE_CHUNK, chunksize = %i",
@@ -456,7 +620,19 @@ send_upgrade_chunk(void)
 	DEBUG(DBG_UPGRADE, "<send_upgrade_chunk");
 }
 
-/* Does not free the message */
+/**
+ * Process a message of type ANOUBISD_MSG_UPGRADE received from the
+ * master process. The messages usually originate from the upgrade process
+ * but are relayed via the master process. The message can be of three
+ * different types:
+ * - The upgrade process requests a chunk of upgrade filenames.
+ * - The upgrade process informs us that processing of the current
+ *     upgrade completed.
+ * - The master informs the policy engine if it should track new upgrades
+ *
+ * @param The message of type ANOUBISD_MSG_UPGRADE. The message is not
+ *     freed by this function.
+ */
 static void
 dispatch_upgrade(struct anoubisd_msg *msg)
 {
@@ -516,6 +692,15 @@ dispatch_upgrade(struct anoubisd_msg *msg)
 	DEBUG(DBG_UPGRADE, "<dispatch_upgrade");
 }
 
+/**
+ * Helper function that calculates the size of a process identifier
+ * for the purpose of sending it to the session engine, e.g. as part of
+ * an escalation message. It is the size of the checksum plus the
+ * length of the path name including the terminating NUL byte.
+ *
+ * @param pident The process identifier.
+ * @return The size.
+ */
 static int
 pident_size(struct pe_proc_ident *pident)
 {
@@ -528,12 +713,21 @@ pident_size(struct pe_proc_ident *pident)
 	return ret;
 }
 
-/*
- * Helper function. This copies @datalen bytes from @data to the
- * offset pointed to by @offp in @buf. The value pointed to by @offp
- * is updated accordingly.
- * Additionally the offset from @offp and the datalenth @datalen are stored
- * in @roffp and @rlenp.
+/**
+ * Internal helper function. This copies <code>datalen</code> bytes from
+ * <code>data</code> to the offset pointed to by <code>offp</code> in
+ * <code>buf</code>. The value pointed to by <code>offp</code> is updated
+ * accordingly. Additionally, the initial offset from <code>offp</code> and
+ * the length of the data copied are stored in <code>roffp</code> and
+ * <code>rlenp</code>.
+ *
+ * @param buf The target buffer.
+ * @param offp The pointer to the target offset. The target offset is
+ *     increased by the number of copied bytes.
+ * @param data The data to copy.
+ * @param datalen The length of th data to copy.
+ * @param roffp The initial offset of the copy is stored here.
+ * @param rlenp The length of the copy is stored here.
  */
 static void
 do_copy(char *buf, int *offp, const void *data, int datalen,
@@ -549,8 +743,16 @@ do_copy(char *buf, int *offp, const void *data, int datalen,
 }
 
 /**
- * The same as do_copy but the data and data length are taken from a
+ * The same as do_copy but the data and data length are taken from an
  * abuf_buffer and not from a pointer.
+ *
+ * @param buf The target buffer.
+ * @param offp The pointer to the target offset. The target offset is
+ *     increase by the number of copied bytes.
+ * @param data The buffer containing the data to copy. The entire buffer
+ *     is copied.
+ * @param roffp The initial offset of the copy is stored here.
+ * @param rlenp The length of the copy is stored here.
  */
 static void
 do_copy_buf(char *buf, int *offp, const struct abuf_buffer data,
@@ -560,11 +762,21 @@ do_copy_buf(char *buf, int *offp, const struct abuf_buffer data,
 	    abuf_length(data), roffp, rlenp);
 }
 
-/*
- * Copy a proc ident by calling @do_copy twice. Once for the csum and
- * once for the pathhint. The offset pointed to by @offp is updated.
- * Additionally the target offsets and lengths are of the copies are
- * stored in @rcsoffp/@rcslenp and @rpathoffp/@rpathlenp respectively.
+/**
+ * Copy a proc ident by calling do_copy twice. Once for the csum and once
+ * for the pathhint. The offset pointed to by <code>offp</code> is updated.
+ * Additionally the target offsets and lengths of the copies are
+ * stored in <code>rcsoffp/rcslenp</code> and
+ * <code>rpathoffp/rpathlenp</code> respectively.
+ *
+ * @param The target buffer.
+ * @param offp The pointer to the target offset. The target offset is
+ *     increased by the number of copied bytes.
+ * @param pident The process identifier to copy.
+ * @param rcsoffp The offset of the checksum is stored here.
+ * @param rcslenp The length of the checksum is stored here.
+ * @param rpathoffp The offset of the path is stored here.
+ * @param rpathlenp The length of the path is stored here.
  */
 static void
 do_copy_ident(char *buf, int *offp, const struct pe_proc_ident *pident,
@@ -583,8 +795,19 @@ do_copy_ident(char *buf, int *offp, const struct pe_proc_ident *pident,
 	do_copy(buf, offp, pident->pathhint, plen, rpathoffp, rpathlenp);
 }
 
+/**
+ * Compose an escalation message that will be sent to the session engine.
+ * The data of the event is taken from the kernel event and the policy
+ * engine reply to that event.
+ *
+ * @param type The type of the event (either ANOUBISD_MSG_EVENTASK or
+ *     ANOUBIS_MSG_LOGREQUEST).
+ * @param hdr The kernel event.
+ * @param reply The policy engine reply for the event.
+ * @return A newly allocated message ready to be sent to the session engine.
+ */
 static struct anoubisd_msg *
-fill_eventask_message(int type, int loglevel, struct eventdev_hdr *hdr,
+fill_eventask_message(int type, struct eventdev_hdr *hdr,
     struct anoubisd_reply *reply)
 {
 	struct anoubisd_msg		*msg;
@@ -605,7 +828,7 @@ fill_eventask_message(int type, int loglevel, struct eventdev_hdr *hdr,
 	eventask->rule_id = reply->rule_id;
 	eventask->prio = reply->prio;
 	eventask->sfsmatch = reply->sfsmatch;
-	eventask->loglevel = loglevel;
+	eventask->loglevel = reply->log;
 	off = 0;
 	do_copy(eventask->payload, &off, hdr, hdr->msg_size,
 	    &eventask->evoff, &eventask->evlen);
@@ -618,14 +841,32 @@ fill_eventask_message(int type, int loglevel, struct eventdev_hdr *hdr,
 	return msg;
 }
 
+/**
+ * Process a message received from the master. If end of file is detected
+ * on the incoming pipe a graceful termination is initiated or continued.
+ * Possible message type are:
+ * ANOUBISD_MSG_SFSCACHE_INVALIDATE: Invalidate an entry in the sfs cache.
+ * ANOUBISD_MSG_EVENTDEV: Process a kernel event according to the policy.
+ *     These messages are either answered directly according to the
+ *     relevant policies or the event is forwarded to the sesssion engine.
+ *     In the latter case a the event is tracked and a timeout is attached
+ *     to it. The event will be denied if the session engine does not answer
+ *     the event within this timeout.
+ * ANOUBISD_MSG_UPGRADE: Upgrade messages.
+ * ANOUBISD_MSG_CONFIG: Configuration changes.
+ * ANOUBISD_MSG_PGCOMMIT_REPLY: Replies to commit request for the playground.
+ *
+ * @param fd The file descriptor of the incoming message.
+ * @param sig The event details (unused).
+ * @param arg The callback argument of the event (unused).
+ */
 static void
-dispatch_m2p(int fd, short sig __used, void *arg)
+dispatch_m2p(int fd, short sig __used, void *arg __used)
 {
 	struct reply_wait			*msg_wait;
 	struct anoubisd_msg			*msg;
 	struct anoubisd_msg			*msg_reply;
 	struct anoubisd_reply			*reply;
-	struct event_info_policy		*ev_info = arg;
 	struct eventdev_hdr			*hdr;
 	struct eventdev_reply			*rep;
 
@@ -698,7 +939,7 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 			eventdev_token		 token = hdr->msg_token;
 
 			nmsg = fill_eventask_message(ANOUBISD_MSG_EVENTASK,
-			    0 /* loglevel */, hdr, reply);
+			    hdr, reply);
 			if (!nmsg) {
 				free(msg);
 				free(reply);
@@ -765,13 +1006,21 @@ dispatch_m2p(int fd, short sig __used, void *arg)
 		DEBUG(DBG_TRACE, "<dispatch_m2p (loop)");
 	}
 	if (msg_eof(fd)) {
-		set_terminate(2, ev_info);
-		event_del(ev_info->ev_m2p);
+		set_terminate(2);
+		event_del(&ev_m2p);
 		event_add(eventq_p2s.ev, NULL);
 	}
 	DEBUG(DBG_TRACE, "<dispatch_m2p (no msg)");
 }
 
+/**
+ * This is the event handler for outgoing message from the policy engine
+ * to the master process.
+ *
+ * @param fd The file descriptor for the event.
+ * @param sig The event details (unused).
+ * @param arg The callback argument of the event (unused).
+ */
 static void
 dispatch_p2m(int fd, short sig __used, void *arg __used)
 {
@@ -780,19 +1029,22 @@ dispatch_p2m(int fd, short sig __used, void *arg __used)
 	DEBUG(DBG_TRACE, "<dispatch_p2m");
 }
 
-int
-token_cmp(void *msg1, void *msg2)
-{
-	if (msg1 == NULL || msg2 == NULL) {
-		DEBUG(DBG_TRACE, "token_cmp: null msg pointer");
-		return 0;
-	}
-	if (((struct reply_wait *)msg1)->token ==
-	    ((struct reply_wait *)msg2)->token)
-		return 1;
-	return 0;
-}
-
+/**
+ * Send a log notification to the session engine. This function allocates
+ * and fills an event message of type ANOUBISD_MSG_LOGREQUEST with the
+ * data from the arguments and the given kernel event. The message is
+ * then sent to the session engine.
+ *
+ * @param pident The identifier of the process that triggered the event.
+ * @param ctxident The identifier of the context.
+ * @param hdr The raw kernel event.
+ * @param error The reply to the event.
+ * @param loglevel The loglevel according to the policy.
+ * @param rule_id The rule ID that triggered the log event.
+ * @param prio the priority of the ruleset that triggered the log event.
+ * @param sfsmatch For log events triggered by an SFS rule this is the
+ *     part of the SFS rule that actually matched.
+ */
 void
 __send_lognotify(struct pe_proc_ident *pident, struct pe_proc_ident *ctxident,
     struct eventdev_hdr *hdr, u_int32_t error, u_int32_t loglevel,
@@ -810,9 +1062,9 @@ __send_lognotify(struct pe_proc_ident *pident, struct pe_proc_ident *ctxident,
 	reply.sfsmatch = sfsmatch;
 	reply.pident = pident;
 	reply.ctxident = ctxident;
+	reply.log = loglevel;
 
-	msg = fill_eventask_message(ANOUBISD_MSG_LOGREQUEST, loglevel,
-	    hdr, &reply);
+	msg = fill_eventask_message(ANOUBISD_MSG_LOGREQUEST, hdr, &reply);
 	if (!msg) {
 		log_warn("send_lognotify: can't allocate memory");
 		return;
@@ -822,6 +1074,22 @@ __send_lognotify(struct pe_proc_ident *pident, struct pe_proc_ident *ctxident,
 	DEBUG(DBG_QUEUE, "<__send_lognotify");
 }
 
+/**
+ * Send a log notification to the session engine. This function allocates
+ * and fills an event message of type ANOUBISD_MSG_LOGREQUEST with the
+ * data from the arguments and the given kernel event. The message is
+ * then sent to the session engine.
+ *
+ * @param proc The identifiers for the process and the context are
+ *     derived from this process.
+ * @param hdr The raw kernel event.
+ * @param error The reply to the event.
+ * @param loglevel The loglevel according to the policy.
+ * @param rule_id The rule ID that triggered the log event.
+ * @param prio the priority of the ruleset that triggered the log event.
+ * @param sfsmatch For log events triggered by an SFS rule this is the
+ *     part of the SFS rule that actually matched.
+ */
 void
 send_lognotify(struct pe_proc *proc, struct eventdev_hdr *hdr,
     u_int32_t error, u_int32_t loglevel, u_int32_t rule_id, u_int32_t prio,
@@ -838,6 +1106,12 @@ send_lognotify(struct pe_proc *proc, struct eventdev_hdr *hdr,
 	    rule_id, prio, sfsmatch);
 }
 
+/**
+ * Send a message that informs the user of a modified policy.
+ *
+ * @param The user ID of the modified policy.
+ * @param prio The priority of the modified policy.
+ */
 void
 send_policychange(u_int32_t uid, u_int32_t prio)
 {
@@ -855,6 +1129,14 @@ send_policychange(u_int32_t uid, u_int32_t prio)
 	enqueue(&eventq_p2s, msg);
 }
 
+/**
+ * Send the contents of a file to the session engine. The content is
+ * broken into one or more messages of type ANOUBISD_MSG_POLREPLY.
+ *
+ * @param The token to use for the messages.
+ * @param fd A file descriptor of the policy file. The contents of this
+ *     file are sent to the daemon.
+ */
 int
 send_policy_data(u_int64_t token, int fd)
 {
@@ -898,10 +1180,10 @@ oom:
  * This function handles list requests received from the session engine,
  * i.e. the user.  The request message is passed as a paramter. Any response
  * messages that must be generated are added to the given queue.
+ * The user is notified of any error via error messages.
  *
  * @param inmsg The request message of type anoubisd_msg_listrequest.
  * @param queue Reply messages are added to this queue.
- * @return None. The user is notified of any error via error messages.
  */
 static void
 dispatch_list_request(struct anoubisd_msg *inmsg, Queue *queue)
@@ -940,10 +1222,27 @@ dispatch_list_request(struct anoubisd_msg *inmsg, Queue *queue)
 	amsg_list_send(&ctx, queue);
 }
 
+/**
+ * Handle incoming messages received from the session engine.
+ * Possible message types are:
+ * ANOUBISD_MSG_POLREQUEST: A request to change or get a particular
+ *     policy. Handled by pe_dispatch_policy.
+ * ANOUBISD_MSG_EVENTREPLY: Replies to event escalations.
+ * ANOUBISD_MSG_LISTREQUEST: A user requested a list of items (playgrounds,
+ *     processes, etc.). Handled by dispatch_list_request.
+ * ANOUBISD_MSG_PGCOMMIT: A playground commit request. This is usually
+ *     forwarded to the master but the playground management must keep
+ *     track of these requests, too.
+ * If EOF is detected on the incoming file descriptor, the termination
+ * status advances to stage 3.
+ *
+ * @param fd The file descriptor for incoming messages.
+ * @param sig The details of the event (unused).
+ * @param arg The callback argument of the event (unused).
+ */
 static void
-dispatch_s2p(int fd, short sig __used, void *arg)
+dispatch_s2p(int fd, short sig __used, void *arg __used)
 {
-	struct event_info_policy		*ev_info = arg;
 	struct reply_wait			*rep_wait;
 	struct eventdev_reply			*evrep;
 	struct anoubisd_msg			*msg;
@@ -1021,12 +1320,21 @@ dispatch_s2p(int fd, short sig __used, void *arg)
 		}
 	}
 	if (msg_eof(fd)) {
-		event_del(ev_info->ev_s2p);
-		set_terminate(3, ev_info);
+		event_del(&ev_s2p);
+		set_terminate(3);
 	}
 	DEBUG(DBG_TRACE, "<dispatch_s2p");
 }
 
+/**
+ * This is the event handler for write events on the outgoing pipe to
+ * the session engine. If the outgoing queue is empty and the termination
+ * state is at least 2 the write end of the pipe is shut down.
+ *
+ * @param fd The file descriptor for outgoing messages.
+ * @param sig The details of the event (unused).
+ * @param arg The callback argument of the event (unused).
+ */
 static void
 dispatch_p2s(int fd, short sig __used, void *arg __used)
 {
@@ -1035,34 +1343,4 @@ dispatch_p2s(int fd, short sig __used, void *arg __used)
 	if (terminate >= 2 && !queue_peek(&eventq_p2s) && !msg_pending(fd))
 		shutdown(fd, SHUT_WR);
 	DEBUG(DBG_TRACE, "<dispatch_p2s");
-}
-
-/*
- * Caller must call pe_upgrade_filelist_start before calling this
- * function for the first time. Fills as many paths as possible
- * from the upgrade filelist into buf. A path that does not fit into
- * the buffer is not copied at all and will be reconsidered with the
- * next chunk.
- *
- * Returns the number of bytes actually copied.
- */
-static int
-policy_upgrade_fill_chunk(char *buf, int maxlen)
-{
-	int	reallen = 0;
-
-	while (1) {
-		struct pe_filetree_node	*node = pe_upgrade_filelist_get();
-		int len;
-
-		if (!node)
-			break;
-		len = strlen(node->path) + 1;
-		if (reallen + len > maxlen)
-			break;
-		memcpy(buf+reallen, node->path, len);
-		reallen += len;
-		pe_upgrade_filelist_next();
-	}
-	return reallen;
 }
