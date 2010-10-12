@@ -1030,7 +1030,7 @@ DlgRuleEditor::onFooterExportButton(wxCommandEvent &)
 void
 DlgRuleEditor::onFooterActivateButton(wxCommandEvent &)
 {
-	wxString	 message;
+	wxString	 message, status;
 	PolicyCtrl	*policyCtrl;
 	PolicyCtrl::PolicyResult	 polRes;
 	PolicyRuleSet	*admin = NULL, *user = NULL;
@@ -1048,22 +1048,24 @@ DlgRuleEditor::onFooterActivateButton(wxCommandEvent &)
 	}
 
 	if (user) {
-		footerStatusText->SetLabel(wxT("sending to daemon"));
+		status = _("sending to daemon");
+		footerStatusText->SetLabel(status);
 		polRes = policyCtrl->sendToDaemon(userRuleSetId_);
 		switch (polRes) {
 		case PolicyCtrl::RESULT_POL_WRONG_PASS:
 			message = _("The entered password is incorrect.");
 			anMessageBox(message, _("Key Load Error"),
 			    wxOK|wxICON_ERROR, this);
-			footerStatusText->SetLabel(wxT("Wrong password!"));
+			status = _("Wrong password!");
+			footerStatusText->SetLabel(status);
 			break;
 		case PolicyCtrl::RESULT_POL_ERR:
 			message = _("An error occured while sending policy to"
 			    " daemon.");
 			anMessageBox(message, _("Policy Load Error"),
 			    wxOK|wxICON_ERROR, this);
-			footerStatusText->SetLabel(wxT("Error while sending "
-			    "policy to daemon!"));
+			status = _("Error while sending policy to daemon!");
+			footerStatusText->SetLabel(status);
 			break;
 		case PolicyCtrl::RESULT_POL_ABORT:
 		case PolicyCtrl::RESULT_POL_OK:
@@ -1078,15 +1080,17 @@ DlgRuleEditor::onFooterActivateButton(wxCommandEvent &)
 			message = _("The entered password is incorrect.");
 			anMessageBox(message, _("Key Load Error"),
 			    wxOK|wxICON_ERROR, this);
-			footerStatusText->SetLabel(wxT("Wrong password!"));
+			status = _("Wrong password!");
+			footerStatusText->SetLabel(status);
 			break;
 		case PolicyCtrl::RESULT_POL_ERR:
 			message = _("An error occured while sending admin"
 			    " policy to the daemon.");
 			anMessageBox(message, _("Policy Load Error"),
 			    wxOK|wxICON_ERROR, this);
-			footerStatusText->SetLabel(wxT("Error while sending"
-			    " admin policy to daemon."));
+			status = _("Error while sending "
+			    "admin policy to daemon!");
+			footerStatusText->SetLabel(status);
 			break;
 		case PolicyCtrl::RESULT_POL_ABORT:
 		case PolicyCtrl::RESULT_POL_OK:

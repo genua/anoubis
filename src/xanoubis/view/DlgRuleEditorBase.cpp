@@ -303,7 +303,9 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	
 	footerStatusText = new wxStaticText( this, wxID_ANY, _("not modified"), wxDefaultPosition, wxDefaultSize, 0 );
 	footerStatusText->Wrap( -1 );
-	textFootSizer->Add( footerStatusText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	footerStatusText->SetMinSize( wxSize( 123,-1 ) );
+	
+	textFootSizer->Add( footerStatusText, 0, wxALIGN_CENTER_VERTICAL|wxALL|wxEXPAND, 5 );
 	
 	mainSizer->Add( textFootSizer, 0, wxEXPAND, 5 );
 	
