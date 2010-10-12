@@ -103,7 +103,6 @@ anoubis_proc_destroy(struct anoubis_proc *p)
  * Set up a handle that can later be used to retrieve information about
  * individual processes.
  *
- * @param None.
  * @return The handle.
  */
 extern struct anoubis_proc_handle *
@@ -128,7 +127,7 @@ anoubis_proc_close(struct anoubis_proc_handle *handle);
  *     the process or NULL if the process was not found.
  */
 extern struct anoubis_proc *
-anoubis_proc_get(struct anoubis_proc_handle *, pid_t pid);
+anoubis_proc_get(struct anoubis_proc_handle *handle, pid_t pid);
 
 __END_DECLS
 

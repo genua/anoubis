@@ -132,8 +132,7 @@ anoubis_csmulti_create(unsigned int op, uid_t uid, void *keyid, int idlen);
  * by anoubis_csmulti_create. This function frees all the memory
  * associated with the request.
  *
- * @param requst The request.
- * @return None.
+ * @param request The request.
  */
 void
 anoubis_csmulti_destroy(struct anoubis_csmulti_request *request);
@@ -170,13 +169,13 @@ anoubis_csmulti_add_error(struct anoubis_csmulti_request *request,
 /**
  * Find the request record with a given index in a csmulti request.
  *
- * @param request The csmulti request.
- * @param index The index of the record.
+ * @param req The csmulti request.
+ * @param idx The index of the record.
  * @return A pointer to the record or NULL if the index was not found.
  */
 struct anoubis_csmulti_record *
-anoubis_csmulti_find(struct anoubis_csmulti_request *request,
-    unsigned int index);
+anoubis_csmulti_find(struct anoubis_csmulti_request *req,
+    unsigned int idx);
 
 /**
  * Create the csmulti message that actually starts an anoubis_csmulti_request.
@@ -240,7 +239,7 @@ struct anoubis_transaction *anoubis_client_pgcommit_start(
  * string of each pair is the scanner's description, the second string is
  * the scanner output.
  *
- * @param The (single) reply message.
+ * @param m The (single) reply message.
  * @return A malloced array of pointers that point the the strings in the
  *     message. The caller should free the pointer array but must not free
  *     the strings as these point into the message. The list of pointers

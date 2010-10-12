@@ -20,17 +20,51 @@
 
 #include "anoubis_chat.h"
 
+/**
+ * The default-size of a buffer.
+ */
 #define ACHAT_BUFFER_DEFAULTSZ 0x001000
+
+/**
+ * Maximum size of a data-chunk you can append to the buffer.
+ */
 #define ACHAT_BUFFER_MAX_CHUNK 0x100000
+
+/**
+ * Maximum size of a buffer.
+ */
 #define ACHAT_BUFFER_MAX_LEN   0xa00000
+
+/**
+ * Buffer-alignment.
+ * The size of the buffer is aligned at this size.
+ */
 #define ACHAT_BUFFER_ALLOCSZ   0x008000
 
+/**
+ * Structure defines a chat-buffer.
+ * The buffer is used to send/receive data from/to the chat-library.
+ */
 struct achat_buffer {
-	/*@null@*/
-	u_char	*buf;		/* achat_buffer for data. */
-	size_t	 alloc;		/* Number of bytes allocated for data. */
-	size_t	 offset;	/* Offset of first byte containing data. */
-	size_t	 end;		/* Offset of last byte containing data. */
+	/**
+	 * achat_buffer for data.
+	 */
+	u_char	*buf;
+
+	/**
+	 * Number of bytes allocated for data.
+	 */
+	size_t	 alloc;
+
+	/**
+	 * Offset of first byte containing data.
+	 */
+	size_t	 offset;
+
+	/**
+	 * Offset of last byte containing data.
+	 */
+	size_t	 end;
 };
 typedef struct achat_buffer achat_buffer;
 

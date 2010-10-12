@@ -280,7 +280,7 @@ anoubis_keysubject_destroy(struct anoubis_keysubject *subject)
 
 /**
  * Check if a given file exists.
- * @praram file The filename
+ * @param file The filename
  * @return True if the given file does not exist, i.e. lstat returns false
  *         and the error code is ENOENT.
  */
@@ -414,12 +414,12 @@ err:
 /**
  * Generate a public/private key pair.
  *
- * Generate a public/private key pair and store the private key in @private
- * and the certificate in @public.
+ * Generate a public/private key pair and store the private key in
+ * <code>private</code> and the certificate in <code>public</code>.
  *
- * NOTE: This function spawns child processes and waits for them. Do not
+ * @note This function spawns child processes and waits for them. Do not
  *       ignore SIGCHLD or the exit code will be lost.
- * NOTE: Unfortunately execvp does not allow pointers to const char strings,
+ *       Unfortunately execvp does not allow pointers to const char strings,
  *       Thus we must cast away the const from the argument. It is better
  *       to do this here than to do it in every caller. This is 100% safe
  *       because only the child ever uses the data but the const applies to
@@ -431,6 +431,8 @@ err:
  * @param subject The subject to be used for the certificate. This string
  *                must be in a format that is acceptable to the -subj option
  *                of openssl x509.
+ * @param bits Length of key in bits
+ * @param days Validity of certificate in days
  * @return A negative error code in case of an error, in particular ECHILD
  *         indicates an unsuccessful termination of one of the openssl
  *         commands. Zero in case of success.

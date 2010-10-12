@@ -48,6 +48,13 @@
 #include "accbuffer.h"
 #include "anoubis_chat.h"
 
+/**
+ * Calls <code>fcntl(2)</code> on a filedescriptor.
+ *
+ * @param fd The destination filedescriptor
+ * @param flags Flags to be set on <code>fd</code>.
+ * @return On success achat_rc::ACHAT_RC_OK is returned.
+ */
 static achat_rc
 acc_fcntl(int fd, int flags)
 {
@@ -62,6 +69,17 @@ acc_fcntl(int fd, int flags)
 		return ACHAT_RC_OK;
 }
 
+/**
+ * Prepares the chat_channel.
+ *
+ * Depending on the @link achat_channel::tail tail @endlink and
+ * @link achat_channel::addr address-information @endlink a (server-)socket is
+ * created.
+ *
+ * @param acc The channel
+ * @return On success achat_rc::ACHAT_RC_OK is returned. If the socket could
+ *         not be created achat_rc::ACHAT_RC_ERROR is returned.
+ */
 achat_rc
 acc_prepare(struct achat_channel *acc)
 {
@@ -135,6 +153,22 @@ acc_prepare(struct achat_channel *acc)
 	return (ACHAT_RC_OK);
 }
 
+/**
+ * Opens the connection over the channel.
+ *
+ * The operation performed by the function depends on the
+ * @link achat_channel::tail tail-mode @endlink:
+ * - acc_tail::ACC_TAIL_SERVER A pending connection is accepted and a new
+ *     client-channel with tail acc_tail::ACC_TAIL_CLIENT is created. The
+ *     original server-channel is closed and replaced with the new
+ *     client-channel. So, after a successful acc_open()-call, the
+ *     <code>acc</code>-argument switches to a client-channel.
+ * - acc_tail::ACC_TAIL_CLIENT The connection to the server is established.
+ *
+ * @param acc The channel
+ * @return On success achat_rc::ACHAT_RC_OK is returned. If the connection
+ *         could not be created, achat_rc::ACHAT_RC_ERROR is returned.
+ */
 achat_rc
 acc_open(struct achat_channel *acc)
 {
@@ -185,6 +219,16 @@ acc_open(struct achat_channel *acc)
 	return (ACHAT_RC_OK);
 }
 
+/**
+ * Creates and opens a duplicate of the server-channel.
+ * A copy of the given channel is created. The new channel represents the
+ * client-end of the communication. The tail-mode of the new channel is set to
+ * achat_tail::ACC_TAIL_CLIENT and the server accepts a pending
+ * client-connection.
+ *
+ * @param acc The server-channel
+ * @return The client-channel. On error NULL is returned.
+ */
 struct achat_channel *
 acc_opendup(struct achat_channel *acc)
 {
@@ -236,6 +280,12 @@ acc_opendup(struct achat_channel *acc)
 	return (nc);
 }
 
+/**
+ * Closes the channel.
+ *
+ * @param acc The channel is close
+ * @return On success achat_rc::ACHAT_RC_OK is returned.
+ */
 achat_rc
 acc_close(struct achat_channel *acc)
 {
@@ -256,6 +306,17 @@ acc_close(struct achat_channel *acc)
 	return (ACHAT_RC_OK);
 }
 
+/**
+ * Sets the effective user ID and group ID of the channel of the peer connected
+ * to a UNIX domain socket.
+ *
+ * If the channel is not a UNIX domain socket, achat_channel::euid and
+ * achat_channel::egid are set to -1.
+ *
+ * @param acc The channel
+ * @return On success achat_rc::ACHAT_RC_OK is retured. If an error occured
+ *         achat_rc::ACHAT_RC_ERROR is returned.
+ */
 achat_rc
 acc_getpeerids(struct achat_channel *acc)
 {

@@ -42,36 +42,45 @@
 #define ACHAT_MAX_BACKLOG	5
 #define ACHAT_MAX_MSGSIZE	81920		/* Be generous */
 
-/* anoubis chat channel encryption mode */
+/**
+ * Anoubis chat channel encryption mode.
+ */
 enum acc_sslmode {
-	ACC_SSLMODE_NONE = 0,
-	ACC_SSLMODE_CLEAR,
-	ACC_SSLMODE_ENCIPHERED
+	ACC_SSLMODE_NONE = 0,	/*!< Encryption-mode is not set. */
+	ACC_SSLMODE_CLEAR,	/*!< Encryption is switched off. */
+	ACC_SSLMODE_ENCIPHERED	/*!< Excryption is enabled. */
 };
 
-/* anoubis chat channel tail */
+/**
+ * Anoubis chat channel tail.
+ */
 enum acc_tail {
-	ACC_TAIL_NONE = 0,
-	ACC_TAIL_SERVER,
-	ACC_TAIL_CLIENT
+	ACC_TAIL_NONE = 0,	/*!< Tail-mode is not set. */
+	ACC_TAIL_SERVER,	/*!< The channel acts as a server. */
+	ACC_TAIL_CLIENT		/*!< The channel acts as a client. */
 };
 
-/* anoubis chat blocking mode */
+/**
+ * Anoubis chat blocking mode.
+ */
 enum acc_blockingmode {
-	ACC_BLOCKING = 0,
-	ACC_NON_BLOCKING
+	ACC_BLOCKING = 0,	/*!< The channel runs in blocking-mode. */
+	ACC_NON_BLOCKING	/*!< The channel runs in non-blocking mode. */
 };
 
-/* anoubis chat return codes */
+/**
+ * Anoubis chat return codes.
+ */
 enum achat_rc {
-	ACHAT_RC_OK = 0,
-	ACHAT_RC_ERROR,
-	ACHAT_RC_NYI,		/* not yet implemented */
-	ACHAT_RC_EOF,		/* connection end */
-	ACHAT_RC_INVALPARAM,	/* invalid argument */
-	ACHAT_RC_OOMEM,		/* out of memory */
-	ACHAT_RC_PENDING,	/* Pending data to be send/receive */
-	ACHAT_RC_NOSPACE	/* Not enough space to receive/send a message */
+	ACHAT_RC_OK = 0,	/*!< The operation was successful. */
+	ACHAT_RC_ERROR,		/*!< The operation results into an error. */
+	ACHAT_RC_NYI,		/*!< not yet implemented */
+	ACHAT_RC_EOF,		/*!< connection end */
+	ACHAT_RC_INVALPARAM,	/*!< invalid argument */
+	ACHAT_RC_OOMEM,		/*!< out of memory */
+	ACHAT_RC_PENDING,	/*!< Pending data to be send/receive */
+	ACHAT_RC_NOSPACE	/*!< Not enough space to receive/send a
+				     message */
 };
 typedef enum achat_rc achat_rc;
 
@@ -79,20 +88,82 @@ typedef enum achat_rc achat_rc;
 struct achat_buffer;
 struct event;
 
-/* The channel */
+/**
+ * The anoubis chat channel.
+ *
+ * The channel contains all information you need to transfer data between
+ * anoubisd and an anoubis-client.
+ */
 struct achat_channel {
+	/**
+	 * The encryption-mode.
+	 * Specifies whether data are encrypted.
+	 * @note Encryption is currently not implemented.
+	 */
 	enum acc_sslmode	sslmode;	/* CLEAR, ENCIPHERED */
-	enum acc_tail		tail;		/* SERVER, CLIENT */
-	enum acc_blockingmode	blocking;	/* BLOCKING, NON_BLOCKING */
-	struct sockaddr_storage	addr;		/* where we want to go to */
-	size_t			addrsize;	/* Size of addr */
-	int			fd;		 /* The socket fd */
 
-	/* credentials of users connect via a unix domain socket */
+	/**
+	 * Channel-tail.
+	 * Specifies whether the channel acts as a client or server.
+	 */
+	enum acc_tail		tail;
+
+	/**
+	 * Blocking-mode of the channel.
+	 * Specifies whether the channel runs in (non-) blocking mode.
+	 */
+	enum acc_blockingmode	blocking;
+
+	/**
+	 * Address-information.
+	 *
+	 * Depends on the tail-mode:
+	 * - acc_tail::ACC_TAIL_SERVER: The field contains bind-information.
+	 * - acc_tail::ACC_TAIL_CLIENT: Where you want to go
+	 */
+	struct sockaddr_storage	addr;
+
+	/**
+	 * Size of achat_channel::addr.
+	 */
+	size_t			addrsize;
+
+	/**
+	 * The channel-socket.
+	 */
+	int			fd;
+
+	/**
+	 * Effective uid of users connect via a unix domain socket.
+	 */
 	uid_t			euid;
+
+	/**
+	 * Effective gid of users connect via a unix domain socket.
+	 */
 	gid_t			egid;
+
+	/**
+	 * Output-buffer.
+	 * Data are written from the output-buffer into achat_channel::fd.
+	 */
 	struct achat_buffer	*sendbuffer;
+
+	/**
+	 * Input-buffer.
+	 * Data are read from the achat_channel::fd into the input-buffer.
+	 */
 	struct achat_buffer	*recvbuffer;
+
+	/**
+	 * An event to be informed when you are able to flush the channel.
+	 *
+	 * You can setup an event here. When the filedescriptor of the channel
+	 * is able to write, the event is triggered.
+	 * <code>event_add(3)</code> is called, when acc_flush() cannot write
+	 * all data. Now you are informed, when is is possible to call
+	 * acc_flush() again.
+	 */
 	struct event		*event;
 };
 

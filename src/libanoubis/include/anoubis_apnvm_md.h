@@ -42,13 +42,17 @@ typedef struct _apnmd apnmd;
  * Everything outside the tags is ignored.
  *
  * Metadata are organized in key-value-pairs:
- * <key> := <value>
+ * <pre>
+ * &lt;key&gt; := &lt;value&gt;
+ * </pre>
  *
  * If you want to append another line to a key, use the "+=" operator:
- * <key> += <another value>
+ * <pre>
+ * &lt;key&gt; += &lt;another value&gt;
+ * </pre>
  *
- * This results into a value "<value>\n<another value>" for the metadata-key
- * <key>.
+ * This results into a value <code>&lt;value&gt;\n&lt;another value&gt;</code>
+ * for the metadata-key <code>&lt;key&gt;</code>.
  */
 apnmd *apnmd_parse(const char *);
 

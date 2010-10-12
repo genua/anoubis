@@ -36,6 +36,11 @@
 #include "anoubis_chat.h"
 #include "accbuffer.h"
 
+/**
+ * Creates a new channel.
+ *
+ * @return A new channel. On error NULL is returned.
+ */
 struct achat_channel *
 acc_create(void)
 {
@@ -87,6 +92,12 @@ acc_create(void)
 	return (c);
 }
 
+/**
+ * Destroys a channel.
+ *
+ * @param acc The channel to destroy
+ * @return On success achat_rc::ACHAT_RC_OK is returned.
+ */
 achat_rc
 acc_destroy(struct achat_channel *acc)
 {
@@ -113,6 +124,14 @@ acc_destroy(struct achat_channel *acc)
 	return (rc);
 }
 
+/**
+ * Clears a channel.
+ *
+ * All buffer are cleared and all settings are removed.
+ *
+ * @param acc The channel to clear.
+ * @return On success achat_rc::ACHAT_RC_OK is returned.
+ */
 achat_rc
 acc_clear(struct achat_channel *acc)
 {
@@ -133,6 +152,15 @@ acc_clear(struct achat_channel *acc)
 	return (ACHAT_RC_OK);
 }
 
+/**
+ * Sets the tail-mode of the channel.
+ *
+ * @param acc The channel to update
+ * @param newtail The new tail-mode
+ * @return On success achat_rc::ACHAT_RC_OK is returned.
+ *
+ * @note The operation is only allowed if you have no open connection.
+ */
 achat_rc
 acc_settail(struct achat_channel *acc, enum acc_tail newtail)
 {
@@ -147,6 +175,15 @@ acc_settail(struct achat_channel *acc, enum acc_tail newtail)
 	return (ACHAT_RC_OK);
 }
 
+/**
+ * Sets the ssl-mode of the channel.
+ *
+ * @param acc The channel to update
+ * @param newsslmode The new ssl-mode
+ * @return On success achat_rc::ACHAT_RC_OK is returned.
+ *
+ * @note The operation is only allowed if you have no open connection.
+ */
 achat_rc
 acc_setsslmode(struct achat_channel *acc, enum acc_sslmode newsslmode)
 {
@@ -165,6 +202,15 @@ acc_setsslmode(struct achat_channel *acc, enum acc_sslmode newsslmode)
 	return (ACHAT_RC_OK);
 }
 
+/**
+ * Sets the blocking-mode of the channel.
+ *
+ * @param acc The channel to update
+ * @param newmode The new blocking-mode
+ * @return On success achat_rc::ACHAT_RC_OK is returned.
+ *
+ * @note The operation is only allowed if you have no open connection.
+ */
 achat_rc
 acc_setblockingmode(struct achat_channel *acc, enum acc_blockingmode newmode)
 {
@@ -179,6 +225,16 @@ acc_setblockingmode(struct achat_channel *acc, enum acc_blockingmode newmode)
 	return (ACHAT_RC_OK);
 }
 
+/**
+ * Assigns address-information to the channel.
+ *
+ * @param acc The channel to update
+ * @param newsa The new address-information copied into the channel.
+ * @param addrsize Size of <code>newsa</code>
+ * @return On success achat_rc::ACHAT_RC_OK is returned.
+ *
+ * @note The operation is only allowed if you have no open connection.
+ */
 achat_rc
 acc_setaddr(struct achat_channel *acc, struct sockaddr_storage *newsa,
 	size_t addrsize)

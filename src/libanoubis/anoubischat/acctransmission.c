@@ -42,6 +42,19 @@
 #include "accbuffer.h"
 #include "accutils.h"
 
+/**
+ * Reads data from a filedescriptor.
+ *
+ * Reads up to <code>nbyte</code> bytes from the filedescriptor <code>fd</code>
+ * and stores the data in <code>buf</code>. The function stops reading, if no
+ * more data are available in <code>fd</code>.
+ *
+ * @param fd The filedescriptor to read from
+ * @param buf The destination-buffer where the data are stored
+ * @param nbyte Maximum number of bytes to read from the filedescriptor
+ * @return Number of bytes received from the filedescriptor. On error -1 is
+ *         returned.
+ */
 static ssize_t
 acc_read(int fd, void *buf, ssize_t nbyte)
 {
@@ -70,6 +83,15 @@ acc_read(int fd, void *buf, ssize_t nbyte)
 	return num;
 }
 
+/**
+ * Writes data into a filedescriptor.
+ *
+ * @param fd The destination filedescriptor
+ * @param buf The source-buffer
+ * @param nbyte Number of bytes to write
+ * @return Number of bytes written into the filedescriptor. On error -1 is
+ *         returned.
+ */
 static ssize_t
 acc_write(int fd, void *buf, ssize_t nbyte)
 {
@@ -95,6 +117,15 @@ acc_write(int fd, void *buf, ssize_t nbyte)
 	return num;
 }
 
+/**
+ * Flushes the content of the output-buffer.
+ * The content of achat_channel::sendbuffer is written into achat_channel::fd.
+ *
+ * @param chan The channel
+ * @return If the complete content of the output-buffer was written into the
+ *         filedescriptor achat_rc::ACHAT_RC_OK is returned. When there are
+ *         still some pending data left, achat_rc::ACHAT_RC_PENDING is returned.
+ */
 achat_rc
 acc_flush(struct achat_channel *chan)
 {
@@ -137,6 +168,17 @@ acc_flush(struct achat_channel *chan)
 	return ret;
 }
 
+/**
+ * Appends data to the output-buffer and flushes (at least a part of) it.
+ * Data are appended at achat_channel::sendbuffer and acc_flush() is called.
+ *
+ * @param acc The channel
+ * @param msg Data to be appended
+ * @param size Number of bytes to be appended
+ * @return If all data are written by acc_flush() achat_rc::ACHAT_RC_OK is
+ *         returned. When there are still some pending data left,
+ *         achat_rc::ACHAT_RC_PENDING is returned.
+ */
 achat_rc
 acc_sendmsg(struct achat_channel *acc, const char *msg, size_t size)
 {
@@ -169,6 +211,18 @@ acc_sendmsg(struct achat_channel *acc, const char *msg, size_t size)
 	return acc_flush(acc);
 }
 
+/**
+ * Appends data at the input-buffer of the channel.
+ * The expected number of bytes is passed to the function. Data are read
+ * from chat_channel::fd and inserted into achat_channel::recvbuffer.
+ *
+ * @param acc The channel
+ * @param size Number of bytes top read from the filedescriptor
+ * @return If the number of expected bytes were read from the filedescriptor
+ *         achat_rc::ACHAT_RC_OK is returned. If the number of bytes read from
+ *         the filedescriptor is less than <code>size</code>
+ *         achat_rc::ACHAT_RC_PENDING is returned.
+ */
 static achat_rc
 acc_fillrecvbuffer(struct achat_channel *acc, size_t size)
 {
@@ -222,6 +276,21 @@ acc_fillrecvbuffer(struct achat_channel *acc, size_t size)
 	return (nread > 0) ? ACHAT_RC_OK : ACHAT_RC_EOF;
 }
 
+/**
+ * Reads a complete message from the channel.
+ *
+ * The message starts with a two-byte-sequence, which contains the size of
+ * the following datagram. Next, the message is read from the channel.
+ *
+ * @param acc The channel
+ * @param msg Additionally, the functions copies the message into this buffer.
+ * @param size First, points to an integer, which contains the size of
+ *        <code>msg</code>. Then, the function writes the number of bytes read
+ *        into the integer.
+ * @return If the complete message was read, achat_rc::ACHAT_RC_OK is returned.
+ *        If you still read some more data to complete the message
+ *        achat_rc::ACHAT_RC_PENDING is returned.
+ */
 achat_rc
 acc_receivemsg(struct achat_channel *acc, char *msg, size_t *size)
 {

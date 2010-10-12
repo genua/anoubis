@@ -68,15 +68,15 @@ __BEGIN_DECLS
  * back.
  * With given flags you can ignore mismatched key.
  *
- * @param[in] 1st Private key.
- * @param[in] 2nd Certificate.
- * @param[in] 3rd Authentication request message.
- * @param[out] 4th Assembled authentication reply message.
- * @param[in] 5th Flags
+ * @param key Private key.
+ * @param cert Certificate.
+ * @param request Authentication request message.
+ * @param reply Assembled authentication reply message.
+ * @param flags Flags
  * @return 0 on success or a negative ANOUBIS_AUTHERR_* error code.
  */
-int anoubis_auth_callback(struct anoubis_sig *, struct anoubis_sig *,
-    const struct anoubis_msg *, struct anoubis_msg **, int);
+int anoubis_auth_callback(struct anoubis_sig *key, struct anoubis_sig *cert,
+    const struct anoubis_msg *request, struct anoubis_msg **reply, int flags);
 
 __END_DECLS
 

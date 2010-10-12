@@ -49,7 +49,12 @@
 #include "accbuffer.h"
 #include "accutils.h"
 
-/* Initializes the buffer structure. */
+/**
+ * Initializes the buffer structure.
+ *
+ * @param buffer The buffer to initialize
+ * @return achat_rc::ACHAT_RC_OK on success.
+ */
 achat_rc
 acc_bufferinit(achat_buffer *buffer)
 {
@@ -78,7 +83,12 @@ acc_bufferinit(achat_buffer *buffer)
 	return (ACHAT_RC_OK);
 }
 
-/* Frees any memory used for the buffer. */
+/**
+ * Frees any memory used for the buffer.
+ *
+ * @param buffer The buffer to release
+ * @return achat_rc::ACHAT_RC_OK on sucess.
+ */
 achat_rc
 acc_bufferfree(achat_buffer *buffer)
 {
@@ -108,9 +118,12 @@ acc_bufferfree(achat_buffer *buffer)
 	/*@=mustfreeonly@*/
 }
 
-/*
- * Clears any data from the buffer, making it empty.  This does not actually
- * zero the memory.
+/**
+ * Clears any data from the buffer, making it empty.
+ * This does not actually zero the memory.
+ *
+ * @param buffer The buffer to clear
+ * @return achat_rc::ACHAT_RC_OK on sucess.
  */
 achat_rc
 acc_bufferclear(achat_buffer *buffer)
@@ -123,7 +136,15 @@ acc_bufferclear(achat_buffer *buffer)
 	return (ACHAT_RC_OK);
 }
 
-/* Appends data to the buffer, expanding it if necessary. */
+/**
+ * Appends data to the buffer.
+ * The buffer is expanded if it is necessary.
+ *
+ * @param buffer The destination buffer
+ * @param data Data to be appanded
+ * @param len Number of bytes to be appended
+ * @return achat_rc::ACHAT_RC_OK on sucess.
+ */
 achat_rc
 acc_bufferappend(achat_buffer *buffer, const void *data, size_t len)
 {
@@ -146,7 +167,15 @@ acc_bufferappend(achat_buffer *buffer, const void *data, size_t len)
 
 static int accbuffer_compact(/*@null@*/ achat_buffer *);
 
-/* Removes data from the beginning of the buffer*/
+/**
+ * Removes data from the beginning of the buffer.
+ *
+ * @param buffer The buffer
+ * @param len Number of bytes to remove, which must not be greater than the
+ *            buffer-len (acc_bufferlen()).
+ * @return achat_rc::ACHAT_RC_OK on sucess. If <code>len</code> exceeds to the
+ *         buffer-len, achat_rc::ACHAT_RC_ERROR is returned.
+ */
 achat_rc
 acc_bufferconsume(achat_buffer *buffer, size_t len)
 {
@@ -169,7 +198,15 @@ acc_bufferconsume(achat_buffer *buffer, size_t len)
 	return (ACHAT_RC_OK);
 }
 
-/* Removes data from the end of the buffer */
+/**
+ * Removes data from the end of the buffer.
+ *
+ * @param buffer The buffer
+ * @param len Number of bytes to remove, which must not be greater than the
+ *            buffer-len (acc_bufferlen()).
+ * @return achat_rc::ACHAT_RC_OK on sucess. If <code>len</code> exceeds to the
+ *         buffer-len, achat_rc::ACHAT_RC_ERROR is returned.
+ */
 achat_rc
 acc_buffertrunc(achat_buffer *buffer, size_t len)
 {
@@ -182,6 +219,14 @@ acc_buffertrunc(achat_buffer *buffer, size_t len)
 	return (ACHAT_RC_OK);
 }
 
+/**
+ * Compacts the buffer.
+ * If the buffer is quite empty, but all data is at the end, move the
+ * data to the beginning.
+ *
+ * @param buffer The buffer to compact
+ * @return If the buffer was modified 1 is returned.
+ */
 static int
 accbuffer_compact(/*@null@*/ achat_buffer *buffer)
 {
@@ -202,10 +247,20 @@ accbuffer_compact(/*@null@*/ achat_buffer *buffer)
 	return (0);
 }
 
-/*
- * Appends space to the buffer, expanding the buffer if necessary. This does
- * not actually copy the data into the buffer, but instead returns a pointer
- * to the allocated region.
+/**
+ * Appends space to the buffer.
+ * The buffer is expanded if necessary. This does not actually copy the data
+ * into the buffer, but instead returns a pointer to the allocated region.
+ *
+ * Number of bytes allocated can differ from <code>len</code>. The buffer-size
+ * is always aligned at ACHAT_BUFFER_ALLOCSZ. So if some bytes are missing,
+ * they are appended to <code>len</code>.
+ *
+ * @param buffer The buffer to expand
+ * @param len Number of bytes to append to the buffer which must not be greater
+ *            that ACHAT_BUFFER_MAX_CHUNK.
+ * @return On success a pointer to the (new) allocated region is returned.
+ *         If an error occured NULL is returned.
  */
 void *
 acc_bufferappend_space(achat_buffer *buffer, size_t len)
@@ -251,14 +306,24 @@ restart:
 	/*NOTREACHED*/
 }
 
-/* Returns the number of bytes of data in the buffer. */
+/**
+ * Returns the number of bytes of data in the buffer.
+ *
+ * @param buffer The buffer
+ * @return Number of bytes stored in the buffer.
+ */
 size_t
 acc_bufferlen(achat_buffer *buffer)
 {
 	return (buffer->end - buffer->offset);
 }
 
-/* Returns a pointer to the first used byte in the buffer. */
+/**
+ * Returns a pointer to the first used byte in the buffer.
+ *
+ * @param buffer The buffer
+ * @return A pointer to the allocated region.
+ */
 void *
 acc_bufferptr(achat_buffer *buffer)
 {

@@ -47,37 +47,24 @@
  * Please keep that in mind if you change any fields in that structure.
  */
 struct anoubis_keysubject {
-	/** The country/nation (/C=...) */
+	/** The country/nation. <pre>/C=...</pre> */
 	char		*country;
-	/** state The state or province (/ST=...) */
+	/** The state or province. <pre>/ST=...</pre> */
 	char		*state;
-	/** locality The city, street etc. within the state (/L=...) */
+	/** The city, street etc within the state. <pre>/L=...</pre> */
 	char		*locality;
-	/** organization The organization (/O=...) */
+	/** The organization. <pre>/O=...</pre> */
 	char		*organization;
-	/** orgunit The sub-unit with the organization (/ON=...) */
+	/** The sub-unit with the organization. <pre>/ON=...</pre> */
 	char		*orgunit;
-	/** name The common name of the entity (/CN=...) */
+	/** The common name of the entity. <pre>/CN=...</pre> */
 	char		*name;
-	/** email The mail-Address of the entity (/emailAddress=...) */
+	/** The mail-Address of the entity. <pre>/emailAddress=...</pre> */
 	char		*email;
 };
 
 
 __BEGIN_DECLS
-/**
- * Generate key.
- *
- * This method runs openssl to generate the key pair.
- *
- * param[in] 1st The private key filename.
- * param[in] 2nd The certificate filename.
- * param[in] 3rd The passphrase.
- * param[in] 4tn The subject string.
- * param[in] 5th bits.
- * param[in] 6th The number of days to certify the certificate for.
- * @return 0 on success.
- */
 extern int anoubis_keygen(const char *, const char *, const char *,
     const char *, int, int);
 
@@ -91,13 +78,13 @@ extern struct anoubis_keysubject *anoubis_keysubject_defaults(void);
  * cannot by extracted from the certificate, the related attributes of the
  * structure is set to NULL.
  *
- * @param 1st the certificate to be read
+ * @param cert the certificate to be read
  * @return The structure contains subject-information from the certificate.
  *         NULL is returned, if the certificate passed to the function is
  *         NULL or there is not enough memory available to create the
  *         structure.
  */
-extern struct anoubis_keysubject *anoubis_keysubject_fromX509(X509 *);
+extern struct anoubis_keysubject *anoubis_keysubject_fromX509(X509 *cert);
 
 extern char *anoubis_keysubject_tostring(const struct anoubis_keysubject *);
 extern void anoubis_keysubject_destroy(struct anoubis_keysubject *);

@@ -28,6 +28,12 @@
 #ifndef _ACCUTILS_H_
 #define _ACCUTILS_H_
 
+/**
+ * Parameter-checking macro.
+ *
+ * If the given condition is not fulfilled, achat_rc::ACHAT_RC_INVALPARAM
+ * is returned.
+ */
 #define ACC_CHKPARAM(cond) \
 	do { \
 		if (!(cond)) \

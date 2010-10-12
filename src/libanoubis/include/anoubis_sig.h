@@ -131,13 +131,13 @@ int anoubis_sig_check_consistency(const struct anoubis_sig *);
  * This method returns a newly allocated time structure tm filled with
  * the certificates 'notAfter' time values.
  *
- * @param[in]  1st The certificate in question.
- * @param[out] 2nd The time structure to be filled.
+ * @param cert The certificate in question.
+ * @param time The time structure to be filled.
  * @return 0 on success.
  *	-EINVAL in case of invalid argument.
  *	-ERANGE in case of corrupt notAfter time.
  */
-int anoubis_sig_cert_validity(X509 *, struct tm *);
+int anoubis_sig_cert_validity(X509 *cert, struct tm *time);
 
 /**
  * Compares two keys.
@@ -147,8 +147,8 @@ int anoubis_sig_cert_validity(X509 *, struct tm *);
  * private keys, a key pais split in two anoubis_sig structures or with
  * two public keys.
  *
- * @param[in] one key
- * @param[in] another key
+ * @param keyA one key
+ * @param keyB another key
  * @return 0 if they are equal.
  *	-EINVAL in case of invalid argument.
  *	-EPERM in case of not equal.
