@@ -60,29 +60,51 @@
 static void	dispatch_m2u(int, short, void *);
 static void	dispatch_u2m(int, short, void *);
 
-static Queue    eventq_u2m;
+/**
+ * The event queue for outgoing events to the master process.
+ */
+static Queue		 eventq_u2m;
 
-struct event_info_upgrade {
-	struct event	*ev_m2u;
-	struct event	*sigs[10];
-};
+/**
+ * The event for incoming events from the master.
+ */
+struct event		 ev_m2u;
+
+/**
+ * Events for signals. This are used in the singal handler to
+ * remove signal events from the event queue during shutdown.
+ * This is neccessary to make sure that the event loop terminates.
+ */
+struct event	*sigs[10];
 
 
+/**
+ * The signal handler for QUIT, TERM and INT signals. INT and TERM
+ * cause a gracefule shutdown, QUIT exists the event loop immediately.
+ * This functions is sometimes called manually to simulate a signal.
+ * This happens if end of file is detected on the incoming file descriptor.
+ *
+ * @note: This function is never called from signal context. It is and
+ *     event handler for signal events that is called from the main
+ *     event loop.
+ *
+ * @param sig The signal.
+ * @param event The event type (unused).
+ * @param arg The callback argument (unused).
+ */
 static void
-upgrade_sighandler(int sig, short event __used, void *arg)
+upgrade_sighandler(int sig, short event __used, void *arg __used)
 {
 	int				 i;
 	sigset_t			 mask;
-	struct event_info_upgrade	*ev_info = arg;
 
 	switch (sig) {
 	case SIGINT:
 	case SIGTERM:
 		sigfillset(&mask);
 		sigprocmask(SIG_SETMASK, &mask, NULL);
-		for (i=0; ev_info->sigs[i]; ++i) {
-			signal_del(ev_info->sigs[i]);
-		}
+		for (i=0; sigs[i]; ++i)
+			signal_del(sigs[i]);
 		break;
 	case SIGQUIT:
 		(void)event_loopexit(NULL);
@@ -90,15 +112,31 @@ upgrade_sighandler(int sig, short event __used, void *arg)
 	}
 }
 
+/**
+ * This is the main entry point for the upgrade process. This function
+ * is called once by the master. It spawns the upgrade child process and
+ * has no other effect on the master process. The upgrade process only
+ * communicates with the master and runs with root privileges.
+ *
+ * @param pipes The file descriptors for the pipes that are used
+ *     by the daemon processes to communicate with each other. The
+ *     child process only uses one of those file descriptors to setup
+ *     the communication with the master. All other descriptors are
+ *     closed in the child process.
+ * @param loggers The pipes that are used by the anoubis daemon processes
+ *     to communicate with the logger process. Only one file descriptor is
+ *     used all other descriptors are closed in the child process.
+ * @return Returns the process ID of the upgrade child in the parent process.
+ *     In the child process this function never returns.
+ */
 pid_t
 upgrade_main(int pipes[], int loggers[])
 {
 	pid_t				pid;
 	int				masterfd, logfd;
 	sigset_t			mask;
-	struct event			ev_m2u, ev_u2m;
+	struct event			ev_u2m;
 	struct event			ev_sigterm, ev_sigint, ev_sigquit;
-	struct event_info_upgrade	ev_info;
 #ifdef LINUX
 	int				dazukofd;
 #endif
@@ -127,16 +165,16 @@ upgrade_main(int pipes[], int loggers[])
 	dazukofd = dazukofs_ignore();
 #endif
 
-	signal_set(&ev_sigterm, SIGTERM, upgrade_sighandler, &ev_info);
-	signal_set(&ev_sigint,  SIGINT,  upgrade_sighandler, &ev_info);
-	signal_set(&ev_sigquit, SIGQUIT, upgrade_sighandler, &ev_info);
+	signal_set(&ev_sigterm, SIGTERM, upgrade_sighandler, NULL);
+	signal_set(&ev_sigint,  SIGINT,  upgrade_sighandler, NULL);
+	signal_set(&ev_sigquit, SIGQUIT, upgrade_sighandler, NULL);
 	signal_add(&ev_sigterm, NULL);
 	signal_add(&ev_sigint,  NULL);
 	signal_add(&ev_sigquit, NULL);
-	ev_info.sigs[0] = &ev_sigterm;
-	ev_info.sigs[1] = &ev_sigint;
-	ev_info.sigs[2] = &ev_sigquit;
-	ev_info.sigs[3] = NULL;
+	sigs[0] = &ev_sigterm;
+	sigs[1] = &ev_sigint;
+	sigs[2] = &ev_sigquit;
+	sigs[3] = NULL;
 
 	anoubisd_defaultsigset(&mask);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
@@ -144,15 +182,11 @@ upgrade_main(int pipes[], int loggers[])
 	msg_init(masterfd);
 
 	/* master process */
-	event_set(&ev_m2u, masterfd, EV_READ | EV_PERSIST, dispatch_m2u,
-	    &ev_info);
+	event_set(&ev_m2u, masterfd, EV_READ | EV_PERSIST, dispatch_m2u, NULL);
 	event_add(&ev_m2u, NULL);
 
 	event_set(&ev_u2m, masterfd, EV_WRITE, dispatch_u2m, NULL);
-
 	queue_init(&eventq_u2m, &ev_u2m);
-
-	ev_info.ev_m2u = &ev_m2u;
 
 	setproctitle("upgrade");
 
@@ -163,6 +197,14 @@ upgrade_main(int pipes[], int loggers[])
 	_exit(0);
 }
 
+/**
+ * Send an upgrade message without payload to the master process.
+ * This function composes a new message and sends it to the master.
+ * The type of the message is ANOUBISD_MSG_UPGRADE.
+ *
+ * @param type The upgrade subtype of the upgrade message. Can be
+ *     ANOUBISD_UPGRADE_CHUNK_REQ or ANOUBISD_UPGRADE_END.
+ */
 static void
 send_upgrade_message(int type)
 {
@@ -181,6 +223,14 @@ send_upgrade_message(int type)
 	enqueue(&eventq_u2m, msg);
 }
 
+/**
+ * Calculate the new checksum of an upgraded file and send it to the
+ * master. The master will update checksums in the SFS tree with the
+ * new value.
+ *
+ * @param path The path of the file. Only regular files and symlinks
+ *     are handled. All other files are skipped.
+ */
 static void
 send_checksum(const char *path)
 {
@@ -257,6 +307,16 @@ send_checksum(const char *path)
 	enqueue(&eventq_u2m, msg);
 }
 
+/**
+ * Parse and process an upgrade message received from the master.
+ * Accepted messages are of type ANOUBISD_UPGRADE_START or
+ * ANOUBISD_UPGRADE_CHUNK. In the latter case all files in the chunk
+ * are checksumed and the checksums are sent to the master. Additionally,
+ * this function requests a new chunk until an empty chunk is received,
+ * i.e. all upgraded files have been processed.
+ *
+ * @param msg The upgrade message.
+ */
 static void
 dispatch_upgrade(struct anoubisd_msg *msg)
 {
@@ -296,10 +356,19 @@ dispatch_upgrade(struct anoubisd_msg *msg)
 	}
 }
 
+/**
+ * This is the event handler for read events on the pipe from the master.
+ * Only messages of type ANOUBISD_MSG_UPGRADE are acceptable. If EOF is
+ * received on this file descriptor the upgrade process initiates a
+ * gracefule shutdown.
+ *
+ * @param fd The file descriptor of the event.
+ * @param sig The type of the event (unused).
+ * @param arg The callback argument (unused).
+ */
 static void
-dispatch_m2u(int fd, short sig __used, void *arg)
+dispatch_m2u(int fd, short sig __used, void *arg __used)
 {
-	struct event_info_upgrade	*ev_info = arg;
 	struct anoubisd_msg		*msg;
 
 	DEBUG(DBG_TRACE, ">dispatch_m2u");
@@ -323,13 +392,20 @@ dispatch_m2u(int fd, short sig __used, void *arg)
 		free(msg);
 	}
 	if (msg_eof(fd)) {
-		upgrade_sighandler(SIGTERM, 0, ev_info);
-		event_del(ev_info->ev_m2u);
+		upgrade_sighandler(SIGTERM, 0, NULL);
+		event_del(&ev_m2u);
 	}
 
 	DEBUG(DBG_TRACE, "<dispatch_m2u");
 }
 
+/**
+ * This is the event handler for write events on the pipe to the master.
+ *
+ * @param fd The file descriptor of the event.
+ * @param sig The type of the event (unused).
+ * @param arg The callback argument of the event (unused).
+ */
 static void
 dispatch_u2m(int fd, short sig __used, void *arg __used)
 {
