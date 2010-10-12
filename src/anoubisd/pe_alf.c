@@ -100,7 +100,6 @@ static int		 pe_addrmatch_port(struct apn_port *, void *,
 struct anoubisd_reply *
 pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 {
-	static char		 prefix[] = "ALF";
 	static char		*verdict[3] = { "allowed", "denied", "asked" };
 	struct alf_event	*msg;
 	struct anoubisd_reply	*reply;
@@ -157,16 +156,16 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 	case APN_LOG_NONE:
 		break;
 	case APN_LOG_NORMAL:
-		log_info("token %u: ALF %s prio %d rule %d %s %s (%s)",
-		    hdr->msg_token, prefix, prio,
-		    rule_id, verdict[decision], dump, context);
+		log_info("token %u: ALF prio %d rule %d %s %s (%s)",
+		    hdr->msg_token, prio, rule_id,
+		    verdict[decision], dump, context);
 		send_lognotify(proc, hdr, decision, log, rule_id, prio,
 		    ANOUBIS_SFS_NONE);
 		break;
 	case APN_LOG_ALERT:
-		log_warnx("token %u: ALF %s prio %d rule %d %s %s (%s)",
-		    hdr->msg_token, prefix, prio,
-		    rule_id, verdict[decision], dump, context);
+		log_warnx("token %u: ALF prio %d rule %d %s %s (%s)",
+		    hdr->msg_token, prio, rule_id,
+		    verdict[decision], dump, context);
 		send_lognotify(proc, hdr, decision, log, rule_id, prio,
 		    ANOUBIS_SFS_NONE);
 		break;
@@ -207,12 +206,12 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 }
 
 /**
- * Evaluate an ALF event according to the policy givne by prio and uid.
+ * Evaluate an ALF event according to the policy given by prio and uid.
  * If the user ID of the process is equal to the user ID in the event,
  * the rules from the processes context are used, otherwise the rules
  * for the application in the ruleset for the uid of the event is used.
  *
- * ALF rules always apply filter rules first. Capability rules are evaluate
+ * ALF rules always apply filter rules first. Capability rules are evaluated
  * only if no filter rule matches. Finally, default rules are evaluated.
  * Within one class of rules the evaluation order depends on the order
  * of the rules in the rule block.
@@ -254,7 +253,7 @@ pe_alf_evaluate(struct pe_proc *proc, int prio, uid_t uid,
 		}
 	}
 	if (rule == NULL || msg == NULL) {
-		log_warnx("pe_alf_evaluate: empty rule or messae");
+		log_warnx("pe_alf_evaluate: empty rule or message");
 		return -1;
 	}
 
@@ -363,9 +362,9 @@ pe_alf_evaluate_rule(struct apn_rule *rule, struct alf_event *msg,
 		/* Save result of the first default rule. */
 		if (hp->apn_type == APN_DEFAULT) {
 			if (default_decision == -1) {
-				*log = hp->rule.afilt.filtspec.log;
 				*rule_id = hp->apn_id;
-				default_decision = hp->rule.afilt.action;
+				*log = hp->rule.apndefault.log;
+				default_decision = hp->rule.apndefault.action;
 			}
 			continue;
 		}
