@@ -76,6 +76,7 @@ struct cert {
 };
 
 void		 cert_init(int);
+void		 cert_flush(void);
 void		 cert_reconfigure(int);
 char		*cert_keyid_for_uid(uid_t uid);
 

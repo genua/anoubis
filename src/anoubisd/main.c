@@ -1045,6 +1045,7 @@ main(int argc, char *argv[])
 #endif
 	log_warnx(PACKAGE_DAEMON " shutdown");
 	flush_log_queue();
+	cert_flush();
 
 	exit(0);
 }

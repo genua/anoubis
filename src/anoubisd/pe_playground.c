@@ -730,6 +730,22 @@ pe_playground_init(void)
 }
 
 /**
+ * Free all memory related to playground during shutdown.
+ */
+void
+pe_playground_shutdown(void)
+{
+	struct playground		*pg;
+
+	while ((pg = LIST_FIRST(&playgrounds)) != NULL) {
+		LIST_REMOVE(pg, next);
+		if (pg->cmd)
+			free(pg->cmd);
+		abuf_free_type(pg, struct playground);
+	}
+}
+
+/**
  * Parse the playground directory and extract the maximum playground ID.
  * This value is sent to the kernel via an appropriate ioctl. This function
  * is called by the master process during startup.

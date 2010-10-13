@@ -383,7 +383,6 @@ policy_main(int pipes[], int loggers[])
 	event_add(&ev_timer, &tv);
 
 	/* Start policy engine */
-	cert_init(1);
 	pe_init();
 	pe_playground_init();
 

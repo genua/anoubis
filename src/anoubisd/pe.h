@@ -249,6 +249,7 @@ void			 pe_proc_ident_put(struct pe_proc_ident *);
 /* pe_proc access functions */
 void			 pe_proc_init(void);
 void			 pe_proc_dump(void);
+void			 pe_proc_shutdown(void);
 struct pe_proc		*pe_proc_get(anoubis_cookie_t cookie);
 void			 pe_proc_put(struct pe_proc *proc);
 void			 pe_proc_fork(uid_t, anoubis_cookie_t cookie,
@@ -401,6 +402,7 @@ int			 pe_playground_file_scanrequest(anoubis_cookie_t,
 			     uid_t uid);
 void			 pe_playground_dump(void);
 void			 pe_playground_init(void);
+void			 pe_playground_shutdown(void);
 int			 pe_playground_send_pglist(uint64_t token,
 			     anoubis_cookie_t pgid, Queue *q);
 int			 pe_playground_send_filelist(uint64_t token,

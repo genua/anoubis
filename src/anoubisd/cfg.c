@@ -501,7 +501,9 @@ cfg_parse_commit(struct abuf_buffer valuebuf, int lineno)
 				ret = 0;
 				break;
 			}
-			if (stat(scanner->path, &sbuf) != 0) {
+			if (strcasecmp(scanner->path, "allow") != 0
+			    && strcasecmp(scanner->path, "deny") != 0
+			    && stat(scanner->path, &sbuf) != 0) {
 				log_warn("invalid scanner '%s' (line %d)",
 					scanner->path, lineno);
 			}

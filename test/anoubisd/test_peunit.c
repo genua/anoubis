@@ -129,6 +129,11 @@ cert_init(int chroot __used)
 }
 
 void
+cert_flush(void)
+{
+}
+
+void
 cert_reconfigure(int chroot __used)
 {
 }

@@ -129,6 +129,18 @@ cert_reconfigure(int chroot)
 }
 
 /**
+ * Free all memory associated with the cert database during shutdown.
+ */
+void
+cert_flush(void)
+{
+	struct cert_db		*cdb = certs;
+
+	certs = NULL;
+	cert_flush_db(cdb);
+}
+
+/**
  * Read certificates from a specified directory and load them into the
  * database given as argument. The certificates must be named according to
  * the numerical user IDs of their respective owner.
@@ -305,7 +317,8 @@ cert_keyid(X509 *cert)
 /**
  * Delete all certificates from the database and free the memory.
  *
- * @param sc Database of certificates
+ * @param sc Database of certificates. If the database is NULL nothing
+ *     happens. The database being flushed must not be active.
  * @return None.
  */
 static void
@@ -314,7 +327,7 @@ cert_flush_db(struct cert_db *sc)
 	struct cert	*p, *next;
 
 	if (sc == NULL)
-		sc = certs;
+		return;
 	for (p = TAILQ_FIRST(sc); p != TAILQ_END(sc); p = next) {
 		next = TAILQ_NEXT(p, entry);
 		TAILQ_REMOVE(sc, p, entry);

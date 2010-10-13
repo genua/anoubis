@@ -145,6 +145,9 @@ pe_shutdown(void)
 {
 	pe_user_flush_db(NULL);
 	sfshash_flush();
+	pe_proc_shutdown();
+	cert_flush();
+	pe_playground_shutdown();
 }
 
 /**

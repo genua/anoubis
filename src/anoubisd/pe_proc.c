@@ -155,6 +155,21 @@ pe_proc_init(void)
 }
 
 /**
+ * Shutdown process tracking. This is called during shutdown for
+ * the benefit of valgrind.
+ */
+void
+pe_proc_shutdown(void)
+{
+	struct pe_proc			*proc;
+
+	while((proc = TAILQ_FIRST(&tracker)) != NULL) {
+		proc->instances = 0;
+		pe_proc_untrack(proc);
+	}
+}
+
+/**
  * Return the process structure for the given task cookie. If a process
  * with the given task cookie exists, a reference to its proc structure is
  * acquired and a pointer to the structure is returned.

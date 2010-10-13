@@ -55,6 +55,7 @@
 #include <anoubisd.h>
 #include <amsg.h>
 #include <aqueue.h>
+#include <cert.h>
 
 /**
  * This structure is used to describe one active scanner child.
@@ -548,9 +549,11 @@ err:
  * is zero. An empty list of scanners means that the file must not be
  * committed.
  *
- * NOTE: This function runs in a sub process of the anoubis daemon master
+ * This function runs in a sub process of the anoubis daemon master
  * that exits immediately after the scan. This means that we need not care
  * about freeing of memory. We allocate only a few kilobytes per scanner.
+ * The function is not inlined to make it appear in valgrind backtraces.
+ * Allocations below this function can be suppressed from memory leak checking.
  *
  * @param sp The description of this scanner process.
  * @param flags If flags is non-zero only recommended scanners are run.
@@ -561,7 +564,7 @@ err:
  * NOTE: directly instead. The list of forbidden functions includes
  * DEBUG(...), log_* and fatal.
  */
-__dead static void
+__dead static void __attribute__((noinline))
 scanner_main(struct scanproc *sp, int flags)
 {
 	int					 i, off;
@@ -691,6 +694,9 @@ out:
 			_exit(2);
 		off += ret;
 	}
+	/* Make valgrind happy! */
+	abuf_free_type(sp, struct scanproc);
+	cert_flush();
 	_exit(0);
 }
 
@@ -784,7 +790,7 @@ anoubisd_scan_start(uint64_t token, int fd, uint64_t auth_uid, int flags)
 
 /**
  * Detach from all scanner children and send them a SIGTERM. This
- * should case the children to terminate in time. As this is only called
+ * should cause the children to terminate in time. As this is only called
  * during daemon termination, we do not wait for the termination of the
  * scanner children. This is left to the child process run by scanner_main.
  */
