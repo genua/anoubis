@@ -137,9 +137,6 @@ upgrade_main(int pipes[], int loggers[])
 	sigset_t			mask;
 	struct event			ev_u2m;
 	struct event			ev_sigterm, ev_sigint, ev_sigquit;
-#ifdef LINUX
-	int				dazukofd;
-#endif
 
 	pid = fork();
 	if (pid == -1)
@@ -162,7 +159,7 @@ upgrade_main(int pipes[], int loggers[])
 	log_info("upgrade started (pid %d)", getpid());
 
 #ifdef LINUX
-	dazukofd = dazukofs_ignore();
+	dazukofs_ignore();
 #endif
 
 	signal_set(&ev_sigterm, SIGTERM, upgrade_sighandler, NULL);

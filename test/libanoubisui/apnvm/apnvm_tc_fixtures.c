@@ -315,12 +315,11 @@ void
 apnvm_setup(void)
 {
 	char path[PATH_MAX];
-	char *s;
-	int fd, rc;
+	int fd;
 
 	strcpy(apnvm_cvsroot, "/tmp/tc_vm_XXXXXX");
 	strcpy(apnvm_user, "user1");
-	s = mkdtemp(apnvm_cvsroot);
+	mkdtemp_or_fail(apnvm_cvsroot);
 
 	vm_tc_exec("cvs -d \"%s\" init", apnvm_cvsroot);
 
@@ -339,25 +338,25 @@ apnvm_setup(void)
 	/* user1/user2/xxx,v */
 	snprintf(path, sizeof(path), "%s/user1/user2/xxx,v", apnvm_cvsroot);
 	fd = open(path, O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR);
-	rc = write(fd, XXX_V, strlen(XXX_V));
+	write_or_fail(fd, XXX_V, strlen(XXX_V));
 	close(fd);
 
 	/* user1/user2/yyy,v */
 	snprintf(path, sizeof(path), "%s/user1/user2/yyy,v", apnvm_cvsroot);
 	fd = open(path, O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR);
-	rc = write(fd, YYY_V, strlen(YYY_V));
+	write_or_fail(fd, YYY_V, strlen(YYY_V));
 	close(fd);
 
 	/* user1/user2/zzz,v */
 	snprintf(path, sizeof(path), "%s/user1/user2/zzz,v", apnvm_cvsroot);
 	fd = open(path, O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR);
-	rc = write(fd, ZZZ_V, strlen(ZZZ_V));
+	write_or_fail(fd, ZZZ_V, strlen(ZZZ_V));
 	close(fd);
 
 	/* user1/user3/active,v */
 	snprintf(path, sizeof(path), "%s/user1/user3/active,v", apnvm_cvsroot);
 	fd = open(path, O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR);
-	rc = write(fd, ACTIVE_V, strlen(ACTIVE_V));
+	write_or_fail(fd, ACTIVE_V, strlen(ACTIVE_V));
 	close(fd);
 }
 

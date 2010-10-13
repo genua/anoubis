@@ -108,10 +108,8 @@ libanoubissig_tc_exec(const char *cmd, ...)
 static void
 libanoubissig_tc_setup(void)
 {
-	char *s;
-
 	strncpy(workdir, "/tmp/tc_sig_XXXXXX", WDIR_SIZE);
-	s = mkdtemp(workdir);
+	mkdtemp_or_fail(workdir);
 
 	libanoubissig_tc_exec("echo \"[ req ] \" >> %s/openssl.cnf", workdir);
 	libanoubissig_tc_exec("echo \"default_bits = 2048 \" >> %s/openssl.cnf",

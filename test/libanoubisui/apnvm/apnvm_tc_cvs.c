@@ -175,14 +175,13 @@ cvs_tc_exec(const char* cmd, ...)
 
 void cvs_setup(void)
 {
-	char *s;
 	char path[PATH_MAX];
-	int fd, rc;
+	int fd;
 
 	strcpy(cvsroot, "/tmp/tc_cvs_XXXXXX");
 	strcpy(workdir, "/tmp/tc_cvs_XXXXXX");
-	s = mkdtemp(cvsroot);
-	s = mkdtemp(workdir);
+	mkdtemp_or_fail(cvsroot);
+	mkdtemp_or_fail(workdir);
 
 	cvs_tc_exec("cvs -d \"%s\" init", cvsroot);
 
@@ -191,7 +190,7 @@ void cvs_setup(void)
 
 	snprintf(path, sizeof(path), "%s/foo/file,v", cvsroot);
 	fd = open(path, O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR);
-	rc = write(fd, FILE_V, strlen(FILE_V));
+	write_or_fail(fd, FILE_V, strlen(FILE_V));
 	close(fd);
 
 	cvs_tc_exec("cd \"%s\" && cvs -d \"%s\" checkout foo",

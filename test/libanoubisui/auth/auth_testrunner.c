@@ -69,14 +69,13 @@ setup(void)
 {
 	int	 error		= 0;
 	int	 challengeLen	= 0;
-	int	 len;
 	void	*challengeBuf	= NULL;
 	char *keyfile = TEST_KEY_FILE;
 	char *crtfile = TEST_CRT_FILE;
 
 	if (getenv("KEYDIR")) {
-		len = asprintf(&keyfile, "%s/%s", getenv("KEYDIR"), keyfile);
-		len = asprintf(&crtfile, "%s/%s", getenv("KEYDIR"), crtfile);
+		fail_unless(asprintf(&keyfile, "%s/%s", getenv("KEYDIR"), keyfile) > 0);
+		fail_unless(asprintf(&crtfile, "%s/%s", getenv("KEYDIR"), crtfile) > 0);
 	}
 
 	/* Create / read local key. */

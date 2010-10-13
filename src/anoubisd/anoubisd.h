@@ -450,7 +450,7 @@ __dead void	master_terminate(void);
 __dead void	early_err(const char *);
 __dead void	early_errx(const char *);
 
-int	dazukofs_ignore(void);
+void	dazukofs_ignore(void);
 
 void	pe_dump(void);
 int	send_policy_data(u_int64_t token, int fd);

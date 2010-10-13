@@ -39,20 +39,27 @@ extern "C" {
 void _clang_fail(void) __attribute__((analyzer_noreturn));
 #undef	fail_if
 #undef	fail_unless
-#define	fail_if(expr, ...)	do { if (expr) _clang_fail(1) } while (0)
-#define	fail_unless(expr, ...)	do { if (!expr) _clang_fail(1) } while (0)
+#define	fail_if(expr, ...)	do { if (expr) _clang_fail(); } while (0)
+#define	fail_unless(expr, ...)	do { if (!(expr)) _clang_fail(); } while (0)
 #endif
 
-/**
- * Evaluates failures and type of failures from the given SRunner.
- *
- * The return-code of the method depends on the test-results.
- *
- * - 0 is returned, if all tests passed.
- * - 1 is returned, if at least one test failed but no error occured
- * - 2 is returned, if at least one error occured.
- */
 int check_eval_srunner(SRunner *);
+
+/**
+ * like mkdtemp(3), but fail test on failure
+ * @param templ the template passed to mkdtemp
+ */
+#define mkdtemp_or_fail(templ)		fail_if(mkdtemp(templ) == NULL)
+
+int write_full(int fd, const void *buf, size_t count);
+/**
+ * like write(2), but loop on incomplete writes and fail test on failure
+ * @param fd The FD to write to
+ * @param buf The buffer to write
+ * @param count The number of bytes to write
+ */
+#define write_or_fail(fd, buf, count)	fail_unless(write_full(fd,buf,count))
+
 
 #ifdef __cplusplus
 }

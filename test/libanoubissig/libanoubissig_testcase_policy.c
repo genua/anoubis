@@ -76,10 +76,8 @@ libanoubissig_tc_pol_exec(const char *cmd, ...)
 static void
 libanoubissig_tc_pol_setup(void)
 {
-	char *s;
-
 	strcpy(workdir, "/tmp/tc_sig_XXXXXX");
-	s = mkdtemp(workdir);
+	mkdtemp_or_fail(workdir);
 
 	/* Creating openssl.cnf */
 	libanoubissig_tc_pol_exec("echo \"[ req ] \" >> %s/openssl.cnf",

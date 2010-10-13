@@ -26,8 +26,18 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <errno.h>
 #include "anoubischeck.h"
 
+/**
+ * Evaluates failures and type of failures from the given SRunner.
+ * @param srunner The SRunner to run
+ * @return 0 if all tests passed,
+ *         1 if at least one test failed but no error occured,
+ *         2 if at least one error occured.
+ */
 int
 check_eval_srunner(SRunner *srunner)
 {
@@ -67,4 +77,33 @@ check_eval_srunner(SRunner *srunner)
 		return (2); /* NORESULT */
 	else
 		return (1); /* ERROR */
+}
+
+/**
+ * Utility function used in write_or_fail macro
+ * @param fd The FD to write to
+ * @param buf The buffer to write
+ * @param count The number of bytes to write
+ * @return 0 on failure, non-zero on success
+ */
+int
+write_full(int fd, const void *buf, size_t count)
+{
+	ssize_t len;
+
+	while (count > 0) {
+		len = write(fd, buf, count);
+		if (len == -1) {
+			if (errno != EAGAIN && errno != EINTR) {
+				perror("write");
+				return 0;
+			}
+			else
+				continue;
+		}
+		count -= len;
+		buf += len;
+	}
+
+	return 1;
 }

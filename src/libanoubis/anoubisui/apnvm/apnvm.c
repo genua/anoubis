@@ -753,6 +753,10 @@ apnvm_remove(apnvm *vm, const char *user, const char *profile, int no)
 		return (APNVM_OOM);
 
 	result = snprintf(file, PATH_MAX, "%s/%s", user, profile);
+	if (result >= PATH_MAX) {
+		/* path name too long */
+		return APNVM_ARG;
+	}
 	result = apncvs_remrev(&vm->cvs, file, revno);
 	if (result != 0) {
 		/* Failed to remove revision */

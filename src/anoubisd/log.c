@@ -491,9 +491,6 @@ logger_main(int pipes[], int loggers[])
 	struct event	 ev_sigterm, ev_sigint, ev_sigquit;
 	struct passwd	*pw;
 	sigset_t	 mask;
-#ifdef LINUX
-	int		 dazukofd;
-#endif
 	static int	 logpipeidx[] = { PROC_MAIN+1, PROC_POLICY+1,
 			     PROC_SESSION+1, PROC_UPGRADE+1, -1 };
 
@@ -512,7 +509,7 @@ logger_main(int pipes[], int loggers[])
 	anoubisd_process = PROC_LOGGER;
 
 #ifdef LINUX
-	dazukofd = dazukofs_ignore();
+	dazukofs_ignore();
 #endif
 
 	if (setgroups(1, &pw->pw_gid) ||

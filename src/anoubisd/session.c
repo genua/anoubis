@@ -498,9 +498,6 @@ session_main(int pipes[], int loggers[])
 	struct passwd			*pw;
 	sigset_t			 mask;
 	pid_t				 pid;
-#ifdef LINUX
-	int				 dazukofd;
-#endif
 
 
 	pid = fork();
@@ -524,7 +521,7 @@ session_main(int pipes[], int loggers[])
 	/* while still privileged we install a listening socket */
 	listening_socket = setup_listening_socket();
 #ifdef LINUX
-	dazukofd = dazukofs_ignore();
+	dazukofs_ignore();
 #endif
 
 	if ((pw = getpwnam(ANOUBISD_USER)) == NULL)

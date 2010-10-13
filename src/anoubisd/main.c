@@ -231,6 +231,31 @@ static char *omit_pid_file = NULL;
 #endif
 
 /**
+ * Try to write to fd, doing the minimum error handling.
+ *
+ * @param fd The fd to write to
+ * @param buf The data to write
+ * @param count The number of bytes to write
+ */
+static void
+try_write(int fd, const void *buf, size_t count)
+{
+	ssize_t ret;
+
+	while (count > 0) {
+		ret = write(fd, buf, count);
+		if (ret == -1) {
+			if ((errno == EINTR) || (errno == EAGAIN))
+				continue;
+			else
+				return;
+		}
+		count -= ret;
+		buf += ret;
+	}
+}
+
+/**
  * Signal handler for segmentation faults. As opposed to other "signal"
  * handlers, this handler is not called from normal process context by
  * libevent but directly as a signal handler.
@@ -283,10 +308,9 @@ segvhandler(int sig, siginfo_t *info, void *uc)
 	} else {
 		sprintf(p, " (none)\n");
 	}
-	/* Avoid unused return value warning by using "i = write(...). */
-	i = write(1, buf, strlen(buf));
+	try_write(1, buf, strlen(buf));
 	if (fd)
-		i = write(fd, buf, strlen(buf));
+		try_write(fd, buf, strlen(buf));
 	syslog(LOG_ALERT, "%s", buf);
 
 #ifdef HAVE_BACKTRACE
@@ -297,7 +321,7 @@ segvhandler(int sig, siginfo_t *info, void *uc)
 		    btsymbols ? btsymbols[i] : "(unknown)");
 		syslog(LOG_ALERT, "%s", buf);
 		if (fd)
-		    c = write(fd, buf, c);
+		    try_write(fd, buf, c);
 	}
 #endif
 
@@ -682,7 +706,6 @@ main(int argc, char *argv[])
 	int			sfsversion;
 	struct sigaction	act;
 #ifdef LINUX
-	int			 dazukofd;
 	FILE			*omitfp;
 #endif
 
@@ -872,7 +895,7 @@ main(int argc, char *argv[])
 		log_info("%d playground scanner(s) configured",
 		    anoubisd_config.pg_scanners);
 #ifdef LINUX
-	dazukofd = dazukofs_ignore();
+	dazukofs_ignore();
 
 	for (p=0; omit_pid_files[p]; p++) {
 		if ((omitfp = fopen(omit_pid_files[p], "w")) == NULL)
@@ -1110,22 +1133,17 @@ master_terminate(void)
 /**
  * Tell dazukofs that it should not try to check file system accesses
  * done by the anoubis daemon master.
- *
- * @return An open file descriptior. The caller must keep this file
- *     descriptor open as long as it wants to dazukofs to ignore us.
- *     If something goes wrong (usually because dazukofs is not active)
- *     -1 is returned.
  */
-int
+void
 dazukofs_ignore(void)
 {
-	int fd = -1;
+	int fd;
 
 	fd = open(_PATH_DEV "dazukofs.ign", O_RDONLY);
 	if ((fd == -1) && (errno != ENOENT))
 		log_warn("Could not open dazukofs: %s",
 				anoubis_strerror(errno));
-	return(fd);
+	return;
 }
 
 #endif

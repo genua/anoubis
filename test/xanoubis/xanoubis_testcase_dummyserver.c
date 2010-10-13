@@ -70,8 +70,8 @@
 void _clang_fail(void) __attribute__((analyzer_noreturn));
 #undef	fail_if
 #undef	fail_unless
-#define	fail_if(expr, ...)	do { if (expr) _clang_fail(1) } while (0)
-#define	fail_unless(expr, ...)	do { if (!expr) _clang_fail(1) } while (0)
+#define	fail_if(expr, ...)	do { if (expr) _clang_fail(); } while (0)
+#define	fail_unless(expr, ...)	do { if (!(expr)) _clang_fail(); } while (0)
 #endif
 
 #define __used __attribute__((unused))
@@ -107,7 +107,8 @@ list_dummy(struct anoubis_server *server, struct anoubis_msg *m __used,
 
 	answer = anoubis_msg_new(sizeof(Anoubis_ListMessage));
 	set_value(answer->u.listreply->type, ANOUBIS_P_LISTREP);
-	set_value(answer->u.listreply->flags, POLICY_FLAG_START|POLICY_FLAG_END);
+	set_value(answer->u.listreply->flags,
+	    POLICY_FLAG_START|POLICY_FLAG_END);
 	set_value(answer->u.listreply->error, 0);
 	set_value(answer->u.listreply->nrec, 0);
 	set_value(answer->u.listreply->rectype,

@@ -43,6 +43,7 @@
 #include <anoubis_errno.h>
 #include <anoubischeck.h>
 #include <errno.h>
+#include <locale.h>
 
 static char *tmpdir;
 
@@ -55,14 +56,14 @@ libanoubiserrorcode_tc_setup(void)
 	 * in it, this catalog-file will be used by
 	 * testcase_de
 	 */
-	char cmd[200], *tmp, *catalog;
+	char cmd[200], *catalog;
 
 	catalog = getenv("CATALOG");
 	if (catalog == NULL)
 		catalog = "src/anoubis/po/de.gmo";
 
 	tmpdir = strdup("/tmp/tc_de_testXXXXXX");
-	tmp = mkdtemp(tmpdir);
+	mkdtemp_or_fail(tmpdir);
 
 	snprintf(cmd, 200, "mkdir -p %s/%s/%s",
 		tmpdir, LOCALE, CATSTRING);

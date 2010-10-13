@@ -135,11 +135,10 @@ static X509 *
 read_certificate(const char *name)
 {
 	char	*crtfile;
-	int	len;
 	FILE	*fh;
 	X509	*cert;
 
-	len = asprintf(&crtfile, "%s/%s", getenv("KEYDIR"), name);
+	fail_unless(asprintf(&crtfile, "%s/%s", getenv("KEYDIR"), name) > 0);
 	fh = fopen(crtfile, "r");
 	fail_unless(fh != NULL, "Failed to open \"%s\" for reading: %s",
 	    crtfile, anoubis_strerror(errno));
