@@ -860,25 +860,29 @@ main(int argc, char *argv[])
 			early_errx("socketpair");
 	}
 
+	/* Start the logger first. */
 	logger_pid = logger_main(pipes, loggers);
 
-	(void)event_init();
-
-	log_init(loggers[anoubisd_process]);
-	DEBUG(DBG_TRACE, "logger_pid=%d", logger_pid);
-
-	log_info("master started (pid %d)", getpid());
-	log_info("Package: " PACKAGE_VERSION " (build " PACKAGE_BUILD ")");
-	DEBUG(DBG_TRACE, "debug=%x", debug_flags);
 	master_pid = getpid();
-	DEBUG(DBG_TRACE, "master_pid=%d", master_pid);
 	save_pid(pidfp, master_pid);
 
+	/*
+	 * Start child processes before initializing the master. Otherwise
+	 * the children will reinitialize stuff and lose memory that was
+	 * already allocated.
+	 */
 	se_pid = session_main(pipes, loggers);
-	DEBUG(DBG_TRACE, "session_pid=%d", se_pid);
 	policy_pid = policy_main(pipes, loggers);
-	DEBUG(DBG_TRACE, "policy_pid=%d", policy_pid);
 	upgrade_pid = upgrade_main(pipes, loggers);
+
+	(void)event_init();
+	log_init(loggers[anoubisd_process]);
+	log_info("master started (pid %d)", getpid());
+	log_info("Package: " PACKAGE_VERSION " (build " PACKAGE_BUILD ")");
+	DEBUG(DBG_TRACE, "logger_pid=%d", logger_pid);
+	DEBUG(DBG_TRACE, "master_pid=%d", master_pid);
+	DEBUG(DBG_TRACE, "session_pid=%d", se_pid);
+	DEBUG(DBG_TRACE, "policy_pid=%d", policy_pid);
 	DEBUG(DBG_TRACE, "upgrade_pid=%d", upgrade_pid);
 
 	policyfd = sessionfd = upgradefd = logfd = -1;

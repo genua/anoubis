@@ -437,7 +437,8 @@ logger_sighandler(int sig __used, short event __used, void *arg __used)
  * @param fd The log file descriptor to read from.
  * @param sig The event type (unused).
  * @param arg The event callback. This is the event itself. We use this
- *     to remove the event from the event queue in case of EOF.
+ *     to remove the event from the event queue in case of EOF. The event
+ *     is dynamically allocated and must be freed in this case.
  * @return None.
  */
 void
@@ -462,6 +463,7 @@ dispatch_log_read(int fd, short sig __used, void *arg)
 	if (msg_eof(fd)) {
 		logger_sighandler(SIGTERM, 0, NULL);
 		event_del(arg);
+		free(arg);
 	}
 	__logging = 0;
 }
