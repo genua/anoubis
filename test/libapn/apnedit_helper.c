@@ -698,8 +698,8 @@ int main(int argc, char **argv)
 {
 	struct apn_ruleset	*rs;
 	char			 l[1024];
-	FILE			*cmd, *null;
-	int			 ret;
+	FILE			*cmd = NULL, *null = NULL;
+	int			 ret, err = 0;
 
 	if (argc != 3)
 		usage(argv[0]);
@@ -713,12 +713,14 @@ int main(int argc, char **argv)
 	if (ret != 0) {
 		apn_print_errors(rs, stderr);
 		fprintf(stderr, "Could not parse %s\n", argv[2]);
-		return 1;
+		err = 1;
+		goto out;
 	}
 	cmd = fopen(argv[1], "r");
 	if (!cmd) {
 		fprintf(stderr, "Could not open %s\n", argv[1]);
-		return 1;
+		err = 1;
+		goto out;
 	}
 	while (1) {
 		int	 i, fail, ret;
@@ -788,18 +790,26 @@ int main(int argc, char **argv)
 		} else {
 			fprintf(stderr, "line %d: Unknown command %s\n",
 			    line, p);
-			return 1;
+			err = 1;
+			break;
 		}
 		if (ret && fail) {
 			fprintf(stderr, "line %d: Operation did not fail\n",
 			    line);
-			return 1;
+			err = 1;
+			break;
 		}
 		if (!ret && !fail) {
 			fprintf(stderr, "%d: Operation did not succeed\n",
 			    line);
-			return 1;
+			err = 1;
+			break;
 		}
 	}
-	return 0;
+out:
+	if (null)
+		fclose(null);
+	if (cmd)
+		fclose(cmd);
+	return err;
 }

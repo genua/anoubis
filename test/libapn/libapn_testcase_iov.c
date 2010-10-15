@@ -151,7 +151,7 @@ START_TEST(tc_iovec)
 	int			 ret;
 	char			*ref;
 	int			 reflen, i, j;
-	struct iovec		*iov;
+	struct iovec		*iov, *iov_tmp;
 
 	file = generate_file();
 	ret = apn_parse(file, &rs, 0);
@@ -183,7 +183,9 @@ START_TEST(tc_iovec)
 				memcpy(buf, ref + total, this);
 			}
 			iovcnt++;
-			iov = realloc(iov, sizeof(struct iovec)*iovcnt);
+			iov_tmp = realloc(iov, sizeof(struct iovec)*iovcnt);
+			fail_if(iov_tmp == NULL, "OUT OF MEMORY");
+			iov = iov_tmp;
 			iov[iovcnt-1].iov_len = this;
 			iov[iovcnt-1].iov_base = this?buf:NULL;
 			total += this;

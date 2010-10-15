@@ -391,6 +391,7 @@ sfs_init_request_tree(void)
 	tree = malloc(sizeof(*tree));
 	if (tree == NULL)
 		return NULL;
+	// cppcheck-suppress uninitdata
 	RB_INIT(&tree->head);
 	return tree;
 }

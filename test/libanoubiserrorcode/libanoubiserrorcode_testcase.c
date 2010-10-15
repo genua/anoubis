@@ -159,14 +159,13 @@ START_TEST(testcase_de)
 
 	char	*locale = setlocale(LC_ALL, NULL);
 	char	 *domain = textdomain(NULL);
-	char	*dir;
 	char	*loc;
 	int	 is_utf8 = 0;
 
 	printf("testing german error codes\n");
 	printf("domain: %s\n", textdomain("anoubis"));
 
-	dir = bindtextdomain("anoubis", tmpdir);
+	fail_unless(bindtextdomain("anoubis", tmpdir) != NULL);
 #ifndef OPENBSD
 	loc = setlocale(LC_ALL, LOCALE);
 	if (loc == NULL) {
@@ -176,7 +175,7 @@ START_TEST(testcase_de)
 	printf("locale: %s\n", loc);
 #else
 	setenv("LANG", "de", 1);
-	dir = bindtextdomain("libc", "/usr/share/nls/");
+	fail_unless(bindtextdomain("libc", "/usr/share/nls/") != NULL);
 	loc = setlocale(LC_ALL, "de_DE.ISO8859-15");
 	printf("locale: %s\n", loc);
 #endif

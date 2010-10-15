@@ -218,6 +218,7 @@ START_TEST(sign_and_verify_policy_match_tc)
 		}
 		n += rc;
 	}
+	// cppcheck-suppress deallocDealloc
 	close(fd);
 
 	err = anoubis_sig_create(&as, NULL, pol_certfile, pass_cb);
@@ -268,6 +269,7 @@ START_TEST(sign_and_verify_policy_mismatch_tc)
 		}
 		n += rc;
 	}
+	// cppcheck-suppress deallocDealloc
 	close(fd);
 
 	err = anoubis_sig_create(&as, NULL, pol_certfile, pass_cb);

@@ -40,6 +40,7 @@
 #include <anoubis_apnvm.h>
 
 #include "apnvm_tc_fixtures.h"
+#include "anoubischeck.h"
 
 #define TEST_TIMEOUT	20
 
@@ -47,7 +48,6 @@ START_TEST(vm_tc_prepare_no_cvsroot)
 {
 	char		*cvsroot;
 	char		user[16];
-	char		*s;
 	char		*tmpdir;
 	apnvm		*vm;
 	apnvm_result	vmrc;
@@ -59,7 +59,7 @@ START_TEST(vm_tc_prepare_no_cvsroot)
 		fail_if(1, "asprintf");
 
 	strcpy(user, "user1");
-	s = mkdtemp(cvsroot);
+	mkdtemp_or_fail(cvsroot);
 
 	vm = apnvm_init(cvsroot, user, NULL);
 	fail_if(vm == NULL, "Initialization of apnvm failed");

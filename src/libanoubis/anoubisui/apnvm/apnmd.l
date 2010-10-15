@@ -158,6 +158,7 @@ apnmd_parse(const char *content)
 	if ((md = malloc(sizeof(struct _apnmd))) == NULL)
 		return (NULL);
 
+	// cppcheck-suppress uninitdata
 	LIST_INIT(&md->kv_list);
 
 	/* Parse only, if you have something to parse */

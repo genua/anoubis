@@ -298,6 +298,7 @@ send_checksum(const char *path)
 	}
 	umsg = (anoubisd_sfs_update_all_t *)msg->msg;
 	umsg->cslen = ANOUBIS_CS_LEN;
+	// cppcheck-suppress bufferAccessOutOfBounds
 	memcpy(umsg->payload, &cs.csum, ANOUBIS_CS_LEN);
 	memcpy(umsg->payload + ANOUBIS_CS_LEN, path, plen);
 	DEBUG(DBG_QUEUE, " Checksum upgrade message for %s", path);

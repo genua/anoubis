@@ -1148,6 +1148,7 @@ dazukofs_ignore(void)
 	if ((fd == -1) && (errno != ENOENT))
 		log_warn("Could not open dazukofs: %s",
 				anoubis_strerror(errno));
+	// cppcheck-suppress resourceLeak
 	return;
 }
 
@@ -1974,10 +1975,10 @@ dispatch_auth_request(struct anoubisd_msg *msg)
 		challenge->idlen = challenge->challengelen = 0;
 	} else {
 		/* We do need a challenge. Create it. */
-		int	payload = abuf_length(cert->keyid) + sizeof(cdata);
+		int payloadlen = abuf_length(cert->keyid) + sizeof(cdata);
 
 		rep_msg = msg_factory(ANOUBISD_MSG_AUTH_CHALLENGE,
-		    sizeof(struct anoubisd_msg_authchallenge) + payload);
+		    sizeof(struct anoubisd_msg_authchallenge) + payloadlen);
 		if (rep_msg == NULL)
 			master_terminate();
 		challenge = (struct anoubisd_msg_authchallenge *)rep_msg->msg;
@@ -1986,6 +1987,7 @@ dispatch_auth_request(struct anoubisd_msg *msg)
 		challenge->idlen = abuf_length(cert->keyid);
 		challenge->challengelen = sizeof(cdata);
 		challenge->error = 0;
+		// cppcheck-suppress bufferAccessOutOfBounds
 		memcpy(challenge->payload, &cdata, sizeof(cdata));
 		abuf_copy_frombuf(challenge->payload + sizeof(cdata),
 		    cert->keyid, abuf_length(cert->keyid));

@@ -50,7 +50,9 @@ struct achat_channel {
 struct achat_channel *acc_create(void)
 {
 	struct achat_channel * ret = malloc(sizeof(*ret));
+	// cppcheck-suppress uninitdata
 	TAILQ_INIT(&ret->rd);
+	// cppcheck-suppress uninitdata
 	TAILQ_INIT(&ret->wr);
 	return ret;
 };

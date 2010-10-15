@@ -1153,6 +1153,7 @@ send_policy_data(u_int64_t token, int fd)
 		polreply->token = token;
 		polreply->reply = 0;
 		polreply->flags = flags;
+		// cppcheck-suppress bufferAccessOutOfBounds
 		polreply->len = read(fd, polreply->data, 3000);
 		if (polreply->len < 0) {
 			int ret = -errno;
