@@ -2281,7 +2281,7 @@ session_destroy(struct session *session)
 		struct anoubis_auth	*auth;
 
 		auth = anoubis_server_getauth(session->proto);
-		if (auth->auth_private) {
+		if (auth && auth->auth_private) {
 			free(auth->auth_private);
 			auth->auth_private = NULL;
 		}
