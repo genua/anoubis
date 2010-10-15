@@ -1280,6 +1280,10 @@ dispatch_authdata(struct anoubis_server *server, struct anoubis_msg *m,
 	}
 	return;
 error:
+	if (auth->auth_private) {
+		free(auth->auth_private);
+		auth->auth_private = NULL;
+	}
 	auth->error = err;
 	auth->state = ANOUBIS_AUTH_FAILURE;
 	auth->uid = -1;
@@ -2274,6 +2278,13 @@ session_destroy(struct session *session)
 	DEBUG(DBG_TRACE, ">session_destroy");
 
 	if (session->proto) {
+		struct anoubis_auth	*auth;
+
+		auth = anoubis_server_getauth(session->proto);
+		if (auth->auth_private) {
+			free(auth->auth_private);
+			auth->auth_private = NULL;
+		}
 		anoubis_server_destroy(session->proto);
 		session->proto = NULL;
 	}

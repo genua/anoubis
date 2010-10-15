@@ -233,8 +233,11 @@ JobCtrl::onDaemonRegistration(TaskEvent &event)
 	ComRegistrationTask *task =
 	    dynamic_cast<ComRegistrationTask*>(event.getTask());
 
-	if (task != regTask_)
+	if (task != regTask_) {
+		delete task;
+		event.Skip();
 		return;
+	}
 	regTask_ = NULL;
 
 	if (task->getAction() == ComRegistrationTask::ACTION_REGISTER) {

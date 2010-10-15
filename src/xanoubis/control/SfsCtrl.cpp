@@ -584,28 +584,11 @@ SfsCtrl::getErrors(void) const
 void
 SfsCtrl::OnRegistration(TaskEvent &event)
 {
-	ComRegistrationTask *task =
-	    dynamic_cast<ComRegistrationTask*>(event.getTask());
-
-	if (task->getComTaskResult() == ComTask::RESULT_SUCCESS) {
-		switch (task->getAction()) {
-		case ComRegistrationTask::ACTION_REGISTER:
-			/*
-			 * Registration successful,
-			 * enable communication-part
-			 */
-			enableCommunication();
-			break;
-		case ComRegistrationTask::ACTION_UNREGISTER:
-			/*
-			 * Unregistration successful,
-			 * disable communication-part again
-			 */
-			disableCommunication();
-			break;
-		}
+	if (JobCtrl::instance()->isConnected()) {
+		enableCommunication();
+	} else {
+		disableCommunication();
 	}
-
 	event.Skip();
 }
 

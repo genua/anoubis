@@ -45,6 +45,7 @@ struct anoubis_auth * anoubis_auth_create(struct achat_channel * chan,
 	ret->chan = chan;
 	ret->finish_callback = finish;
 	ret->cbdata = cbdata;
+	ret->auth_private = NULL;
 	return ret;
 }
 
