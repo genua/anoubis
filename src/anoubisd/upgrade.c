@@ -206,14 +206,14 @@ static void
 send_upgrade_message(int type)
 {
 	struct anoubisd_msg		*msg;
-	anoubisd_msg_upgrade_t		*umsg;
+	struct anoubisd_msg_upgrade	*umsg;
 
 	msg = msg_factory(ANOUBISD_MSG_UPGRADE, sizeof(*umsg));
 	if (msg == NULL) {
 		log_warnx("send_upgrade_message: Out of memory");
 		master_terminate();
 	}
-	umsg = (anoubisd_msg_upgrade_t *)msg->msg;
+	umsg = (struct anoubisd_msg_upgrade *)msg->msg;
 	umsg->chunksize = 0;
 	umsg->upgradetype = type;
 	DEBUG(DBG_QUEUE, " Upgrade message: type %d", type);
@@ -233,7 +233,7 @@ send_checksum(const char *path)
 {
 	static int			 devanoubis = -2;
 	struct anoubisd_msg		*msg;
-	anoubisd_sfs_update_all_t	*umsg;
+	struct anoubisd_sfs_update_all	*umsg;
 	struct anoubis_ioctl_csum	 cs;
 	int				 fd, len, plen;
 	struct stat			 statbuf;
@@ -290,13 +290,13 @@ send_checksum(const char *path)
 		return;
 	}
 	plen = strlen(path) + 1;
-	len = sizeof(anoubisd_sfs_update_all_t) + ANOUBIS_CS_LEN + plen;
+	len = sizeof(struct anoubisd_sfs_update_all) + ANOUBIS_CS_LEN + plen;
 	msg = msg_factory(ANOUBISD_MSG_SFS_UPDATE_ALL, len);
 	if (msg == NULL) {
 		log_warnx("upgrade: Out of memory in send_checksum");
 		return;
 	}
-	umsg = (anoubisd_sfs_update_all_t *)msg->msg;
+	umsg = (struct anoubisd_sfs_update_all *)msg->msg;
 	umsg->cslen = ANOUBIS_CS_LEN;
 	// cppcheck-suppress bufferAccessOutOfBounds
 	memcpy(umsg->payload, &cs.csum, ANOUBIS_CS_LEN);
@@ -318,14 +318,14 @@ send_checksum(const char *path)
 static void
 dispatch_upgrade(struct anoubisd_msg *msg)
 {
-	anoubisd_msg_upgrade_t		*umsg;
+	struct anoubisd_msg_upgrade	*umsg;
 	size_t				 pos;
 
 	if (msg->size < (int)(sizeof(*msg) + sizeof(*umsg))) {
 		log_warnx("dispatch_upgrade: short message");
 		return;
 	}
-	umsg = (anoubisd_msg_upgrade_t *)msg->msg;
+	umsg = (struct anoubisd_msg_upgrade *)msg->msg;
 	if (msg->size < (int)(sizeof(*msg) + sizeof(*umsg) + umsg->chunksize)) {
 		log_warnx("dispatch_upgrade: short message");
 		return;

@@ -64,17 +64,6 @@
  */
 
 /**
- * This array maps numerical process names to strings. The process name
- * is used to prefix each log message with a message source.
- */
-static const char * const procnames[] = {
-	[ PROC_MAIN ] = "main",
-	[ PROC_POLICY ] = "policy",
-	[ PROC_SESSION ] = "session",
-	[ PROC_UPGRADE ] = "upgrade",
-};
-
-/**
  * Log message file descriptor. This variable is set up by log_init and
  * stores the file descriptor that log messages are sent to in other
  * anoubis daemon processes.
@@ -345,16 +334,16 @@ __dead void
 fatal(const char *emsg)
 {
 	if (emsg == NULL)
-		logit(LOG_CRIT, "fatal in %s: %s", procnames[anoubisd_process],
+		logit(LOG_CRIT, "fatal in %s: %s", anoubisd_proc_name(),
 		    anoubis_strerror(errno));
 	else
 		if (errno)
 			logit(LOG_CRIT, "fatal in %s: %s: %s",
-			    procnames[anoubisd_process], emsg,
+			    anoubisd_proc_name(), emsg,
 			    anoubis_strerror(errno));
 		else
 			logit(LOG_CRIT, "fatal in %s: %s",
-			    procnames[anoubisd_process], emsg);
+			    anoubisd_proc_name(), emsg);
 	flush_log_queue();
 	exit(1);
 }

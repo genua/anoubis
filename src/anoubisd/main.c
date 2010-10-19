@@ -79,7 +79,6 @@
 #include <ucontext.h>
 #endif
 
-/* on glibc 2.6+, event.h uses non C89 types :/ */
 #include <event.h>
 #include <anoubis_msg.h>
 #include <anoubis_sig.h>
@@ -136,11 +135,14 @@ enum anoubisd_process_type	anoubisd_process;
 static int	terminate = 0;
 
 /**
- * File descriptors for the anoubis devices.
- * Index zero is a handle to our eventdev queue.
- * Index one is a handle to the anoubis device.
+ * File descriptors for the anoubis eventdev queue.
  */
-static int	eventfds[2];
+static int	eventdevfd;
+
+/**
+ * File descriptor for the anoubis device.
+ */
+static int	anoubisfd;
 
 /**
  * The anoubis daemon configuration.
@@ -154,7 +156,8 @@ pid_t		policy_pid = 0;		/** The pid of the policy engine */
 pid_t		upgrade_pid = 0;	/** The pid of the upgrade process */
 
 u_int32_t	debug_flags = 0;	/** Current debug flags */
-u_int32_t	debug_stderr = 0;	/** True if debugging is on stderr */
+char		debug_stderr = 0;	/** True if debugging is on stderr */
+char		anoubisd_noaction = 0;	/** True if -n switch was given */
 gid_t		anoubisd_gid;		/** Group ID of the anoubisd user */
 
 /**
@@ -200,6 +203,51 @@ static Queue eventq_m2u;
  */
 static Queue eventq_m2dev;
 
+/**
+ * Event structure for read events from the session engine.
+ */
+static struct event ev_s2m;
+
+/**
+ * Event structure for read events from the policy engine.
+ */
+static struct event ev_p2m;
+
+/**
+ * Event structure for read events from the upgrade process.
+ */
+static struct event ev_u2m;
+
+/**
+ * Event structure for read events from the kernel event device.
+ */
+static struct event ev_dev2m;
+
+/**
+ * Event structure for the time event. The timer is used to peridically
+ * request status information from the kernel.
+ */
+static struct event ev_timer;
+
+/**
+ * The timeout for the statistics timer.
+ */
+static struct timeval event_tv = {
+	.tv_sec = 5,
+	.tv_usec = 0,
+};
+
+/**
+ * Event structure for sigchld events.
+ */
+static struct event ev_sigchld;
+
+/**
+ * Event structure for signal events. These are required by the
+ * signal handler to remove these events from the event queue during
+ * shutdown. The list is terminated by a NULL pointer.
+ */
+static struct event *ev_sigs[10];
 
 /**
  * A file handle to the PID file. This file handle remains open
@@ -340,16 +388,14 @@ segvhandler(int sig, siginfo_t *info, void *uc)
  *
  * @param sig The signal.
  * @param event The event type (see libevent).
- * @param arg The callback argument of for the event handler. This is either
- *     NULL or a struct event_info_main.
+ * @param arg The callback argument of for the event handler (unused).
  *
  * @note This handler is sometimes called manually with arg == NULL.
  */
 static void
-sighandler(int sig, short event __used, void *arg)
+sighandler(int sig, short event __used, void *arg __used)
 {
 	int			 die = 0;
-	struct event_info_main	*info = arg;
 
 	DEBUG(DBG_TRACE, ">sighandler: %d", sig);
 
@@ -363,14 +409,13 @@ sighandler(int sig, short event __used, void *arg)
 			terminate = 1;
 		anoubisd_scanners_detach();
 		log_warnx(PACKAGE_DAEMON ": Shutdown requested by signal");
-		if (ioctl(eventfds[1], ANOUBIS_UNDECLARE_FD,
-		    eventfds[0]) == 0) {
+		if (ioctl(anoubisfd, ANOUBIS_UNDECLARE_FD, eventdevfd) == 0) {
 			struct timeval tv;
 			tv.tv_sec = 0;
 			tv.tv_usec = 10000;
-			event_del(info->ev_timer);
-			event_del(info->ev_dev2m);
-			event_add(info->ev_dev2m, &tv);
+			event_del(&ev_timer);
+			event_del(&ev_dev2m);
+			event_add(&ev_dev2m, &tv);
 			sigfillset(&mask);
 			sigdelset(&mask, SIGCHLD);
 			sigprocmask(SIG_SETMASK, &mask, NULL);
@@ -382,8 +427,8 @@ sighandler(int sig, short event __used, void *arg)
 				kill(policy_pid, SIGTERM);
 			if (logger_pid)
 				kill(logger_pid, SIGTERM);
-			for (i=0; info->ev_sigs[i]; ++i)
-				signal_del(info->ev_sigs[i]);
+			for (i=0; ev_sigs[i]; ++i)
+				signal_del(ev_sigs[i]);
 			break;
 		}
 		log_warnx("Cannot undeclare eventdev queue");
@@ -420,9 +465,8 @@ sighandler(int sig, short event __used, void *arg)
 				childname = "anoubis logger";
 			}
 			if (childname == NULL) {
-				if (info)
-					anoubisd_scanproc_exit(pid, status,
-					    info, &eventq_m2p);
+				anoubisd_scanproc_exit(pid, status, anoubisfd,
+				    &eventq_m2p);
 				continue;
 			}
 			if (WIFEXITED(status))
@@ -433,8 +477,8 @@ sighandler(int sig, short event __used, void *arg)
 			if (!terminate)
 				die = 1;
 		}
-		if (terminate && sig == SIGCHLD && info)
-			signal_del(info->ev_sigchld);
+		if (terminate && sig == SIGCHLD)
+			signal_del(&ev_sigchld);
 		if (die) {
 			main_shutdown();
 			/*NOTREACHED*/
@@ -522,13 +566,11 @@ save_pid(FILE *fp, pid_t pid)
  *
  * @param sig The signal number (see libevent).
  * @param event The type of event that occured (see libevent).
- * @param arg The event callback data. This is a pointer to
- *            struct event_info_main.
+ * @param arg The event callback data (unused).
  */
 static void
-dispatch_timer(int sig __used, short event __used, void * arg)
+dispatch_timer(int sig __used, short event __used, void * arg __used)
 {
-	struct event_info_main	*ev_info = arg;
 	static int		 first = 1;
 	static int		 warned = 0;
 
@@ -543,14 +585,14 @@ dispatch_timer(int sig __used, short event __used, void * arg)
 		first = 0;
 		sighandler(SIGCHLD, 0, NULL);
 	}
-	if (ioctl(ev_info->anoubisfd, ANOUBIS_REQUEST_STATS, 0) < 0) {
+	if (ioctl(anoubisfd, ANOUBIS_REQUEST_STATS, 0) < 0) {
 		if (!warned)
 			log_warn("Failed to request stats from the kernel");
 		warned = 1;
 	} else {
 		warned = 0;
 	}
-	event_add(ev_info->ev_timer, ev_info->tv);
+	event_add(&ev_timer, &event_tv);
 
 	DEBUG(DBG_TRACE, "<dispatch_timer");
 }
@@ -693,15 +735,10 @@ main(int argc, char *argv[])
 	int			pipes[PIPE_MAX * 2];
 	int			loggers[PROC_LOGGER * 2];
 	int			logfd, policyfd, sessionfd, upgradefd;
-	struct event		ev_sigterm, ev_sigint, ev_sigquit, ev_sighup,
-				    ev_sigchld;
-	struct event		ev_s2m, ev_p2m, ev_u2m, ev_dev2m;
+	struct event		ev_sigterm, ev_sigint, ev_sigquit, ev_sighup;
 	struct event		ev_m2s, ev_m2p, ev_m2u, ev_m2dev;
-	struct event		ev_timer;
-	struct event_info_main	ev_info;
 	int			p;
 	sigset_t		mask;
-	struct timeval		tv;
 	struct passwd		*pw;
 	int			sfsversion;
 	struct sigaction	act;
@@ -725,7 +762,7 @@ main(int argc, char *argv[])
 		fatal("can't copy progname");
 	}
 
-	if (anoubisd_config.opts & ANOUBISD_OPT_NOACTION)
+	if (anoubisd_noaction)
 		cfg_dump(stdout);
 
 	/*
@@ -773,7 +810,7 @@ main(int argc, char *argv[])
 		if (empty < 0)
 			early_err("Could not read " SFS_CHECKSUMROOT);
 		if (empty) {
-			if (anoubisd_config.opts & ANOUBISD_OPT_NOACTION) {
+			if (anoubisd_noaction) {
 				/* No further action required */
 				exit(0);
 			}
@@ -805,7 +842,7 @@ main(int argc, char *argv[])
 		early_errx(msg);
 	}
 
-	if (anoubisd_config.opts & ANOUBISD_OPT_NOACTION) {
+	if (anoubisd_noaction) {
 		/* Exit at this point, no further action required.
 		 * Note that there is another exit(0) above in the
 		 * case of an empty sfs tree.
@@ -895,9 +932,15 @@ main(int argc, char *argv[])
 	/* Load Public Keys */
 	cert_init(0);
 
-	if (anoubisd_config.pg_scanners)
-		log_info("%d playground scanner(s) configured",
-		    anoubisd_config.pg_scanners);
+	if (!CIRCLEQ_EMPTY(&anoubisd_config.pg_scanner)) {
+		int				 cnt = 0;
+		struct anoubisd_pg_scanner	*scanner;
+
+		CIRCLEQ_FOREACH(scanner, &anoubisd_config.pg_scanner, link)
+			cnt++;
+		log_info("%d playground scanner(s) configured", cnt);
+	}
+
 #ifdef LINUX
 	dazukofs_ignore();
 
@@ -918,22 +961,21 @@ main(int argc, char *argv[])
 #endif
 
 	/* We catch or block signals rather than ignore them. */
-	signal_set(&ev_sigterm, SIGTERM, sighandler, &ev_info);
-	signal_set(&ev_sigint, SIGINT, sighandler, &ev_info);
+	signal_set(&ev_sigterm, SIGTERM, sighandler, NULL);
+	signal_set(&ev_sigint, SIGINT, sighandler, NULL);
 	signal_set(&ev_sigquit, SIGQUIT, sighandler, NULL);
-	signal_set(&ev_sighup, SIGHUP, sighandler, &ev_info);
-	signal_set(&ev_sigchld, SIGCHLD, sighandler, &ev_info);
+	signal_set(&ev_sighup, SIGHUP, sighandler, NULL);
+	signal_set(&ev_sigchld, SIGCHLD, sighandler, NULL);
 	signal_add(&ev_sigterm, NULL);
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigquit, NULL);
 	signal_add(&ev_sighup, NULL);
 	signal_add(&ev_sigchld, NULL);
-	ev_info.ev_sigs[0] = &ev_sigterm;
-	ev_info.ev_sigs[1] = &ev_sigint;
-	ev_info.ev_sigs[2] = &ev_sigquit;
-	ev_info.ev_sigs[3] = &ev_sighup;
-	ev_info.ev_sigs[4] = NULL;
-	ev_info.ev_sigchld = &ev_sigchld;
+	ev_sigs[0] = &ev_sigterm;
+	ev_sigs[1] = &ev_sigint;
+	ev_sigs[2] = &ev_sigquit;
+	ev_sigs[3] = &ev_sighup;
+	ev_sigs[4] = NULL;
 
 	anoubisd_defaultsigset(&mask);
 	sigdelset(&mask, SIGCHLD);
@@ -942,7 +984,7 @@ main(int argc, char *argv[])
 	sigdelset(&mask, SIGALRM);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 
-	/* init msg_bufs - keep track of outgoing ev_info */
+	/* init msg_bufs */
 	msg_init(sessionfd);
 	msg_init(policyfd);
 	msg_init(upgradefd);
@@ -952,81 +994,68 @@ main(int argc, char *argv[])
 	 * This needs to be done before the event_add for it,
 	 * because that causes an event.
 	 */
-	eventfds[0] = open(_PATH_DEV "eventdev", O_RDWR);
-	if (eventfds[0] < 0) {
+	eventdevfd = open(_PATH_DEV "eventdev", O_RDWR);
+	if (eventdevfd < 0) {
 		log_warn("Could not open " _PATH_DEV "eventdev");
 		main_shutdown();
 	}
-	msg_init(eventfds[0]);
+	msg_init(eventdevfd);
 
 	/* session process */
 	event_set(&ev_m2s, sessionfd, EV_WRITE, dispatch_m2s, NULL);
-	event_set(&ev_s2m, sessionfd, EV_READ | EV_PERSIST, dispatch_s2m,
-	    &ev_info);
+	event_set(&ev_s2m, sessionfd, EV_READ | EV_PERSIST, dispatch_s2m, NULL);
 	event_add(&ev_s2m, NULL);
 
 	/* policy process */
 	event_set(&ev_m2p, policyfd, EV_WRITE, dispatch_m2p, NULL);
-	event_set(&ev_p2m, policyfd, EV_READ | EV_PERSIST, dispatch_p2m,
-	    &ev_info);
+	event_set(&ev_p2m, policyfd, EV_READ | EV_PERSIST, dispatch_p2m, NULL);
 	event_add(&ev_p2m, NULL);
 
 	/* upgrade process */
 	event_set(&ev_m2u, upgradefd, EV_WRITE, dispatch_m2u, NULL);
-	event_set(&ev_u2m, upgradefd, EV_READ | EV_PERSIST, dispatch_u2m,
-	    &ev_info);
+	event_set(&ev_u2m, upgradefd, EV_READ | EV_PERSIST, dispatch_u2m, NULL);
 	event_add(&ev_u2m, NULL);
 
 	/* event device */
-	event_set(&ev_dev2m, eventfds[0], EV_READ | EV_PERSIST, dispatch_dev2m,
-	    &ev_info);
+	event_set(&ev_dev2m, eventdevfd, EV_READ | EV_PERSIST, dispatch_dev2m,
+	    NULL);
 	event_add(&ev_dev2m, NULL);
 
-	event_set(&ev_m2dev, eventfds[0], EV_WRITE, dispatch_m2dev, NULL);
+	event_set(&ev_m2dev, eventdevfd, EV_WRITE, dispatch_m2dev, NULL);
 
 	queue_init(&eventq_m2p, &ev_m2p);
 	queue_init(&eventq_m2s, &ev_m2s);
 	queue_init(&eventq_m2dev, &ev_m2dev);
 	queue_init(&eventq_m2u, &ev_m2u);
 
-	ev_info.ev_dev2m = &ev_dev2m;
-	ev_info.ev_p2m = &ev_p2m;
-	ev_info.ev_s2m = &ev_s2m;
-	ev_info.ev_u2m = &ev_u2m;
-
 	/*
 	 * Open event device to communicate with the kernel.
 	 */
-	eventfds[1] = open(_PATH_DEV "anoubis", O_RDWR);
-	if (eventfds[1] < 0) {
+	anoubisfd = open(_PATH_DEV "anoubis", O_RDWR);
+	if (anoubisfd < 0) {
 		log_warn("Could not open " _PATH_DEV "anoubis");
-		close(eventfds[0]);
+		close(eventdevfd);
 		main_shutdown();
 	}
 
-	if (ioctl(eventfds[1], ANOUBIS_DECLARE_FD, eventfds[0]) < 0) {
+	if (ioctl(anoubisfd, ANOUBIS_DECLARE_FD, eventdevfd) < 0) {
 		log_warn("ioctl");
-		close(eventfds[0]);
-		close(eventfds[1]);
+		close(eventdevfd);
+		close(anoubisfd);
 		main_shutdown();
 	}
-	if (ioctl(eventfds[1], ANOUBIS_DECLARE_LISTENER, eventfds[0]) < 0) {
+	if (ioctl(anoubisfd, ANOUBIS_DECLARE_LISTENER, eventdevfd) < 0) {
 		log_warn("ioctl");
-		close(eventfds[0]);
-		close(eventfds[1]);
+		close(eventdevfd);
+		close(anoubisfd);
 		main_shutdown();
 	}
-	pe_playground_initpgid(eventfds[1], eventfds[0]);
+	pe_playground_initpgid(anoubisfd, eventdevfd);
 	/* Note that we keep the anoubis device open for subsequent ioctls. */
 
 	/* Five second timer for statistics ioctl */
-	tv.tv_sec = 5;
-	tv.tv_usec = 0;
-	ev_info.anoubisfd = eventfds[1];
-	ev_info.ev_timer = &ev_timer;
-	ev_info.tv = &tv;
-	evtimer_set(&ev_timer, &dispatch_timer, &ev_info);
-	event_add(&ev_timer, &tv);
+	evtimer_set(&ev_timer, &dispatch_timer, NULL);
+	event_add(&ev_timer, &event_tv);
 
 	init_root_key(NULL);
 
@@ -1069,8 +1098,8 @@ main_shutdown(void)
 
 	DEBUG(DBG_TRACE, ">main_cleanup");
 
-	close(eventfds[1]);
-	close(eventfds[0]);
+	close(anoubisfd);
+	close(eventdevfd);
 
 	anoubisd_scanners_detach();
 	if (upgrade_pid)
@@ -1863,12 +1892,12 @@ err:
 static void
 dispatch_passphrase(struct anoubisd_msg *msg)
 {
-	anoubisd_msg_passphrase_t	*pass;
+	struct anoubisd_msg_passphrase	*pass;
 	int				 len;
 
-	pass = (anoubisd_msg_passphrase_t *)msg->msg;
+	pass = (struct anoubisd_msg_passphrase *)msg->msg;
 	len = msg->size - sizeof(struct anoubisd_msg);
-	if (len < (int)sizeof(anoubisd_msg_passphrase_t) + 1)
+	if (len < (int)sizeof(struct anoubisd_msg_passphrase) + 1)
 		return;
 	pass->payload[len-1] = 0;
 	init_root_key(pass->payload);
@@ -2048,14 +2077,12 @@ dispatch_auth_verify(struct anoubisd_msg *imsg)
  *
  * @param fd The file descriptor to read from.
  * @param event The type of the event (see libevent, unused)
- * @param arg The event callback data. This is an event_info_main
- *     structure.
+ * @param arg The event callback data (unused).
  */
 static void
-dispatch_s2m(int fd, short event __used, void *arg)
+dispatch_s2m(int fd, short event __used, void *arg __used)
 {
 	struct anoubisd_msg		*msg;
-	struct event_info_main		*ev_info = arg;
 
 	DEBUG(DBG_TRACE, ">dispatch_s2m");
 
@@ -2087,7 +2114,7 @@ dispatch_s2m(int fd, short event __used, void *arg)
 		DEBUG(DBG_TRACE, "<dispatch_s2m (loop)");
 	}
 	if (msg_eof(fd))
-		event_del(ev_info->ev_s2m);
+		event_del(&ev_s2m);
 	DEBUG(DBG_TRACE, "<dispatch_s2m");
 }
 
@@ -2153,11 +2180,9 @@ expand_dev(dev_t dev)
  * will be reported.
  *
  * @param msg The request message from the policy engine.
- * @param evinfo The event information of the main thread.
  */
 static void
-dispatch_pgcommit(struct anoubisd_msg *msg,
-    struct event_info_main *evinfo __used)
+dispatch_pgcommit(struct anoubisd_msg *msg)
 {
 	struct anoubisd_msg_pgcommit		*pgmsg;
 	struct anoubisd_msg			*rmsg;
@@ -2187,7 +2212,7 @@ dispatch_pgcommit(struct anoubisd_msg *msg,
 	    || statbuf.st_ino != pgmsg->ino)
 		goto error;
 #ifdef LINUX
-	if (ioctl(evinfo->anoubisfd, ANOUBIS_SCAN_STARTED, fd) < 0) {
+	if (ioctl(anoubisfd, ANOUBIS_SCAN_STARTED, fd) < 0) {
 		err = errno;
 		goto error;
 	}
@@ -2224,13 +2249,11 @@ error:
  *
  * @param fd The file descriptor to read from.
  * @param event The type of the event (see libevent, unused)
- * @param arg The event callback data. This is an event_info_main
- *     structure.
+ * @param arg The event callback data (unused).
  */
 static void
-dispatch_p2m(int fd, short event __used, /*@dependent@*/ void *arg)
+dispatch_p2m(int fd, short event __used, void *arg __used)
 {
-	struct event_info_main		*ev_info = arg;
 	struct eventdev_reply		*ev_rep;
 	struct anoubisd_msg		*msg;
 
@@ -2254,7 +2277,7 @@ dispatch_p2m(int fd, short event __used, /*@dependent@*/ void *arg)
 			break;
 		case ANOUBISD_MSG_PGCOMMIT:
 			DEBUG(DBG_QUEUE, " >p2m: pgcommit msg");
-			dispatch_pgcommit(msg, ev_info);
+			dispatch_pgcommit(msg);
 			free(msg);
 			break;
 		default:
@@ -2264,7 +2287,7 @@ dispatch_p2m(int fd, short event __used, /*@dependent@*/ void *arg)
 		DEBUG(DBG_TRACE, "<dispatch_p2m (loop)");
 	}
 	if (msg_eof(fd))
-		event_del(ev_info->ev_p2m);
+		event_del(&ev_p2m);
 	DEBUG(DBG_TRACE, "<dispatch_p2m");
 }
 
@@ -2339,17 +2362,15 @@ dispatch_m2dev(int fd, short event __used, void *arg __used)
  *
  * @param fd The file descriptor to read from.
  * @param event The type of the event (see libevent, unused)
- * @param arg The event callback data. This is an event_info_main
- *     structure.
+ * @param arg The event callback data (unused).
  */
 static void
-dispatch_dev2m(int fd, short event __used, void *arg)
+dispatch_dev2m(int fd, short event __used, void *arg __used)
 {
 	struct eventdev_hdr		*hdr;
 	struct eventdev_reply		*rep;
 	struct anoubisd_msg		*msg;
 	struct anoubisd_msg		*msg_reply;
-	struct event_info_main		*ev_info = arg;
 
 	DEBUG(DBG_TRACE, ">dispatch_dev2m");
 
@@ -2411,8 +2432,7 @@ dispatch_dev2m(int fd, short event __used, void *arg)
 		DEBUG(DBG_TRACE, "<dispatch_dev2m (loop)");
 	}
 	if (terminate) {
-		event_del(ev_info->ev_dev2m);
-		ev_info->ev_dev2m = NULL;
+		event_del(&ev_dev2m);
 		if (terminate < 2)
 			terminate = 2;
 		event_add(eventq_m2p.ev, NULL);
@@ -2462,7 +2482,7 @@ dispatch_m2u(int fd, short event __used, void *arg __used)
 static void
 dispatch_sfs_update_all(struct anoubisd_msg *msg)
 {
-	anoubisd_sfs_update_all_t	*umsg;
+	struct anoubisd_sfs_update_all	*umsg;
 	size_t				 plen;
 	char				*path;
 	int				 ret;
@@ -2479,7 +2499,7 @@ dispatch_sfs_update_all(struct anoubisd_msg *msg)
 	if ((size_t)msg->size < sizeof(*msg) + sizeof(*umsg)
 	    + ANOUBIS_CS_LEN + 1)
 		goto bad;
-	umsg = (anoubisd_sfs_update_all_t *)msg->msg;
+	umsg = (struct anoubisd_sfs_update_all *)msg->msg;
 	if (umsg->cslen != ANOUBIS_CS_LEN)
 		goto bad;
 	plen = msg->size - sizeof(*msg) - sizeof(*umsg) - ANOUBIS_CS_LEN;
@@ -2523,14 +2543,12 @@ bad:
  *
  * @param fd The file descriptor to read data from.
  * @param event The type of event the occured (not useded).
- * @param arg The callback argument. This is a pointer to a
- *            struct event_info_main.
+ * @param arg The callback argument (unused).
  */
 static void
-dispatch_u2m(int fd, short event __used, void *arg)
+dispatch_u2m(int fd, short event __used, void *arg __used)
 {
 	struct anoubisd_msg		*msg;
-	struct event_info_main		*ev_info = arg;
 
 	DEBUG(DBG_TRACE, ">dispatch_u2m");
 	for (;;) {
@@ -2562,6 +2580,6 @@ dispatch_u2m(int fd, short event __used, void *arg)
 		DEBUG(DBG_TRACE, "<dispatch_p2m (loop)");
 	}
 	if (msg_eof(fd))
-		event_del(ev_info->ev_u2m);
+		event_del(&ev_u2m);
 	DEBUG(DBG_TRACE, "<dispatch_u2m");
 }

@@ -167,18 +167,15 @@ struct cfg_param {
  * is re-read after a HUP signal.
  *
  * Fields:
- * cmdlineopts: The command line options.
  * conffile: The location of the configuration file.
  * optsocket: The path to the daemon socket.
+ * opts: The global anoubis daemon options.
  */
 static struct {
-	int			 cmdlineopts;
 	char			*conffile;
 	char			*optsocket;
 } data_store = {
-	0,
-	ANOUBISD_CONF,
-	NULL,
+	.conffile = ANOUBISD_CONF,
 };
 
 /**
@@ -528,7 +525,6 @@ cfg_parse_commit(struct abuf_buffer valuebuf, int lineno)
 		/* success */
 		CIRCLEQ_INSERT_TAIL(&anoubisd_config.pg_scanner,
 		    scanner, link);
-		anoubisd_config.pg_scanners++;
 	} else {
 		log_warnx("line %d: %s", lineno, err_msg);
 
@@ -881,7 +877,7 @@ cfg_read_cmdline(int argc, char * const *argv)
 			}
 			break;
 		case 'n':
-			data_store.cmdlineopts |= ANOUBISD_OPT_NOACTION;
+			anoubisd_noaction = 1;
 			break;
 		case 's':
 			if (!optarg) {
@@ -949,8 +945,6 @@ cfg_defaults(void)
 {
 	char *s;
 
-	anoubisd_config.opts = 0;
-
 	if (anoubisd_config.unixsocket == NULL) {
 		s = strdup(PACKAGE_SOCKET);
 		if (s == NULL) {
@@ -1013,7 +1007,7 @@ cfg_clear(void)
 	}
 	anoubisd_config.rootkey = NULL;
 	anoubisd_config.rootkey_required = 0;
-	anoubisd_config.allow_coredumps = 1;
+	anoubisd_config.allow_coredumps = 0;
 
 	while (!CIRCLEQ_EMPTY(&anoubisd_config.pg_scanner)) {
 		struct anoubisd_pg_scanner *scanner;
@@ -1074,9 +1068,6 @@ cfg_read(void)
 		free(anoubisd_config.unixsocket);
 		anoubisd_config.unixsocket = strdup(data_store.optsocket);
 	}
-
-	/* Transfer cmdline options. */
-	anoubisd_config.opts = data_store.cmdlineopts;
 	return 1;
 }
 
@@ -1151,8 +1142,9 @@ cfg_dump(FILE *f)
 /**
  * Create a message to send the current config to other anoubisd processes.
  * The configuration message consists of the following elements:
- * - An anoubisd_msg_config_t structure that contains the command line
- *   options and the number of upgrade triggers in the payload.
+ * - An anoubisd_msg_config structure that contains the configuration data
+ *   required by the policy engine that can be passed as integers and the
+ *   number of upgrade triggers in the payload.
  * - The payload consists of count+1 NUL-terminated strings. The first
  *   string is the path to the daemon socket.
  * - The rest of the payload contains count NUL-terminated strings. Each
@@ -1170,12 +1162,12 @@ cfg_msg_create(void)
 	int	len;
 
 	struct anoubisd_msg			*msg;
-	anoubisd_msg_config_t			*confmsg;
+	struct anoubisd_msg_config		*confmsg;
 	struct anoubisd_upgrade_trigger		*trigger;
 
 	/* Calculate needed message size. */
 	count = 0;
-	msgsize  = sizeof(anoubisd_msg_config_t);
+	msgsize  = sizeof(struct anoubisd_msg_config);
 	msgsize += strlen(anoubisd_config.unixsocket) + 1;
 	LIST_FOREACH(trigger, &anoubisd_config.upgrade_trigger, entries) {
 		msgsize += strlen(trigger->arg) + 1;
@@ -1189,11 +1181,9 @@ cfg_msg_create(void)
 		master_terminate();
 		return (NULL);
 	}
-	confmsg = (anoubisd_msg_config_t *)msg->msg;
+	confmsg = (struct anoubisd_msg_config *)msg->msg;
 
-	/* Fill message: options. */
-	confmsg->opts = anoubisd_config.opts;
-
+	confmsg->policysize = anoubisd_config.policysize;
 	/* Fill message: upgrade mode. */
 	confmsg->upgrade_mode = anoubisd_config.upgrade_mode;
 
@@ -1234,15 +1224,12 @@ cfg_msg_parse(struct anoubisd_msg *msg)
 	int	count;
 	int	offset;
 
-	anoubisd_msg_config_t		*confmsg;
-	struct anoubisd_upgrade_trigger *trigger;
+	struct anoubisd_msg_config		*confmsg;
+	struct anoubisd_upgrade_trigger		*trigger;
 
-	confmsg = (anoubisd_msg_config_t *)msg->msg;
+	confmsg = (struct anoubisd_msg_config *)msg->msg;
 
 	cfg_clear();
-
-	/* Extract options. */
-	anoubisd_config.opts = confmsg->opts;
 
 	/* Extract upgrade mode. */
 	anoubisd_config.upgrade_mode =
@@ -1256,6 +1243,7 @@ cfg_msg_parse(struct anoubisd_msg *msg)
 		return (-ENOMEM);
 	}
 	memcpy(anoubisd_config.unixsocket, confmsg->chunk, offset);
+	anoubisd_config.policysize = confmsg->policysize;
 
 	/* Extract trigger list. */
 	count = confmsg->triggercount;

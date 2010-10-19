@@ -276,13 +276,14 @@ dispatch_scand2m(int fd, short event __used, void *arg)
  *
  * @param pid The pid of the process that exited.
  * @param status The exit status of the child.
- * @param evinfo The event information of the master process.
+ * @param anoubisfd The file descriptor for the anoubis device. Required
+ *     to remove the security label during commit.
  * @param queue The event queue that the reply message should be sent to.
  * @return True if the pid matched a scanner child.
  */
 int
-anoubisd_scanproc_exit(pid_t pid, int status,
-    struct event_info_main *evinfo __used, Queue *queue)
+anoubisd_scanproc_exit(pid_t pid, int status, int anoubisfd __used,
+    Queue *queue)
 {
 	struct scanproc				*sp;
 	int					 err = -EFAULT, extra;
@@ -328,7 +329,7 @@ anoubisd_scanproc_exit(pid_t pid, int status,
 		goto out;
 	log_info("scanning request of user %" PRId64 " successful", sp->uid);
 #ifdef LINUX
-	if (ioctl(evinfo->anoubisfd, ANOUBIS_SCAN_SUCCESS, sp->scanfile) < 0) {
+	if (ioctl(anoubisfd, ANOUBIS_SCAN_SUCCESS, sp->scanfile) < 0) {
 		err = -errno;
 		goto out;
 	}

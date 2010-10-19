@@ -958,7 +958,7 @@ dispatch_passphrase(struct anoubis_server *server, struct anoubis_msg *m,
 {
 	int				 plen;
 	struct anoubisd_msg		*msg;
-	anoubisd_msg_passphrase_t	*pass;
+	struct anoubisd_msg_passphrase	*pass;
 
 	DEBUG(DBG_TRACE, ">dispatch_passphrase");
 	if (auth_uid != 0) {
@@ -990,10 +990,10 @@ dispatch_passphrase(struct anoubis_server *server, struct anoubis_msg *m,
 	 */
 	dispatch_generic_reply(server, 0, NULL, 0, ANOUBIS_P_PASSPHRASE);
 	msg = msg_factory(ANOUBISD_MSG_PASSPHRASE,
-	    sizeof(anoubisd_msg_passphrase_t) + plen);
+	    sizeof(struct anoubisd_msg_passphrase) + plen);
 	if (!msg)
 		master_terminate();
-	pass = (anoubisd_msg_passphrase_t *)msg->msg;
+	pass = (struct anoubisd_msg_passphrase *)msg->msg;
 	memcpy(pass->payload, m->u.passphrase->payload, plen);
 
 	enqueue(&eventq_s2m, msg);
@@ -1625,7 +1625,7 @@ dispatch_m2s(int fd, short sig __used, void *arg __used)
 			if (cfg_msg_parse(msg) == 0) {
 				log_info("session: reconfigure");
 				/*
-				 * Because we already droped you priviledges
+				 * Because we already droped our priviledges
 				 * nothing more can be done here.
 				 */
 			} else {
@@ -1984,7 +1984,7 @@ dispatch_p2s_evt_request(const struct anoubisd_msg *msg)
 
 	DEBUG(DBG_TRACE, ">dispatch_p2s_evt_request");
 
-	eventask = (anoubisd_msg_eventask_t *)(msg->msg);
+	eventask = (struct anoubisd_msg_eventask *)(msg->msg);
 	m = eventask_to_notify(ANOUBIS_N_ASK, eventask);
 	if (!m) {
 		log_warn("Out of memory in dispatch_p2s_evt_request");

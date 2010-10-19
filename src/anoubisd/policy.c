@@ -819,7 +819,7 @@ fill_eventask_message(int type, struct eventdev_hdr *hdr,
 	msg = msg_factory(type, sizeof(struct anoubisd_msg_eventask) + extra);
 	if (!msg)
 		return NULL;
-	eventask = (anoubisd_msg_eventask_t *)msg->msg;
+	eventask = (struct anoubisd_msg_eventask *)msg->msg;
 	if (reply->ask)
 		eventask->error = 0;
 	else
@@ -1260,13 +1260,11 @@ dispatch_s2p(int fd, short sig __used, void *arg __used)
 			msg_rep = pe_dispatch_policy(msg);
 			if (msg_rep)
 				enqueue(&eventq_p2s, msg_rep);
-			free(msg);
 			break;
 
 		case ANOUBISD_MSG_EVENTREPLY:
 
 			evrep = (struct eventdev_reply *)msg->msg;
-
 			TAILQ_FOREACH(rep_wait, &replyq, next) {
 				if (rep_wait->token == evrep->msg_token)
 					break;
@@ -1296,28 +1294,29 @@ dispatch_s2p(int fd, short sig __used, void *arg __used)
 				DEBUG(DBG_QUEUE, " >eventq_p2m: %x error=%d",
 					evrep->msg_token, evrep->reply);
 				enqueue(&eventq_p2m, msg);
+				/* Prevent freeing of message below. */
+				msg = NULL;
 			} else {
 				DEBUG(DBG_QUEUE, " reply not found for 0x%x",
 				    evrep->msg_token);
-				free(msg);
 			}
 			break;
 		case ANOUBISD_MSG_LISTREQUEST:
 			dispatch_list_request(msg, &eventq_p2s);
-			free(msg);
 			break;
 		case ANOUBISD_MSG_PGCOMMIT:
 			/* NOTE: This functions frees or reuses the message. */
 			pe_playground_dispatch_commit(msg, &eventq_p2s,
 			    &eventq_p2m);
+			msg = NULL;
 			break;
 		default:
 
 			DEBUG(DBG_TRACE, "dispatch_s2p: msg type %d",
 			    msg->mtype);
-			free(msg);
-			break;
 		}
+		if (msg)
+			free(msg);
 	}
 	if (msg_eof(fd)) {
 		event_del(&ev_s2p);
