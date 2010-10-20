@@ -166,39 +166,37 @@ NotificationCtrl::answerEscalation(EscalationNotify *escalation,
 {
 	bool		 rc = false;
 	long		 id = -1;
-	PolicyCtrl	*policyCtrl = NULL;
-	PolicyRuleSet	*ruleSet = NULL;
 	NotifyAnswer	*answer = NULL;
 
-	if (escalation == NULL) {
-		return (false);
-	}
-
-	policyCtrl = PolicyCtrl::instance();
-	if (escalation->isAdmin()) {
-		id = policyCtrl->getAdminId(geteuid());
-	} else {
-		id = policyCtrl->getUserId();
-	}
-
-	ruleSet = policyCtrl->getRuleSet(id);
-	if (ruleSet == NULL) {
-		Debug::err(wxT("Can't access user ruleset."));
-		return (false);
-	}
+	if (escalation == NULL)
+		return false;
 
 	answer = escalation->getAnswer();
 	if (answer == NULL) {
 		Debug::err(wxT("Can't access answer of escalation."));
-		return (false);
+		return false;
 	}
 
-	/* Create policy */
 	if (answer->causeTmpRule() || answer->causePermRule()) {
-		rc = ruleSet->createAnswerPolicy(escalation);
-		if (rc != true) {
-			return (false);
+		PolicyRuleSet		*ruleSet;
+		PolicyCtrl		*policyCtrl = PolicyCtrl::instance();
+
+		if (escalation->isAdmin()) {
+			id = policyCtrl->getAdminId(geteuid());
+		} else {
+			id = policyCtrl->getUserId();
 		}
+
+		ruleSet = policyCtrl->getRuleSet(id);
+		if (ruleSet == NULL) {
+			Debug::err(wxT("Can't access user ruleset."));
+			goto out;
+		}
+
+
+		/* Create policy */
+		if (!ruleSet->createAnswerPolicy(escalation))
+			goto out;
 		/*
 		 * We are going to activate the modified rule set.
 		 * Even though the result is 'ok' the policy may not have
@@ -206,13 +204,15 @@ NotificationCtrl::answerEscalation(EscalationNotify *escalation,
 		 * and the answer to the event is done later, thus this is
 		 * ok.
 		 */
-		rc = policyCtrl->sendToDaemon(ruleSet->getRuleSetId());
-		if (rc != PolicyCtrl::RESULT_POL_OK) {
-			return (false);
-		}
+		if (!policyCtrl->sendToDaemon(ruleSet->getRuleSetId()))
+			goto out;
 	}
-
-	/*  Mark as answered */
+	rc = true;
+out:
+	/*
+	 * Mark as answered. Always do this even if creating the
+	 * escalation rule failed.
+	 */
 	id = escalation->getId();
 	escalationsNotAnswered_.removeId(id);
 	escalationsAnswered_.addId(id);
@@ -221,11 +221,10 @@ NotificationCtrl::answerEscalation(EscalationNotify *escalation,
 	sendUpdateEvent(escalation);
 
 	/* Answer event */
-	if (sendAnswer == true) {
+	if (sendAnswer == true)
 		JobCtrl::instance()->answerNotification(escalation);
-	}
 
-	return (true);
+	return rc;
 }
 
 NotificationCtrl::NotificationCtrl(void) : Singleton<NotificationCtrl>()

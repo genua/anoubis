@@ -617,11 +617,17 @@ ModAnoubisMainPanelImpl::versionListUpdateFromSelection(void)
 void
 ModAnoubisMainPanelImpl::displayMessage(void)
 {
+	unsigned int		ruleid;
+	wxString		ruletxt = wxEmptyString;
+
 	if (!currentNotify_)
 		return;
 
+	ruleid = currentNotify_->getRuleId();
+	if (ruleid)
+		ruletxt += wxString::Format(wxT("/%d"), ruleid);
 	SHOWSLOT(1, _("Time:"), currentNotify_->getTime());
-	SHOWSLOT(2, _("Module:"), currentNotify_->getModule());
+	SHOWSLOT(2, _("Module:"), currentNotify_->getModule() + ruletxt);
 	SHOWSLOT(3, _("Program:"), currentNotify_->getOrigin());
 	SHOWSLOT(4, _("On behalf of:"), currentNotify_->getCtxOrigin());
 	if (currentNotify_->getModule() == wxT("ALF")) {
