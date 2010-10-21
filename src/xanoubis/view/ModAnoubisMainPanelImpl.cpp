@@ -86,7 +86,7 @@
 #define ZERO_SECONDS	0
 #define TEN_SECONDS	10
 
-#define OPTIONS_TAB	3
+#define OPTIONS_TAB	4
 
 #define SHOWSLOT(slotNo,field,value) \
 	do { \
