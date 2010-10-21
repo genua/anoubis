@@ -204,7 +204,8 @@ NotificationCtrl::answerEscalation(EscalationNotify *escalation,
 		 * and the answer to the event is done later, thus this is
 		 * ok.
 		 */
-		if (!policyCtrl->sendToDaemon(ruleSet->getRuleSetId()))
+		if (policyCtrl->sendToDaemon(ruleSet->getRuleSetId()) !=
+		    PolicyCtrl::RESULT_POL_OK)
 			goto out;
 	}
 	rc = true;
