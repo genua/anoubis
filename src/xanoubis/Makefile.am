@@ -193,7 +193,8 @@ dist_wizard_SCRIPTS = \
 	profiles/wizard/alf \
 	profiles/wizard/sandbox
 dist_desktop_DATA = \
-	xanoubis.desktop
+	xanoubis.desktop \
+	xanoubis.desktop.gnome
 
 install-data-hook:
 	-chmod 444 $(DESTDIR)/$(profiledir)/*

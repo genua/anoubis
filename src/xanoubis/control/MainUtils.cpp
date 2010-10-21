@@ -281,6 +281,8 @@ MainUtils::autoStart(bool autostart)
 {
 	wxString deskFile = wxStandardPaths::Get().GetDataDir() +
 	    wxT("/xanoubis.desktop");
+	wxString kdeDeskFile = deskFile + wxT(".kde");
+	wxString gnomeDeskFile = deskFile + wxT(".gnome");
 	wxString kPath = paths_.GetUserConfigDir() + wxT("/.kde/Autostart");
 	wxString gPath = paths_.GetUserConfigDir() + wxT("/.config/autostart");
 	wxString kAutoFile = kPath + wxT("/xanoubis.desktop");
@@ -295,10 +297,16 @@ MainUtils::autoStart(bool autostart)
 		}
 
 		if (wxFileExists(kAutoFile) == false) {
-			wxCopyFile(deskFile, kAutoFile);
+			if (wxFileExists(kdeDeskFile))
+				wxCopyFile(kdeDeskFile, kAutoFile);
+			else
+				wxCopyFile(deskFile, kAutoFile);
 		}
 		if (wxFileExists(gAutoFile) == false) {
-			wxCopyFile(deskFile, gAutoFile);
+			if (wxFileExists(gnomeDeskFile))
+				wxCopyFile(gnomeDeskFile, gAutoFile);
+			else
+				wxCopyFile(deskFile, gAutoFile);
 		}
 	} else {
 		if (wxFileExists(kAutoFile) == true) {
