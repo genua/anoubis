@@ -500,12 +500,15 @@ MainFrame::OnMbHelpAboutSelect(wxCommandEvent&)
 	info.SetDescription(wxT("Build Id: " PACKAGE_BUILD));
 
 	info.AddDeveloper(wxT("Alexander von Gernler"));
+	info.AddDeveloper(wxT("Alexander Taute"));
 	info.AddDeveloper(wxT("Andreas Fiessler"));
 	info.AddDeveloper(wxT("Christian Ehrhardt"));
 	info.AddDeveloper(wxT("Christian Hiesl"));
+	info.AddDeveloper(wxT("Georg Hoesch"));
 	info.AddDeveloper(wxT("Hans-Joerg Hoexer"));
 	info.AddDeveloper(wxT("Joachim Ayasse"));
 	info.AddDeveloper(wxT("Konrad Merz"));
+	info.AddDeveloper(wxT("Martin Weber"));
 	info.AddDeveloper(wxT("Michael Gernoth"));
 	info.AddDeveloper(wxT("Pedro Martelleto"));
 	info.AddDeveloper(wxT("Reinhard Tartler"));
@@ -514,6 +517,7 @@ MainFrame::OnMbHelpAboutSelect(wxCommandEvent&)
 	info.AddDeveloper(wxT("Stefan Fritsch"));
 	info.AddDeveloper(wxT("Stefan Rinkes"));
 	info.AddDeveloper(wxT("Sten Spans"));
+	info.AddDeveloper(wxT("Valentin Dornauer"));
 
 	info.AddTranslator(wxT("Christian Wehrle"));
 	info.AddTranslator(wxT("Mathias Pippel"));

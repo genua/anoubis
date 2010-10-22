@@ -1,3 +1,96 @@
+
+
+2010-10-21 - Changes between 0.9.3 and 0.9.4
+
+New features:
+
+o The Playground feature, which introduces a copy on write
+  filesystem for selected processes that are started in a playground session.
+  It also includes graphical and CLI management tools.
+  With these tools / features it is possible to selectively discard or commit
+  changes to the real filesystem when the a playground is halted.
+  To secure the commit operation it is possible to configure optional content
+  scanners, i.e. anti virus software, which can determine if the selected
+  files pose any risk to the integrity of the system, and if needed alert
+  the user or reject the commit entirely in case a virus is detected.
+o Implemented a process browser in xanoubis, which greatly simplifies
+  the examination of Anoubis rulesets and other details for each process
+  on the system. This feature uses the Anoubis daemon's built-in process
+  tracking to list all processes and is especially useful for debugging and
+  correlating processes to rulesets or playground sessions.
+o added support for Ubuntu Lucid and Debian Squeeze
+o introduced 'anoubisctl ps' command
+o introduced 'anoubisctl stat' command
+o added kernel based SFS/Sandbox exceptions
+o added some library support for mount points and file names
+o added some more tray icons in different sizes (for smoother scaling)
+
+Bugfixes:
+
+o fixed some potential resource leaks
+o fixed a few bugs in the SFS browser
+o protected anoubisd from OOM killer
+o fixed rule display for admin rules
+o fixed several xanoubis segfaults
+o fixed anoubisd upgrade segfault
+o fixed ALF default rule logging
+o fixed ruleeditor alignment
+o fixed GUI notifications
+o fixed de-selection handling
+o fixed broken errno assignment
+o repaired broken error messages
+o fixed xanoubis sigchld handling
+o fixed NFS problems with UDP mounts
+o fixed anoubisctl client-connect segfault
+o activated PAE in the Debian kernel config
+o fixed writeback issues in Anoubis Options Tab
+o enabled POSIX style option parsing in anoubis cli binaries
+o corrected several broken translations and provided some missing ones
+o fixed NULL dereference bug found by clang and added asserts (false positives)
+o refined certificate error messages when connecting to daemon
+o fixed runaway modprobe loop when loading sha256 early
+o fixed potential message passing lockup in anoubisd
+o fixed reported crash with NULL sock->sk fields
+o several valgrind fixes (xanoubis and anoubisd)
+o fixed issues in Linux kernel found by sparse
+o fixed some sparse findings in userspace
+o fixed Use-after Free Bug in anoubisd
+o fixed Fedora/OpenSuSE kernel patches
+o fixed 64Bit kernel stack corruption
+o addressed some cppcheck findings
+o some kernel package fixes
+o fixed OpenBSD kernel Bugs
+o fixed Ubuntu distro kernel
+o quieted some clang warnings
+o fixed message compatibility
+o ComCSMultiTask design fix
+
+Other changes:
+
+o updated / cleaned up the Anoubis LiveCD
+o cleaned up the display of new escalations
+o fine tuned the display of command names
+o updated the Linux kernel to 2.6.32.24
+o unified write dispatcher functions
+o Fedora/OpenSuSE packaging cleanups
+o updated anoubisd.conf in packages
+o extensive code refactoring
+o added a CSMulti request class
+o made queues aware of write events
+o added message to the xanoubis close dialog
+o implemented a template based AnListProperty
+o switched to less restrictive truecrypt policies
+o display of checksum states in SFS escalations
+o converted Checksum removes to CSMulti requests
+o made sure that SFS does not consume all inodes
+o increased tolerance for newlines in the APN syntax
+o make more use of the buffer overflow library
+o use non-root values for free space calculation
+o force a dynamic policy change when the UID of a process changes
+o updated and extended documentation (for users as well as developers)
+o improved many error messages to offer more details / be more specific
+
+
 2010-03-18 - Changes between 0.9.2 and 0.9.3
 
 New features:
