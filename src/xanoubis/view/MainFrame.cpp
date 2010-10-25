@@ -93,7 +93,11 @@ MainFrame::MainFrame(wxWindow *parent, bool trayVisible)
 	upgradeTask_ = NULL;
 	logViewer_ = new DlgLogViewer(this);
 	ruleEditor_ = new DlgRuleEditor(this);
-	trayIcon_ = trayVisible ? new TrayIcon : 0;
+	trayIcon_ = NULL;
+	if (trayVisible) {
+		TrayIcon::waitForSystemTray();
+		trayIcon_ = new TrayIcon();
+	}
 
 	anEvents->Connect(anEVT_WIZARD_SHOW,
 	    wxCommandEventHandler(MainFrame::onWizardShow), NULL, this);

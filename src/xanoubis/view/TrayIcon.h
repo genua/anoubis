@@ -161,6 +161,8 @@ class TrayIcon : public wxTaskBarIcon
 		ANEVENTS_IDENT_BCAST_METHOD_DECLARATION;
 
 	public:
+		static void waitForSystemTray(void);
+
 		TrayIcon(void);
 		~TrayIcon(void);
 

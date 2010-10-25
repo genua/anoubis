@@ -729,3 +729,71 @@ TrayIcon::OnPgForced(wxCommandEvent &ev)
 	if (notify_notification_show(notify, NULL))
 		wxGetApp().Yield(true);
 }
+
+#ifdef __WXGTK__
+
+/*
+ * This code is a hack. The wxWidgets code doesn't properly wait for
+ * the system tray (task bar area) to become ready before it registers
+ * its task bar icon. This can cause the task bar icon to be hidden
+ * behind the system tray or some other window manager window. The code
+ * to check for the availability of the system tray is stolen from the
+ * wxWidgets source code (wxTaskBarIconAreaBase::IsProtocolSupported).
+ * We call this function repeatedly until either the system tray is ready
+ * or the user presses Ctrl-C. This is useful if the user's window manager
+ * does not provide a system tray.
+ */
+#include <iostream>
+#include <gtk/gtk.h>
+#include <gdk/gdkx.h>
+#include <signal.h>
+
+static volatile sig_atomic_t	notray;
+
+static void	sigint_handler(int)
+{
+	notray = 1;
+}
+
+void
+TrayIcon::waitForSystemTray(void)
+{
+	struct sigaction	act, oldact;
+
+	sigemptyset(&act.sa_mask);
+	act.sa_flags = 0;
+	act.sa_handler = sigint_handler;
+	if (sigaction(SIGINT, &act, &oldact) < 0)
+		return;
+	::notray = 0;
+	for (int i=0; i<30; ++i) {
+		Display *display = GDK_DISPLAY();
+		Screen *screen = DefaultScreenOfDisplay(display);
+
+		char name[32];
+		g_snprintf(name, sizeof(name), "_NET_SYSTEM_TRAY_S%d",
+		    XScreenNumberOfScreen(screen));
+		Atom atom = XInternAtom(display, name, False);
+
+		Window manager = XGetSelectionOwner(display, atom);
+
+		if (manager || notray)
+			break;
+		if (i==0)
+			std::cout << "Waiting up to 30s for system Tray. "
+			    "Press Ctrl-C to continue without a tray icon."
+			    << std::endl;
+		sleep(1);
+	}
+	sigaction(SIGINT, &oldact, NULL);
+}
+
+#else
+
+void
+TrayIcon::waitForSystemTray(void)
+{
+	return true;
+}
+
+#endif
