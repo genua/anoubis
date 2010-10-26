@@ -2551,7 +2551,7 @@ msgstr "Information: Zertifikat"
 #: src/xanoubis/view/ModSfsMainPanelImpl.cpp:194
 msgid "No keys are configured. You will not be able to make use of signatures."
 msgstr ""
-"Es sind keine Schlüssel konfiguriert. Die Verwendung von Signature ist nicht "
+"Es sind keine Schlüssel konfiguriert. Die Verwendung von Signaturen ist nicht "
 "möglich."
 
 #: src/xanoubis/view/ModSfsMainPanelImpl.cpp:200
