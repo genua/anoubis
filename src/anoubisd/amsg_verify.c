@@ -49,6 +49,7 @@
 #include <dev/anoubis.h>
 #include <dev/anoubis_alf.h>
 #include <dev/anoubis_sfs.h>
+#include <bsdcompat/dev/anoubis_playground.h>
 #endif
 
 #include <anoubis_protocol.h>

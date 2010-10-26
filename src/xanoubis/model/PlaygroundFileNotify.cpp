@@ -37,16 +37,17 @@
 #ifdef LINUX
 #include <linux/eventdev.h>
 #include <linux/anoubis.h>
+#include <linux/anoubis_playground.h>
 #endif
 #ifdef OPENBSD
 #include <dev/eventdev.h>
 #include <dev/anoubis.h>
+#include <bsdcompat/dev/anoubis_playground.h>
 #endif
 
 #include <anoubis_msg.h>
 #include <anoubis_protocol.h>
 #include <anoubis_playground.h>
-#include <linux/anoubis_playground.h>
 
 #include "Notification.h"
 #include "PlaygroundFileNotify.h"

@@ -36,6 +36,7 @@
 #include <linux/anoubis.h>
 #include <linux/anoubis_alf.h>
 #include <linux/anoubis_sfs.h>
+#include <linux/anoubis_playground.h>
 #endif
 
 #ifdef OPENBSD
@@ -43,9 +44,8 @@
 #include <dev/anoubis.h>
 #include <dev/anoubis_alf.h>
 #include <dev/anoubis_sfs.h>
+#include <bsdcompat/dev/anoubis_playground.h>
 #endif
-
-#include <linux/anoubis_playground.h>
 
 #include <anoubis_msg.h>
 #include <wx/string.h>

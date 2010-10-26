@@ -43,6 +43,7 @@
 #include <linux/eventdev.h>
 #include <linux/anoubis.h>
 #include <linux/anoubis_sfs.h>
+#include <linux/anoubis_playground.h>
 #endif
 #ifdef OPENBSD
 #include <dev/eventdev.h>
@@ -50,10 +51,6 @@
 #include <dev/anoubis_sfs.h>
 #endif
 
-/* This file can be included from both linux and OpenBSD. */
-#include <linux/anoubis_playground.h>
-
-#include <linux/anoubis_playground.h>
 #include <assert.h>
 
 #include <sys/queue.h>

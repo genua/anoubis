@@ -49,7 +49,6 @@
 #include <anoubis_playground.h>
 #include <anoubis_sig.h>
 #include <anoubis_transaction.h>
-#include <linux/anoubis_playground.h>
 #include <errno.h>
 #include <getopt.h>
 #include <inttypes.h>
@@ -60,6 +59,7 @@
 #include <unistd.h>
 
 #ifdef LINUX
+#include <linux/anoubis_playground.h>
 #include <bsdcompat.h>
 #include <attr/xattr.h>
 #define __dead	__attribute__((__noreturn__))

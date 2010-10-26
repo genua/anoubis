@@ -33,9 +33,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifdef OPENBSD
-#include <sys/limits.h>
-#endif
+#include <limits.h>
 
 #include <apn.h>
 #include <errno.h>
@@ -58,6 +56,7 @@
 #include <dev/anoubis_alf.h>
 #include <dev/anoubis_sfs.h>
 #include <dev/anoubis.h>
+#include <bsdcompat/dev/anoubis_playground.h>
 #endif
 
 #include <sys/queue.h>

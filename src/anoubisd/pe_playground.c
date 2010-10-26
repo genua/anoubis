@@ -51,6 +51,10 @@
 #include <bsdcompat.h>
 #endif
 
+#ifdef OPENBSD
+#include <bsdcompat/dev/anoubis_playground.h>
+#endif
+
 #include "anoubisd.h"
 #include "amsg.h"
 #include "anoubis_alloc.h"
