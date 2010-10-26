@@ -57,7 +57,7 @@ noinst_PROGRAMS = \
 
 if HAVE_LIBWXGUITESTING
 noinst_PROGRAMS += \
-	wxGuiTest
+	testSuite_wxGuiTest
 endif
 
 endif
@@ -354,10 +354,10 @@ wxStringTest_LDADD = @WX_LIBS@
 # go into two different tests. This would greatly increase build time so
 # both tests share one suite and one binary.
 if HAVE_LIBWXGUITESTING
-wxGuiTest_CPPFLAGS = $(AM_CPPFLAGS)
-wxGuiTest_DEPENDENCIES = $(dependencies)
-wxGuiTest_LDADD = $(GUITEST_LDADD)
-wxGuiTest_SOURCES = \
+testSuite_wxGuiTest_CPPFLAGS = $(AM_CPPFLAGS)
+testSuite_wxGuiTest_DEPENDENCIES = $(dependencies)
+testSuite_wxGuiTest_LDADD = $(GUITEST_LDADD)
+testSuite_wxGuiTest_SOURCES = \
 	wxGuiTestRunner.cpp \
 	wxGuiTest/SuitePlayground.cpp \
 	wxGuiTest/SuitePlayground.h \
