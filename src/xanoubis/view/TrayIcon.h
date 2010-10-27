@@ -208,6 +208,22 @@ class TrayIcon : public wxTaskBarIcon
 		 */
 		void OnPgForced(wxCommandEvent &ev);
 
+		/**
+		 * This function is called in response to a PG_CHANGE event,
+		 * i.e. a playground just terminated. This funtion will
+		 * display a notification message to the user.
+		 *
+		 * @param ev The event.
+		 */
+		void OnPgChange(wxCommandEvent &ev);
+
+		/**
+		 * Show a notification message to the user.
+		 *
+		 * @param msg The message.
+		 */
+		void ShowPgAlert(wxString &msg);
+
 	enum {
 		GUI_EXIT = 12001,
 		GUI_RESTORE

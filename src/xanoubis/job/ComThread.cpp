@@ -504,6 +504,17 @@ ComThread::sendNotify(struct anoubis_msg *notifyMsg)
 		if (dynamic_cast<AnoubisGuiApp*>(wxTheApp)) {
 			wxPostEvent(AnEvents::instance(), pce);
 		}
+	} else if (type == ANOUBIS_N_PGCHANGE) {
+		unsigned int	pgop = get_value(notifyMsg->u.pgchange->pgop);
+		uint64_t	pgid = get_value(notifyMsg->u.pgchange->pgid);
+		if (pgop == ANOUBIS_PGCHANGE_TERMINATE) {
+			wxCommandEvent	pgchange(anEVT_PG_CHANGE);
+
+			/* XXX CEH: Should be a long long... */
+			pgchange.SetExtraLong(pgid);
+			if (dynamic_cast<AnoubisGuiApp *>(wxTheApp))
+				wxPostEvent(AnEvents::instance(), pgchange);
+		}
 	} else if (type == ANOUBIS_N_STATUSNOTIFY) {
 		unsigned int		key, value;
 

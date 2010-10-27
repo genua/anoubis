@@ -713,3 +713,25 @@ PlaygroundCtrl::commitFiles(uint64_t pgid, std::vector<uint64_t> devs,
 	addTask(ct);
 	JobCtrl::instance()->addTask(ct);
 }
+
+wxString
+PlaygroundCtrl::getPlaygroundName(uint64_t pgid)
+{
+
+	for (int i=0; i<playgroundInfo_.getRawSize(); ++i) {
+		AnListClass		*item;
+		PlaygroundInfoEntry	*entry;
+
+		item = playgroundInfo_.getRawRow(i);
+		if (item == NULL)
+			continue;
+		entry = dynamic_cast<PlaygroundInfoEntry *>(item);
+		if (entry == NULL)
+			continue;
+		if (pgid == entry->getPgid()) {
+			return wxString::Format(wxT("%llx (%s)"), pgid,
+			    entry->getPath().c_str());
+		}
+	}
+	return wxString::Format(wxT("%llx"), (long long)pgid);
+}

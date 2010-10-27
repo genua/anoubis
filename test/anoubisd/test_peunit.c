@@ -86,27 +86,33 @@ master_terminate(void)
 }
 
 void
-send_policychange(u_int32_t uid __used, u_int32_t prio __used)
+send_policychange(uint32_t uid __used, uint32_t prio __used)
+{
+}
+
+void
+send_pgchange(unsigned int uid __used, anoubis_cookie_t pgid __used,
+    unsigned int pgop __used)
 {
 }
 
 void
 __send_lognotify(struct pe_proc_ident *pident __used,
     struct pe_proc_ident *ctxident __used, struct eventdev_hdr *hdr __used,
-    u_int32_t error __used, u_int32_t loglevel __used,
-    u_int32_t rule_id __used, u_int32_t prio __used, u_int32_t sfsmatch __used)
+    uint32_t error __used, uint32_t loglevel __used,
+    uint32_t rule_id __used, uint32_t prio __used, uint32_t sfsmatch __used)
 {
 }
 
 void
 send_lognotify(struct pe_proc *proc __used, struct eventdev_hdr *hdr __used,
-    u_int32_t error __used, u_int32_t loglevel __used,
-    u_int32_t rule_id __used, u_int32_t prio __used, u_int32_t sfsmatch __used)
+    uint32_t error __used, uint32_t loglevel __used,
+    uint32_t rule_id __used, uint32_t prio __used, uint32_t sfsmatch __used)
 {
 }
 
 int
-send_policy_data(u_int64_t token __used, int fd __used)
+send_policy_data(uint64_t token __used, int fd __used)
 {
 	return 0;
 }

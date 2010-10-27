@@ -575,6 +575,7 @@ verify_listreply(const struct anoubis_msg *m)
 
 DEFINE_STRICT_CHECK_FUNCTION(notifyresult, Anoubis_NotifyResultMessage)
 DEFINE_STRICT_CHECK_FUNCTION(policychange, Anoubis_PolicyChangeMessage)
+DEFINE_STRICT_CHECK_FUNCTION(pgchange, Anoubis_PgChangeMessage)
 DEFINE_STRICT_CHECK_FUNCTION(statusnotify, Anoubis_StatusNotifyMessage)
 
 int
@@ -617,6 +618,7 @@ anoubis_msg_verify(const struct anoubis_msg *m)
 	CASE(ANOUBIS_N_NOTIFY, notify);
 	CASE(ANOUBIS_N_LOGNOTIFY, notify);
 	CASE(ANOUBIS_N_POLICYCHANGE, policychange);
+	CASE(ANOUBIS_N_PGCHANGE, pgchange);
 	CASE(ANOUBIS_N_STATUSNOTIFY, statusnotify);
 
 	default:

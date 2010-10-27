@@ -63,6 +63,7 @@ struct anoubis_msg {
 		Anoubis_CSMultiRequestMessage * csmultireq;
 		Anoubis_CSMultiReplyMessage * csmultireply;
 		Anoubis_PolicyChangeMessage * policychange;
+		Anoubis_PgChangeMessage * pgchange;
 		Anoubis_StatusNotifyMessage * statusnotify;
 		Anoubis_PassphraseMessage *passphrase;
 		Anoubis_ListRequestMessage *listreq;

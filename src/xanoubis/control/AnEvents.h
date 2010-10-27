@@ -529,6 +529,13 @@ BEGIN_DECLARE_EVENT_TYPES()
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_POLICY_CHANGE, wxNewEventType())
 
 	/**
+	 * A playground change event.
+	 * @param GetExtraLong() The playground ID of the terminated
+	 *     playground.
+	 */
+	DECLARE_LOCAL_EVENT_TYPE(anEVT_PG_CHANGE, wxNewEventType())
+
+	/**
 	 * Backup Policy event.
 	 * This event is sent if a modified policy had to be replaced by
 	 * an update version from its source (usually the daemon).

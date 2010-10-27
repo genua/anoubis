@@ -56,6 +56,7 @@
 #include "TrayIcon.h"
 #include "MainUtils.h"
 #include "NotificationCtrl.h"
+#include "PlaygroundCtrl.h"
 
 #define MAX_MESSAGE	128
 #define MAX_PATH	1024
@@ -178,6 +179,8 @@ TrayIcon::TrayIcon(void)
 	    this);
 	anEvents->Connect(anEVT_PLAYGROUND_FORCED,
 	    wxCommandEventHandler(TrayIcon::OnPgForced), NULL, this);
+	anEvents->Connect(anEVT_PG_CHANGE,
+	    wxCommandEventHandler(TrayIcon::OnPgChange), NULL, this);
 }
 
 TrayIcon::~TrayIcon(void)
@@ -209,6 +212,8 @@ TrayIcon::~TrayIcon(void)
 	    this);
 	anEvents->Disconnect(anEVT_PLAYGROUND_FORCED,
 	    wxCommandEventHandler(TrayIcon::OnPgForced), NULL, this);
+	anEvents->Disconnect(anEVT_PG_CHANGE,
+	    wxCommandEventHandler(TrayIcon::OnPgChange), NULL, this);
 }
 
 void
@@ -702,7 +707,6 @@ TrayIcon::OnPgForced(wxCommandEvent &ev)
 {
 	long			 id = ev.GetExtraLong();
 	Notification		*n;
-	NotifyNotification	*notify;
 	wxString		 msg;
 
 	n = NotificationCtrl::instance()->getNotification(id);
@@ -710,6 +714,26 @@ TrayIcon::OnPgForced(wxCommandEvent &ev)
 		return;
 	msg = wxString::Format(_("Program %ls will be started in a playground"),
 	    n->getPath().c_str());
+	ShowPgAlert(msg);
+}
+
+void
+TrayIcon::OnPgChange(wxCommandEvent &ev)
+{
+	unsigned long long	pgid = ev.GetExtraLong();
+	wxString		msg;
+	wxString		pgnam;
+
+	pgnam = PlaygroundCtrl::instance()->getPlaygroundName(pgid);
+	msg = wxString::Format(_("Playground %s terminated"), pgnam.c_str());
+	ShowPgAlert(msg);
+}
+
+void
+TrayIcon::ShowPgAlert(wxString &msg)
+{
+	NotifyNotification	*notify;
+
 	notify = notify_notification_new("Anoubis", msg.fn_str(), NULL, NULL);
 	g_signal_connect(notify, "closed", G_CALLBACK(pg_close_callback), this);
 	notify_notification_set_timeout(notify, 5*ONE_SECOND);

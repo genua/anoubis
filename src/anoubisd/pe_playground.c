@@ -400,8 +400,10 @@ pe_playground_postexec(anoubis_cookie_t pgid, struct pe_proc *proc)
 		    "%" PRIx64, pgid);
 		return;
 	}
-	if (pe_playground_initproc(pg, proc))
+	if (pe_playground_initproc(pg, proc)) {
 		pg->did_exec = 1;
+		send_pgchange(pg->uid, pg->pgid, ANOUBIS_PGCHANGE_CREATE);
+	}
 }
 
 /**
@@ -444,6 +446,10 @@ pe_playground_delete(anoubis_cookie_t pgid, struct pe_proc *proc)
 		DEBUG(DBG_PG, "pe_playground_delete: pgid=0x%" PRIx64
 		    " task=0x%" PRIx64 " nrprocs=%d", pg->pgid,
 		    pe_proc_task_cookie(proc), pg->nrprocs);
+		if (pg->nrprocs == 0) {
+			send_pgchange(pg->uid, pgid,
+			    ANOUBIS_PGCHANGE_TERMINATE);
+		}
 		pe_playground_trykill(pg);
 	} else {
 		log_warnx("pe_playground_delete: Invalid playground ID %lld",

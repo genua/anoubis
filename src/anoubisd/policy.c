@@ -1177,6 +1177,32 @@ oom:
 }
 
 /**
+ * Send a playground change message to the session engine.
+ *
+ * @param uid The user Id of the playground owner.
+ * @param pgid The playground ID of the playground.
+ * @param pgop The playground operation.
+ */
+void
+send_pgchange(unsigned int uid, anoubis_cookie_t pgid, unsigned int pgop)
+{
+	struct anoubisd_msg		*msg;
+	struct anoubisd_msg_pgchange	*pgmsg;
+
+	DEBUG(DBG_PG, "send_pgchange: uid=%d pgid=%llx pgop=%d",
+	    uid, (long long)pgid, pgop);
+	msg = msg_factory(ANOUBISD_MSG_PGCHANGE,
+	    sizeof(struct anoubisd_msg_pgchange));
+	if (msg == NULL)
+		return;
+	pgmsg = (struct anoubisd_msg_pgchange *)msg->msg;
+	pgmsg->uid = uid;
+	pgmsg->pgid = pgid;
+	pgmsg->pgop = pgop;
+	enqueue(&eventq_p2s, msg);
+}
+
+/**
  * This function handles list requests received from the session engine,
  * i.e. the user.  The request message is passed as a paramter. Any response
  * messages that must be generated are added to the given queue.

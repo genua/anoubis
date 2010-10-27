@@ -216,6 +216,7 @@ static void	dispatch_p2s(int, short, void *);
 static void	dispatch_p2s_evt_request(const struct anoubisd_msg *);
 static void	dispatch_p2s_log_request(const struct anoubisd_msg *);
 void		dispatch_p2s_policychange(const struct anoubisd_msg *);
+void		dispatch_p2s_pgchange(const struct anoubisd_msg *);
 static void	dispatch_p2s_evt_cancel(const struct anoubisd_msg *);
 static void	dispatch_p2s_pol_reply(const struct anoubisd_msg *);
 static void	dispatch_p2s_list_reply(const struct anoubisd_msg *);
@@ -1780,6 +1781,11 @@ dispatch_p2s(int fd, short sig __used, void *arg __used)
 			dispatch_p2s_policychange(msg);
 			break;
 
+		case ANOUBISD_MSG_PGCHANGE:
+			DEBUG(DBG_QUEUE, " >p2s: pgchange");
+			dispatch_p2s_pgchange(msg);
+			break;
+
 		case ANOUBISD_MSG_EVENTCANCEL:
 			hdr = (struct eventdev_hdr *)msg->msg;
 			DEBUG(DBG_QUEUE, " >p2s: %x",
@@ -1804,13 +1810,12 @@ dispatch_p2s(int fd, short sig __used, void *arg __used)
 }
 
 /**
- * Notify all interested session about a modifies policy. This is
+ * Notify all interested sessions about a modified policy. This is
  * called in response to an ANOUBISD_MSG_POLICYCHANGE message received
  * from the policy process.
  *
  * @param msg The policy change message that includes user ID and priority
  *     of the modified policy.
- * @return None.
  */
 void
 dispatch_p2s_policychange(const struct anoubisd_msg *msg)
@@ -1831,6 +1836,31 @@ dispatch_p2s_policychange(const struct anoubisd_msg *msg)
 	set_value(m->u.policychange->prio, pchange->prio);
 	__send_notify(m);
 	DEBUG(DBG_TRACE, "<dispatch_p2s_policychange");
+}
+
+/**
+ * Notify all interested sessions about a modified playground. This is
+ * called in response to an ANOUBISD_MSG_PGCHAGNE message received from
+ * policy process.
+ *
+ * @param msg The playground change message that includes user ID and
+ *     playground ID.
+ */
+void
+dispatch_p2s_pgchange(const struct anoubisd_msg *msg)
+{
+	struct anoubisd_msg_pgchange	*pgchange;
+	struct anoubis_msg		*m;
+
+	pgchange = (struct anoubisd_msg_pgchange *)msg->msg;
+	m = anoubis_msg_new(sizeof(Anoubis_PgChangeMessage));
+	if (!m)
+		return;
+	set_value(m->u.pgchange->type, ANOUBIS_N_PGCHANGE);
+	set_value(m->u.pgchange->uid, pgchange->uid);
+	set_value(m->u.pgchange->pgid, pgchange->pgid);
+	set_value(m->u.pgchange->pgop, pgchange->pgop);
+	__send_notify(m);
 }
 
 /**

@@ -391,6 +391,7 @@ enum anoubisd_msg_type {
 	ANOUBISD_MSG_CHECKSUM_OP,	/** anoubisd_msg_csumop */
 	ANOUBISD_MSG_EVENTASK,		/** anoubisd_msg_eventask */
 	ANOUBISD_MSG_POLICYCHANGE,	/** anoubisd_msg_pchange */
+	ANOUBISD_MSG_PGCHANGE,		/** anoubisd_msg_pgchange */
 	ANOUBISD_MSG_SFSCACHE_INVALIDATE, /** anoubisd_sfscache_invalidate */
 	ANOUBISD_MSG_UPGRADE,		/** anoubisd_msg_upgrade */
 	ANOUBISD_MSG_SFS_UPDATE_ALL,	/** anoubisd_sfs_update_all */
@@ -483,19 +484,19 @@ struct anoubisd_msg_polrequest {
 	/**
 	 * The token of the policy request (assigned by the session engine.
 	 */
-	u_int64_t	token;
+	uint64_t	token;
 
 	/**
 	 * The authenticated user ID of the user responsible for the request.
 	 */
-	u_int32_t	auth_uid;
+	uint32_t	auth_uid;
 
 	/**
 	 * Policy flags. These flags tell the other side if more data
 	 * belongs to the same request. Possible flags are POLICY_FLAG_START
 	 * and POLICY_FLAG_END.
 	 */
-	u_int32_t	flags;
+	uint32_t	flags;
 
 	/**
 	 * The length of the policy request stored in the data field.
@@ -519,7 +520,7 @@ struct anoubisd_msg_polrequest_abort {
 	/**
 	 * The token of the aborted request.
 	 */
-	u_int64_t	token;
+	uint64_t	token;
 };
 
 
@@ -532,7 +533,7 @@ struct anoubisd_msg_polreply {
 	/**
 	 * The token of the user's policy request.
 	 */
-	u_int64_t	token;
+	uint64_t	token;
 
 	/**
 	 * The error code of the policy request.
@@ -543,7 +544,7 @@ struct anoubisd_msg_polreply {
 	 * Flags of the reply. Possible flags are POLICY_FLAG_START and
 	 * POLICY_FLAG_END.
 	 */
-	u_int32_t	flags;
+	uint32_t	flags;
 
 	/**
 	 * Length of the data that follows.
@@ -567,12 +568,12 @@ struct anoubisd_msg_csumop {
 	/**
 	 * The token assigned to this request by the session engine.
 	 */
-	u_int64_t	token;
+	uint64_t	token;
 
 	/**
 	 * The authenticated user ID of the user responsible for the request.
 	 */
-	u_int32_t	uid;
+	uint32_t	uid;
 
 	/**
 	 * The length of the request data.
@@ -595,7 +596,7 @@ struct anoubisd_msg_csumreply {
 	/**
 	 * The token assigend to the request by the session engine.
 	 */
-	u_int64_t	token;
+	uint64_t	token;
 
 	/**
 	 * The error code of the request.
@@ -606,7 +607,7 @@ struct anoubisd_msg_csumreply {
 	 * The request flags. Possible flags are POLICY_FLAG_START and
 	 * POLICY_FLAG_END.
 	 */
-	u_int32_t	flags;
+	uint32_t	flags;
 
 	/**
 	 * The length of the reply.
@@ -631,18 +632,18 @@ struct anoubisd_sfscache_invalidate {
 	 * we are invalidating an unsigned checksum. If keylen is non-zero
 	 * this value is not used.
 	 */
-	u_int32_t	uid;
+	uint32_t	uid;
 
 	/**
 	 * The length of the path name.
 	 */
-	u_int32_t	plen;
+	uint32_t	plen;
 
 	/**
 	 * The length of the key ID. Only used if we are invalidating
 	 * a singed checksum. Zero otherwise.
 	 */
-	u_int32_t	keylen;
+	uint32_t	keylen;
 
 	/**
 	 * Contains the NUL-terminted path name (plen bytes) followed by
@@ -662,7 +663,7 @@ struct anoubisd_sfs_update_all {
 	 * The length of the checksum inside the payload. Should be
 	 * ANOUBIS_CS_LEN.
 	 */
-	u_int32_t	cslen;
+	uint32_t	cslen;
 
 	/**
 	 * The payload data. This consists of cslen bytes of checksum
@@ -681,7 +682,7 @@ struct anoubisd_msg_logit {
 	 * The log priority. This is used as the priority argument for
 	 * sysylog(3c).
 	 */
-	u_int32_t		prio;
+	uint32_t		prio;
 
 	/**
 	 * The message data (a NUL-terminated string).
@@ -699,12 +700,35 @@ struct anoubisd_msg_pchange
 	/**
 	 * The user ID of the modified policy.
 	 */
-	u_int32_t	uid;
+	uint32_t	uid;
 
 	/**
 	 * The priority of the modified policy.
 	 */
-	u_int32_t	prio;
+	uint32_t	prio;
+};
+
+/**
+ * Message format of ANOUBISD_MSG_PGCHANGE message. These are sent
+ * by teh policy engine if the playground status of a playground changes.
+ * Connected user interfaces can use this to show notifications to the user.
+ */
+struct anoubisd_msg_pgchange
+{
+	/**
+	 * The user ID of the playground owner.
+	 */
+	uint32_t			uid;
+
+	/**
+	 * The playground ID.
+	 */
+	uint64_t			pgid;
+
+	/**
+	 * The playground operation.
+	 */
+	uint32_t			pgop;
 };
 
 /**
@@ -732,7 +756,7 @@ struct anoubisd_msg_upgrade
 	 * The upgrade type. This is one of the values defined in the
 	 * anoubisd_upgrade enumeration.
 	 */
-	u_int32_t	upgradetype;
+	uint32_t	upgradetype;
 
 	/**
 	 * This value is zero for ANOUBISD_UPGRADE_START, ANOUBISD_UPGRADE_END
@@ -742,7 +766,7 @@ struct anoubisd_msg_upgrade
 	 * ANOUBISD_UPGRADE_NOTIFY if is the total number of upgraded files
 	 * in the last upgrade and chunk is unused.
 	 */
-	u_int32_t	chunksize;
+	uint32_t	chunksize;
 
 	/**
 	 * This field contains payload data. It is only used for two of
@@ -778,14 +802,14 @@ struct anoubisd_msg_authrequest {
 	/**
 	 * The token of the request as assigned by the session engine.
 	 */
-	u_int64_t	token;
+	uint64_t	token;
 
 	/**
 	 * The user ID of the user that want's to authenticate. This is
 	 * taken from the communication channel. The user may still be
 	 * required to proof access to the private key.
 	 */
-	u_int32_t	auth_uid;
+	uint32_t	auth_uid;
 };
 
 /**
@@ -798,13 +822,13 @@ struct anoubisd_msg_authchallenge {
 	/**
 	 * The token of the request as assigend by the session engine.
 	 */
-	u_int64_t	token;
+	uint64_t	token;
 
 	/**
 	 * The user ID of the user that wants to authenticate. This is
 	 * copied from the authentication request.
 	 */
-	u_int32_t	auth_uid;
+	uint32_t	auth_uid;
 
 	/**
 	 * The error code for the authentication. If this value is
@@ -812,21 +836,21 @@ struct anoubisd_msg_authchallenge {
 	 * the message might contain a challenge. If the error code is
 	 * zero and no challenge is present, the authentication succeeded.
 	 */
-	u_int32_t	error;
+	uint32_t	error;
 
 	/**
 	 * The length of the authentication challenge. Will be zero in
 	 * case of an error. If zero in case of succes the authentication
 	 * succeeded.
 	 */
-	u_int32_t	challengelen;
+	uint32_t	challengelen;
 
 	/**
 	 * The length of the key ID. The key identified by the key ID is
 	 * the public key of the user. The user must sign the challenge
 	 * with the corresponding private key.
 	 */
-	u_int32_t	idlen;
+	uint32_t	idlen;
 
 	/**
 	 * The payload data. This consists of challengelen bytes of
@@ -847,22 +871,22 @@ struct anoubisd_msg_authverify {
 	/**
 	 * The token of the request assigned by the session engine.
 	 */
-	u_int64_t	token;
+	uint64_t	token;
 
 	/**
 	 * The uid that wants to authenticate.
 	 */
-	u_int32_t	auth_uid;
+	uint32_t	auth_uid;
 
 	/**
 	 * The length of the challenge data.
 	 */
-	u_int32_t	datalen;
+	uint32_t	datalen;
 
 	/**
 	 * The length of the signature data.
 	 */
-	u_int32_t	siglen;
+	uint32_t	siglen;
 
 	/**
 	 * datalen bytes of challenge data followed by siglen bytes of
@@ -882,17 +906,17 @@ struct anoubisd_msg_authresult {
 	/**
 	 * The request token assigned by the session engine.
 	 */
-	u_int64_t	token;
+	uint64_t	token;
 
 	/**
 	 * The user ID of the user that tried to authenticate.
 	 */
-	u_int32_t	auth_uid;
+	uint32_t	auth_uid;
 
 	/**
 	 * The result of the authentication. Zero means success.
 	 */
-	u_int32_t	error;
+	uint32_t	error;
 };
 
 /**
@@ -904,17 +928,17 @@ struct anoubisd_msg_config
 	/**
 	 * The number of upgrade triggers in the payload.
 	 */
-	u_int32_t		triggercount;
+	uint32_t		triggercount;
 
 	/**
 	 * The value of the policysize limit in the new configuration.
 	 */
-	u_int32_t		policysize;
+	uint32_t		policysize;
 
 	/**
 	 * The new upgrade mode.
 	 */
-	u_int8_t		upgrade_mode;
+	uint8_t		upgrade_mode;
 
 	/**
 	 * The payload data. This consist of NUL-terminated string.
@@ -1020,7 +1044,7 @@ struct anoubisd_msg_pgcommit {
 	/**
 	 * True if recommended scanners should be ignored for this commit.
 	 */
-	u_int8_t	ignore_recommended_scanners;
+	uint8_t	ignore_recommended_scanners;
 
 	/**
 	 * The path name of the file. This is the full path name not just
@@ -1129,14 +1153,15 @@ extern __dead void	early_errx(const char *);
 
 extern void	dazukofs_ignore(void);
 
-extern int	send_policy_data(u_int64_t token, int fd);
-
+extern int	send_policy_data(uint64_t token, int fd);
+void		send_pgchange(unsigned int uid, anoubis_cookie_t pgid,
+		    unsigned int pgop);
 extern void	__send_lognotify(struct pe_proc_ident *pident,
 		    struct pe_proc_ident *ctxident, struct eventdev_hdr *,
-		    u_int32_t, u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+		    uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
 extern void	send_lognotify(struct pe_proc *proc, struct eventdev_hdr *,
-		    u_int32_t, u_int32_t, u_int32_t, u_int32_t, u_int32_t);
-extern void	send_policychange(u_int32_t uid, u_int32_t prio);
+		    uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
+extern void	send_policychange(uint32_t uid, uint32_t prio);
 extern void	flush_log_queue(void);
 
 extern void	send_upgrade_start(void);
@@ -1152,7 +1177,7 @@ extern void	anoubisd_scanners_detach(void);
 extern struct anoubisd_config		 anoubisd_config;
 extern enum anoubisd_process_type	 anoubisd_process;
 extern char				*logname;
-extern u_int32_t			 debug_flags;
+extern uint32_t				 debug_flags;
 extern char				 debug_stderr;
 extern char				 anoubisd_noaction;
 extern gid_t				 anoubisd_gid;

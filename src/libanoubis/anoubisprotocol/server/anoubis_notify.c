@@ -268,6 +268,10 @@ anoubis_notify_create_head(struct anoubis_msg * m,
 		if (!VERIFY_LENGTH(m, sizeof(Anoubis_StatusNotifyMessage)))
 			return NULL;
 		break;
+	case ANOUBIS_N_PGCHANGE:
+		if (!VERIFY_LENGTH(m, sizeof(Anoubis_PgChangeMessage)))
+			return NULL;
+		break;
 	case ANOUBIS_N_NOTIFY:
 	case ANOUBIS_N_ASK:
 	case ANOUBIS_N_LOGNOTIFY:
@@ -327,6 +331,14 @@ int anoubis_notify(struct anoubis_notify_group * ng,
 		if (ng->uid != 0 && ng->uid != uid)
 			return 0;
 		break;
+	case ANOUBIS_N_PGCHANGE:
+		uid = get_value(m->u.pgchange->uid);
+		subsystem = ANOUBIS_SOURCE_STAT;
+		ruleid = 0;
+		token = 0;
+		if (ng->uid != uid)
+			return 0;
+		break;
 	case ANOUBIS_N_STATUSNOTIFY:
 		subsystem = ANOUBIS_SOURCE_STAT;
 		uid = 0;
@@ -352,6 +364,7 @@ int anoubis_notify(struct anoubis_notify_group * ng,
 	/* In these cases there is no need to wait for a reply */
 	if (opcode == ANOUBIS_N_NOTIFY || opcode == ANOUBIS_N_LOGNOTIFY
 	    || opcode == ANOUBIS_N_POLICYCHANGE
+	    || opcode == ANOUBIS_N_PGCHANGE
 	    || opcode == ANOUBIS_N_STATUSNOTIFY) {
 		ret = anoubis_msg_send(ng->chan, m);
 		if (ret < 0)

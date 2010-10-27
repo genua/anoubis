@@ -645,6 +645,10 @@ static int anoubis_client_process_event(struct anoubis_client * client,
 		if (!VERIFY_LENGTH(m, sizeof(Anoubis_PolicyChangeMessage)))
 			return -ERANGE;
 		break;
+	case ANOUBIS_N_PGCHANGE:
+		if (!VERIFY_LENGTH(m, sizeof(Anoubis_PgChangeMessage)))
+			return -ERANGE;
+		break;
 	case ANOUBIS_N_STATUSNOTIFY:
 		if (!VERIFY_LENGTH(m, sizeof(Anoubis_StatusNotifyMessage)))
 			return -ERANGE;
@@ -747,6 +751,7 @@ int anoubis_client_process(struct anoubis_client * client,
 		case ANOUBIS_N_RESYOU:
 		case ANOUBIS_N_RESOTHER:
 		case ANOUBIS_N_POLICYCHANGE:
+		case ANOUBIS_N_PGCHANGE:
 		case ANOUBIS_N_STATUSNOTIFY:
 			ret = anoubis_client_process_event(client, m, opcode,
 			    token);

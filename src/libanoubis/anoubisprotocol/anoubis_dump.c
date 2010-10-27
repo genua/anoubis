@@ -392,7 +392,7 @@ dump_listreply(Anoubis_ListMessage *m, size_t len __used)
 			off += get_value(pgrec->reclen);
 			snprintf(DSTR, DLEN, " path=%s", pgrec->path);
 			DUMP_NETU(pgrec, uid);
-			DUMP_NETULL(pgrec, pgid);
+			DUMP_NETXLL(pgrec, pgid);
 			DUMP_NETULL(pgrec, starttime);
 			DUMP_NETU(pgrec, nrprocs);
 			DUMP_NETU(pgrec, nrfiles);
@@ -400,7 +400,7 @@ dump_listreply(Anoubis_ListMessage *m, size_t len __used)
 		case ANOUBIS_REC_PGFILELIST:
 			filerec = (Anoubis_PgFileRecord *)(m->payload + off);
 			off += get_value(filerec->reclen);
-			DUMP_NETULL(filerec, pgid);
+			DUMP_NETXLL(filerec, pgid);
 			DUMP_NETXLL(filerec, dev);
 			DUMP_NETULL(filerec, ino);
 			snprintf(DSTR, DLEN, " path=%s", filerec->path);
@@ -418,7 +418,7 @@ dump_listreply(Anoubis_ListMessage *m, size_t len __used)
 			off += get_value(procrec->reclen);
 			DUMP_NETU(procrec, pid);
 			DUMP_NETULL(procrec, taskcookie);
-			DUMP_NETULL(procrec, pgid);
+			DUMP_NETXLL(procrec, pgid);
 			DUMP_NETU(procrec, uid);
 			DUMP_NETU(procrec, alfrule[0]);
 			DUMP_NETU(procrec, alfrule[1]);
@@ -454,6 +454,14 @@ dump_policychange(Anoubis_PolicyChangeMessage *m, size_t len __used)
 {
 	DUMP_NETU(m, uid);
 	DUMP_NETU(m, prio);
+}
+
+static void
+dump_pgchange(Anoubis_PgChangeMessage *m, size_t len __used)
+{
+	DUMP_NETU(m, uid);
+	DUMP_NETXLL(m, pgid);
+	DUMP_NETU(m, pgop);
 }
 
 static void
@@ -494,6 +502,7 @@ void __anoubis_dump(struct anoubis_msg * m, const char * pre, char **pstr)
 	CASE2(ANOUBIS_N_ASK, notify, 0)
 	CASE2(ANOUBIS_N_LOGNOTIFY, notify, 1)
 	CASE(ANOUBIS_N_POLICYCHANGE, policychange)
+	CASE(ANOUBIS_N_PGCHANGE, pgchange)
 	CASE(ANOUBIS_N_STATUSNOTIFY, statusnotify)
 	CASE(ANOUBIS_N_REGISTER, notifyreg)
 	CASE(ANOUBIS_N_UNREGISTER, notifyreg)

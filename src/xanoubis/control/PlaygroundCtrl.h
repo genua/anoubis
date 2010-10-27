@@ -122,6 +122,13 @@ class PlaygroundCtrl : public GenericCtrl, public Singleton<PlaygroundCtrl>
 		 */
 		bool commitFiles(const std::vector<int> &files);
 
+		/**
+		 * Return the program name saved for a particular playground.
+		 *
+		 * @param pgid The playground ID.
+		 */
+		wxString getPlaygroundName(uint64_t pgid);
+
 	protected:
 		/**
 		 * Constructor.

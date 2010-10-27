@@ -1605,19 +1605,22 @@ kernel_stat(void)
 		return 5;
 	}
 	/* Wait for the stat message. */
-	if (anoubis_client_wait(client) <= 0) {
-		fprintf(stderr, "message receive failed\n");
-		destroy_channel();
-		return 5;
-	}
-	while((m = anoubis_client_getnotify(client))) {
+	while (1) {
 		int				 i, len;
 		struct anoubis_stat_message	*statmsg;
 
+		if (anoubis_client_wait(client) <= 0) {
+			fprintf(stderr, "message receive failed\n");
+			destroy_channel();
+			return 5;
+		}
+		if ((m = anoubis_client_getnotify(client)) == NULL)
+			continue;
+		if (get_value(m->u.general->type) != ANOUBIS_N_NOTIFY)
+			continue;
 		len = sizeof(Anoubis_NotifyMessage)
 		    + sizeof(struct anoubis_stat_message);
-		if (get_value(m->u.general->type) != ANOUBIS_N_NOTIFY
-		    || !VERIFY_LENGTH(m, len)) {
+		if (!VERIFY_LENGTH(m, len)) {
 			fprintf(stderr, "Broken message\n");
 			destroy_channel();
 			return 5;

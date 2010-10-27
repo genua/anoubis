@@ -44,9 +44,10 @@
  *     Version 3: Removed SFSDISABLE messages.
  *     Version 4: Add key based authentication.
  *     Version 5: Add CSMULTI messages
+ *     Version 6: Add Playground and file browser messages
  */
-#define ANOUBIS_PROTO_VERSION		5
-#define ANOUBIS_PROTO_MINVERSION	4
+#define ANOUBIS_PROTO_VERSION		6
+#define ANOUBIS_PROTO_MINVERSION	6
 
 #define ANOUBIS_PROTO_CONNECT		0
 #define ANOUBIS_PROTO_POLICY		1
@@ -201,6 +202,7 @@ static inline u_int64_t __ntohll(u_int64_t arg)
 #define		ANOUBIS_N_LOGNOTIFY	0x4015
 #define		ANOUBIS_N_POLICYCHANGE	0x4016
 #define		ANOUBIS_N_STATUSNOTIFY	0x4017
+#define		ANOUBIS_N_PGCHANGE	0x4018
 
 #define		ANOUBIS_N_MAX		0x4FFF
 
@@ -213,6 +215,12 @@ static inline u_int64_t __ntohll(u_int64_t arg)
 #define ANOUBIS_STATUS_UPGRADE		0x1000UL
 		/* Upgrade end. Value: Number of upgraded files */
 
+/*
+ * Playground operations for the pgop filed in AnoubisPgChange messages.
+ * Clients should ignore message types that they do not understand.
+ */
+#define		ANOUBIS_PGCHANGE_CREATE		0x0001
+#define		ANOUBIS_PGCHANGE_TERMINATE	0x0002
 
 /*
  * Checksum Request Flags:
@@ -355,6 +363,22 @@ typedef struct {
 	u32n	uid;
 	u32n	prio;
 } __attribute__((packed)) Anoubis_PolicyChangeMessage;
+
+/*
+ * Notify a client about a change to one of its playgrounds. This is
+ * a message of type ANOUBIS_SOURCE_STAT wrt. registration.
+ * Fileds:
+ * type: The message type (ANOUBIS_N_PGCHANGE).
+ * uid: The user ID of the playground owner.
+ * pgop: The playground operation (ANOUBIS_PGCHANGE_*)
+ * pgid: The playground ID.
+ */
+typedef struct {
+	u32n	type;		/* ANOUIBS_N_PGCHANGE */
+	u32n	uid;
+	u32n	pgop;
+	u64n	pgid;
+} __attribute__((packed)) Anoubis_PgChangeMessage;
 
 typedef struct {
 	u32n	type;
