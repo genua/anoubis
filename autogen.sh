@@ -7,6 +7,12 @@
 : ${AUTOMAKE=automake}
 : ${AUTOCONF=autoconf}
 
+# Create a VERSION-file
+if [ ! -f VERSION ]; then
+	echo "0.9.4-dev" > VERSION
+	date >> VERSION
+fi
+
 {
 	echo "running aclocal" >&2
 	if [ -n "$CHECK_DIR" ]; then
