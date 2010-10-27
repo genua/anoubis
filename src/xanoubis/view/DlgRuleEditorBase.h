@@ -92,6 +92,7 @@ class DlgRuleEditorBase : public wxFrame
 		wxButton* appListUpButton;
 		wxButton* appListDownButton;
 		
+		wxButton* appListCloneButton;
 		wxButton* appListDeleteButton;
 		AnPolicyNotebook* appPolicyPanels;
 		wxPanel* filterPanel;
@@ -132,6 +133,7 @@ class DlgRuleEditorBase : public wxFrame
 		virtual void onAppGridCellSelect( wxGridEvent& event ){ event.Skip(); }
 		virtual void onAppListUpClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAppListDownClick( wxCommandEvent& event ){ event.Skip(); }
+		virtual void onAppListCloneClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onAppListDeleteClick( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onFilterListCreateButton( wxCommandEvent& event ){ event.Skip(); }
 		virtual void onFilterListColumnsButtonClick( wxCommandEvent& event ){ event.Skip(); }

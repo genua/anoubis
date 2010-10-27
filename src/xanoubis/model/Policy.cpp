@@ -235,10 +235,28 @@ Policy::remove(void)
 	return (true);
 }
 
-struct apn_rule *
-Policy::cloneRule(void)
+bool
+Policy::clone(void)
 {
-	return apn_copy_one_rule(rule_);
+	long			 id = getApnRuleId();
+	PolicyRuleSet		*prs = getParentRuleSet();
+	struct apn_rule		*copy;
+	struct apn_ruleset	*rs;
+
+	if (prs == NULL)
+		return false;
+	rs = prs->getApnRuleSet();
+	if (rs == NULL)
+		return false;
+	copy = apn_copy_one_rule(rule_);
+	if (!copy)
+		return false;
+	if (apn_insert(rs, copy, id) != 0) {
+		apn_free_one_rule(copy, NULL);
+		return false;
+	}
+	prs->refresh();
+	return true;
 }
 
 wxString

@@ -430,10 +430,12 @@ DlgRuleEditor::onAppGridCellSelect(wxGridEvent &event)
 		appListUpButton->Enable(appPolicy->canMoveUp());
 		appListDownButton->Enable(appPolicy->canMoveDown());
 		appListDeleteButton->Enable(appPolicy->canDelete());
+		appListCloneButton->Enable(appPolicy->canDelete());
 	} else {
 		appListUpButton->Disable();
 		appListDownButton->Disable();
 		appListDeleteButton->Disable();
+		appListCloneButton->Disable();
 	}
 
 	/* Adjust type choice of filter policy creation. */
@@ -645,7 +647,6 @@ DlgRuleEditor::onAppListDeleteClick(wxCommandEvent &)
 
 	isLast = false;
 	index  = appGrid->GetGridCursorRow();
-	policy = NULL;
 
 	if (index >= 0) {
 		policy = getSelectedPolicy(appGrid);
@@ -675,6 +676,32 @@ DlgRuleEditor::onAppListDeleteClick(wxCommandEvent &)
 		appListDeleteButton->Hide();
 		appListDeleteButton->Show();
 	}
+}
+
+void
+DlgRuleEditor::onAppListCloneClick(wxCommandEvent &)
+{
+	int		 index;
+	Policy		*policy;
+
+	index = appGrid->GetGridCursorRow();
+	if (index < 0)
+		return;
+	policy = getSelectedPolicy(appGrid);
+	if (policy == NULL)
+		return;
+	filterPolicyPanels->resetTabSelection();
+	filterPolicyPanels->deselect();
+	filterListUpButton->Disable();
+	filterListDownButton->Disable();
+	filterListDeleteButton->Disable();
+	if (policy->clone()) {
+		loadRuleSet();
+	} else {
+		anMessageBox(_("Failed to clone the rule"),
+		    _("Error"), wxOK, this);
+	}
+	selectRow(appGrid, index);
 }
 
 void

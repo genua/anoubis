@@ -159,6 +159,12 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	
 	appListFoodSizer->Add( 50, 0, 0, wxEXPAND, 5 );
 	
+	appListCloneButton = new wxButton( appPanel, wxID_ANY, _("Clone"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	appListCloneButton->Enable( false );
+	appListCloneButton->SetToolTip( _("Create an identical copy of the selected rule.") );
+	
+	appListFoodSizer->Add( appListCloneButton, 0, wxALL, 5 );
+	
 	appListDeleteButton = new wxButton( appPanel, wxID_ANY, _("delete"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
 	appListDeleteButton->Enable( false );
 	appListDeleteButton->SetToolTip( _("Removes selected policy") );
@@ -354,6 +360,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	appGrid->Connect( wxEVT_GRID_SELECT_CELL, wxGridEventHandler( DlgRuleEditorBase::onAppGridCellSelect ), NULL, this );
 	appListUpButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onAppListUpClick ), NULL, this );
 	appListDownButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onAppListDownClick ), NULL, this );
+	appListCloneButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onAppListCloneClick ), NULL, this );
 	appListDeleteButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onAppListDeleteClick ), NULL, this );
 	filterListCreateButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onFilterListCreateButton ), NULL, this );
 	filterListColumnsButton->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( DlgRuleEditorBase::onFilterListColumnsButtonClick ), NULL, this );

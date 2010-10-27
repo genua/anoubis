@@ -261,6 +261,11 @@ class DlgRuleEditor : public Observer, public DlgRuleEditorBase
 		virtual void onAppListDeleteClick(wxCommandEvent &);
 
 		/**
+		 * Clone selected application policy.
+		 */
+		virtual void onAppListCloneClick(wxCommandEvent &);
+
+		/**
 		 * Delete selected filter policy.
 		 * @param None.
 		 * @return Nothing.

@@ -201,12 +201,12 @@ class Policy : public AnListClass
 		bool remove(void);
 
 		/**
-		 * Return a copy of the apn_rule associated with the Policy.
-		 * The caller is responsible for freeing the apn_rule.
+		 * Create an identical copy of the given rule immediately
+		 * before it in the parent rule set.
 		 * @param None.
-		 * @return A copy of the apn_rule.
+		 * @return True if successful, false if not.
 		 */
-		struct apn_rule *cloneRule(void);
+		bool clone(void);
 
 		/**
 		 * Apn string represantation of a single rule.
