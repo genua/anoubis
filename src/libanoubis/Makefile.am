@@ -130,7 +130,8 @@ if NEEDBSDCOMPAT
 headers += \
 	include/bsdcompat/bsdcompat.h \
 	include/bsdcompat/sys/queue.h \
-	include/bsdcompat/sys/tree.h
+	include/bsdcompat/sys/tree.h \
+	include/bsdcompat/dev/anoubis_playground.h
 csources += \
 	bsdcompat/getpeereid.c \
 	bsdcompat/strtonum.c \
