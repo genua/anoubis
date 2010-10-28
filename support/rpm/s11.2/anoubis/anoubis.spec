@@ -62,7 +62,7 @@ Central daemon of the Anoubis Security Suite.
 %package -n %{gui}
 Summary:	GUI of the Anoubis Security Suite
 Group:		User Interface/X
-Requires:	%{daemon} >= 0.9.3.216
+Requires:	%{daemon} >= 0.9.3.26.216
 Requires:	wxGTK >= 2.8
 Requires:	xorg-x11-fonts
 Requires:	openssl
