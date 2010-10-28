@@ -1635,6 +1635,7 @@ kernel_stat(void)
 			    statmsg->vals[i].key,
 			    statmsg->vals[i].value);
 		}
+		break;
 	}
 	destroy_channel();
 	return 0;
