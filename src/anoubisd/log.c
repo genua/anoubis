@@ -31,6 +31,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <pwd.h>
 #include <signal.h>
 #include <event.h>
@@ -460,6 +461,11 @@ dispatch_log_read(int fd, short sig __used, void *arg)
 /**
  * Spawn the logger process and return its process ID. This functions
  * sets up signal handling and the event loop in the logger process.
+ * Before entering the main event loop, the child process waits up to 30
+ * seconds for /dev/log to appear. This avoids lost log messages during
+ * system boot even if the anoubis daemon starts slightly before the
+ * system logger.
+ *
  * The parent process returns immediately.
  *
  * @param pipes The pipes between the different anoubis daemon processes.
@@ -476,7 +482,7 @@ dispatch_log_read(int fd, short sig __used, void *arg)
 pid_t
 logger_main(int pipes[], int loggers[])
 {
-	int		 pp;
+	int		 pp, i;
 	pid_t		 pid;
 	struct event	*ev_logger;
 	struct event	 ev_sigterm, ev_sigint, ev_sigquit;
@@ -540,6 +546,15 @@ logger_main(int pipes[], int loggers[])
 	}
 	cleanup_fds(pipes, loggers);
 
+	/*
+	 * Wait up to 30s for the system logger to become ready.
+	 */
+	for (i=0; i<30; ++i) {
+		struct stat	 statbuf;
+		if (stat("/dev/log", &statbuf) == 0)
+			break;
+		sleep(1);
+	}
 	setproctitle("logger");
 
 	if (event_dispatch() == -1)
