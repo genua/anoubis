@@ -49,7 +49,7 @@
 #include <linux/anoubis.h>
 #endif
 #ifdef OPENBSD
-#include <dev/anoubis_sfs.h>
+#include <sys/anoubis_sfs.h>
 #include <dev/anoubis.h>
 #endif
 

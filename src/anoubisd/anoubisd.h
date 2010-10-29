@@ -48,7 +48,7 @@
 #ifdef OPENBSD
 #include <dev/eventdev.h>
 #include <dev/anoubis.h>
-#include <dev/anoubis_sfs.h>
+#include <sys/anoubis_sfs.h>
 #endif
 
 #include <assert.h>

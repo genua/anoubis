@@ -46,8 +46,8 @@
 #else
 #include <dev/eventdev.h>
 #include <dev/anoubis.h>
-#include <dev/anoubis_alf.h>
-#include <dev/anoubis_sfs.h>
+#include <sys/anoubis_alf.h>
+#include <sys/anoubis_sfs.h>
 #endif
 
 /**

@@ -1,4 +1,4 @@
-dnl Copyright (c) 2007 GeNUA mbH <info@genua.de>
+dnl Copyright (c) 2010 GeNUA mbH <info@genua.de>
 dnl
 dnl All rights reserved.
 dnl
@@ -130,6 +130,7 @@ AC_SUBST(NOTIFY_CFLAGS)
 
 AC_CONFIG_FILES([
 	Makefile
+	contrib/Makefile
 	src/Makefile
 	src/anoubisd/Makefile
 	src/libanoubis/Makefile
@@ -155,8 +156,6 @@ AC_CONFIG_FILES([
 	test/libanoubisui/auth/Makefile
 	test/libanoubisui/procinfo/Makefile
 	include/Makefile
-	include/linux/Makefile
-	include/dev/Makefile
 	lint/Makefile
 	lint/flawfinder
 	lint/splint
@@ -166,6 +165,54 @@ AC_CONFIG_FILES([
 
 AC_CHECK_PROGS(LCOV, lcov, false)
 AC_CHECK_PROGS(GENHTML, genhtml, false)
+
+dnl provide the variable $host, and set some defines depending on that
+AC_CANONICAL_HOST
+case $host in
+	*-*-linux*)
+	AC_DEFINE(LINUX, 1, "Define LINUX")
+	AC_DEFINE(_GNU_SOURCE, 1, "Define _GNU_SOURCE")
+	AM_LDFLAGS="-Wl,-z,relro $AM_LDFLAGS"
+	linux=yes
+	;;
+	*-*-openbsd*)
+	AC_DEFINE(OPENBSD, 1, "Define OpenBSD")
+	obsd=yes
+	;;
+esac
+
+dnl KERNELHEADERS/KERNELFLAGS, preprocessor-flags to kernel-headers
+KERNELFLAGS=
+AC_ARG_VAR([KERNELHEADERS], [Location to Anoubis kernel headers])
+if [ test -n "$KERNELHEADERS" ]; then
+	for dir in $KERNELHEADERS; do
+		if [ test -d "$dir" ]; then
+			AC_MSG_CHECKING([$dir])
+			if [ test -r "$dir/linux/anoubis.h" ]; then
+				# Assume that this is a Linux-kernel
+				if [ test "x$linux" = "xyes" ]; then
+					KERNELFLAGS="$KERNELFLAGS -I $dir"
+					AC_MSG_RESULT([include])
+				else
+					AC_MSG_RESULT([contrib])
+				fi
+			elif [ test -r "$dir/dev/anoubis.h" ]; then
+				# Assume that this is an OpenBSD-kernel
+				if [ test "x$obsd" = "xyes" ]; then
+					KERNELFLAGS="$KERNELFLAGS -I $dir"
+					AC_MSG_RESULT([include])
+				else
+					AC_MSG_RESULT([contrib])
+				fi
+			else
+				AC_MSG_ERROR([Unsupported kernel: $dir])
+			fi
+		else
+			AC_MSG_ERROR([No such directory: $dir])
+		fi
+	done
+fi
+AC_SUBST(KERNELFLAGS)
 
 dnl conditionally enable code coverage
 AC_ARG_ENABLE(gcov,
@@ -319,19 +366,6 @@ AC_SUBST(WXFB_PROJECT_FILES)
 AC_DEFINE_UNQUOTED(ANOUBIS_MODULESNO, [$ANOUBIS_MODULESNO],
     "Number of anoubis modules")
 
-dnl provide the variable $host, and set some defines depending on that
-AC_CANONICAL_HOST
-case $host in
-	*-*-linux*)
-	AC_DEFINE(LINUX, 1, "Define LINUX")
-	AC_DEFINE(_GNU_SOURCE, 1, "Define _GNU_SOURCE")
-	AM_LDFLAGS="-Wl,-z,relro $AM_LDFLAGS"
-	;;
-	*-*-openbsd*)
-	AC_DEFINE(OPENBSD, 1, "Define OpenBSD")
-	obsd=yes
-	;;
-esac
 
 dnl makefile.include should know that platform is openbsd, to inlcude
 dnl libintl.h

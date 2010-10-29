@@ -56,7 +56,7 @@
 #include <linux/anoubis_sfs.h>
 #include <bsdcompat.h>
 #else
-#include <dev/anoubis_sfs.h>
+#include <sys/anoubis_sfs.h>
 #endif
 
 #include <sys/queue.h>

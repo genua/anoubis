@@ -52,7 +52,7 @@
 #include <linux/anoubis.h>
 #endif
 #ifdef OPENBSD
-#include <dev/anoubis_alf.h>
+#include <sys/anoubis_alf.h>
 #include <dev/anoubis.h>
 #endif
 

@@ -45,7 +45,7 @@
 
 #ifdef OPENBSD
 #include "dev/anoubis.h"
-#include "dev/anoubis_alf.h"
+#include "sys/anoubis_alf.h"
 #endif
 
 #include <anoubis_protocol.h>

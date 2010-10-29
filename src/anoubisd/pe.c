@@ -53,8 +53,8 @@
 #include <linux/anoubis.h>
 #endif
 #ifdef OPENBSD
-#include <dev/anoubis_alf.h>
-#include <dev/anoubis_sfs.h>
+#include <sys/anoubis_alf.h>
+#include <sys/anoubis_sfs.h>
 #include <dev/anoubis.h>
 #include <bsdcompat/dev/anoubis_playground.h>
 #endif

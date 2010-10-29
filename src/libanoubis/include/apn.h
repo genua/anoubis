@@ -51,7 +51,7 @@
 #include <sys/queue.h>
 #ifndef LINUX
 #include <dev/anoubis.h>
-#include <dev/anoubis_alf.h>
+#include <sys/anoubis_alf.h>
 #include <sys/uio.h>
 #else
 #include <linux/anoubis.h>

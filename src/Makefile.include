@@ -63,9 +63,13 @@ libanoubis_cppflags  = -I$(libanoubisinclude) $(bsdcompat_cppflags)
 
 basic_cppflags = $(prog_AM_CPPFLAGS) \
 	-I$(top_builddir)/src \
+	-I$(top_srcdir)/contrib \
 	-I$(top_srcdir)/include
 
-anoubis_cppflags = $(libanoubis_cppflags) $(basic_cppflags) $(intl_include)
+anoubis_cppflags = $(libanoubis_cppflags) \
+	$(basic_cppflags) \
+	$(intl_include) \
+	@KERNELFLAGS@
 
 # define standard variables for test programs:
 #   test_cppflags

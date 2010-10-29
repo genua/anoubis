@@ -1,5 +1,5 @@
 ##########################################################################
-# Copyright (c) 2008 GeNUA mbH <info@genua.de>
+# Copyright (c) 2010 GeNUA mbH <info@genua.de>
 #
 # All rights reserved.
 #
@@ -25,9 +25,19 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##########################################################################
 
-noinst_HEADERS = \
-anoubis.h \
-anoubis_alf.h \
-anoubis_sfs.h \
-anoubis_playground.h \
-eventdev.h
+LINUX_HEADER = linux/anoubis.h linux/eventdev.h linux/anoubis_sfs.h \
+    linux/anoubis_alf.h linux/anoubis_playground.h
+OBSD_HEADER = dev/anoubis.h dev/eventdev.h sys/anoubis_sfs.h sys/anoubis_alf.h
+ALL_HEADER = $(LINUX_HEADER) $(OBSD_HEADER)
+
+dist-hook:
+	for dir in @KERNELHEADERS@; do \
+		for hdr in $(ALL_HEADER); do \
+			if [ -r $$dir/$$hdr ]; then \
+				df=$(distdir)/$$hdr; \
+				dd=`dirname $$df`; \
+				[ ! -d $$dd ] && mkdir -p $$dd; \
+				cp -fp $$dir/$$hdr $$dd; \
+			fi \
+		done \
+	done

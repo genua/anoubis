@@ -67,7 +67,7 @@
 #include <openssl/sha.h>
 #include <attr/xattr.h>
 #else
-#include <dev/anoubis_sfs.h>
+#include <sys/anoubis_sfs.h>
 #include <sha2.h>
 #endif
 
