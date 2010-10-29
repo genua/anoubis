@@ -119,7 +119,7 @@ class SbOverviewTable : public SimpleOverviewTable
 			COL_SUB,
 			COL_ACTION,
 			COL_MASK,
-			COL_SCOPE,
+			COL_RESTRICTIONS,
 			COL_USER,
 			COL_EOF
 		};

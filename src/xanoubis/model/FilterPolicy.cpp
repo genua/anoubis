@@ -26,6 +26,7 @@
  */
 
 #include "FilterPolicy.h"
+#include "apn.h"
 
 FilterPolicy::FilterPolicy(AppPolicy *parent, struct apn_rule *rule)
     : Policy((parent==NULL ? NULL : parent->getParentRuleSet()), rule)
@@ -142,4 +143,22 @@ FilterPolicy::sendPolicyChangeEvent(void)
 			parentPolicy_->getRowProvider()->ProcessEvent(event);
 		}
 	}
+}
+
+wxString
+FilterPolicy::getRestrictionName(void) const
+{
+	struct apn_rule		*rule = getApnRule();
+	wxString		 ret = wxEmptyString;
+
+	if (rule == NULL || rule->scope == NULL)
+		return wxEmptyString;
+	if (rule->scope->task)
+		ret = _("Time");
+	if (rule->scope->timeout) {
+		if (ret != wxEmptyString)
+			ret += wxT(", ");
+		ret += _("Processes");
+	}
+	return ret;
 }

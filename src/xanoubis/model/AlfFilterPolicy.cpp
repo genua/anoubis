@@ -25,6 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <netdb.h>
+
 #include "AlfFilterPolicy.h"
 
 #ifdef NEEDBSDCOMPAT
@@ -34,6 +36,7 @@
 #include "PolicyUtils.h"
 #include "PolicyVisitor.h"
 #include "PolicyRuleSet.h"
+#include "apn.h"
 
 AlfFilterPolicy::AlfFilterPolicy(AppPolicy *parentPolicy, struct apn_rule *rule)
     : FilterPolicy(parentPolicy, rule)
@@ -518,13 +521,13 @@ AlfFilterPolicy::setFromPortList(wxArrayString portList)
 }
 
 wxString
-AlfFilterPolicy::getFromPortName(void) const
+AlfFilterPolicy::getFromPortName(bool symbolic) const
 {
-	return (PolicyUtils::listToString(getFromPortList()));
+	return PolicyUtils::listToString(getFromPortList(symbolic));
 }
 
 wxArrayString
-AlfFilterPolicy::getFromPortList(void) const
+AlfFilterPolicy::getFromPortList(bool symbolic) const
 {
 	wxArrayString	 portList;
 	struct apn_port *fromPort;
@@ -537,7 +540,7 @@ AlfFilterPolicy::getFromPortList(void) const
 
 	fromPort = getApnRule()->rule.afilt.filtspec.fromport;
 	do {
-		portList.Add(portToString(fromPort));
+		portList.Add(portToString(fromPort, symbolic));
 		if ((fromPort == NULL) || (fromPort->next == NULL)) {
 			break;
 		}
@@ -680,13 +683,13 @@ AlfFilterPolicy::setToPortList(wxArrayString portList)
 }
 
 wxString
-AlfFilterPolicy::getToPortName(void) const
+AlfFilterPolicy::getToPortName(bool symbolic) const
 {
-	return (PolicyUtils::listToString(getToPortList()));
+	return PolicyUtils::listToString(getToPortList(symbolic));
 }
 
 wxArrayString
-AlfFilterPolicy::getToPortList(void) const
+AlfFilterPolicy::getToPortList(bool symbolic) const
 {
 	wxArrayString	 portList;
 	struct apn_port *toPort;
@@ -699,7 +702,7 @@ AlfFilterPolicy::getToPortList(void) const
 
 	toPort = getApnRule()->rule.afilt.filtspec.toport;
 	do {
-		portList.Add(portToString(toPort));
+		portList.Add(portToString(toPort, symbolic));
 		if ((toPort == NULL) || (toPort->next == NULL)) {
 			break;
 		}
@@ -716,17 +719,19 @@ AlfFilterPolicy::getRoleName(void) const
 
 	switch (getDirectionNo()) {
 	case APN_SEND:
-		/* FALLTHROUGH */
+		role = _("sender");
+		break;
 	case APN_CONNECT:
-		role = wxT("client");
+		role = _("client");
 		break;
 	case APN_RECEIVE:
-		/* FALLTHROUGH */
+		role = _("receiver");
+		break;
 	case APN_ACCEPT:
-		role = wxT("server");
+		role = _("server");
 		break;
 	case APN_BOTH:
-		role = wxT("both");
+		role = _("any");
 		break;
 	default:
 		role = _("(unknown)");
@@ -743,18 +748,14 @@ AlfFilterPolicy::getServiceName(void) const
 
 	switch (getDirectionNo()) {
 	case APN_SEND:
-		/* FALLTHROUGH */
 	case APN_CONNECT:
-		service.Printf(_("to %ls"), getToHostName().c_str());
-		break;
+		return getToPortName(true);
 	case APN_RECEIVE:
-		/* FALLTHROUGH */
 	case APN_ACCEPT:
-		service.Printf(_("from %ls"), getFromHostName().c_str());
-		break;
+		return getFromPortName(true);
 	case APN_BOTH:
-		service.Printf(_("both from %ls to %ls"),
-		    getFromHostName().c_str(), getToHostName().c_str());
+		return wxString::Format(_("from %ls to %ls"),
+		    getFromPortName(true).c_str(), getToPortName(true).c_str());
 		break;
 	default:
 		service = _("(unknown)");
@@ -789,7 +790,7 @@ AlfFilterPolicy::hostToString(struct apn_host *host) const
 }
 
 wxString
-AlfFilterPolicy::portToString(struct apn_port *port) const
+AlfFilterPolicy::portToString(struct apn_port *port, bool symbolic) const
 {
 	wxString portString;
 
@@ -799,8 +800,48 @@ AlfFilterPolicy::portToString(struct apn_port *port) const
 		portString = wxString::Format(wxT("%hu - %hu"),
 		    ntohs(port->port), ntohs(port->port2));
 	} else {
-		portString = wxString::Format(wxT("%hu"), ntohs(port->port));
+		struct servent		*sent = NULL;
+		/* NOTE: getservbyport expects network byte order */
+		if (symbolic)
+			sent = getservbyport(port->port, NULL);
+		if (sent && sent->s_name) {
+			portString = wxString::Format(wxT("%hs"), sent->s_name);
+		} else {
+			portString = wxString::Format(wxT("%hu"),
+			    ntohs(port->port));
+		}
 	}
+	return portString;
+}
 
-	return (portString);
+wxString
+AlfFilterPolicy::getRestrictionName(void) const
+{
+	wxString		 scope;
+	struct apn_rule		*rule = getApnRule();
+	bool			 needhost = false;
+
+	scope = FilterPolicy::getRestrictionName();
+	if (rule == NULL)
+		return scope;
+	if (rule->rule.afilt.filtspec.fromhost
+	    || rule->rule.afilt.filtspec.tohost)
+		needhost = true;
+	switch (getDirectionNo()) {
+	case APN_SEND:
+	case APN_CONNECT:
+		if (rule->rule.afilt.filtspec.fromport)
+			needhost = true;
+		break;
+	case APN_RECEIVE:
+	case APN_ACCEPT:
+		if (rule->rule.afilt.filtspec.toport)
+			needhost = true;
+		break;
+	}
+	if (!needhost)
+		return scope;
+	if (scope == wxEmptyString)
+		return _("Hosts");
+	return wxString::Format(_("%ls, %ls"), _("Hosts"), scope.c_str());
 }

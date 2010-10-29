@@ -65,8 +65,8 @@ AlfOverviewTable::GetColLabelValue(int col)
 		return _("Role");
 	case COL_ACTION:
 		return _("Action");
-	case COL_SCOPE:
-		return _("Temporary");
+	case COL_RESTRICTIONS:
+		return _("Restrictions");
 	case COL_USER: return _("User");
 	}
 
@@ -183,16 +183,16 @@ AlfOverviewTable::getAlfText(int col, AlfFilterPolicy *policy) const
 {
 	switch (col) {
 	case COL_SERVICE:
-		return (policy->getServiceName());
+		return policy->getServiceName();
 	case COL_ROLE:
-		return (policy->getRoleName());
+		return policy->getRoleName();
 	case COL_ACTION:
-		return (policy->getActionName());
-	case COL_SCOPE:
-		return (policy->hasScope() ? wxT("T") : wxEmptyString);
+		return policy->getActionName();
+	case COL_RESTRICTIONS:
+		return policy->getRestrictionName();
 	}
 
-	return (wxEmptyString);
+	return wxEmptyString;
 }
 
 wxString
@@ -204,8 +204,8 @@ AlfOverviewTable::getAlfCapabilityText(int col,
 		return (wxT("capability ") + policy->getCapabilityTypeName());
 	case COL_ACTION:
 		return (policy->getActionName());
-	case COL_SCOPE:
-		return (policy->hasScope() ? wxT("T") : wxEmptyString);
+	case COL_RESTRICTIONS:
+		return policy->getRestrictionName();
 	}
 
 	return (wxEmptyString);
@@ -219,8 +219,8 @@ AlfOverviewTable::getDefaultText(int col, DefaultFilterPolicy *policy) const
 		return (wxT("default"));
 	case COL_ACTION:
 		return (policy->getActionName());
-	case COL_SCOPE:
-		return (policy->hasScope() ? wxT("T") : wxEmptyString);
+	case COL_RESTRICTIONS:
+		return policy->getRestrictionName();
 	}
 
 	return (wxEmptyString);

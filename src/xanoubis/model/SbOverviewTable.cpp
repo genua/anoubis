@@ -68,8 +68,8 @@ SbOverviewTable::GetColLabelValue(int col)
 		return _("Action");
 	case COL_MASK:
 		return _("Mask");
-	case COL_SCOPE:
-		return _("Temporary");
+	case COL_RESTRICTIONS:
+		return _("Restrictions");
 	case COL_USER:
 		return _("User");
 	}
@@ -191,8 +191,8 @@ SbOverviewTable::getSbAccessText(int col, SbAccessFilterPolicy *policy) const
 		return (policy->getActionName());
 	case COL_MASK:
 		return (policy->getAccessMaskName());
-	case COL_SCOPE:
-		return (policy->hasScope() ? wxT("T") : wxEmptyString);
+	case COL_RESTRICTIONS:
+		return policy->getRestrictionName();
 	}
 
 	return (wxEmptyString);
@@ -206,8 +206,8 @@ SbOverviewTable::getDefaultText(int col, DefaultFilterPolicy *policy) const
 		return (wxT("default"));
 	case COL_ACTION:
 		return (policy->getActionName());
-	case COL_SCOPE:
-		return (policy->hasScope() ? wxT("T") : wxEmptyString);
+	case COL_RESTRICTIONS:
+		return policy->getRestrictionName();
 	}
 
 	return (wxEmptyString);

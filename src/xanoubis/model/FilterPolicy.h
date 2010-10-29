@@ -122,6 +122,15 @@ class FilterPolicy : public Policy
 		 */
 		virtual wxString getRulePrefix(void) const;
 
+		/**
+		 * Return a comma separated list of restriction types
+		 * that apply to this filter rule. The common version
+		 * in this base class deals with scope restriction only.
+		 *
+		 * @return A comma separated list of restrictions.
+		 */
+		virtual wxString getRestrictionName(void) const;
+
 	protected:
 		/**
 		 * Translate the apn log numbers APN_LOG_*

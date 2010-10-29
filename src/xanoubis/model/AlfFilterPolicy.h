@@ -219,17 +219,19 @@ class AlfFilterPolicy : public FilterPolicy
 
 		/**
 		 * Get the from port.
-		 * @param None.
+		 * @param symbolic If true, single ports are converted to
+		 *     service names using getservent.
 		 * @return From port (may be a list).
 		 */
-		wxString getFromPortName(void) const;
+		wxString getFromPortName(bool symbolic = false) const;
 
 		/**
 		 * Get the form ports list.
-		 * @param None.
+		 * @param symbolic If true, single ports are converted to
+		 *     service names using getservent.
 		 * @return List of from ports.
 		 */
-		wxArrayString getFromPortList(void) const;
+		wxArrayString getFromPortList(bool symbolic = false) const;
 
 		/**
 		 * Set IP of to host.
@@ -275,17 +277,19 @@ class AlfFilterPolicy : public FilterPolicy
 
 		/**
 		 * Get the to port.
-		 * @param None.
+		 * @param symbolic If true, single ports are converted to
+		 *     service names using getservent.
 		 * @return To port (may be a list).
 		 */
-		wxString getToPortName(void) const;
+		wxString getToPortName(bool symbolic = false) const;
 
 		/**
 		 * Get the to ports list.
-		 * @param None.
+		 * @param symbolic If true, single ports are converted to
+		 *     service names using getservent.
 		 * @return List of to ports.
 		 */
-		wxArrayString getToPortList(void) const;
+		wxArrayString getToPortList(bool symbolic = false) const;
 
 		/**
 		 * Get the role of this policy.
@@ -303,6 +307,15 @@ class AlfFilterPolicy : public FilterPolicy
 		 */
 		wxString getServiceName(void) const;
 
+		/**
+		 * Return a comma separated list of restrictions
+		 * that apply to this rule. This function handles
+		 * scope restrictions and restrictions based on host
+		 * in an ALF rule.
+		 *
+		 * @return The list of restrictions.
+		 */
+		virtual wxString getRestrictionName(void) const;
 	private:
 		/**
 		 * Converts data of native apn host structure to string.
@@ -314,9 +327,12 @@ class AlfFilterPolicy : public FilterPolicy
 		/**
 		 * Converts data of native apn port structure to string.
 		 * @param[in] 1st The port structure in question.
+		 * @param[in] 2nd If true, single ports are converted to
+		 *     service names using getservent.
 		 * @return String representation of the given port.
 		 */
-		wxString portToString(struct apn_port *) const;
+		wxString portToString(struct apn_port *,
+		    bool symbolic = false) const;
 };
 
 #endif	/* _ALFFILTERPOLICY_H_ */

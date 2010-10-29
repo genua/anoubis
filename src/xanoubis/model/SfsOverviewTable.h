@@ -118,7 +118,7 @@ class SfsOverviewTable : public SimpleOverviewTable {
 			COL_VA,
 			COL_IA,
 			COL_UA,
-			COL_SCOPE,
+			COL_RESTRICTIONS,
 			COL_USER,
 			COL_EOF
 		};

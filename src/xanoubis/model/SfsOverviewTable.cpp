@@ -68,8 +68,8 @@ SfsOverviewTable::GetColLabelValue(int col)
 		return _("Invalid action");
 	case COL_UA:
 		return _("Unknown action");
-	case COL_SCOPE:
-		return _("Temporary");
+	case COL_RESTRICTIONS:
+		return _("Restrictions");
 	case COL_USER:
 		return _("User");
 	}
@@ -160,8 +160,8 @@ SfsOverviewTable::getSfsText(int col, SfsFilterPolicy *policy) const
 		return (policy->getInvalidActionName());
 	case COL_UA:
 		return (policy->getUnknownActionName());
-	case COL_SCOPE:
-		return (policy->hasScope() ? wxT("T") : wxEmptyString);
+	case COL_RESTRICTIONS:
+		return policy->getRestrictionName();
 	}
 
 	return (wxEmptyString);
@@ -177,8 +177,8 @@ SfsOverviewTable::getSfsDefaultText(int col,
 	case COL_VA:
 		return (wxString::Format(_("default %ls"),
 		    policy->getActionName().c_str()));
-	case COL_SCOPE:
-		return (policy->hasScope() ? wxT("T") : wxEmptyString);
+	case COL_RESTRICTIONS:
+		return policy->getRestrictionName();
 	}
 
 	return (wxEmptyString);

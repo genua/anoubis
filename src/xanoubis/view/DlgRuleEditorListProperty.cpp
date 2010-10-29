@@ -253,6 +253,12 @@ DlgRuleEditorListProperty::examineAlfCapabilityFilterPolicy(
 	case PROPERTY_TYPE:
 		EXTRACT_TYPE(text, ruleSet, filter);
 		break;
+	case PROPERTY_ACTION:
+		text = filter->getActionName();
+		break;
+	case PROPERTY_LOG:
+		text = filter->getLogName();
+		break;
 	case PROPERTY_CAP:
 		text = filter->getCapabilityTypeName();
 		break;

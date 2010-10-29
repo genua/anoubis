@@ -118,7 +118,7 @@ class AlfOverviewTable : public SimpleOverviewTable
 			COL_SERVICE,
 			COL_ROLE,
 			COL_ACTION,
-			COL_SCOPE,
+			COL_RESTRICTIONS,
 			COL_USER,
 			COL_EOF
 		};
