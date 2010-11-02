@@ -49,6 +49,21 @@ AC_REPLACE_FUNCS([strlcat strlcpy strtonum getpeereid \
 	inet_net_pton setproctitle])
 AM_CONDITIONAL([NEEDBSDCOMPAT], [test -n "$LIBOBJS"])
 
+dnl provide the variable $host, and set some defines depending on that
+AC_CANONICAL_HOST
+case $host in
+	*-*-linux*)
+	AC_DEFINE(LINUX, 1, "Define LINUX")
+	AC_DEFINE(_GNU_SOURCE, 1, "Define _GNU_SOURCE")
+	AM_LDFLAGS="-Wl,-z,relro $AM_LDFLAGS"
+	linux=yes
+	;;
+	*-*-openbsd*)
+	AC_DEFINE(OPENBSD, 1, "Define OpenBSD")
+	obsd=yes
+	;;
+esac
+
 if test -n "$LIBOBJS"; then
 	AC_DEFINE(NEEDBSDCOMPAT, 1, "need a libbsdcompat.a")
 fi
@@ -105,6 +120,9 @@ AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS([stdlib.h strings.h unistd.h])
 AC_CHECK_HEADERS([arpa/inet.h netinet/in.h stdlib.h string.h sys/socket.h])
 AC_CHECK_HEADERS([sys/inotify.h])
+if [ test "x$linux" = "xyes" ]; then
+    AC_CHECK_HEADER([attr/xattr.h], [], AC_MSG_ERROR([xattr.h not found]))
+fi
 
 dnl checks for libraries
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
@@ -166,20 +184,6 @@ AC_CONFIG_FILES([
 AC_CHECK_PROGS(LCOV, lcov, false)
 AC_CHECK_PROGS(GENHTML, genhtml, false)
 
-dnl provide the variable $host, and set some defines depending on that
-AC_CANONICAL_HOST
-case $host in
-	*-*-linux*)
-	AC_DEFINE(LINUX, 1, "Define LINUX")
-	AC_DEFINE(_GNU_SOURCE, 1, "Define _GNU_SOURCE")
-	AM_LDFLAGS="-Wl,-z,relro $AM_LDFLAGS"
-	linux=yes
-	;;
-	*-*-openbsd*)
-	AC_DEFINE(OPENBSD, 1, "Define OpenBSD")
-	obsd=yes
-	;;
-esac
 
 dnl KERNELHEADERS/KERNELFLAGS, preprocessor-flags to kernel-headers
 KERNELFLAGS=
