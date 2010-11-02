@@ -65,7 +65,10 @@
 DlgRuleEditor::DlgRuleEditor(wxWindow* parent)
     : Observer(NULL), DlgRuleEditorBase(parent)
 {
-	AnEvents *anEvents;
+	AnEvents	*anEvents;
+	AnIconList	*iconlist = AnIconList::instance();
+
+	SetIcon(*iconlist->getIcon(AnIconList::ICON_ANOUBIS_BLACK_48));
 
 	anEvents = AnEvents::instance();
 

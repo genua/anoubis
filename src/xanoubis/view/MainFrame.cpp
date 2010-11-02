@@ -78,6 +78,7 @@ MainFrame::MainFrame(wxWindow *parent, bool trayVisible)
 	errorIcon_ = utils->loadIcon(wxT("General_error_16.png"));
 	alertIcon_ = utils->loadIcon(wxT("General_alert_16.png"));
 	escalationIcon_ = utils->loadIcon(wxT("General_question_16.png"));
+	SetIcon(*aboutIcon_);
 
 	anEvents = AnEvents::instance();
 	jobCtrl = JobCtrl::instance();

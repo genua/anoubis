@@ -107,6 +107,9 @@ DlgLogViewer::DlgLogViewer(wxWindow* parent) : DlgLogViewerBase(parent)
 	AnEvents		*anEvents;
 	NotificationCtrl	*notifyCtrl;
 	AnListProperty		*property;
+	AnIconList		*iconlist = AnIconList::instance();
+
+	SetIcon(*iconlist->getIcon(AnIconList::ICON_ANOUBIS_BLACK_48));
 
 	anEvents = AnEvents::instance();
 	notifyCtrl = NotificationCtrl::instance();
