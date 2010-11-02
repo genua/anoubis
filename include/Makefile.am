@@ -25,7 +25,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##########################################################################
 
-include_HEADERS = splint-includes.h
+noinst_HEADERS = splint-includes.h
 
 # targets must exist, but need not to do anything
 flawfinder:
