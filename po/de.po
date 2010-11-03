@@ -1213,7 +1213,7 @@ msgstr "Ausführ-Rechte"
 
 #: src/xanoubis/view/DlgRuleEditorBase.h:151
 msgid "Anoubis Rule Editor"
-msgstr "Anoubis RuleEditor"
+msgstr "Anoubis Rule Editor"
 
 #: src/xanoubis/view/DlgRuleEditorFilterActionPage.cpp:46
 msgid "Default Path:"
