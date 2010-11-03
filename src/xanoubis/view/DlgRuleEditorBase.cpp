@@ -86,7 +86,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	appListTypeChoice = new wxChoice( appPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, appListTypeChoiceNChoices, appListTypeChoiceChoices, 0 );
 	appListHeadSizer->Add( appListTypeChoice, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	appListCreateButton = new wxButton( appPanel, wxID_ANY, _("create"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	appListCreateButton = new wxButton( appPanel, wxID_ANY, _("Create"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
 	appListCreateButton->SetToolTip( _("Creates a new rule") );
 	
 	appListHeadSizer->Add( appListCreateButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
@@ -144,13 +144,13 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	appListPolicyText->Wrap( -1 );
 	appListFoodSizer->Add( appListPolicyText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	appListUpButton = new wxButton( appPanel, wxID_ANY, _("up"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	appListUpButton = new wxButton( appPanel, wxID_ANY, _("Up"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
 	appListUpButton->Enable( false );
 	appListUpButton->SetToolTip( _("Move up") );
 	
 	appListFoodSizer->Add( appListUpButton, 0, wxALL, 5 );
 	
-	appListDownButton = new wxButton( appPanel, wxID_ANY, _("down"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	appListDownButton = new wxButton( appPanel, wxID_ANY, _("Down"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
 	appListDownButton->Enable( false );
 	appListDownButton->SetToolTip( _("Move down") );
 	
@@ -165,7 +165,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	
 	appListFoodSizer->Add( appListCloneButton, 0, wxALL, 5 );
 	
-	appListDeleteButton = new wxButton( appPanel, wxID_ANY, _("delete"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	appListDeleteButton = new wxButton( appPanel, wxID_ANY, _("Delete"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
 	appListDeleteButton->Enable( false );
 	appListDeleteButton->SetToolTip( _("Removes selected policy") );
 	
@@ -197,7 +197,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	
 	filterListHeadSizer->Add( filterListTypeChoice, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	filterListCreateButton = new wxButton( filterPanel, wxID_ANY, _("create"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	filterListCreateButton = new wxButton( filterPanel, wxID_ANY, _("Create"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
 	filterListCreateButton->Enable( false );
 	filterListCreateButton->SetToolTip( _("Creates a new rule") );
 	
@@ -256,13 +256,13 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	filterListPolicyText->Wrap( -1 );
 	filterListFoodSizer->Add( filterListPolicyText, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 	
-	filterListUpButton = new wxButton( filterPanel, wxID_ANY, _("up"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	filterListUpButton = new wxButton( filterPanel, wxID_ANY, _("Up"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
 	filterListUpButton->Enable( false );
 	filterListUpButton->SetToolTip( _("Move up") );
 	
 	filterListFoodSizer->Add( filterListUpButton, 0, wxALL, 5 );
 	
-	filterListDownButton = new wxButton( filterPanel, wxID_ANY, _("down"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	filterListDownButton = new wxButton( filterPanel, wxID_ANY, _("Down"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
 	filterListDownButton->Enable( false );
 	filterListDownButton->SetToolTip( _("Move down") );
 	
@@ -271,7 +271,7 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	
 	filterListFoodSizer->Add( 50, 0, 0, wxEXPAND, 5 );
 	
-	filterListDeleteButton = new wxButton( filterPanel, wxID_ANY, _("delete"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
+	filterListDeleteButton = new wxButton( filterPanel, wxID_ANY, _("Delete"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT );
 	filterListDeleteButton->Enable( false );
 	filterListDeleteButton->SetToolTip( _("Removes selected policy") );
 	
@@ -318,12 +318,12 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	wxBoxSizer* buttonFootSizer;
 	buttonFootSizer = new wxBoxSizer( wxHORIZONTAL );
 	
-	footerImportButton = new wxButton( this, wxID_ANY, _("import..."), wxDefaultPosition, wxDefaultSize, 0 );
+	footerImportButton = new wxButton( this, wxID_ANY, _("Import..."), wxDefaultPosition, wxDefaultSize, 0 );
 	footerImportButton->SetToolTip( _("import ruleset from file") );
 	
 	buttonFootSizer->Add( footerImportButton, 0, wxALL, 5 );
 	
-	footerReloadButton = new wxButton( this, wxID_ANY, _("reload from daemon"), wxDefaultPosition, wxDefaultSize, 0 );
+	footerReloadButton = new wxButton( this, wxID_ANY, _("Reload from Daemon"), wxDefaultPosition, wxDefaultSize, 0 );
 	footerReloadButton->Enable( false );
 	footerReloadButton->SetToolTip( _("reload ruleset from daemon") );
 	
@@ -332,12 +332,12 @@ DlgRuleEditorBase::DlgRuleEditorBase( wxWindow* parent, wxWindowID id, const wxS
 	
 	buttonFootSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	footerExportButton = new wxButton( this, wxID_ANY, _("export..."), wxDefaultPosition, wxDefaultSize, 0 );
+	footerExportButton = new wxButton( this, wxID_ANY, _("Export..."), wxDefaultPosition, wxDefaultSize, 0 );
 	footerExportButton->SetToolTip( _("export ruleset to file (which has to be choosen)") );
 	
 	buttonFootSizer->Add( footerExportButton, 0, wxALL, 5 );
 	
-	footerActivateButton = new wxButton( this, wxID_ANY, _("activate"), wxDefaultPosition, wxDefaultSize, 0 );
+	footerActivateButton = new wxButton( this, wxID_ANY, _("Activate"), wxDefaultPosition, wxDefaultSize, 0 );
 	footerActivateButton->Enable( false );
 	footerActivateButton->SetToolTip( _("send ruleset to daemon") );
 	
@@ -424,12 +424,12 @@ DlgRuleEditorAppPageBase::DlgRuleEditorAppPageBase( wxWindow* parent, wxWindowID
 	wxBoxSizer* footerSizer;
 	footerSizer = new wxBoxSizer( wxHORIZONTAL );
 	
-	addButton = new wxButton( mainPage, ID_APP_PAGE_ADD, _("add"), wxDefaultPosition, wxDefaultSize, 0 );
+	addButton = new wxButton( mainPage, ID_APP_PAGE_ADD, _("Add"), wxDefaultPosition, wxDefaultSize, 0 );
 	addButton->SetToolTip( _("Appends the binary to the policy") );
 	
 	footerSizer->Add( addButton, 0, wxALL, 5 );
 	
-	deleteButton = new wxButton( mainPage, ID_APP_PAGE_DELETE, _("delete"), wxDefaultPosition, wxDefaultSize, 0 );
+	deleteButton = new wxButton( mainPage, ID_APP_PAGE_DELETE, _("Delete"), wxDefaultPosition, wxDefaultSize, 0 );
 	deleteButton->SetToolTip( _("Removes the binary from the policy") );
 	
 	footerSizer->Add( deleteButton, 0, wxALL, 5 );

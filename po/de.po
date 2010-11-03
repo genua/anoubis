@@ -33,7 +33,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: anoubis. 10.972.C388\n"
 "Report-Msgid-Bugs-To: anoubis@lists.anoubis.org\n"
-"POT-Creation-Date: 2010-10-28 13:39+0200\n"
+"POT-Creation-Date: 2010-10-29 20:45+0200\n"
 "PO-Revision-Date: 2010-09-17 16:25+0100\n"
 "Last-Translator: Robin <robin_doer@genua.de>\n"
 "Language-Team: German <translation-team-de@lists.sourceforge.net>\n"
@@ -82,10 +82,10 @@ msgid "undefined anoubis error code"
 msgstr "Unbekannte Anoubis-Fehlernummer"
 
 #: src/xanoubis/model/AlfCapabilityFilterPolicy.cpp:223
-#: src/xanoubis/model/AlfFilterPolicy.cpp:327
-#: src/xanoubis/model/AlfFilterPolicy.cpp:382
-#: src/xanoubis/model/AlfFilterPolicy.cpp:735
-#: src/xanoubis/model/AlfFilterPolicy.cpp:759
+#: src/xanoubis/model/AlfFilterPolicy.cpp:329
+#: src/xanoubis/model/AlfFilterPolicy.cpp:384
+#: src/xanoubis/model/AlfFilterPolicy.cpp:737
+#: src/xanoubis/model/AlfFilterPolicy.cpp:761
 #: src/xanoubis/model/ContextFilterPolicy.cpp:181
 #: src/xanoubis/model/FilterPolicy.cpp:94
 #: src/xanoubis/model/FilterPolicy.cpp:120
@@ -94,39 +94,39 @@ msgstr "Unbekannte Anoubis-Fehlernummer"
 msgid "(unknown)"
 msgstr "(unbekannt)"
 
-#: src/xanoubis/model/AlfFilterPolicy.cpp:720
+#: src/xanoubis/model/AlfFilterPolicy.cpp:722
 msgid "sender"
 msgstr "Sender"
 
-#: src/xanoubis/model/AlfFilterPolicy.cpp:723
+#: src/xanoubis/model/AlfFilterPolicy.cpp:725
 msgid "client"
 msgstr "Client"
 
-#: src/xanoubis/model/AlfFilterPolicy.cpp:726
+#: src/xanoubis/model/AlfFilterPolicy.cpp:728
 msgid "receiver"
 msgstr "Empfänger"
 
-#: src/xanoubis/model/AlfFilterPolicy.cpp:729
+#: src/xanoubis/model/AlfFilterPolicy.cpp:731
 msgid "server"
 msgstr "Server"
 
-#: src/xanoubis/model/AlfFilterPolicy.cpp:732
+#: src/xanoubis/model/AlfFilterPolicy.cpp:734
 #: src/xanoubis/view/DlgRuleEditorFilterSubjectPage.cpp:76
 #: src/xanoubis/view/DlgRuleEditorFilterSubjectPage.cpp:422
 msgid "any"
 msgstr "unabhängig"
 
-#: src/xanoubis/model/AlfFilterPolicy.cpp:755
+#: src/xanoubis/model/AlfFilterPolicy.cpp:757
 #, c-format
 msgid "from %ls to %ls"
 msgstr "von %ls nach %ls"
 
-#: src/xanoubis/model/AlfFilterPolicy.cpp:835
-#: src/xanoubis/model/AlfFilterPolicy.cpp:836
+#: src/xanoubis/model/AlfFilterPolicy.cpp:845
+#: src/xanoubis/model/AlfFilterPolicy.cpp:846
 msgid "Hosts"
 msgstr "Hosts"
 
-#: src/xanoubis/model/AlfFilterPolicy.cpp:836
+#: src/xanoubis/model/AlfFilterPolicy.cpp:846
 #, c-format
 msgid "%ls, %ls"
 msgstr "%ls, %ls"
@@ -807,7 +807,7 @@ msgstr "CTX"
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:89
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:200
-msgid "create"
+msgid "Create"
 msgstr "Erstellen"
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:90
@@ -839,7 +839,7 @@ msgstr "Regel:"
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:147
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:259
-msgid "up"
+msgid "Up"
 msgstr "Aufwärts"
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:149
@@ -849,7 +849,7 @@ msgstr "Verschiebe aufwärts"
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:153
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:265
-msgid "down"
+msgid "Down"
 msgstr "Abwärts"
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:155
@@ -868,11 +868,14 @@ msgstr "Kopiert die ausgewählte Regel."
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:168
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:274
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:432
+#: src/xanoubis/view/ModAnoubisPanelsBase.cpp:443
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:562
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:94
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:231
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:467
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:629
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:894
-msgid "delete"
+msgid "Delete"
 msgstr "Löschen"
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:170
@@ -902,7 +905,8 @@ msgid "Status:"
 msgstr "Status:"
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:321
-msgid "import..."
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:182
+msgid "Import..."
 msgstr "Importieren..."
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:322
@@ -910,7 +914,7 @@ msgid "import ruleset from file"
 msgstr "importieren eines Regelsatzes aus Datei"
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:326
-msgid "reload from daemon"
+msgid "Reload from Daemon"
 msgstr "Neuladen vom Daemon"
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:328
@@ -918,15 +922,17 @@ msgid "reload ruleset from daemon"
 msgstr "Neuladen des Regelsatzes vom Daemon"
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:335
-msgid "export..."
-msgstr "Export..."
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:188
+msgid "Export..."
+msgstr "Exportieren..."
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:336
 msgid "export ruleset to file (which has to be choosen)"
 msgstr "Exportieren des Regelsatzes in Datei (die gewählt wurde)"
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:340
-msgid "activate"
+#: src/xanoubis/view/ModAnoubisPanelsBase.cpp:490
+msgid "Activate"
 msgstr "Aktivieren"
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:342
@@ -963,7 +969,7 @@ msgstr ""
 "werden."
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:427
-msgid "add"
+msgid "Add"
 msgstr "Hinzufügen"
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:428
@@ -1281,7 +1287,7 @@ msgstr "Richtung"
 #: src/xanoubis/view/RuleWizardAlfClientPortsPage.cpp:67
 #: src/xanoubis/view/RuleWizardAlfDlgAddService.cpp:58
 msgid "Protocol"
-msgstr "Protokol"
+msgstr "Protokoll"
 
 #: src/xanoubis/view/DlgRuleEditorListProperty.cpp:70
 msgid "From host"
@@ -1526,6 +1532,7 @@ msgstr "Beenden"
 
 #: src/xanoubis/view/MainFrameBase.cpp:56
 #: src/xanoubis/view/ModSfsListProperty.cpp:44
+#: src/xanoubis/view/RuleWizardPanelsBase.cpp:875
 #: src/xanoubis/view/RuleWizardSandboxProperty.cpp:45
 msgid "File"
 msgstr "Datei"
@@ -1975,12 +1982,6 @@ msgstr "Benachrichtigungen"
 msgid "Profile:"
 msgstr "Profil:"
 
-#: src/xanoubis/view/ModAnoubisPanelsBase.cpp:443
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:94
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:231
-msgid "Delete"
-msgstr "Löschen"
-
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:445
 msgid "Removes the selected profile"
 msgstr "Entfernt das selektierte Profil"
@@ -2015,10 +2016,6 @@ msgstr ""
 "Speichern eines Profils erzeugt nur eine neue Version. Der Regelsatz wird "
 "nicht an den Daemon gesandt. Benutze \"Aktivieren\" um dies zu erreichen."
 
-#: src/xanoubis/view/ModAnoubisPanelsBase.cpp:490
-msgid "Activate"
-msgstr "Aktivieren"
-
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:492
 msgid "Send the selected Profile to the Daemon"
 msgstr "Sende ausgewähltes Profil zum Daemon"
@@ -2044,7 +2041,7 @@ msgid "Comment of selected version:"
 msgstr "Kommentar der ausgewählten Version:"
 
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:552
-msgid "restore"
+msgid "Restore"
 msgstr "Wiederherstellen"
 
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:553
@@ -2052,8 +2049,8 @@ msgid "Restore the selected version of the profile."
 msgstr "Ausgewählte Version des Profils wiederherstellen."
 
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:557
-msgid "export ..."
-msgstr "Exportieren ..."
+msgid "Export ..."
+msgstr "Exportieren..."
 
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:558
 msgid "Export the selected Version of the profile to a file."
@@ -2064,9 +2061,7 @@ msgid "Delete the selected version of the profile."
 msgstr "Ausgewählte Version des Profils löschen."
 
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:567
-#: src/xanoubis/widgets/AnDetails.cpp:145
-#: src/xanoubis/widgets/AnDetails.cpp:146
-msgid "show"
+msgid "Show"
 msgstr "Zeige"
 
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:580
@@ -2074,7 +2069,7 @@ msgid "Version control"
 msgstr "Versionskontrolle"
 
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:592
-msgid "reload"
+msgid "Reload"
 msgstr "neu laden"
 
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:615
@@ -2803,17 +2798,9 @@ msgstr "Signiere Dateien / Überprüfe Signaturen"
 msgid "Enables signature support"
 msgstr "Signaturen miteinbeziehen"
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:182
-msgid "Import..."
-msgstr "Importieren..."
-
 #: src/xanoubis/view/ModSfsPanelsBase.cpp:184
 msgid "Import from file"
 msgstr "Aus Datei importieren"
-
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:188
-msgid "Export..."
-msgstr "Exportieren..."
 
 #: src/xanoubis/view/ModSfsPanelsBase.cpp:190
 msgid "Export to file"
@@ -3320,7 +3307,7 @@ msgid "search"
 msgstr "Suche"
 
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:167
-msgid "add selected service"
+msgid "Add selected Service"
 msgstr "Ausgewählten Dienst hinzufügen"
 
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:169
@@ -3342,7 +3329,7 @@ msgid "Portnumber(s) or -range:"
 msgstr "Portnummer(n) oder -bereich:"
 
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:218
-msgid "add custom service"
+msgid "Add custom Service"
 msgstr "eigenen Dienst hinzufügen"
 
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:219
@@ -3436,7 +3423,7 @@ msgid "Exceptions (programs started with own polcies):"
 msgstr "Ausnahmen (Programme die mit eigenen Regeln gestartet werden):"
 
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:459
-msgid "add..."
+msgid "Add..."
 msgstr "Hinzufügen..."
 
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:460
@@ -3508,7 +3495,7 @@ msgid "List of allowed services:"
 msgstr "Liste der erlaubten Dienste:"
 
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:612
-msgid " add..."
+msgid " Add..."
 msgstr " Hinzufügen..."
 
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:613
@@ -3520,7 +3507,7 @@ msgstr ""
 "und fügt das Resultat der Liste hinzu"
 
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:620
-msgid "add default services"
+msgid "Add default Services"
 msgstr "Standarddienste hinzufügen"
 
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:622
@@ -3603,10 +3590,6 @@ msgstr "... Zugriff erlauben:"
 msgid "Add:"
 msgstr "Hinzufügen:"
 
-#: src/xanoubis/view/RuleWizardPanelsBase.cpp:875
-msgid "file"
-msgstr "Datei"
-
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:876
 msgid ""
 "opens a file-choose-dialog\n"
@@ -3616,8 +3599,8 @@ msgstr ""
 "und fügt das Resultat zur Liste hinzu"
 
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:880
-msgid "directory"
-msgstr "Verzeichnis"
+msgid "Directory"
+msgstr "Verzeichnis:"
 
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:881
 msgid ""
@@ -3628,7 +3611,7 @@ msgstr ""
 "und fügt das Resultat zur Liste hinzu"
 
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:885
-msgid "default permissions"
+msgid "Default Permissions"
 msgstr "Standardberechtigungen"
 
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:906
@@ -4400,6 +4383,11 @@ msgstr "Eine SFS Operation wird bearbeitet. Bitte warten ..."
 msgid "hide"
 msgstr "Verbergen"
 
+#: src/xanoubis/widgets/AnDetails.cpp:145
+#: src/xanoubis/widgets/AnDetails.cpp:146
+msgid "show"
+msgstr "Zeige"
+
 #: src/xanoubis/widgets/AnGrid.cpp:97 src/xanoubis/widgets/AnListCtrl.cpp:389
 msgid "Table columns"
 msgstr "Tabellenspalten"
@@ -4421,22 +4409,24 @@ msgid "Pick..."
 msgstr "Auswahl..."
 
 #: src/xanoubis/widgets/AnPickFromFs.cpp:64
-msgid "use right mouse button to alter pick mode"
-msgstr "Mit der rechten Maustaste das Auswahlverfahen beeinflussen"
+msgid "use the right mouse button to choose between files and directories"
+msgstr ""
+"Benutzen Sie die rechte Maustaste um zwischen Dateien und Verzeichnissen zu "
+"wählen"
 
-#: src/xanoubis/widgets/AnPickFromFs.cpp:68
+#: src/xanoubis/widgets/AnPickFromFs.cpp:69
 msgid "Pick a file"
 msgstr "Datei hinzufügen"
 
-#: src/xanoubis/widgets/AnPickFromFs.cpp:70
+#: src/xanoubis/widgets/AnPickFromFs.cpp:71
 msgid "Pick a directory"
 msgstr "Verzeichnis hinzufügen"
 
-#: src/xanoubis/widgets/AnPickFromFs.cpp:193
+#: src/xanoubis/widgets/AnPickFromFs.cpp:194
 msgid "Symbolic link was resolved"
 msgstr "Symbolischer Link wurde aufgelöst"
 
-#: src/xanoubis/widgets/AnPickFromFs.cpp:199
+#: src/xanoubis/widgets/AnPickFromFs.cpp:200
 msgid "Failure to resolve: "
 msgstr "Konnte nicht aufgelöst werden: "
 
@@ -4553,6 +4543,36 @@ msgstr ""
 "Das eingegebene Passwort war falsch!\n"
 "Eingabe des Passwortes für:\n"
 "%ls"
+
+#~ msgid "export ..."
+#~ msgstr "Exportieren ..."
+
+#~ msgid "delete"
+#~ msgstr "Löschen"
+
+#~ msgid "file"
+#~ msgstr "Datei"
+
+#~ msgid "directory"
+#~ msgstr "Verzeichnis"
+
+#~ msgid "up"
+#~ msgstr "Aufwärts"
+
+#~ msgid "down"
+#~ msgstr "Abwärts"
+
+#~ msgid "import..."
+#~ msgstr "Importieren..."
+
+#~ msgid "add"
+#~ msgstr "Hinzufügen"
+
+#~ msgid "export..."
+#~ msgstr "Export..."
+
+#~ msgid "activate"
+#~ msgstr "Aktivieren"
 
 #~ msgid "to %ls"
 #~ msgstr "an %ls"

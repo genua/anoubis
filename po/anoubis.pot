@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: anoubis 0.9.3.26.222.408\n"
+"Project-Id-Version: anoubis 0.9.3.26.227.413\n"
 "Report-Msgid-Bugs-To: anoubis@lists.anoubis.org\n"
-"POT-Creation-Date: 2010-10-28 13:39+0200\n"
+"POT-Creation-Date: 2010-10-29 20:45+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -55,10 +55,10 @@ msgid "undefined anoubis error code"
 msgstr ""
 
 #: src/xanoubis/model/AlfCapabilityFilterPolicy.cpp:223
-#: src/xanoubis/model/AlfFilterPolicy.cpp:327
-#: src/xanoubis/model/AlfFilterPolicy.cpp:382
-#: src/xanoubis/model/AlfFilterPolicy.cpp:735
-#: src/xanoubis/model/AlfFilterPolicy.cpp:759
+#: src/xanoubis/model/AlfFilterPolicy.cpp:329
+#: src/xanoubis/model/AlfFilterPolicy.cpp:384
+#: src/xanoubis/model/AlfFilterPolicy.cpp:737
+#: src/xanoubis/model/AlfFilterPolicy.cpp:761
 #: src/xanoubis/model/ContextFilterPolicy.cpp:181
 #: src/xanoubis/model/FilterPolicy.cpp:94
 #: src/xanoubis/model/FilterPolicy.cpp:120
@@ -67,39 +67,39 @@ msgstr ""
 msgid "(unknown)"
 msgstr ""
 
-#: src/xanoubis/model/AlfFilterPolicy.cpp:720
+#: src/xanoubis/model/AlfFilterPolicy.cpp:722
 msgid "sender"
 msgstr ""
 
-#: src/xanoubis/model/AlfFilterPolicy.cpp:723
+#: src/xanoubis/model/AlfFilterPolicy.cpp:725
 msgid "client"
 msgstr ""
 
-#: src/xanoubis/model/AlfFilterPolicy.cpp:726
+#: src/xanoubis/model/AlfFilterPolicy.cpp:728
 msgid "receiver"
 msgstr ""
 
-#: src/xanoubis/model/AlfFilterPolicy.cpp:729
+#: src/xanoubis/model/AlfFilterPolicy.cpp:731
 msgid "server"
 msgstr ""
 
-#: src/xanoubis/model/AlfFilterPolicy.cpp:732
+#: src/xanoubis/model/AlfFilterPolicy.cpp:734
 #: src/xanoubis/view/DlgRuleEditorFilterSubjectPage.cpp:76
 #: src/xanoubis/view/DlgRuleEditorFilterSubjectPage.cpp:422
 msgid "any"
 msgstr ""
 
-#: src/xanoubis/model/AlfFilterPolicy.cpp:755
+#: src/xanoubis/model/AlfFilterPolicy.cpp:757
 #, c-format
 msgid "from %ls to %ls"
 msgstr ""
 
-#: src/xanoubis/model/AlfFilterPolicy.cpp:835
-#: src/xanoubis/model/AlfFilterPolicy.cpp:836
+#: src/xanoubis/model/AlfFilterPolicy.cpp:845
+#: src/xanoubis/model/AlfFilterPolicy.cpp:846
 msgid "Hosts"
 msgstr ""
 
-#: src/xanoubis/model/AlfFilterPolicy.cpp:836
+#: src/xanoubis/model/AlfFilterPolicy.cpp:846
 #, c-format
 msgid "%ls, %ls"
 msgstr ""
@@ -775,7 +775,7 @@ msgstr ""
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:89
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:200
-msgid "create"
+msgid "Create"
 msgstr ""
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:90
@@ -807,7 +807,7 @@ msgstr ""
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:147
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:259
-msgid "up"
+msgid "Up"
 msgstr ""
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:149
@@ -817,7 +817,7 @@ msgstr ""
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:153
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:265
-msgid "down"
+msgid "Down"
 msgstr ""
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:155
@@ -836,11 +836,14 @@ msgstr ""
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:168
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:274
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:432
+#: src/xanoubis/view/ModAnoubisPanelsBase.cpp:443
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:562
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:94
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:231
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:467
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:629
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:894
-msgid "delete"
+msgid "Delete"
 msgstr ""
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:170
@@ -870,7 +873,8 @@ msgid "Status:"
 msgstr ""
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:321
-msgid "import..."
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:182
+msgid "Import..."
 msgstr ""
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:322
@@ -878,7 +882,7 @@ msgid "import ruleset from file"
 msgstr ""
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:326
-msgid "reload from daemon"
+msgid "Reload from Daemon"
 msgstr ""
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:328
@@ -886,7 +890,8 @@ msgid "reload ruleset from daemon"
 msgstr ""
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:335
-msgid "export..."
+#: src/xanoubis/view/ModSfsPanelsBase.cpp:188
+msgid "Export..."
 msgstr ""
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:336
@@ -894,7 +899,8 @@ msgid "export ruleset to file (which has to be choosen)"
 msgstr ""
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:340
-msgid "activate"
+#: src/xanoubis/view/ModAnoubisPanelsBase.cpp:490
+msgid "Activate"
 msgstr ""
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:342
@@ -927,7 +933,7 @@ msgid ""
 msgstr ""
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:427
-msgid "add"
+msgid "Add"
 msgstr ""
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:428
@@ -1457,6 +1463,7 @@ msgstr ""
 
 #: src/xanoubis/view/MainFrameBase.cpp:56
 #: src/xanoubis/view/ModSfsListProperty.cpp:44
+#: src/xanoubis/view/RuleWizardPanelsBase.cpp:875
 #: src/xanoubis/view/RuleWizardSandboxProperty.cpp:45
 msgid "File"
 msgstr ""
@@ -1904,12 +1911,6 @@ msgstr ""
 msgid "Profile:"
 msgstr ""
 
-#: src/xanoubis/view/ModAnoubisPanelsBase.cpp:443
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:94
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:231
-msgid "Delete"
-msgstr ""
-
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:445
 msgid "Removes the selected profile"
 msgstr ""
@@ -1941,10 +1942,6 @@ msgid ""
 "daemon. Use \"Activate\" to achieve this."
 msgstr ""
 
-#: src/xanoubis/view/ModAnoubisPanelsBase.cpp:490
-msgid "Activate"
-msgstr ""
-
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:492
 msgid "Send the selected Profile to the Daemon"
 msgstr ""
@@ -1970,7 +1967,7 @@ msgid "Comment of selected version:"
 msgstr ""
 
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:552
-msgid "restore"
+msgid "Restore"
 msgstr ""
 
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:553
@@ -1978,7 +1975,7 @@ msgid "Restore the selected version of the profile."
 msgstr ""
 
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:557
-msgid "export ..."
+msgid "Export ..."
 msgstr ""
 
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:558
@@ -1990,9 +1987,7 @@ msgid "Delete the selected version of the profile."
 msgstr ""
 
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:567
-#: src/xanoubis/widgets/AnDetails.cpp:145
-#: src/xanoubis/widgets/AnDetails.cpp:146
-msgid "show"
+msgid "Show"
 msgstr ""
 
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:580
@@ -2000,7 +1995,7 @@ msgid "Version control"
 msgstr ""
 
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:592
-msgid "reload"
+msgid "Reload"
 msgstr ""
 
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:615
@@ -2694,16 +2689,8 @@ msgstr ""
 msgid "Enables signature support"
 msgstr ""
 
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:182
-msgid "Import..."
-msgstr ""
-
 #: src/xanoubis/view/ModSfsPanelsBase.cpp:184
 msgid "Import from file"
-msgstr ""
-
-#: src/xanoubis/view/ModSfsPanelsBase.cpp:188
-msgid "Export..."
 msgstr ""
 
 #: src/xanoubis/view/ModSfsPanelsBase.cpp:190
@@ -3190,7 +3177,7 @@ msgid "search"
 msgstr ""
 
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:167
-msgid "add selected service"
+msgid "Add selected Service"
 msgstr ""
 
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:169
@@ -3212,7 +3199,7 @@ msgid "Portnumber(s) or -range:"
 msgstr ""
 
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:218
-msgid "add custom service"
+msgid "Add custom Service"
 msgstr ""
 
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:219
@@ -3292,7 +3279,7 @@ msgid "Exceptions (programs started with own polcies):"
 msgstr ""
 
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:459
-msgid "add..."
+msgid "Add..."
 msgstr ""
 
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:460
@@ -3356,7 +3343,7 @@ msgid "List of allowed services:"
 msgstr ""
 
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:612
-msgid " add..."
+msgid " Add..."
 msgstr ""
 
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:613
@@ -3366,7 +3353,7 @@ msgid ""
 msgstr ""
 
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:620
-msgid "add default services"
+msgid "Add default Services"
 msgstr ""
 
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:622
@@ -3443,10 +3430,6 @@ msgstr ""
 msgid "Add:"
 msgstr ""
 
-#: src/xanoubis/view/RuleWizardPanelsBase.cpp:875
-msgid "file"
-msgstr ""
-
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:876
 msgid ""
 "opens a file-choose-dialog\n"
@@ -3454,7 +3437,7 @@ msgid ""
 msgstr ""
 
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:880
-msgid "directory"
+msgid "Directory"
 msgstr ""
 
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:881
@@ -3464,7 +3447,7 @@ msgid ""
 msgstr ""
 
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:885
-msgid "default permissions"
+msgid "Default Permissions"
 msgstr ""
 
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:906
@@ -4154,6 +4137,11 @@ msgstr ""
 msgid "hide"
 msgstr ""
 
+#: src/xanoubis/widgets/AnDetails.cpp:145
+#: src/xanoubis/widgets/AnDetails.cpp:146
+msgid "show"
+msgstr ""
+
 #: src/xanoubis/widgets/AnGrid.cpp:97 src/xanoubis/widgets/AnListCtrl.cpp:389
 msgid "Table columns"
 msgstr ""
@@ -4175,22 +4163,22 @@ msgid "Pick..."
 msgstr ""
 
 #: src/xanoubis/widgets/AnPickFromFs.cpp:64
-msgid "use right mouse button to alter pick mode"
+msgid "use the right mouse button to choose between files and directories"
 msgstr ""
 
-#: src/xanoubis/widgets/AnPickFromFs.cpp:68
+#: src/xanoubis/widgets/AnPickFromFs.cpp:69
 msgid "Pick a file"
 msgstr ""
 
-#: src/xanoubis/widgets/AnPickFromFs.cpp:70
+#: src/xanoubis/widgets/AnPickFromFs.cpp:71
 msgid "Pick a directory"
 msgstr ""
 
-#: src/xanoubis/widgets/AnPickFromFs.cpp:193
+#: src/xanoubis/widgets/AnPickFromFs.cpp:194
 msgid "Symbolic link was resolved"
 msgstr ""
 
-#: src/xanoubis/widgets/AnPickFromFs.cpp:199
+#: src/xanoubis/widgets/AnPickFromFs.cpp:200
 msgid "Failure to resolve: "
 msgstr ""
 

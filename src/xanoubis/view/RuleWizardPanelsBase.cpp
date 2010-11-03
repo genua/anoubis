@@ -164,7 +164,7 @@ RuleWizardAlfDlgAddServiceBase::RuleWizardAlfDlgAddServiceBase( wxWindow* parent
 	
 	addSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	addButton = new wxButton( this, wxID_ANY, _("add selected service"), wxDefaultPosition, wxDefaultSize, 0 );
+	addButton = new wxButton( this, wxID_ANY, _("Add selected Service"), wxDefaultPosition, wxDefaultSize, 0 );
 	addButton->Enable( false );
 	addButton->SetToolTip( _("close this dialog and return\nthe selected service") );
 	
@@ -215,7 +215,7 @@ RuleWizardAlfDlgAddServiceBase::RuleWizardAlfDlgAddServiceBase( wxWindow* parent
 	portTextCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
 	customSizer->Add( portTextCtrl, 1, wxALL|wxALIGN_CENTER_VERTICAL|wxEXPAND, 5 );
 	
-	customAddButton = new wxButton( this, wxID_ANY, _("add custom service"), wxDefaultPosition, wxDefaultSize, 0 );
+	customAddButton = new wxButton( this, wxID_ANY, _("Add custom Service"), wxDefaultPosition, wxDefaultSize, 0 );
 	customAddButton->SetToolTip( _("close this dialog and return\nthe given custom service") );
 	
 	customSizer->Add( customAddButton, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
@@ -456,7 +456,7 @@ RuleWizardContextExceptionPageBase::RuleWizardContextExceptionPageBase( wxWindow
 	wxBoxSizer* buttonSizer;
 	buttonSizer = new wxBoxSizer( wxHORIZONTAL );
 	
-	addButton = new wxButton( this, wxID_ANY, _("add..."), wxDefaultPosition, wxDefaultSize, 0 );
+	addButton = new wxButton( this, wxID_ANY, _("Add..."), wxDefaultPosition, wxDefaultSize, 0 );
 	addButton->SetToolTip( _("opens a file-choose-dialog and\nadds the result to the list") );
 	
 	buttonSizer->Add( addButton, 0, wxALL, 5 );
@@ -464,7 +464,7 @@ RuleWizardContextExceptionPageBase::RuleWizardContextExceptionPageBase( wxWindow
 	
 	buttonSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	deleteButton = new wxButton( this, wxID_ANY, _("delete"), wxDefaultPosition, wxDefaultSize, 0 );
+	deleteButton = new wxButton( this, wxID_ANY, _("Delete"), wxDefaultPosition, wxDefaultSize, 0 );
 	deleteButton->SetToolTip( _("removes the selected entry from the list") );
 	
 	buttonSizer->Add( deleteButton, 0, wxALL, 5 );
@@ -609,7 +609,7 @@ RuleWizardAlfServicePageBase::RuleWizardAlfServicePageBase( wxWindow* parent, wx
 	wxBoxSizer* buttonSizer;
 	buttonSizer = new wxBoxSizer( wxHORIZONTAL );
 	
-	addButton = new wxButton( this, wxID_ANY, _(" add..."), wxDefaultPosition, wxDefaultSize, 0 );
+	addButton = new wxButton( this, wxID_ANY, _(" Add..."), wxDefaultPosition, wxDefaultSize, 0 );
 	addButton->SetToolTip( _("opens a service-choose-dialog\nand adds the result to the list") );
 	
 	buttonSizer->Add( addButton, 0, wxALL, 5 );
@@ -617,7 +617,7 @@ RuleWizardAlfServicePageBase::RuleWizardAlfServicePageBase( wxWindow* parent, wx
 	
 	buttonSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	defaultsButton = new wxButton( this, wxID_ANY, _("add default services"), wxDefaultPosition, wxDefaultSize, 0 );
+	defaultsButton = new wxButton( this, wxID_ANY, _("Add default Services"), wxDefaultPosition, wxDefaultSize, 0 );
 	defaultsButton->Enable( false );
 	defaultsButton->SetToolTip( _("adds the default services to the list") );
 	
@@ -626,7 +626,7 @@ RuleWizardAlfServicePageBase::RuleWizardAlfServicePageBase( wxWindow* parent, wx
 	
 	buttonSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	deleteButton = new wxButton( this, wxID_ANY, _("delete"), wxDefaultPosition, wxDefaultSize, 0 );
+	deleteButton = new wxButton( this, wxID_ANY, _("Delete"), wxDefaultPosition, wxDefaultSize, 0 );
 	deleteButton->Enable( false );
 	deleteButton->SetToolTip( _("removes the selected items from the list") );
 	
@@ -872,17 +872,17 @@ RuleWizardSandboxFilesPageBase::RuleWizardSandboxFilesPageBase( wxWindow* parent
 	add_label->Wrap( -1 );
 	buttonSizer->Add( add_label, 0, wxALIGN_CENTER|wxALL, 5 );
 	
-	addFileButton = new wxButton( this, wxID_ANY, _("file"), wxDefaultPosition, wxDefaultSize, 0 );
+	addFileButton = new wxButton( this, wxID_ANY, _("File"), wxDefaultPosition, wxDefaultSize, 0 );
 	addFileButton->SetToolTip( _("opens a file-choose-dialog\nand adds the result to the list") );
 	
 	buttonSizer->Add( addFileButton, 0, wxALL, 5 );
 	
-	addDirectoryButton = new wxButton( this, wxID_ANY, _("directory"), wxDefaultPosition, wxDefaultSize, 0 );
+	addDirectoryButton = new wxButton( this, wxID_ANY, _("Directory"), wxDefaultPosition, wxDefaultSize, 0 );
 	addDirectoryButton->SetToolTip( _("opens a directory-choose-dialog\nand adds the result to the list") );
 	
 	buttonSizer->Add( addDirectoryButton, 0, wxALL, 5 );
 	
-	defaultsButton = new wxButton( this, wxID_ANY, _("default permissions"), wxDefaultPosition, wxDefaultSize, 0 );
+	defaultsButton = new wxButton( this, wxID_ANY, _("Default Permissions"), wxDefaultPosition, wxDefaultSize, 0 );
 	defaultsButton->Enable( false );
 	defaultsButton->SetToolTip( _("adds the default services to the list") );
 	
@@ -891,7 +891,7 @@ RuleWizardSandboxFilesPageBase::RuleWizardSandboxFilesPageBase( wxWindow* parent
 	
 	buttonSizer->Add( 40, 0, 1, wxEXPAND, 5 );
 	
-	deleteButton = new wxButton( this, wxID_ANY, _("delete"), wxDefaultPosition, wxDefaultSize, 0 );
+	deleteButton = new wxButton( this, wxID_ANY, _("Delete"), wxDefaultPosition, wxDefaultSize, 0 );
 	deleteButton->Enable( false );
 	deleteButton->SetToolTip( _("removes the selected items from the list") );
 	

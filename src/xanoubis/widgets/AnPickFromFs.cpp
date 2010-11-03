@@ -61,7 +61,8 @@ AnPickFromFs::AnPickFromFs(wxWindow *parent, wxWindowID id, const wxPoint & pos,
 
 	pickButton_ = new wxButton(this, wxID_ANY, _("Pick..."),
 	    wxDefaultPosition, wxDefaultSize, 0);
-	pickButton_->SetToolTip(_("use right mouse button to alter pick mode"));
+	pickButton_->SetToolTip(_("use the right mouse button to choose between"
+	    " files and directories"));
 	mainSizer->Add(pickButton_, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
 
 	fileMenuId_ = wxNewId();

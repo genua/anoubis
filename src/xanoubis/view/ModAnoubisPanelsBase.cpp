@@ -549,22 +549,22 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	VersionButtonSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	VersionRestoreButton = new wxButton( tb_MainAnoubisVersions, wxID_ANY, _("restore"), wxDefaultPosition, wxDefaultSize, 0 );
+	VersionRestoreButton = new wxButton( tb_MainAnoubisVersions, wxID_ANY, _("Restore"), wxDefaultPosition, wxDefaultSize, 0 );
 	VersionRestoreButton->SetToolTip( _("Restore the selected version of the profile.") );
 	
 	VersionButtonSizer->Add( VersionRestoreButton, 0, wxALL, 5 );
 	
-	VersionExportButton1 = new wxButton( tb_MainAnoubisVersions, wxID_ANY, _("export ..."), wxDefaultPosition, wxDefaultSize, 0 );
+	VersionExportButton1 = new wxButton( tb_MainAnoubisVersions, wxID_ANY, _("Export ..."), wxDefaultPosition, wxDefaultSize, 0 );
 	VersionExportButton1->SetToolTip( _("Export the selected Version of the profile to a file.") );
 	
 	VersionButtonSizer->Add( VersionExportButton1, 0, wxALL, 5 );
 	
-	VersionDeleteButton = new wxButton( tb_MainAnoubisVersions, wxID_ANY, _("delete"), wxDefaultPosition, wxDefaultSize, 0 );
+	VersionDeleteButton = new wxButton( tb_MainAnoubisVersions, wxID_ANY, _("Delete"), wxDefaultPosition, wxDefaultSize, 0 );
 	VersionDeleteButton->SetToolTip( _("Delete the selected version of the profile.") );
 	
 	VersionButtonSizer->Add( VersionDeleteButton, 0, wxALL, 5 );
 	
-	VersionShowButton = new wxButton( tb_MainAnoubisVersions, wxID_ANY, _("show"), wxDefaultPosition, wxDefaultSize, 0 );
+	VersionShowButton = new wxButton( tb_MainAnoubisVersions, wxID_ANY, _("Show"), wxDefaultPosition, wxDefaultSize, 0 );
 	VersionShowButton->Hide();
 	
 	VersionButtonSizer->Add( VersionShowButton, 0, wxALL, 5 );
@@ -589,7 +589,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	psHeadSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	psReloadButton = new wxButton( tb_PsBrowser, wxID_ANY, _("reload"), wxDefaultPosition, wxDefaultSize, 0 );
+	psReloadButton = new wxButton( tb_PsBrowser, wxID_ANY, _("Reload"), wxDefaultPosition, wxDefaultSize, 0 );
 	psReloadButton->Enable( false );
 	
 	psHeadSizer->Add( psReloadButton, 0, wxALL, 5 );

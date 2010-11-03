@@ -552,7 +552,7 @@
                                                     <property name="font"></property>
                                                     <property name="hidden">0</property>
                                                     <property name="id">wxID_ANY</property>
-                                                    <property name="label">create</property>
+                                                    <property name="label">Create</property>
                                                     <property name="maximum_size"></property>
                                                     <property name="minimum_size"></property>
                                                     <property name="name">appListCreateButton</property>
@@ -900,7 +900,7 @@
                                                     <property name="font"></property>
                                                     <property name="hidden">0</property>
                                                     <property name="id">wxID_ANY</property>
-                                                    <property name="label">up</property>
+                                                    <property name="label">Up</property>
                                                     <property name="maximum_size"></property>
                                                     <property name="minimum_size"></property>
                                                     <property name="name">appListUpButton</property>
@@ -952,7 +952,7 @@
                                                     <property name="font"></property>
                                                     <property name="hidden">0</property>
                                                     <property name="id">wxID_ANY</property>
-                                                    <property name="label">down</property>
+                                                    <property name="label">Down</property>
                                                     <property name="maximum_size"></property>
                                                     <property name="minimum_size"></property>
                                                     <property name="name">appListDownButton</property>
@@ -1066,7 +1066,7 @@
                                                     <property name="font"></property>
                                                     <property name="hidden">0</property>
                                                     <property name="id">wxID_ANY</property>
-                                                    <property name="label">delete</property>
+                                                    <property name="label">Delete</property>
                                                     <property name="maximum_size"></property>
                                                     <property name="minimum_size"></property>
                                                     <property name="name">appListDeleteButton</property>
@@ -1333,7 +1333,7 @@
                                                     <property name="font"></property>
                                                     <property name="hidden">0</property>
                                                     <property name="id">wxID_ANY</property>
-                                                    <property name="label">create</property>
+                                                    <property name="label">Create</property>
                                                     <property name="maximum_size"></property>
                                                     <property name="minimum_size"></property>
                                                     <property name="name">filterListCreateButton</property>
@@ -1681,7 +1681,7 @@
                                                     <property name="font"></property>
                                                     <property name="hidden">0</property>
                                                     <property name="id">wxID_ANY</property>
-                                                    <property name="label">up</property>
+                                                    <property name="label">Up</property>
                                                     <property name="maximum_size"></property>
                                                     <property name="minimum_size"></property>
                                                     <property name="name">filterListUpButton</property>
@@ -1733,7 +1733,7 @@
                                                     <property name="font"></property>
                                                     <property name="hidden">0</property>
                                                     <property name="id">wxID_ANY</property>
-                                                    <property name="label">down</property>
+                                                    <property name="label">Down</property>
                                                     <property name="maximum_size"></property>
                                                     <property name="minimum_size"></property>
                                                     <property name="name">filterListDownButton</property>
@@ -1795,7 +1795,7 @@
                                                     <property name="font"></property>
                                                     <property name="hidden">0</property>
                                                     <property name="id">wxID_ANY</property>
-                                                    <property name="label">delete</property>
+                                                    <property name="label">Delete</property>
                                                     <property name="maximum_size"></property>
                                                     <property name="minimum_size"></property>
                                                     <property name="name">filterListDeleteButton</property>
@@ -2140,7 +2140,7 @@
                                 <property name="font"></property>
                                 <property name="hidden">0</property>
                                 <property name="id">wxID_ANY</property>
-                                <property name="label">import...</property>
+                                <property name="label">Import...</property>
                                 <property name="maximum_size"></property>
                                 <property name="minimum_size"></property>
                                 <property name="name">footerImportButton</property>
@@ -2192,7 +2192,7 @@
                                 <property name="font"></property>
                                 <property name="hidden">0</property>
                                 <property name="id">wxID_ANY</property>
-                                <property name="label">reload from daemon</property>
+                                <property name="label">Reload from Daemon</property>
                                 <property name="maximum_size"></property>
                                 <property name="minimum_size"></property>
                                 <property name="name">footerReloadButton</property>
@@ -2254,7 +2254,7 @@
                                 <property name="font"></property>
                                 <property name="hidden">0</property>
                                 <property name="id">wxID_ANY</property>
-                                <property name="label">export...</property>
+                                <property name="label">Export...</property>
                                 <property name="maximum_size"></property>
                                 <property name="minimum_size"></property>
                                 <property name="name">footerExportButton</property>
@@ -2306,7 +2306,7 @@
                                 <property name="font"></property>
                                 <property name="hidden">0</property>
                                 <property name="id">wxID_ANY</property>
-                                <property name="label">activate</property>
+                                <property name="label">Activate</property>
                                 <property name="maximum_size"></property>
                                 <property name="minimum_size"></property>
                                 <property name="name">footerActivateButton</property>
@@ -2783,7 +2783,7 @@
                                             <property name="font"></property>
                                             <property name="hidden">0</property>
                                             <property name="id">ID_APP_PAGE_ADD</property>
-                                            <property name="label">add</property>
+                                            <property name="label">Add</property>
                                             <property name="maximum_size"></property>
                                             <property name="minimum_size"></property>
                                             <property name="name">addButton</property>
@@ -2835,7 +2835,7 @@
                                             <property name="font"></property>
                                             <property name="hidden">0</property>
                                             <property name="id">ID_APP_PAGE_DELETE</property>
-                                            <property name="label">delete</property>
+                                            <property name="label">Delete</property>
                                             <property name="maximum_size"></property>
                                             <property name="minimum_size"></property>
                                             <property name="name">deleteButton</property>

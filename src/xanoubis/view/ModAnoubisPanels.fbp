@@ -4436,7 +4436,7 @@
                                                     <property name="font"></property>
                                                     <property name="hidden">0</property>
                                                     <property name="id">wxID_ANY</property>
-                                                    <property name="label">restore</property>
+                                                    <property name="label">Restore</property>
                                                     <property name="maximum_size"></property>
                                                     <property name="minimum_size"></property>
                                                     <property name="name">VersionRestoreButton</property>
@@ -4488,7 +4488,7 @@
                                                     <property name="font"></property>
                                                     <property name="hidden">0</property>
                                                     <property name="id">wxID_ANY</property>
-                                                    <property name="label">export ...</property>
+                                                    <property name="label">Export ...</property>
                                                     <property name="maximum_size"></property>
                                                     <property name="minimum_size"></property>
                                                     <property name="name">VersionExportButton1</property>
@@ -4540,7 +4540,7 @@
                                                     <property name="font"></property>
                                                     <property name="hidden">0</property>
                                                     <property name="id">wxID_ANY</property>
-                                                    <property name="label">delete</property>
+                                                    <property name="label">Delete</property>
                                                     <property name="maximum_size"></property>
                                                     <property name="minimum_size"></property>
                                                     <property name="name">VersionDeleteButton</property>
@@ -4592,7 +4592,7 @@
                                                     <property name="font"></property>
                                                     <property name="hidden">1</property>
                                                     <property name="id">wxID_ANY</property>
-                                                    <property name="label">show</property>
+                                                    <property name="label">Show</property>
                                                     <property name="maximum_size"></property>
                                                     <property name="minimum_size"></property>
                                                     <property name="name">VersionShowButton</property>
@@ -4731,7 +4731,7 @@
                                                     <property name="font"></property>
                                                     <property name="hidden">0</property>
                                                     <property name="id">wxID_ANY</property>
-                                                    <property name="label">reload</property>
+                                                    <property name="label">Reload</property>
                                                     <property name="maximum_size"></property>
                                                     <property name="minimum_size"></property>
                                                     <property name="name">psReloadButton</property>
