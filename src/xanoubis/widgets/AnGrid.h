@@ -34,7 +34,12 @@
  * This realizes the Anoubis Grid-Widget.
  *
  * The AnGrid is an ordinary wxGrid, extended ty an event handler and
- * the ability to show and hide the columns on users choice.
+ * the ability to show and hide the columns on users choice. It is intended
+ * to work as a more flexible replacement for an AnListCtrl. Please consider
+ * using a ListCtrl instead of a Grid.
+ *
+ * An AnGrid does assumes that the selection mode is wxGridSelectRows
+ * and enforces that only a single row is selected at any given time.
  */
 class AnGrid : public wxGrid
 {
@@ -97,6 +102,13 @@ class AnGrid : public wxGrid
 		 * Overwrite method of wxGrid to intercept drawing of cursor.
 		 */
 		void DrawCellHighlight(wxDC &, const wxGridCellAttr *);
+
+		/**
+		 * Event handler for range select events. We use this
+		 * to fixup the selection if the user manages to select
+		 * multiple rows.
+		 */
+		void onGridCmdRangeSelect(wxGridRangeSelectEvent &);
 };
 
 #endif	/* _ANGRID_H_ */

@@ -42,6 +42,8 @@ AnGrid::AnGrid(wxWindow *parent, wxWindowID id, const wxPoint& pos,
 	    AnGrid::onLabelRightClick), NULL, this);
 	Connect(wxEVT_GRID_COL_SIZE, wxGridSizeEventHandler(
 	    AnGrid::onColumnSize), NULL, this);
+	Connect(wxEVT_GRID_RANGE_SELECT, wxGridRangeSelectEventHandler(
+	    AnGrid::onGridCmdRangeSelect), NULL, this);
 }
 
 AnGrid::~AnGrid(void)
@@ -50,6 +52,8 @@ AnGrid::~AnGrid(void)
 	    AnGrid::onLabelRightClick), NULL, this);
 	Disconnect(wxEVT_GRID_COL_SIZE, wxGridSizeEventHandler(
 	    AnGrid::onColumnSize), NULL, this);
+	Disconnect(wxEVT_GRID_RANGE_SELECT, wxGridRangeSelectEventHandler(
+	    AnGrid::onGridCmdRangeSelect), NULL, this);
 }
 
 void
@@ -131,4 +135,41 @@ AnGrid::onColumnSize(wxGridSizeEvent & event)
 	}
 
 	table->setColumnWidth(idx, GetColSize(idx));
+}
+
+/*
+ * This function makes sure that the following conditions hold for the
+ * selection:
+ * - If the grid cursor exists, its row must be selected and all other
+ *   rows are deselected.
+ * - If the grid cursor does not exist no selection must exist, either.
+ * Thus fixup is required if:
+ * - the grid cursor exists and the current selection includes other rows.
+ * - the grid cursor exists and the event would select rows that are
+ *   different from the grid cursor row.
+ * - the grid cursor does not exist but a selection exists.
+ * - the gird cursor does not exist and the event would select additional
+ *   cells.
+ */
+void
+AnGrid::onGridCmdRangeSelect(wxGridRangeSelectEvent &event)
+{
+	int		row = GetGridCursorRow();
+	wxArrayInt	sel;
+
+	event.Skip();
+	if (row >= 0) {
+		sel = GetSelectedRows();
+		if (sel.size() != 1 || sel[0] != row) {
+			SelectRow(row, false);
+			return;
+		}
+		if (!event.Selecting())
+			return;
+		if (event.GetTopRow() != row || event.GetBottomRow() != row)
+			SelectRow(row, false);
+	} else {
+		if (IsSelection() || event.Selecting())
+			ClearSelection();
+	}
 }
