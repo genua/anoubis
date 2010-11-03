@@ -695,8 +695,11 @@ reply_merge(struct eventdev_hdr *hdr, struct anoubisd_reply *sfs,
 	if (sb->ask)
 		goto use_sb;
 use_sfs:
-	if (sb)
+	if (sb) {
+		if (sb->log > sfs->log)
+			sfs->log = sb->log;
 		free(sb);
+	}
 	/*
 	 * Due to logging rules this might have changed from SFS to SANDBOX,
 	 * "You'd better change it back or we will both be sorry."
@@ -704,8 +707,11 @@ use_sfs:
 	hdr->msg_source = ANOUBIS_SOURCE_SFS;
 	return sfs;
 use_sb:
-	if (sfs)
+	if (sfs) {
+		if (sfs->log > sb->log)
+			sb->log = sfs->log;
 		free(sfs);
+	}
 	hdr->msg_source = ANOUBIS_SOURCE_SANDBOX;
 	return sb;
 }

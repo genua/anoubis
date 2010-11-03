@@ -221,7 +221,7 @@ pe_sfs_getrules(uid_t uid, int prio, const char *path,
  * Evaluate the SFS rules of the process and decide how to proceed with
  * the given file event. This function evaluates both admin and user SFS
  * rules.
- * 
+ *
  * @param proc The process that triggered the event.
  * @param fevent The file event.
  * @return An anoubis reply structure that contains the result of the
@@ -286,13 +286,15 @@ pe_decide_sfs(struct pe_proc *proc, struct pe_file_event *fevent)
 			if (res == NULL)
 				continue;
 			/*
-			 * XXX CEH: This does NOT honour a LOG directive
-			 * XXX CEH: on a CONTINUE action.
+			 * Always update the log level for a matching rule
+			 * but only if it increases. Keep in mind that a
+			 * CONTINUE rule can have a log directive as well.
 			 */
+			if (res->log > log)
+				log = res->log;
 			if (res->action == APN_ACTION_CONTINUE)
 				continue;
 			rule_id = rule->apn_id;
-			log = res->log;
 			prio = i;
 			switch (res->action) {
 			case APN_ACTION_ALLOW:

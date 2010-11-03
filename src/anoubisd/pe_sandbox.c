@@ -85,7 +85,7 @@ struct result {
  *     logging from an admin log allow rule by specifying an allow rule
  *     without log.
  * @param atype The access type.
- * @param prio The priority 
+ * @param prio The priority.
  */
 static void
 pe_sb_evaluate(struct apnarr_array rulelist, struct pe_file_event *sbevent,
@@ -425,23 +425,23 @@ pe_decide_sandbox(struct pe_proc *proc, struct pe_file_event *sbevent)
 		 * We had at least a partial match. Report the
 		 * rule IDs with the highest log level that we have.
 		 */
-		final.log = -1;
+		final.log = APN_LOG_NONE;
 		final.rule_id = 0;
 		final.prio = 0;
 		for (j=0; j<3; ++j) {
-			if (res[j].decision != final.decision)
-				continue;
-			if (res[j].log > final.log) {
+			/*
+			 * Always use the highest log level. It need not
+			 * match with the rule ID.
+			 */
+			if (res[j].log > final.log)
 				final.log = res[j].log;
-				final.rule_id = res[j].rule_id;
-				final.prio = res[j].prio;
-			}
+			if (res[j].decision != final.decision)
+			final.rule_id = res[j].rule_id;
+			final.prio = res[j].prio;
 		}
 	}
 
 	/* Logging */
-	if (final.log == -1)
-		final.log = APN_LOG_NONE;
 	if (final.log != APN_LOG_NONE) {
 		context = pe_context_dump(sbevent->rawhdr, proc, final.prio);
 		dump = pe_sb_dumpevent(sbevent);

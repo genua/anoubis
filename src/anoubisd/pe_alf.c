@@ -103,7 +103,7 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 	static char		*verdict[3] = { "allowed", "denied", "asked" };
 	struct alf_event	*msg;
 	struct anoubisd_reply	*reply;
-	int			 i, ret, decision, log, prio;
+	int			 i, ret, decision, log, thislog, prio;
 	u_int32_t		 rule_id = 0;
 	char			*dump = NULL;
 	char			*context = NULL;
@@ -119,7 +119,7 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 	}
 	msg = (struct alf_event *)(hdr + 1);
 
-	log = 0;
+	log = APN_LOG_NONE;
 	prio = -1;
 	rule_id = 0;
 	decision = -1;
@@ -128,9 +128,17 @@ pe_decide_alf(struct pe_proc *proc, struct eventdev_hdr *hdr)
 		DEBUG(DBG_PE_DECALF, "pe_decide_alf: prio %d context %p", i,
 		    pe_proc_get_context(proc, i));
 
+		thislog = APN_LOG_NONE;
 		ret = pe_alf_evaluate(proc, i, hdr->msg_uid, msg,
-		    &log, &rule_id);
+		    &thislog, &rule_id);
 		if (ret != -1) {
+			/*
+			 * User rules must not decrease the log level
+			 * of admin rules. This still allows a user to
+			 * change the reported rule ID, though!.
+			 */
+			if (thislog > log)
+				log = thislog;
 			decision = ret;
 			prio = i;
 		}
@@ -252,11 +260,8 @@ pe_alf_evaluate(struct pe_proc *proc, int prio, uid_t uid,
 			rule = NULL;
 		}
 	}
-	if (rule == NULL || msg == NULL) {
-		log_warnx("pe_alf_evaluate: empty rule or message");
+	if (rule == NULL || msg == NULL)
 		return -1;
-	}
-
 	if (time(&t) == (time_t)-1) {
 		log_warn("Cannot get current time");
 		master_terminate();
