@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: anoubis 0.9.3.26.227.413\n"
+"Project-Id-Version: anoubis 0.9.3.26.236.428\n"
 "Report-Msgid-Bugs-To: anoubis@lists.anoubis.org\n"
-"POT-Creation-Date: 2010-10-29 20:45+0200\n"
+"POT-Creation-Date: 2010-11-03 20:15+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -158,8 +158,8 @@ msgstr ""
 #: src/xanoubis/model/SfsOverviewTable.cpp:95
 #: src/xanoubis/model/SfsOverviewTable.cpp:127
 #: src/xanoubis/model/SfsOverviewTable.cpp:137
-#: src/xanoubis/view/DlgLogViewer.cpp:214
-#: src/xanoubis/view/DlgLogViewer.cpp:232
+#: src/xanoubis/view/DlgLogViewer.cpp:217
+#: src/xanoubis/view/DlgLogViewer.cpp:235
 #: src/xanoubis/view/DlgRuleEditorListProperty.cpp:125
 #: src/xanoubis/view/ModSfsListProperty.cpp:105
 #: src/xanoubis/view/ModSfsListProperty.cpp:125
@@ -182,7 +182,7 @@ msgid "yes"
 msgstr ""
 
 #: src/xanoubis/model/DefaultConversions.h:115
-#: src/xanoubis/view/MainFrame.cpp:298 src/xanoubis/view/MainFrameBase.cpp:112
+#: src/xanoubis/view/MainFrame.cpp:299 src/xanoubis/view/MainFrameBase.cpp:112
 #: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:2113
 msgid "no"
 msgstr ""
@@ -202,7 +202,7 @@ msgid "was denied"
 msgstr ""
 
 #: src/xanoubis/model/FilterPolicy.cpp:157
-#: src/xanoubis/view/DlgLogViewer.cpp:209
+#: src/xanoubis/view/DlgLogViewer.cpp:212
 #: src/xanoubis/view/VersionListCtrl.cpp:54
 msgid "Time"
 msgstr ""
@@ -571,17 +571,16 @@ msgstr ""
 msgid "Save ruleset"
 msgstr ""
 
-#: src/xanoubis/view/DlgLogViewer.cpp:210
+#: src/xanoubis/view/DlgLogViewer.cpp:213
 msgid "Module"
 msgstr ""
 
-#: src/xanoubis/view/DlgLogViewer.cpp:211
+#: src/xanoubis/view/DlgLogViewer.cpp:214
 msgid "Message"
 msgstr ""
 
 #: src/xanoubis/view/DlgLogViewerBase.h:68
-#: src/xanoubis/view/MainFrameBase.cpp:66
-msgid "Log Viewer"
+msgid "Anoubis Log Viewer"
 msgstr ""
 
 #: src/xanoubis/view/DlgPlaygroundCommitFileListImpl.cpp:147
@@ -597,24 +596,24 @@ msgstr ""
 msgid "Do you really want to commit the file(s)?"
 msgstr ""
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:656
-#: src/xanoubis/view/DlgRuleEditor.cpp:727
+#: src/xanoubis/view/DlgRuleEditor.cpp:659
+#: src/xanoubis/view/DlgRuleEditor.cpp:730
 #, c-format
 msgid "Delete rule %ld?"
 msgstr ""
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:657
-#: src/xanoubis/view/DlgRuleEditor.cpp:728 src/xanoubis/view/MainFrame.cpp:641
+#: src/xanoubis/view/DlgRuleEditor.cpp:660
+#: src/xanoubis/view/DlgRuleEditor.cpp:731 src/xanoubis/view/MainFrame.cpp:642
 msgid "Confirm"
 msgstr ""
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:701
+#: src/xanoubis/view/DlgRuleEditor.cpp:704
 msgid "Failed to clone the rule"
 msgstr ""
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:702
-#: src/xanoubis/view/DlgRuleEditor.cpp:971 src/xanoubis/view/MainFrame.cpp:553
-#: src/xanoubis/view/MainFrame.cpp:818
+#: src/xanoubis/view/DlgRuleEditor.cpp:705
+#: src/xanoubis/view/DlgRuleEditor.cpp:974 src/xanoubis/view/MainFrame.cpp:554
+#: src/xanoubis/view/MainFrame.cpp:819
 #: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1185
 #: src/xanoubis/view/ModSfsGenerateKeyDlg.cpp:192
 #: src/xanoubis/control/MainUtils.cpp:317
@@ -622,123 +621,120 @@ msgstr ""
 msgid "Error"
 msgstr ""
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:811
+#: src/xanoubis/view/DlgRuleEditor.cpp:814
 msgid "Couldn't create new ruleset!"
 msgstr ""
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:812
-#: src/xanoubis/view/DlgRuleEditor.cpp:817
-#: src/xanoubis/view/DlgRuleEditor.cpp:854
-#: src/xanoubis/view/DlgRuleEditor.cpp:942
+#: src/xanoubis/view/DlgRuleEditor.cpp:815
+#: src/xanoubis/view/DlgRuleEditor.cpp:820
+#: src/xanoubis/view/DlgRuleEditor.cpp:857
+#: src/xanoubis/view/DlgRuleEditor.cpp:905
+#: src/xanoubis/view/DlgRuleEditor.cpp:945
+#: src/xanoubis/view/DlgRuleEditor.cpp:1360
 #: src/xanoubis/view/MainFrameBase.cpp:64
 msgid "Rule Editor"
 msgstr ""
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:816
+#: src/xanoubis/view/DlgRuleEditor.cpp:819
 msgid "Created new ruleset."
 msgstr ""
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:853
+#: src/xanoubis/view/DlgRuleEditor.cpp:856
 msgid "Error: Couldn't create new application rule."
 msgstr ""
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:901
+#: src/xanoubis/view/DlgRuleEditor.cpp:904
 msgid "Cannot edit admin ruleset!"
 msgstr ""
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:902
-#: src/xanoubis/view/DlgRuleEditor.cpp:1357
-msgid "RuleEditor"
-msgstr ""
-
-#: src/xanoubis/view/DlgRuleEditor.cpp:941
+#: src/xanoubis/view/DlgRuleEditor.cpp:944
 msgid "Error: Couldn't create new filter rule."
 msgstr ""
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:962
+#: src/xanoubis/view/DlgRuleEditor.cpp:965
 msgid "Import policy file"
 msgstr ""
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:970 src/xanoubis/view/MainFrame.cpp:552
+#: src/xanoubis/view/DlgRuleEditor.cpp:973 src/xanoubis/view/MainFrame.cpp:553
 msgid "Couldn't import policy file: it has errors."
 msgstr ""
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:1039
+#: src/xanoubis/view/DlgRuleEditor.cpp:1042
 msgid "Export ruleset..."
 msgstr ""
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:1048
-#: src/xanoubis/view/MainFrame.cpp:572
+#: src/xanoubis/view/DlgRuleEditor.cpp:1051
+#: src/xanoubis/view/MainFrame.cpp:573
 msgid "Failed to export the ruleset into a file."
 msgstr ""
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:1049
-#: src/xanoubis/view/MainFrame.cpp:573
+#: src/xanoubis/view/DlgRuleEditor.cpp:1052
+#: src/xanoubis/view/MainFrame.cpp:574
 msgid "Export ruleset"
 msgstr ""
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:1078
+#: src/xanoubis/view/DlgRuleEditor.cpp:1081
 msgid "sending to daemon"
 msgstr ""
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:1083
-#: src/xanoubis/view/DlgRuleEditor.cpp:1107
+#: src/xanoubis/view/DlgRuleEditor.cpp:1086
+#: src/xanoubis/view/DlgRuleEditor.cpp:1110
 #: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:530
 #: src/xanoubis/view/ModSfsMainPanelImpl.cpp:524
 #: src/xanoubis/view/RuleWizard.cpp:423
 msgid "The entered password is incorrect."
 msgstr ""
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:1084
-#: src/xanoubis/view/DlgRuleEditor.cpp:1108
+#: src/xanoubis/view/DlgRuleEditor.cpp:1087
+#: src/xanoubis/view/DlgRuleEditor.cpp:1111
 #: src/xanoubis/view/RuleWizard.cpp:424
 msgid "Key Load Error"
 msgstr ""
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:1086
-#: src/xanoubis/view/DlgRuleEditor.cpp:1110
+#: src/xanoubis/view/DlgRuleEditor.cpp:1089
+#: src/xanoubis/view/DlgRuleEditor.cpp:1113
 #: src/xanoubis/view/ModSfsMainPanelImpl.cpp:523
 msgid "Wrong password!"
 msgstr ""
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:1090
+#: src/xanoubis/view/DlgRuleEditor.cpp:1093
 msgid "An error occured while sending policy to daemon."
 msgstr ""
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:1092
-#: src/xanoubis/view/DlgRuleEditor.cpp:1116
+#: src/xanoubis/view/DlgRuleEditor.cpp:1095
+#: src/xanoubis/view/DlgRuleEditor.cpp:1119
 #: src/xanoubis/view/RuleWizard.cpp:431
 msgid "Policy Load Error"
 msgstr ""
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:1094
+#: src/xanoubis/view/DlgRuleEditor.cpp:1097
 msgid "Error while sending policy to daemon!"
 msgstr ""
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:1114
+#: src/xanoubis/view/DlgRuleEditor.cpp:1117
 #: src/xanoubis/view/RuleWizard.cpp:429
 msgid "An error occured while sending admin policy to the daemon."
 msgstr ""
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:1118
+#: src/xanoubis/view/DlgRuleEditor.cpp:1121
 msgid "Error while sending admin policy to daemon!"
 msgstr ""
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:1300
+#: src/xanoubis/view/DlgRuleEditor.cpp:1303
 msgid "modified"
 msgstr ""
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:1302
+#: src/xanoubis/view/DlgRuleEditor.cpp:1305
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:310
 msgid "not modified"
 msgstr ""
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:1315
+#: src/xanoubis/view/DlgRuleEditor.cpp:1318
 #, c-format
 msgid "%ls %ls"
 msgstr ""
 
-#: src/xanoubis/view/DlgRuleEditor.cpp:1356
+#: src/xanoubis/view/DlgRuleEditor.cpp:1359
 msgid "Invalid user Name"
 msgstr ""
 
@@ -1299,18 +1295,18 @@ msgstr ""
 msgid "Open SFS Browser now!"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:249
+#: src/xanoubis/view/MainFrame.cpp:250
 #, c-format
 msgid ""
 "Display size of %dx%d is too small for the wizard.\n"
 "Presentation may be broken!"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:257
+#: src/xanoubis/view/MainFrame.cpp:258
 msgid "Wizard warning"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:295
+#: src/xanoubis/view/MainFrame.cpp:296
 #: src/xanoubis/view/ModAlfOverviewPanelImpl.cpp:76
 #: src/xanoubis/view/ModPlaygroundOverviewPanelImpl.cpp:87
 #: src/xanoubis/view/ModSbOverviewPanelImpl.cpp:75
@@ -1318,114 +1314,114 @@ msgstr ""
 msgid "ok"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:370
+#: src/xanoubis/view/MainFrame.cpp:371
 #, c-format
 msgid "Connection established with %ls"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:377
+#: src/xanoubis/view/MainFrame.cpp:378
 #, c-format
 msgid "Disconnected from %ls"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:383
+#: src/xanoubis/view/MainFrame.cpp:384
 #, c-format
 msgid "Connection to %ls failed!"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:390
+#: src/xanoubis/view/MainFrame.cpp:391
 #, c-format
 msgid ""
 "Because of an incompatible protocol version (xanoubis: %i, Anoubis daemon: %"
 "i) the connection was rejected. Please update the Anoubis daemon package!"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:397
+#: src/xanoubis/view/MainFrame.cpp:398
 #, c-format
 msgid ""
 "Because of an incompatible protocol version (xanoubis: %i, Anoubis daemon: %"
 "i) the connection was rejected. Please update the xanoubis package!"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:404
+#: src/xanoubis/view/MainFrame.cpp:405
 msgid "Protocol version mismatch"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:411
+#: src/xanoubis/view/MainFrame.cpp:412
 #, c-format
 msgid ""
 "The APN parser (v%i.%i) is newer than the parser of the Anoubis daemon (v%i.%"
 "i). Please update the Anoubis daemon package!"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:419
+#: src/xanoubis/view/MainFrame.cpp:420
 #, c-format
 msgid ""
 "The APN parser (v%i.%i) is older than the parser of the Anoubis daemon (v%i.%"
 "i). Please update the xanoubis package!"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:428
+#: src/xanoubis/view/MainFrame.cpp:429
 msgid "APN version mismatch"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:433
+#: src/xanoubis/view/MainFrame.cpp:434
 msgid ""
 "Because of missing keys the connection was rejected. Please check your key-"
 "configuration (certificate, private key)."
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:437
+#: src/xanoubis/view/MainFrame.cpp:438
 msgid "Missing key"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:443
+#: src/xanoubis/view/MainFrame.cpp:444
 msgid ""
 "Your configured certificate does not match with the certificate requested by "
 "the daemon. Please check your key-configuration or ask your system-"
 "administrator to configure your certificate at the daemon."
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:449
+#: src/xanoubis/view/MainFrame.cpp:450
 msgid "Certificate mismatch"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:456
+#: src/xanoubis/view/MainFrame.cpp:457
 msgid ""
 "Your configured certificate or private key is missconfigured or is not "
 "supported by Anoubis. Please check your certificate and private key."
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:460
+#: src/xanoubis/view/MainFrame.cpp:461
 msgid "Invalid Certificate / Private Key"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:464
+#: src/xanoubis/view/MainFrame.cpp:465
 msgid "An internal error occured while processing the authentication."
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:467
+#: src/xanoubis/view/MainFrame.cpp:468
 msgid "Internal Error"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:541
+#: src/xanoubis/view/MainFrame.cpp:542
 msgid "Choose a policy file:"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:561
+#: src/xanoubis/view/MainFrame.cpp:562
 #: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1651
 msgid "Choose a file to write the policies to:"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:641
+#: src/xanoubis/view/MainFrame.cpp:642
 msgid "Do you really want to close xanoubis?"
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:806
+#: src/xanoubis/view/MainFrame.cpp:807
 msgid "Communication error while fetching list of upgraded files."
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:810
+#: src/xanoubis/view/MainFrame.cpp:811
 #, c-format
 msgid ""
 "%hs.\n"
@@ -1433,7 +1429,7 @@ msgid ""
 "Could not fetch the list of upgraded files."
 msgstr ""
 
-#: src/xanoubis/view/MainFrame.cpp:814
+#: src/xanoubis/view/MainFrame.cpp:815
 #, c-format
 msgid ""
 "An unexpected error (%i) occured while while fetching list of upgraded files."
@@ -1474,6 +1470,10 @@ msgstr ""
 
 #: src/xanoubis/view/MainFrameBase.cpp:61
 msgid "Edit"
+msgstr ""
+
+#: src/xanoubis/view/MainFrameBase.cpp:66
+msgid "Log Viewer"
 msgstr ""
 
 #: src/xanoubis/view/MainFrameBase.cpp:68
@@ -1995,7 +1995,8 @@ msgid "Version control"
 msgstr ""
 
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:592
-msgid "Reload"
+#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:81
+msgid "Refresh View"
 msgstr ""
 
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:615
@@ -2277,12 +2278,8 @@ msgstr ""
 msgid "Playground Overview:"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:81
-msgid "Refresh view"
-msgstr ""
-
 #: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:89
-msgid "Commit files..."
+msgid "Commit Files..."
 msgstr ""
 
 #: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:106
@@ -4142,11 +4139,11 @@ msgstr ""
 msgid "show"
 msgstr ""
 
-#: src/xanoubis/widgets/AnGrid.cpp:97 src/xanoubis/widgets/AnListCtrl.cpp:389
+#: src/xanoubis/widgets/AnGrid.cpp:101 src/xanoubis/widgets/AnListCtrl.cpp:389
 msgid "Table columns"
 msgstr ""
 
-#: src/xanoubis/widgets/AnGrid.cpp:98 src/xanoubis/widgets/AnListCtrl.cpp:390
+#: src/xanoubis/widgets/AnGrid.cpp:102 src/xanoubis/widgets/AnListCtrl.cpp:390
 msgid "Please select the columns to be shown"
 msgstr ""
 

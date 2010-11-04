@@ -515,7 +515,7 @@
                                                             <property name="font"></property>
                                                             <property name="hidden">0</property>
                                                             <property name="id">PG_VIEW_REFRESHBUTTON</property>
-                                                            <property name="label">Refresh view</property>
+                                                            <property name="label">Refresh View</property>
                                                             <property name="maximum_size"></property>
                                                             <property name="minimum_size"></property>
                                                             <property name="name">pgRefreshButton</property>
@@ -577,7 +577,7 @@
                                                             <property name="font"></property>
                                                             <property name="hidden">0</property>
                                                             <property name="id">PG_VIEW_COMMITBUTTON</property>
-                                                            <property name="label">Commit files...</property>
+                                                            <property name="label">Commit Files...</property>
                                                             <property name="maximum_size"></property>
                                                             <property name="minimum_size"></property>
                                                             <property name="name">pgCommitButton</property>

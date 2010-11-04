@@ -902,7 +902,7 @@ DlgRuleEditor::onFilterListCreateButton(wxCommandEvent &)
 	}
 	if (ruleSet->isAdmin() && geteuid() != 0) {
 		wxString message = _("Cannot edit admin ruleset!");
-		anMessageBox(message, _("RuleEditor"),
+		anMessageBox(message, _("Rule Editor"),
 		    wxOK | wxICON_ERROR, this);
 		return;
 	}
@@ -1357,7 +1357,7 @@ DlgRuleEditor::setUser(wxString user)
 		wxString	msg;
 
 		msg = _("Invalid user Name");
-		anMessageBox(msg, _("RuleEditor"), wxOK | wxICON_ERROR, this);
+		anMessageBox(msg, _("Rule Editor"), wxOK | wxICON_ERROR, this);
 	} else {
 		setUser(uid);
 	}

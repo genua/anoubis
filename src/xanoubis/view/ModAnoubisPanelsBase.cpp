@@ -589,7 +589,7 @@ ModAnoubisMainPanelBase::ModAnoubisMainPanelBase( wxWindow* parent, wxWindowID i
 	
 	psHeadSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	psReloadButton = new wxButton( tb_PsBrowser, wxID_ANY, _("Reload"), wxDefaultPosition, wxDefaultSize, 0 );
+	psReloadButton = new wxButton( tb_PsBrowser, wxID_ANY, _("Refresh View"), wxDefaultPosition, wxDefaultSize, 0 );
 	psReloadButton->Enable( false );
 	
 	psHeadSizer->Add( psReloadButton, 0, wxALL, 5 );
@@ -1281,7 +1281,7 @@ ModAnoubisProfileSelectionDialogBase::ModAnoubisProfileSelectionDialogBase( wxWi
 	m_staticText40->Wrap( 250 );
 	bSizer30->Add( m_staticText40, 0, wxALL, 5 );
 	
-	profilesCombo = new wxComboBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 ); 
+	profilesCombo = new wxComboBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 );
 	bSizer30->Add( profilesCombo, 0, wxALL|wxEXPAND, 5 );
 	
 	buttonSizer = new wxStdDialogButtonSizer();

@@ -125,11 +125,11 @@ AnStatusBar::AnStatusBar(wxWindow *parent) : wxStatusBar(parent, ID_STATUSBAR)
 	    wxSize(70, 18), wxSUNKEN_BORDER);
 
 	raisedLogViewerLabel = new wxStaticText(raisedLogViewerPanel_,
-	    wxID_ANY, wxT("LogViewer"));
+	    wxID_ANY, wxT("Log Viewer"));
 	raisedLogViewerLabel->Wrap(-1);
 	raisedLogViewerLabel->SetFont(panelFont);
 	sunkenLogViewerLabel = new wxStaticText(sunkenLogViewerPanel_,
-	    wxID_ANY, wxT("LogViewer"));
+	    wxID_ANY, wxT("Log Viewer"));
 	sunkenLogViewerLabel->Wrap(-1);
 	sunkenLogViewerLabel->SetFont(panelFont);
 
@@ -161,11 +161,11 @@ AnStatusBar::AnStatusBar(wxWindow *parent) : wxStatusBar(parent, ID_STATUSBAR)
 	    wxDefaultPosition, wxSize(70, 18), wxSUNKEN_BORDER);
 
 	raisedRuleEditorLabel = new wxStaticText(raisedRuleEditorPanel_,
-	    wxID_ANY, wxT("RuleEditor"));
+	    wxID_ANY, wxT("Rule Editor"));
 	raisedRuleEditorLabel->Wrap(-1);
 	raisedRuleEditorLabel->SetFont(panelFont);
 	sunkenRuleEditorLabel = new wxStaticText(sunkenRuleEditorPanel_,
-	    wxID_ANY, wxT("RuleEditor"));
+	    wxID_ANY, wxT("Rule Editor"));
 	sunkenRuleEditorLabel->Wrap(-1);
 	sunkenRuleEditorLabel->SetFont(panelFont);
 

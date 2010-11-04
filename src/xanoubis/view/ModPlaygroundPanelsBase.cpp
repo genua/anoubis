@@ -78,7 +78,7 @@ ModPlaygroundMainPanelBase::ModPlaygroundMainPanelBase( wxWindow* parent, wxWind
 	wxBoxSizer* pgButtonSizer;
 	pgButtonSizer = new wxBoxSizer( wxHORIZONTAL );
 	
-	pgRefreshButton = new wxButton( pgPage, PG_VIEW_REFRESHBUTTON, _("Refresh view"), wxDefaultPosition, wxDefaultSize, 0 );
+	pgRefreshButton = new wxButton( pgPage, PG_VIEW_REFRESHBUTTON, _("Refresh View"), wxDefaultPosition, wxDefaultSize, 0 );
 	pgRefreshButton->Enable( false );
 	
 	pgButtonSizer->Add( pgRefreshButton, 0, wxALIGN_LEFT|wxALIGN_TOP|wxALL, 5 );
@@ -86,7 +86,7 @@ ModPlaygroundMainPanelBase::ModPlaygroundMainPanelBase( wxWindow* parent, wxWind
 	
 	pgButtonSizer->Add( 0, 0, 1, wxEXPAND, 5 );
 	
-	pgCommitButton = new wxButton( pgPage, PG_VIEW_COMMITBUTTON, _("Commit files..."), wxDefaultPosition, wxDefaultSize, 0 );
+	pgCommitButton = new wxButton( pgPage, PG_VIEW_COMMITBUTTON, _("Commit Files..."), wxDefaultPosition, wxDefaultSize, 0 );
 	pgCommitButton->Enable( false );
 	
 	pgButtonSizer->Add( pgCommitButton, 0, wxALL, 5 );

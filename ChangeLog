@@ -108,7 +108,7 @@ o xanoubis: Support for editing default policies.
 o xanoubis: Provide a dialogue to generate key-pair within the GUI.
 o xanoubis: comprehensive performance improvements regarding the handling
   of very large policies within xanoubis.
-o xanoubis: The nosfs-flag can now be set within the RuleEditor and
+o xanoubis: The nosfs-flag can now be set within the Rule Editor and
   RuleWizard.
 o Support for SCTP was added to apn, anoubis daemon and xanoubis.
 o Support for eCryptfs was added to the Anoubis Linux kernel.
@@ -139,7 +139,7 @@ o xanoubis: Fix a bug were index counting for visible/invisible columns could
   lead to a memory access behind the actual end of the list in question.
 o xanoubis: Fix a segfault when xanoubis gets closed while in the upgrade
   message dialogue.
-o xanoubis: Fix view in RuleEditor to show non-bold fonts in headers, refuse
+o xanoubis: Fix view in Rule Editor to show non-bold fonts in headers, refuse
 selection of these and store the size persistently.
 o xanoubis: Change permissions of .xanoubis directory to 0700.
 o xanoubis: Fix AnPickFromFS Dialogue to handle files as well as directories.
@@ -162,10 +162,10 @@ o xanoubis: Fix ComCsumAddTask to calculate checksum/signature in CsumCalcTask
   not until both are meant to be send to daemon to improve performance.
 o xanoubis: Redesign of the ALF, SB and SFS overview module.
 o xanoubis: Double-Clicking on an empty application rules now also opens the
-  RuleEditor.
+  Rule Editor.
 o xanoubis: A dialogue is shown to the user if a non-matching key-pair was
   detected.
-o xanoubis: Redesign of the RuleEditor which now uses a grid widget.
+o xanoubis: Redesign of the Rule Editor which now uses a grid widget.
 o xanoubis: Provide better error messages if an error occurs during
   authentication.
 o Linux kernel: Update to 2.6.32
