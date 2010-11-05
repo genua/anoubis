@@ -24,6 +24,10 @@ o introduced 'anoubisctl stat' command
 o added kernel based SFS/Sandbox exceptions
 o added some library support for mount points and file names
 o added some more tray icons in different sizes (for smoother scaling)
+o created userland and kernel source repository on sourceforge.net
+o kernel source packages for .deb and .rpm now also available
+o copy button in rule editor (for cloning rules)
+
 
 Bugfixes:
 
@@ -48,8 +52,10 @@ o enabled POSIX style option parsing in anoubis cli binaries
 o corrected several broken translations and provided some missing ones
 o fixed NULL dereference bug found by clang and added asserts (false positives)
 o refined certificate error messages when connecting to daemon
+o made sure that only a single line can be selected in AnGrids
 o fixed runaway modprobe loop when loading sha256 early
 o fixed potential message passing lockup in anoubisd
+o worked around startup bug in autostart for gnome
 o fixed reported crash with NULL sock->sk fields
 o several valgrind fixes (xanoubis and anoubisd)
 o fixed issues in Linux kernel found by sparse
@@ -57,13 +63,20 @@ o fixed some sparse findings in userspace
 o fixed Use-after Free Bug in anoubisd
 o fixed Fedora/OpenSuSE kernel patches
 o fixed 64Bit kernel stack corruption
+o fixed debian init script dependcies
+o waiting for /dev/log during startup
 o addressed some cppcheck findings
+o fixed package dependencies typo
+o fixed waiting for task bar area
+o fixed kernel directory events
+o fixed logging for admin rules
 o some kernel package fixes
 o fixed OpenBSD kernel Bugs
 o fixed Ubuntu distro kernel
 o quieted some clang warnings
 o fixed message compatibility
 o ComCSMultiTask design fix
+
 
 Other changes:
 
@@ -74,6 +87,8 @@ o updated the Linux kernel to 2.6.32.24
 o unified write dispatcher functions
 o Fedora/OpenSuSE packaging cleanups
 o updated anoubisd.conf in packages
+o improved ALF module rule display
+o application-icons for Anoubis
 o extensive code refactoring
 o added a CSMulti request class
 o made queues aware of write events
@@ -85,7 +100,9 @@ o converted Checksum removes to CSMulti requests
 o made sure that SFS does not consume all inodes
 o increased tolerance for newlines in the APN syntax
 o make more use of the buffer overflow library
+o removed splint-includes.h from source tarball
 o use non-root values for free space calculation
+o removed kernel-header-dependencies from userland
 o force a dynamic policy change when the UID of a process changes
 o updated and extended documentation (for users as well as developers)
 o improved many error messages to offer more details / be more specific
