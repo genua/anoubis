@@ -95,7 +95,7 @@ AnoubisGuiApp::~AnoubisGuiApp(void)
 bool AnoubisGuiApp::OnInit()
 {
 	bool	hasLocale;
-	int	versionError;
+	int	versionError, ret;
 
 	if (!wxApp::OnInit())
 		return false;
@@ -128,9 +128,13 @@ bool AnoubisGuiApp::OnInit()
 	 * Initilize config dirctory and check version of the config
 	 * directory.
 	 */
-	if (anoubis_ui_init() < 0) {
+	ret = anoubis_ui_init();
+	if (ret < 0) {
 		anMessageBox(_("Error while initialising anoubis_ui"),
 		    _("Error"), wxOK | wxICON_ERROR, mainFrame);
+	} else if (ret == 0 && hide_) {
+		fprintf(stderr, "xanoubis is already running\n");
+		exit(1);
 	}
 	versionError = anoubis_ui_readversion();
 	if (versionError > ANOUBIS_UI_VER) {

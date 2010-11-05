@@ -41,6 +41,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/mman.h>
+#include <sys/file.h>
 
 #include <dirent.h>
 #include <fcntl.h>
@@ -766,6 +767,7 @@ apnvm_remove(apnvm *vm, const char *user, const char *profile, int no)
 	return (APNVM_OK);
 }
 
+/* See the header file for documentation of the return codes! */
 int
 anoubis_ui_init(void)
 {
@@ -773,44 +775,49 @@ anoubis_ui_init(void)
 	char		*homepath = NULL,
 			*anoubispath = NULL,
 			*versionpath = NULL;
-	FILE		*fd = NULL;
+	FILE		*fp = NULL;
+	int		 ret;
+	static int	 lockfd = -1;
 
 	homepath = getenv("HOME");
 	if (homepath == NULL)
 		return -ENOENT;
+	if (lockfd != -1)
+		return -EBUSY;
 	if (asprintf(&anoubispath, "%s/%s", homepath, ANOUBIS_UI_DIR) < 0)
-		return (-errno);
+		goto syserr;
 
-	if (stat(anoubispath, &sb) >= 0) {
-		free(anoubispath);
-		return 1;
-	}
-
-	/**
-	 * If config directory does not exist, create an initial one.
-	 */
+	if (asprintf(&versionpath, "%s/version", anoubispath) < 0)
+		goto syserr;
+	if (stat(versionpath, &sb) < 0 && errno != ENOENT)
+		goto syserr;
 	if (errno == ENOENT) {
-		if (mkdir(anoubispath, S_IRWXU) < 0) {
-			free(anoubispath);
-			return (-errno);
-		}
-		if (asprintf(&versionpath, "%s/version",
-		    anoubispath) < 0) {
-			free(anoubispath);
-			return (-errno);
-		}
-		free(anoubispath);
-		if ((fd = fopen(versionpath, "w+")) == NULL) {
-			free(versionpath);
-			return (-errno);
-		}
-		fprintf(fd, "%d", ANOUBIS_UI_VER);
-		fclose(fd);
-		free(versionpath);
-		return (1);
+		/* mkdir errors will show up in fopen below. */
+		mkdir(anoubispath, S_IRWXU);
+		if ((fp = fopen(versionpath, "w+")) == NULL)
+			goto syserr;
+		fprintf(fp, "%d", ANOUBIS_UI_VER);
+		fclose(fp);
 	}
-	free(anoubispath);
-	return (-errno);
+	lockfd = open(versionpath, O_RDONLY);
+	if (lockfd < 0)
+		goto syserr;
+	ret = 1;
+	if (flock(lockfd, LOCK_EX | LOCK_NB) < 0) {
+		if (errno != EWOULDBLOCK)
+			goto syserr;
+		ret = 0;	/* Not the first UI to initialize. */
+	}
+	if (flock(lockfd, LOCK_SH) < 0)
+		goto syserr;
+	return ret;
+syserr:
+	ret = -errno;
+	if (anoubispath)
+		free(anoubispath);
+	if (versionpath)
+		free(versionpath);
+	return ret;
 }
 
 int

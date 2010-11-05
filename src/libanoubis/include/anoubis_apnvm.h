@@ -196,10 +196,15 @@ apnvm_result apnvm_insert(apnvm *, const char *, const char *,
 apnvm_result apnvm_remove(apnvm *, const char *, const char *, int);
 
 /**
- * Creates the configuration directory of an anoubis user
+ * Creates the configuration directory of an anoubis user. It includes a
+ * locking mechanism that allows the caller to detect if another UI is
+ * already running. This is implemented by a shared flock lock on the
+ * version file in the xanoubis directory.
  *
- * On success 0 is returned. 1 is returned if an error
- * occured.
+ * @return A negative error code if initialization failed. Zero if
+ *     initialization succeeded but another UI is already running and
+ *     a positive value if this is the first UI that is currently running.
+ *
  */
 int anoubis_ui_init(void);
 
