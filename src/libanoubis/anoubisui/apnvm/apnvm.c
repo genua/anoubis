@@ -811,6 +811,8 @@ anoubis_ui_init(void)
 	}
 	if (flock(lockfd, LOCK_SH) < 0)
 		goto syserr;
+	free(versionpath);
+	free(anoubispath);
 	return ret;
 syserr:
 	ret = -errno;
