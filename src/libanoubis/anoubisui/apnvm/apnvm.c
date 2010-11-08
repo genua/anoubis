@@ -779,11 +779,12 @@ anoubis_ui_init(void)
 	int		 ret;
 	static int	 lockfd = -1;
 
+	/* Already initialized? Repeated inits happen in playground CLI! */
+	if (lockfd != -1)
+		return 0;
 	homepath = getenv("HOME");
 	if (homepath == NULL)
 		return -ENOENT;
-	if (lockfd != -1)
-		return -EBUSY;
 	if (asprintf(&anoubispath, "%s/%s", homepath, ANOUBIS_UI_DIR) < 0)
 		goto syserr;
 
@@ -817,6 +818,10 @@ syserr:
 		free(anoubispath);
 	if (versionpath)
 		free(versionpath);
+	if (lockfd >= 0) {
+		close(lockfd);
+		lockfd = -1;
+	}
 	return ret;
 }
 
