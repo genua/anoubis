@@ -192,15 +192,18 @@ AnPolicyNotebook::onAddButton(wxCommandEvent &)
 		appPolicy_->addBinary(_("(new)"));
 		newIndex = appPolicy_->getBinaryCount() - 1;
 
-		/* Create page. */
-		if (!wasAny) {
-			appPage = new DlgRuleEditorAppPage(this);
-			appPage->setBinaryIndex(newIndex);
-			appPage->select(appPolicy_);
-			AddPage(appPage, _("(new)"), true);
-		} else {
-			SetPageText(GetSelection(), _("(new)"));
+		if (wasAny) {
+			/* Remove the any-placeholder from the notebook */
+			wxNotebookPage *page = GetPage(0);
+			RemovePage(0);
+			delete page;
 		}
+
+		/* Create page. */
+		appPage = new DlgRuleEditorAppPage(this);
+		appPage->setBinaryIndex(newIndex);
+		appPage->select(appPolicy_);
+		AddPage(appPage, _("(new)"), true);
 	}
 	if (ctxPolicy_ != NULL) {
 		wasAny = ctxPolicy_->isAny();
