@@ -29,14 +29,10 @@
 #define __ModAlfOverviewPanelImpl__
 
 #include "ModAlfPanelsBase.h"
-#include <wx/icon.h>
 
 class ModAlfOverviewPanelImpl : public ModAlfOverviewPanelBase, public Subject
 {
 	private:
-		wxIcon			*stateIconNormal_;
-		wxIcon			*stateIconError_;
-		wxIcon			*stateIconNotConnected_;
 		wxString		notAnswered_;
 
 	public:

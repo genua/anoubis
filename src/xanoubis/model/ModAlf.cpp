@@ -28,6 +28,7 @@
 #include <wx/stdpaths.h>
 #include <wx/string.h>
 
+#include "AnIconList.h"
 #include "Module.h"
 #include "ModAlf.h"
 #include "ModAlfMainPanelImpl.h"
@@ -51,7 +52,6 @@ ModAlf::ModAlf(wxWindow *parent) : Module(), Observer(NULL)
 
 	isActive_ = false;
 
-	loadIcon(wxT("ModAlf_black_48.png"));
 	mainPanel_->Hide();
 	overviewPanel_->Hide();
 
@@ -69,6 +69,12 @@ int
 ModAlf::getToolbarId(void)
 {
 	return (MODALF_ID_TOOLBAR);
+}
+
+wxIcon *
+ModAlf::getIcon(void) const
+{
+	return AnIconList::instance()->getIcon(AnIconList::ICON_ALF_BLACK_48);
 }
 
 void

@@ -27,6 +27,7 @@
 
 #include <wx/icon.h>
 
+#include "AnIconList.h"
 #include "JobCtrl.h"
 #include "MainUtils.h"
 #include "ModSb.h"
@@ -36,11 +37,6 @@
 ModSbOverviewPanelImpl::ModSbOverviewPanelImpl(wxWindow* parent,
     wxWindowID id) : ModSbOverviewPanelBase(parent, id)
 {
-	MainUtils *utils = MainUtils::instance();
-
-	stateIconNormal_ = utils->loadIcon(wxT("ModSb_ok_48.png"));
-	stateIconError_ = utils->loadIcon(wxT("ModSb_error_48.png"));
-	stateIconNotConnected_ = utils->loadIcon(wxT("ModSb_black_48.png"));
 	notAnswered_.Printf(wxT("%d"), 0);
 
 	AnEvents::instance()->Connect(anEVT_OPEN_SB_ESCALATIONS,
@@ -53,30 +49,30 @@ ModSbOverviewPanelImpl::~ModSbOverviewPanelImpl(void)
 	AnEvents::instance()->Disconnect(anEVT_OPEN_SB_ESCALATIONS,
 	    wxCommandEventHandler(ModSbOverviewPanelImpl::OnOpenSbEscalation),
 	    NULL, this);
-
-	delete stateIconNormal_;
-	delete stateIconError_;
-	delete stateIconNotConnected_;
 }
 
 void
 ModSbOverviewPanelImpl::update(void)
 {
+	AnIconList	*iconList;
 	wxString	stateText;
 	wxIcon		*stateIcon;
 	ModSb		*module;
 
+	iconList = AnIconList::instance();
 	module = (ModSb *)(MainUtils::instance()->getModule(SB));
 	if (!JobCtrl::instance()->isConnected()) {
 		stateText = _("not connected");
-		stateIcon = stateIconNotConnected_;
+		stateIcon = iconList->getIcon(AnIconList::ICON_SB_BLACK_48);
 	} else {
 		if (module->isActive()) {
 			stateText = _("ok");
-			stateIcon = stateIconNormal_;
+			stateIcon =
+			    iconList->getIcon(AnIconList::ICON_SB_OK_48);
 		} else {
 			stateText = _("not active");
-			stateIcon = stateIconError_;
+			stateIcon =
+			    iconList->getIcon(AnIconList::ICON_SB_ERROR_48);
 		}
 	}
 	txt_statusValue->SetLabel(stateText);

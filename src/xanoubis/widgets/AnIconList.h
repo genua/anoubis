@@ -54,6 +54,9 @@ class AnIconList : public Singleton<AnIconList>
 			ICON_WARNING,		/*!< Warning icon */
 			ICON_ERROR,		/*!< Error icon */
 			ICON_ALERT,		/*!< Alert icon */
+			ICON_QUESTION,		/*!< Question icon */
+			ICON_DOWN,		/*!< Down-arrow icon */
+			ICON_RIGHT,		/*!< Right-arrow icon */
 			ICON_OK_48,		/*!< Big ok icon */
 			ICON_WARNING_48,	/*!< Big warning icon */
 			ICON_ERROR_48,		/*!< Big error icon */
@@ -76,16 +79,42 @@ class AnIconList : public Singleton<AnIconList>
 			ICON_ANOUBIS_QUESTION_24,/*!< Anoubis question-icon */
 			ICON_ANOUBIS_QUESTION_32,/*!< Anoubis question-icon */
 			ICON_ANOUBIS_QUESTION_48,/*!< Anoubis question-icon */
+			ICON_ALF_BLACK_48,	/*!< Basic Alf-icon */
+			ICON_ALF_OK_48,		/*!< Alf-ok icon */
+			ICON_ALF_ERROR_48,	/*!< Alf-error icon */
+			ICON_OVERVIEW_48,	/*!< Basic Overview-icon */
+			ICON_PG_BLACK_48,	/*!< Basic playground-icon */
+			ICON_PG_OK_48,		/*!< Playground-ok icon */
+			ICON_PG_ERROR_48,	/*!< Playground-error icon */
+			ICON_SB_BLACK_48,	/*!< Basic playground-icon */
+			ICON_SB_OK_48,		/*!< Playground-ok icon */
+			ICON_SB_ERROR_48,	/*!< Playground-error icon */
+			ICON_SFS_BLACK_48,	/*!< Basic Sfs-icon */
+			ICON_SFS_OK_48,		/*!< Sfs-ok icon */
+			ICON_SFS_ERROR_48,	/*!< Sfs-error icon */
 			ICON_ANOUBIS_MAX
 		};
 
 		~AnIconList(void);
 
+		/**
+		 * Returns the icon-data with the given id.
+		 * @param id The requested id
+		 * @return Icon-data
+		 */
 		wxIcon	*getIcon(AnIconList::IconId id) {
-			return icons_[id];
+			return icons_[id].second;
 		}
+
+		/**
+		 * Returns the path where the icon with the given id is stored.
+		 * @param id The requested id
+		 * @return Path of requested icon
+		 */
+		wxString getPath(AnIconList::IconId);
+
 		wxIcon	GetIcon(int id) {
-			return *icons_[id];
+			return *icons_[id].second;
 		}
 	protected:
 		/**
@@ -101,7 +130,14 @@ class AnIconList : public Singleton<AnIconList>
 		 */
 		void addIcon(const wxString &);
 
-		std::vector<wxIcon *>		icons_;
+		/**
+		 * Returns the path of the picture with the given name.
+		 * @param iconName The name of the picture
+		 * @return Path, where the picture is stored.
+		 */
+		static wxString getIconPath(const wxString &);
+
+		std::vector<std::pair<wxString, wxIcon *> > icons_;
 
 	friend class Singleton<AnIconList>;
 };

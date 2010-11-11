@@ -28,6 +28,7 @@
 #include <wx/icon.h>
 #include <wx/string.h>
 
+#include "AnIconList.h"
 #include "MainUtils.h"
 #include "Module.h"
 
@@ -38,13 +39,10 @@ Module::Module(void)
 	state_ = wxString(_("unknown"));
 	mainPanel_ = NULL;
 	overviewPanel_ = NULL;
-	icon_ = NULL;
 }
 
 Module::~Module(void)
 {
-	if (icon_ != NULL)
-		delete icon_;
 	mainPanel_ = NULL;
 }
 
@@ -83,16 +81,4 @@ wxPanel *
 Module::getOverviewPanel(void)
 {
 	return (overviewPanel_);
-}
-
-wxIcon *
-Module::getIcon(void)
-{
-	return (icon_);
-}
-
-void
-Module::loadIcon(wxString iconName)
-{
-	icon_ = MainUtils::instance()->loadIcon(iconName);
 }

@@ -34,6 +34,7 @@
 #include <wx/stattext.h>
 #include <wx/string.h>
 
+#include "AnIconList.h"
 #include "Module.h"
 #include "ModOverview.h"
 #include "ModOverviewMainPanelImpl.h"
@@ -45,7 +46,6 @@ ModOverview::ModOverview(wxWindow *parent) : Module()
 	mainPanel_ = new ModOverviewMainPanelImpl(parent,
 	    MODOVERVIEW_ID_MAINPANEL);
 
-	loadIcon(wxT("ModOverview_black_48.png"));
 	mainPanel_->Hide();
 }
 
@@ -59,6 +59,12 @@ int
 ModOverview::getToolbarId(void)
 {
 	return (MODOVERVIEW_ID_TOOLBAR);
+}
+
+wxIcon *
+ModOverview::getIcon(void) const
+{
+	return AnIconList::instance()->getIcon(AnIconList::ICON_OVERVIEW_48);
 }
 
 void

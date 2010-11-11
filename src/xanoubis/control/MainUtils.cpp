@@ -132,41 +132,6 @@ MainUtils::getGroupNameById(gid_t gid) const
 }
 
 wxString
-MainUtils::getIconPath(wxString iconName)
-{
-	wxString iconFileName;
-
-#ifdef USE_WXGUITESTING
-	/* In case of wxGuiTest (running on xen test) icons are in root fs. */
-	return wxT("/") + iconName;
-#endif /* USE_WXGUITESTING */
-
-	iconFileName = paths_.GetDataDir() + wxT("/icons/") + iconName;
-	if (!::wxFileExists(iconFileName)) {
-		/*
-		 * We didn't find our icon (where --prefix told us)!
-		 * Try to take executable path into account. This should
-		 * fix a missing --prefix as the matter in our build and test
-		 * environment with aegis.
-		 */
-		iconFileName  = ::wxPathOnly(paths_.GetExecutablePath()) +
-		    wxT("/../../..") + iconFileName;
-	}
-	/*
-	 * XXX: by ch: No error check is done, 'cause wxIcon will open a error
-	 * dialog, complaining about missing icons itself. But maybe a logging
-	 * message should be generated when logging will been implemented.
-	 */
-	return iconFileName;
-}
-
-wxIcon *
-MainUtils::loadIcon(wxString iconName)
-{
-	return (new wxIcon(getIconPath(iconName), wxBITMAP_TYPE_PNG));
-}
-
-wxString
 MainUtils::getDataDir(void)
 {
 	return (paths_.GetUserConfigDir());

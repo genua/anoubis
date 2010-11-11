@@ -63,10 +63,6 @@ class ModSbOverviewPanelImpl : public ModSbOverviewPanelBase, public Subject
 		void OnOpenSbEscalation(wxCommandEvent&);
 
 	private:
-		wxIcon *stateIconNormal_; /**< normal state icon. */
-		wxIcon *stateIconError_; /**< error state icon. */
-		wxIcon *stateIconNotConnected_; /**< connection state icon */
-
 		wxString notAnswered_; /**< message showing unanswered events */
 };
 

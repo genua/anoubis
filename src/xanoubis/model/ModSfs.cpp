@@ -28,6 +28,7 @@
 #include <wx/stdpaths.h>
 #include <wx/string.h>
 
+#include "AnIconList.h"
 #include "Module.h"
 #include "ModSfs.h"
 #include "ModSfsMainPanelImpl.h"
@@ -51,7 +52,6 @@ ModSfs::ModSfs(wxWindow *parent) : Module(), Observer(NULL)
 
 	isActive_ = false;
 
-	loadIcon(wxT("ModSfs_black_48.png"));
 	mainPanel_->Hide();
 	overviewPanel_->Hide();
 
@@ -69,6 +69,12 @@ int
 ModSfs::getToolbarId(void)
 {
 	return (MODSFS_ID_TOOLBAR);
+}
+
+wxIcon *
+ModSfs::getIcon(void) const
+{
+	return AnIconList::instance()->getIcon(AnIconList::ICON_SFS_BLACK_48);
 }
 
 void

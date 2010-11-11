@@ -124,16 +124,6 @@ class AnDetails : public wxPanel
 		wxStaticLine* detailsLine_;
 
 		/**
-		 * This holds the arrow image (arrow down).
-		 */
-		wxIcon *downArrow_;
-
-		/**
-		 * This holds the arrow image (arrow right).
-		 */
-		wxIcon *rightArrow_;
-
-		/**
 		 * Event handler for left mouse button releases.
 		 * This is called by the arrow-icon and the lable-text.
 		 * @param[in] 1st The mouse event.

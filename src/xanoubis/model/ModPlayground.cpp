@@ -28,6 +28,7 @@
 #include <wx/stdpaths.h>
 #include <wx/string.h>
 
+#include "AnIconList.h"
 #include "Module.h"
 #include "ModPlayground.h"
 #include "ModPlaygroundMainPanelImpl.h"
@@ -51,7 +52,6 @@ ModPlayground::ModPlayground(wxWindow *parent) : Module(), Observer(NULL)
 
 	isActive_ = false;
 
-	loadIcon(wxT("ModPlayground_black_48.png"));
 	mainPanel_->Hide();
 	overviewPanel_->Hide();
 
@@ -70,6 +70,12 @@ int
 ModPlayground::getToolbarId(void)
 {
 	return (MODPG_ID_TOOLBAR);
+}
+
+wxIcon *
+ModPlayground::getIcon(void) const
+{
+	return AnIconList::instance()->getIcon(AnIconList::ICON_PG_BLACK_48);
 }
 
 void

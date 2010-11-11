@@ -27,6 +27,7 @@
 
 #include <wx/icon.h>
 
+#include "AnIconList.h"
 #include "JobCtrl.h"
 #include "MainUtils.h"
 #include "ModAlf.h"
@@ -36,11 +37,6 @@
 ModAlfOverviewPanelImpl::ModAlfOverviewPanelImpl(wxWindow* parent,
     wxWindowID id) : ModAlfOverviewPanelBase(parent, id)
 {
-	MainUtils *utils = MainUtils::instance();
-
-	stateIconNormal_ = utils->loadIcon(wxT("ModAlf_ok_48.png"));
-	stateIconError_ = utils->loadIcon(wxT("ModAlf_error_48.png"));
-	stateIconNotConnected_ = utils->loadIcon(wxT("ModAlf_black_48.png"));
 	notAnswered_.Printf(wxT("%d"), 0);
 
 	AnEvents::instance()->Connect(anEVT_OPEN_ALF_ESCALATIONS,
@@ -53,31 +49,31 @@ ModAlfOverviewPanelImpl::~ModAlfOverviewPanelImpl(void)
 	AnEvents::instance()->Disconnect(anEVT_OPEN_ALF_ESCALATIONS,
 	    wxCommandEventHandler(ModAlfOverviewPanelImpl::OnOpenAlfEscalation),
 		NULL, this);
-
-	delete stateIconNormal_;
-	delete stateIconError_;
-	delete stateIconNotConnected_;
 }
 
 void
 ModAlfOverviewPanelImpl::update(void)
 {
+	AnIconList	*iconList;
 	wxString	 stateText;
 	wxIcon		*stateIcon;
 	ModAlf		*module;
 
+	iconList = AnIconList::instance();
 	module = (ModAlf *)(MainUtils::instance()->getModule(ALF));
 
 	if (!JobCtrl::instance()->isConnected()) {
 		 stateText = _("not connected");
-		 stateIcon = stateIconNotConnected_;
+		 stateIcon = iconList->getIcon(AnIconList::ICON_ALF_BLACK_48);
 	} else {
 		if (module->isActive()) {
 			stateText = _("ok");
-			stateIcon = stateIconNormal_;
+			stateIcon =
+			    iconList->getIcon(AnIconList::ICON_ALF_OK_48);
 		} else {
 			stateText = _("not active");
-			stateIcon = stateIconError_;
+			stateIcon =
+			    iconList->getIcon(AnIconList::ICON_ALF_ERROR_48);
 		}
 	}
 

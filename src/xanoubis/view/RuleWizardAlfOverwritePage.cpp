@@ -25,6 +25,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "AnIconList.h"
 #include "AppPolicy.h"
 #include "MainUtils.h"
 #include "PolicyCtrl.h"
@@ -51,9 +52,8 @@ RuleWizardAlfOverwritePage::RuleWizardAlfOverwritePage(wxWindow *parent,
 	    " application. Thereby you may specify new alf policies.");
 	helpLabel->SetLabel(text);
 
-	icon = MainUtils::instance()->loadIcon(wxT("General_problem_48.png"));
+	icon = AnIconList::instance()->getIcon(AnIconList::ICON_PROBLEM_48);
 	alertIcon->SetIcon(*icon);
-	delete icon;
 
 	text = _("For this application\nalf policies\nalready exists.");
 	alertLabel->SetLabel(text);

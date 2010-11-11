@@ -77,8 +77,6 @@ class MainUtils : public Singleton<MainUtils>
 		uid_t getUserIdByName(wxString) const;
 		wxString getUserNameById(uid_t) const;
 		wxString getGroupNameById(gid_t) const;
-		wxString getIconPath(wxString);
-		wxIcon *loadIcon(wxString);
 		wxString getDataDir(void);
 		void status(wxString);
 		void initModules(MainFrame *);

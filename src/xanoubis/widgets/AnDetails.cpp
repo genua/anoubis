@@ -26,7 +26,7 @@
  */
 
 #include "AnDetails.h"
-#include "MainUtils.h"
+#include "AnIconList.h"
 
 AnDetails::AnDetails(wxWindow *parent, wxWindowID id, const wxPoint & pos,
     const wxSize & size, long style, const wxString & name)
@@ -34,13 +34,9 @@ AnDetails::AnDetails(wxWindow *parent, wxWindowID id, const wxPoint & pos,
 {
 	wxBoxSizer* mainSizer;
 	wxBoxSizer* headSizer;
-	MainUtils*  utils;
 
 	isVisible_    = false;
 	contentSizer_ = NULL;
-	utils	      = MainUtils::instance();
-	downArrow_    = utils->loadIcon(wxT("General_downarrow_16.png"));
-	rightArrow_   = utils->loadIcon(wxT("General_rightarrow_16.png"));
 
 	mainSizer = new wxBoxSizer(wxVERTICAL);
 	headSizer = new wxBoxSizer(wxHORIZONTAL);
@@ -77,8 +73,6 @@ AnDetails::~AnDetails(void)
 	    wxMouseEventHandler(AnDetails::onDetailClick), NULL, this);
 	detailsLabel_->Disconnect(wxEVT_LEFT_UP,
 	    wxMouseEventHandler(AnDetails::onDetailClick), NULL, this);
-	delete downArrow_;
-	delete rightArrow_;
 }
 
 void
@@ -126,7 +120,9 @@ AnDetails::onDetailClick(wxMouseEvent &event)
 void
 AnDetails::update(void)
 {
-	wxWindow *parent;
+	wxWindow	*parent;
+	wxIcon		*icon;
+	wxString	 tooltip;
 
 	parent = GetParent();
 
@@ -137,14 +133,16 @@ AnDetails::update(void)
 	}
 
 	if (isVisible_) {
-		detailsIcon_->SetIcon(*downArrow_);
-		detailsIcon_->SetToolTip(_("hide"));
-		detailsLabel_->SetToolTip(_("hide"));
+		icon = AnIconList::instance()->getIcon(AnIconList::ICON_DOWN);
+		tooltip = _("hide");
 	} else {
-		detailsIcon_->SetIcon(*rightArrow_);
-		detailsIcon_->SetToolTip(_("show"));
-		detailsLabel_->SetToolTip(_("show"));
+		icon = AnIconList::instance()->getIcon(AnIconList::ICON_RIGHT);
+		tooltip = _("show");
 	}
+
+	detailsIcon_->SetIcon(*icon);
+	detailsIcon_->SetToolTip(tooltip);
+	detailsLabel_->SetToolTip(tooltip);
 
 	/* update the view */
 	if (parent == NULL) {

@@ -49,6 +49,7 @@ class ModSfs : public Module, private Observer
 
 		int	getBaseId(void);
 		int	getToolbarId(void);
+		wxIcon	*getIcon(void) const;
 		void	update(void);
 
 		void update(Subject *);

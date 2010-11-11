@@ -70,6 +70,12 @@ class ModPlayground : public Module, private Observer
 		int getToolbarId(void);
 
 		/**
+		 * Returns the icon of the playground-module.
+		 * @return Icon of module
+		 */
+		wxIcon *getIcon(void) const;
+
+		/**
 		 * Update panels.
 		 * @param None.
 		 * @return Nothing.

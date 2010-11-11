@@ -43,7 +43,6 @@ ModAnoubis::ModAnoubis(wxWindow *parent) : Module(), Observer(NULL)
 	mainPanel_ = new ModAnoubisMainPanelImpl(parent,
 	    MODANOUBIS_ID_MAINPANEL);
 
-	loadIcon(wxT("ModAnoubis_black_48.png"));
 	mainPanel_->Hide();
 	overviewPanel_->Hide();
 }
@@ -58,6 +57,13 @@ int
 ModAnoubis::getToolbarId(void)
 {
 	return (MODANOUBIS_ID_TOOLBAR);
+}
+
+wxIcon *
+ModAnoubis::getIcon(void) const
+{
+	return AnIconList::instance()->getIcon(
+	    AnIconList::ICON_ANOUBIS_BLACK_48);
 }
 
 void

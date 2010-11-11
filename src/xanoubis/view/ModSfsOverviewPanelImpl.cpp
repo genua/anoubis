@@ -27,6 +27,7 @@
 
 #include <wx/icon.h>
 
+#include "AnIconList.h"
 #include "JobCtrl.h"
 #include "MainUtils.h"
 #include "ModSfs.h"
@@ -35,11 +36,6 @@
 ModSfsOverviewPanelImpl::ModSfsOverviewPanelImpl(wxWindow* parent,
     wxWindowID id) : ModSfsOverviewPanelBase(parent, id)
 {
-	MainUtils *utils = MainUtils::instance();
-
-	stateIconNormal_ = utils->loadIcon(wxT("ModSfs_ok_48.png"));
-	stateIconError_ = utils->loadIcon(wxT("ModSfs_error_48.png"));
-	stateIconNotConnected_ = utils->loadIcon(wxT("ModSfs_black_48.png"));
 	notAnswered_.Printf(wxT("%d"), 0);
 
 	AnEvents::instance()->Connect(anEVT_OPEN_SFS_ESCALATIONS,
@@ -52,30 +48,30 @@ ModSfsOverviewPanelImpl::~ModSfsOverviewPanelImpl(void)
 	AnEvents::instance()->Disconnect(anEVT_OPEN_SFS_ESCALATIONS,
 	    wxCommandEventHandler(ModSfsOverviewPanelImpl::OnOpenSfsEscalation),
 	    NULL, this);
-
-	delete stateIconNormal_;
-	delete stateIconError_;
-	delete stateIconNotConnected_;
 }
 
 void
 ModSfsOverviewPanelImpl::update(void)
 {
+	AnIconList	*iconList;
 	wxString	 stateText;
 	wxIcon		*stateIcon;
 	ModSfs		*module;
 
+	iconList = AnIconList::instance();
 	module = (ModSfs *)(MainUtils::instance()->getModule(SFS));
 	if (!JobCtrl::instance()->isConnected()) {
 		stateText = _("not connected");
-		stateIcon = stateIconNotConnected_;
+		stateIcon = iconList->getIcon(AnIconList::ICON_SFS_BLACK_48);
 	} else {
 		if (module->isActive()) {
 			stateText = _("ok");
-			stateIcon = stateIconNormal_;
+			stateIcon =
+			    iconList->getIcon(AnIconList::ICON_SFS_OK_48);
 		} else {
 			stateText = _("not active");
-			stateIcon = stateIconError_;
+			stateIcon =
+			    iconList->getIcon(AnIconList::ICON_SFS_ERROR_48);
 		}
 	}
 

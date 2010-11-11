@@ -48,6 +48,7 @@ class ModOverview : public Module
 
 		int	getBaseId(void);
 		int	getToolbarId(void);
+		wxIcon	*getIcon(void) const;
 		void	update(void);
 		void	addModules(Module* []);
 };

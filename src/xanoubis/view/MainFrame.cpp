@@ -66,18 +66,18 @@ MainFrame::MainFrame(wxWindow *parent, bool trayVisible)
 {
 	AnEvents	*anEvents;
 	JobCtrl		*jobCtrl;
-	MainUtils	*utils;
+	AnIconList	*iconList;
 
 	exit_ = false;
 
-	utils = MainUtils::instance();
+	iconList = AnIconList::instance();
 	messageAlertCount_ = 0;
 	messageEscalationCount_ = 0;
-	aboutIcon_ = utils->loadIcon(wxT("ModAnoubis_black_48.png"));
-	okIcon_ = utils->loadIcon(wxT("General_ok_16.png"));
-	errorIcon_ = utils->loadIcon(wxT("General_error_16.png"));
-	alertIcon_ = utils->loadIcon(wxT("General_alert_16.png"));
-	escalationIcon_ = utils->loadIcon(wxT("General_question_16.png"));
+	aboutIcon_ = iconList->getIcon(AnIconList::ICON_ANOUBIS_BLACK_48);
+	okIcon_ = iconList->getIcon(AnIconList::ICON_OK);
+	errorIcon_ = iconList->getIcon(AnIconList::ICON_ERROR);
+	alertIcon_ = iconList->getIcon(AnIconList::ICON_ALERT);
+	escalationIcon_ = iconList->getIcon(AnIconList::ICON_QUESTION);
 	SetIcon(*aboutIcon_);
 
 	anEvents = AnEvents::instance();
@@ -160,11 +160,6 @@ MainFrame::~MainFrame()
 
 	SetStatusBar(NULL);
 	delete an_statusbar;
-	delete aboutIcon_;
-	delete okIcon_;
-	delete errorIcon_;
-	delete alertIcon_;
-	delete escalationIcon_;
 	if (trayIcon_ != 0)
 		delete trayIcon_;
 	if (ruleEditor_ != NULL)

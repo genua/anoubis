@@ -36,9 +36,6 @@ class ModPlaygroundOverviewPanelImpl : public ModPlaygroundOverviewPanelBase,
     public Subject
 {
 	private:
-		wxIcon			*stateIconNormal_;
-		wxIcon			*stateIconError_;
-		wxIcon			*stateIconNotConnected_;
 		wxString		runningPgs_;
 
 	public:

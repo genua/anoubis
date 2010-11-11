@@ -69,6 +69,12 @@ class ModSb : public Module, private Observer
 		int     getToolbarId(void);
 
 		/**
+		 * Returns the icon of the sandbox-module.
+		 * @return Icon of module
+		 */
+		wxIcon *getIcon(void) const;
+
+		/**
 		 * This gets called when view ModSb has to be updated.
 		 * @param None.
 		 * @return Nothing.

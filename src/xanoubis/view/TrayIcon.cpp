@@ -54,7 +54,6 @@
 #include "JobCtrl.h"
 #include "main.h"
 #include "TrayIcon.h"
-#include "MainUtils.h"
 #include "NotificationCtrl.h"
 #include "PlaygroundCtrl.h"
 
@@ -443,16 +442,16 @@ TrayIcon::systemNotify(const gchar *module, const gchar *message,
 	}
 #endif
 
+	AnIconList *iconList = AnIconList::instance();
+
 	/* determine the icon used for systemNotify */
 	if (messagePriority == NOTIFY_URGENCY_LOW)
-		ipath += MainUtils::instance()->getIconPath(
-		     wxT("ModAnoubis_black_48.png"));
+		ipath += iconList->getPath(AnIconList::ICON_ANOUBIS_BLACK_48);
 	if (messagePriority == NOTIFY_URGENCY_NORMAL)
-		ipath += MainUtils::instance()->getIconPath(
-		    wxT("ModAnoubis_alert_48.png"));
+		ipath += iconList->getPath(AnIconList::ICON_ANOUBIS_ALERT_48);
 	if (messagePriority == NOTIFY_URGENCY_CRITICAL)
-		ipath += MainUtils::instance()->getIconPath(
-		    wxT("ModAnoubis_question_48.png"));
+		ipath +=
+		    iconList->getPath(AnIconList::ICON_ANOUBIS_QUESTION_48);
 
 	strlcpy(buffer, (const char*)ipath.mb_str(wxConvUTF8), sizeof(buffer));
 	uri = buffer;

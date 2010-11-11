@@ -27,6 +27,7 @@
 
 #include <wx/icon.h>
 
+#include "AnIconList.h"
 #include "JobCtrl.h"
 #include "MainUtils.h"
 #include "ModPlayground.h"
@@ -36,12 +37,6 @@
 ModPlaygroundOverviewPanelImpl::ModPlaygroundOverviewPanelImpl(wxWindow* parent,
     wxWindowID id) : ModPlaygroundOverviewPanelBase(parent, id)
 {
-	MainUtils *utils = MainUtils::instance();
-
-	stateIconNormal_ = utils->loadIcon(wxT("ModPlayground_ok_48.png"));
-	stateIconError_ = utils->loadIcon(wxT("ModPlayground_error_48.png"));
-	stateIconNotConnected_ = utils->loadIcon(
-	    wxT("ModPlayground_black_48.png"));
 	runningPgs_.Printf(wxT("%d"), 0);
 
 	AnEvents::instance()->Connect(anEVT_OPEN_PLAYGROUND_ESCALATIONS,
@@ -56,10 +51,6 @@ ModPlaygroundOverviewPanelImpl::~ModPlaygroundOverviewPanelImpl(void)
 	    wxCommandEventHandler(
 		ModPlaygroundOverviewPanelImpl::onPlaygroundEscalation),
 	    NULL, this);
-
-	delete stateIconNormal_;
-	delete stateIconError_;
-	delete stateIconNotConnected_;
 }
 
 void
@@ -73,22 +64,26 @@ ModPlaygroundOverviewPanelImpl::onPlaygroundEscalation(wxCommandEvent &event)
 void
 ModPlaygroundOverviewPanelImpl::update(void)
 {
+	AnIconList	*iconList;
 	wxString	 stateText;
 	wxIcon		*stateIcon;
 	ModPlayground	*module;
 
+	iconList = AnIconList::instance();
 	module = (ModPlayground *)(MainUtils::instance()->getModule(PG));
 
 	if (!JobCtrl::instance()->isConnected()) {
 		 stateText = _("not connected");
-		 stateIcon = stateIconNotConnected_;
+		 stateIcon = iconList->getIcon(AnIconList::ICON_PG_BLACK_48);
 	} else {
 		if (module->isActive()) {
 			stateText = _("ok");
-			stateIcon = stateIconNormal_;
+			stateIcon =
+			    iconList->getIcon(AnIconList::ICON_PG_OK_48);
 		} else {
 			stateText = _("not active");
-			stateIcon = stateIconError_;
+			stateIcon =
+			    iconList->getIcon(AnIconList::ICON_PG_ERROR_48);
 		}
 	}
 

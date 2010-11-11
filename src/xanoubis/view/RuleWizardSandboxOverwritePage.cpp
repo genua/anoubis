@@ -25,7 +25,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "MainUtils.h"
+#include "AnIconList.h"
 #include "PolicyCtrl.h"
 #include "PolicyRuleSet.h"
 #include "RuleWizardSandboxOverwritePage.h"
@@ -50,9 +50,8 @@ RuleWizardSandboxOverwritePage::RuleWizardSandboxOverwritePage(wxWindow *parent,
 	    " application. Thereby you may specify new sandbox policies.");
 	helpLabel->SetLabel(text);
 
-	icon = MainUtils::instance()->loadIcon(wxT("General_problem_48.png"));
+	icon = AnIconList::instance()->getIcon(AnIconList::ICON_PROBLEM_48);
 	alertIcon->SetIcon(*icon);
-	delete icon;
 
 	text = _("For this application\nsandbox policies\nalready exist.");
 	alertLabel->SetLabel(text);

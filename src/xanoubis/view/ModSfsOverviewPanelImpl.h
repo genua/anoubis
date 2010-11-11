@@ -36,9 +36,6 @@
 class ModSfsOverviewPanelImpl : public ModSfsOverviewPanelBase, public Subject
 {
 	private:
-		wxIcon		*stateIconNormal_;
-		wxIcon		*stateIconError_;
-		wxIcon		*stateIconNotConnected_;
 		wxString	notAnswered_;
 
 	public:

@@ -25,6 +25,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "AnIconList.h"
 #include "Module.h"
 #include "ModSb.h"
 #include "ModSbMainPanelImpl.h"
@@ -47,7 +48,6 @@ ModSb::ModSb(wxWindow *parent) : Module(), Observer(NULL)
 
 	isActive_ = false;
 
-	loadIcon(wxT("ModSb_black_48.png"));
 	mainPanel_->Hide();
 	overviewPanel_->Hide();
 
@@ -65,6 +65,12 @@ int
 ModSb::getToolbarId(void)
 {
 	return (MODSB_ID_TOOLBAR);
+}
+
+wxIcon *
+ModSb::getIcon(void) const
+{
+	return AnIconList::instance()->getIcon(AnIconList::ICON_SB_BLACK_48);
 }
 
 void

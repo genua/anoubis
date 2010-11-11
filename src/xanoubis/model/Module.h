@@ -49,9 +49,6 @@ class Module {
 		wxString	 state_;
 		wxPanel		*mainPanel_;
 		wxPanel		*overviewPanel_;
-		wxIcon		*icon_;
-
-		virtual void	 loadIcon(wxString);
 
 	public:
 		Module(void);
@@ -63,7 +60,7 @@ class Module {
 		virtual void		setState(const wxString& state);
 		virtual wxPanel		*getMainPanel(void);
 		virtual wxPanel		*getOverviewPanel(void);
-		virtual wxIcon		*getIcon(void);
+		virtual wxIcon		*getIcon(void) const = 0;
 		virtual int		getBaseId(void) = 0;
 		virtual int		getToolbarId(void) = 0;
 		virtual void		update(void) = 0;

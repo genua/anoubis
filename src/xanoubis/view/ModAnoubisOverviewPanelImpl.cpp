@@ -25,6 +25,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "AnIconList.h"
 #include "JobCtrl.h"
 #include "MainUtils.h"
 #include "ModAnoubisOverviewPanelImpl.h"
@@ -32,10 +33,9 @@
 ModAnoubisOverviewPanelImpl::ModAnoubisOverviewPanelImpl(wxWindow* parent, \
     wxWindowID id) : ModAnoubisOverviewPanelBase(parent, id)
 {
-	wxIcon *icon = MainUtils::instance()->loadIcon(
-	    wxT("ModAnoubis_black_48.png"));
+	wxIcon *icon = AnIconList::instance()->getIcon(
+	    AnIconList::ICON_ANOUBIS_BLACK_48);
 	anoubisStatusIcon->SetIcon(*icon);
-	delete icon;
 
 	setConnectionState(false);
 
