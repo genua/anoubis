@@ -99,43 +99,18 @@ AnIconList::getPath(AnIconList::IconId id)
 void
 AnIconList::addIcon(const wxString &name)
 {
-	wxString path = getIconPath(name);
+	wxString path;
+	
+#ifdef USE_WXGUITESTING
+	/* In case of wxGuiTest (running on xen test) icons are in root fs. */
+	path = wxT("/") + name;
+#else
+	path = wxStandardPaths::Get().GetDataDir() + wxT("/icons/") + name;
+#endif /* USE_WXGUITESTING */
+
 	wxIcon *icon = new wxIcon(path, wxBITMAP_TYPE_PNG);
 
 	icons_.push_back(std::pair<wxString, wxIcon *>(path, icon));
-}
-
-wxString
-AnIconList::getIconPath(const wxString &iconName)
-{
-	wxStandardPaths paths;
-	wxString iconFileName;
-
-	/* XXX: You should use wxStandardPaths::Get() */
-	paths.SetInstallPrefix(wxT(PACKAGE_PREFIX));
-
-#ifdef USE_WXGUITESTING
-	/* In case of wxGuiTest (running on xen test) icons are in root fs. */
-	return wxT("/") + iconName;
-#endif /* USE_WXGUITESTING */
-
-	iconFileName = paths.GetDataDir() + wxT("/icons/") + iconName;
-	if (!::wxFileExists(iconFileName)) {
-		/*
-		 * We didn't find our icon (where --prefix told us)!
-		 * Try to take executable path into account. This should
-		 * fix a missing --prefix as the matter in our build and test
-		 * environment with aegis.
-		 */
-		iconFileName  = ::wxPathOnly(paths.GetExecutablePath()) +
-		    wxT("/../../..") + iconFileName;
-	}
-	/*
-	 * XXX: by ch: No error check is done, 'cause wxIcon will open a error
-	 * dialog, complaining about missing icons itself. But maybe a logging
-	 * message should be generated when logging will been implemented.
-	 */
-	return iconFileName;
 }
 
 AnIconList::~AnIconList(void)

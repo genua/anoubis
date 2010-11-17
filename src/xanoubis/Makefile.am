@@ -581,6 +581,8 @@ xanoubis_SOURCES= \
 	ctassert.h \
 	main.cpp \
 	main.h \
+	traits.cpp \
+	traits.h \
 	libapn.h
 
 #

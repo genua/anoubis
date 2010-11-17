@@ -118,6 +118,16 @@ class AnoubisGuiApp : public PARENTCLASS, private PassphraseReader
 
 	protected:
 		/**
+		 * Creates a customized wxAppTraits-instance.
+		 *
+		 * The traits-object returned by this method is returned by
+		 * GetTraits().
+		 *
+		 * @return Anoubis-traits
+		 */
+		wxAppTraits *CreateTraits(void);
+
+		/**
 		 * Relay notifications.
 		 * XXX ch: Can we remove this or do it another way?
 		 * XXX ch: I'll take a look at this.

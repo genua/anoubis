@@ -130,13 +130,6 @@ class AnIconList : public Singleton<AnIconList>
 		 */
 		void addIcon(const wxString &);
 
-		/**
-		 * Returns the path of the picture with the given name.
-		 * @param iconName The name of the picture
-		 * @return Path, where the picture is stored.
-		 */
-		static wxString getIconPath(const wxString &);
-
 		std::vector<std::pair<wxString, wxIcon *> > icons_;
 
 	friend class Singleton<AnIconList>;

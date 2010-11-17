@@ -64,6 +64,7 @@
 #include "KeyCtrl.h"
 #include "PSListCtrl.h"
 #include "main.h"
+#include "traits.h"
 
 #ifdef USE_WXGUITESTING
 #include <wxGuiTest/WxGuiTestHelper.h>
@@ -278,6 +279,12 @@ AnoubisGuiApp::OnCmdLineParsed(wxCmdLineParser& parser)
 		hide_ = true;
 
 	return (true);
+}
+
+wxAppTraits *
+AnoubisGuiApp::CreateTraits(void)
+{
+	return new AnTraits;
 }
 
 wxString
