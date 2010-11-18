@@ -90,8 +90,29 @@ AnIconList::AnIconList(void)
 	addIcon(wxT("ModSfs_error_48.png"));
 }
 
+wxIcon *
+AnIconList::getIcon(AnIconList::IconId id)
+{
+	wxIcon &icon = GetIcon(id);
+	return &icon;
+}
+
+wxIcon &
+AnIconList::GetIcon(AnIconList::IconId id)
+{
+	wxIcon &icon = icons_[id].second;
+
+	if (!icon.IsOk()) {
+		/* Icon-data not loaded, load now */
+		wxString &path = icons_[id].first;
+		icon.LoadFile(path, wxBITMAP_TYPE_PNG);
+	}
+
+	return icon;
+}
+
 wxString
-AnIconList::getPath(AnIconList::IconId id)
+AnIconList::getPath(AnIconList::IconId id) const
 {
 	return icons_[id].first;
 }
@@ -100,7 +121,8 @@ void
 AnIconList::addIcon(const wxString &name)
 {
 	wxString path;
-	
+	std::pair<wxString, wxIcon> pair;
+
 #ifdef USE_WXGUITESTING
 	/* In case of wxGuiTest (running on xen test) icons are in root fs. */
 	path = wxT("/") + name;
@@ -108,14 +130,16 @@ AnIconList::addIcon(const wxString &name)
 	path = wxStandardPaths::Get().GetDataDir() + wxT("/icons/") + name;
 #endif /* USE_WXGUITESTING */
 
-	wxIcon *icon = new wxIcon(path, wxBITMAP_TYPE_PNG);
+	pair.first = path;
 
-	icons_.push_back(std::pair<wxString, wxIcon *>(path, icon));
+	/*
+	 * wxIcon in pair.second is created with the std-c'tor, thus no
+	 * icon-data are loaded.
+	 */
+
+	icons_.push_back(pair);
 }
 
 AnIconList::~AnIconList(void)
 {
-	for (unsigned int i=0; i<icons_.size(); ++i)
-		delete icons_[i].second;
-	icons_.clear();
 }

@@ -58,11 +58,6 @@ class MainFrame : public MainFrameBase
 		unsigned int     messageAlertCount_;
 		unsigned int     messageEscalationCount_;
 		bool		 exit_;
-		wxIcon		*aboutIcon_;
-		wxIcon		*okIcon_;
-		wxIcon		*errorIcon_;
-		wxIcon		*alertIcon_;
-		wxIcon		*escalationIcon_;
 		ComSfsListTask	*upgradeTask_;
 
 		void setConnectionString(bool, const wxString &);

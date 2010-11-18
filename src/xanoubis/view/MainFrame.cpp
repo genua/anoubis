@@ -66,19 +66,13 @@ MainFrame::MainFrame(wxWindow *parent, bool trayVisible)
 {
 	AnEvents	*anEvents;
 	JobCtrl		*jobCtrl;
-	AnIconList	*iconList;
 
 	exit_ = false;
 
-	iconList = AnIconList::instance();
 	messageAlertCount_ = 0;
 	messageEscalationCount_ = 0;
-	aboutIcon_ = iconList->getIcon(AnIconList::ICON_ANOUBIS_BLACK_48);
-	okIcon_ = iconList->getIcon(AnIconList::ICON_OK);
-	errorIcon_ = iconList->getIcon(AnIconList::ICON_ERROR);
-	alertIcon_ = iconList->getIcon(AnIconList::ICON_ALERT);
-	escalationIcon_ = iconList->getIcon(AnIconList::ICON_QUESTION);
-	SetIcon(*aboutIcon_);
+	SetIcon(AnIconList::instance()->GetIcon(
+	    AnIconList::ICON_ANOUBIS_BLACK_48));
 
 	anEvents = AnEvents::instance();
 	jobCtrl = JobCtrl::instance();
@@ -289,10 +283,12 @@ MainFrame::setConnectionString(bool connected, const wxString &host)
 
 	if (connected) {
 		statusBoxComText->SetLabel(_("ok"));
-		statusBoxComIcon->SetIcon(*okIcon_);
+		statusBoxComIcon->SetIcon(
+		    AnIconList::instance()->GetIcon(AnIconList::ICON_OK));
 	} else {
 		statusBoxComText->SetLabel(_("no"));
-		statusBoxComIcon->SetIcon(*errorIcon_);
+		statusBoxComIcon->SetIcon(
+		    AnIconList::instance()->GetIcon(AnIconList::ICON_ERROR));
 		an_menubar->Check(ID_MIFILECONNECT, false);
 	}
 
@@ -304,13 +300,16 @@ MainFrame::setMessageString(void)
 {
 	/* escalations represent the highest priority */
 	if (messageEscalationCount_ > 0) {
-		statusBoxMsgIcon->SetIcon(*escalationIcon_);
+		statusBoxMsgIcon->SetIcon(
+		    AnIconList::instance()->GetIcon(AnIconList::ICON_QUESTION));
 		statusBoxMsgIcon->Show();
 		statusBoxMsgText->SetLabel(wxString::Format(wxT("%d"),
 		    messageEscalationCount_));
 	} else {
 		if (messageAlertCount_ > 0) {
-			statusBoxMsgIcon->SetIcon(*alertIcon_);
+			statusBoxMsgIcon->SetIcon(
+			    AnIconList::instance()->GetIcon(
+			    AnIconList::ICON_ALERT));
 			statusBoxMsgIcon->Show();
 			statusBoxMsgText->SetLabel(wxString::Format(wxT("%d"),
 			    messageAlertCount_));
@@ -496,7 +495,8 @@ MainFrame::OnMbHelpAboutSelect(wxCommandEvent&)
 	info.SetVersion(wxT(VERSION));
 	info.SetCopyright(wxT("(C) 2007-2010 GeNUA mbH"));
 	info.SetWebSite(wxT("www.anoubis.org"));
-	info.SetIcon(*aboutIcon_);
+	info.SetIcon(
+	    AnIconList::instance()->GetIcon(AnIconList::ICON_ANOUBIS_BLACK_48));
 	info.SetDescription(wxT("Build Id: " PACKAGE_BUILD));
 
 	info.AddDeveloper(wxT("Alexander von Gernler"));
@@ -706,7 +706,9 @@ MainFrame::onBackupPolicy(wxCommandEvent &event)
 
 	rs = policyCtrl->getRuleSet(event.GetExtraLong());
 	if (rs) {
-		DlgBackupPolicy dlg(alertIcon_, rs);
+		DlgBackupPolicy dlg(
+		    AnIconList::instance()->getIcon(AnIconList::ICON_ALERT),
+		    rs);
 		this->Show();
 		this->Raise();
 

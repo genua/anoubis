@@ -102,20 +102,22 @@ class AnIconList : public Singleton<AnIconList>
 		 * @param id The requested id
 		 * @return Icon-data
 		 */
-		wxIcon	*getIcon(AnIconList::IconId id) {
-			return icons_[id].second;
-		}
+		wxIcon	*getIcon(AnIconList::IconId id);
+
+		/**
+		 * Returns a reference to the icon-data with the given id.
+		 * @param id The requested id
+		 * @return Reference to icon-data
+		 */
+		wxIcon &GetIcon(AnIconList::IconId id);
 
 		/**
 		 * Returns the path where the icon with the given id is stored.
 		 * @param id The requested id
 		 * @return Path of requested icon
 		 */
-		wxString getPath(AnIconList::IconId);
+		wxString getPath(AnIconList::IconId) const;
 
-		wxIcon	GetIcon(int id) {
-			return *icons_[id].second;
-		}
 	protected:
 		/**
 		 * Std-c'tor.
@@ -130,7 +132,7 @@ class AnIconList : public Singleton<AnIconList>
 		 */
 		void addIcon(const wxString &);
 
-		std::vector<std::pair<wxString, wxIcon *> > icons_;
+		std::vector<std::pair<wxString, wxIcon> > icons_;
 
 	friend class Singleton<AnIconList>;
 };
