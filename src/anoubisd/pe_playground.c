@@ -403,6 +403,7 @@ pe_playground_postexec(anoubis_cookie_t pgid, struct pe_proc *proc)
 	if (pe_playground_initproc(pg, proc)) {
 		pg->did_exec = 1;
 		send_pgchange(pg->uid, pg->pgid, ANOUBIS_PGCHANGE_CREATE);
+		pe_playground_save_last_pgid(pg->pgid);
 	}
 }
 
@@ -729,6 +730,8 @@ pe_playground_init(void)
 
 		if (dent->d_name[0] == '.')
 			continue;
+		if (strcmp(dent->d_name, ANOUBISD_PG_LAST_PGID_FILENAME) == 0)
+			continue;
 		if (sscanf(dent->d_name, "%" PRIx64 "%c", &pgid, &dummy) != 1) {
 			log_warnx("pe_playground_init: Skipping malformed "
 			    "entry %s in " ANOUBISD_PG, dent->d_name);
@@ -771,6 +774,7 @@ pe_playground_initpgid(int anoubisfd __used, int eventfd __used)
 	DIR			*pgdir;
 	struct dirent		*dent;
 	anoubis_cookie_t	 maxpgid = 0;
+	anoubis_cookie_t	 loaded_last_pgid = 0;
 
 	pgdir = opendir(ANOUBISD_PG);
 	if (pgdir == NULL) {
@@ -784,12 +788,20 @@ pe_playground_initpgid(int anoubisfd __used, int eventfd __used)
 
 		if (dent->d_name[0] == '.')
 			continue;
+		if (strcmp(dent->d_name, ANOUBISD_PG_LAST_PGID_FILENAME) == 0)
+			continue;
 		if (sscanf(dent->d_name, "%" PRIx64 "%c", &pgid, &dummy) == 1) {
 			if (pgid > maxpgid)
 				maxpgid = pgid;
 		}
 	}
 	closedir(pgdir);
+
+	/* restore saved pgid from disk if it's > maxpgid */
+	loaded_last_pgid = pe_playground_load_last_pgid();
+	if (loaded_last_pgid > maxpgid)
+		maxpgid = loaded_last_pgid;
+
 	if  (maxpgid == 0)
 		return;
 #if ANOUBISCORE_VERSION >= ANOUBISCORE_PG_VERSION
@@ -1043,6 +1055,7 @@ pe_playground_send_filelist(uint64_t token, uint64_t pgid, uint32_t auth_uid,
 			error = -errno;
 			goto err;
 		}
+
 		error = pe_playground_send_onefile(&ctx, pgid, dev, ino, fd, q);
 		close(fd);
 		if (error < 0)
@@ -1063,7 +1076,7 @@ err:
  * Send an alert message to the session engine when a process is forced
  * into a playground due to APN rules. The caller must provide the eventdev
  * header of the exec event. This is turned into a fake event with source
- * ANOUBIS_SOURCE_PLAYGROUNDPROC. The payload of such an event is a
+ * ANOUBIS_SOURCE_PLAYGROUNDPROC. The playload of such an event is a
  * pg_proc_message structure. The event is logged to syslog, too.
  *
  * @param ident The process identifier of the process after a successful
@@ -1221,4 +1234,67 @@ pe_playground_dispatch_commitreply(struct anoubisd_msg *msg)
 	pg->scandev = 0;
 	pg->scanino = 0;
 	pg->scantok = 0;
+}
+
+/**
+ * Store Playground ID of newest playground for later retrieval.
+ * The ID has to be saved to disk to be avoid collisions of playground IDs after
+ * system a reboot in case the cleanup of dead playgrounds fails and files with
+ * the same ID still exist in the filesystem.
+ *
+ * @param pgid The ID of the last created playground.
+ * @return none.
+ */
+void
+pe_playground_save_last_pgid(uint64_t pgid)
+{
+	FILE	   *fp;
+	const char *errmsg_str	= "while attempting to save last playground id";
+
+	fp = fopen(ANOUBISD_PG_LAST_PGID_FILE_CHROOT, "w");
+	if (!fp) {
+		log_warn("ERROR: failed to open file '%s' %s",
+		    ANOUBISD_PG_LAST_PGID_FILE_CHROOT, errmsg_str);
+	} else {
+		if (fprintf(fp, "%" PRIx64 "\n", pgid) < 0)
+			log_warn("ERROR %s", errmsg_str);
+		fclose(fp);
+	}
+	DEBUG(DBG_TRACE, "<pe_playground_save_last_pgid (errno = %d, pgid="
+	    "%" PRIx64 ")", errno, pgid);
+}
+
+/**
+ * Retrieve and return the playground ID of the latest playground which was
+ * stored using pe_playground_save_last_pgid().
+ *
+ * @param none.
+ * @return latest playground id, 0 if none exists or on failure to load.
+ */
+uint64_t
+pe_playground_load_last_pgid()
+{
+	FILE	    *fp		= NULL;
+	uint64_t     pgid	= 0;
+	int	     n		= 0;
+	const char  *errmsg_str	= "while attempting to load last playground id";
+
+	fp = fopen(ANOUBISD_PG_LAST_PGID_FILE, "r");
+	if (!fp) {
+		if (errno != ENOENT)
+			log_warn("ERROR %s", errmsg_str);
+	} else {
+		char dummy;
+		n = fscanf(fp, "%" PRIx64 "%c", &pgid, &dummy);
+		if (n != 2 || dummy != '\n') {
+			log_warnx("ERROR %s: '%s' does not contain a valid"
+			    " playground id!", errmsg_str,
+			    ANOUBISD_PG_LAST_PGID_FILE);
+			pgid = 0;
+		}
+		fclose(fp);
+	}
+	DEBUG(DBG_TRACE, "<pe_playground_load_last_pgid (errno = %d, pgid="
+	    "%" PRIx64 ")", errno, pgid);
+	return pgid;
 }

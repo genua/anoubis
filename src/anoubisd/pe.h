@@ -414,6 +414,8 @@ void			 pe_playground_dispatch_commitreply(
 void			 pe_playground_notify_forced(struct pe_proc_ident *,
 			     struct eventdev_hdr *hdr, uint32_t ruleid,
 			     uint32_t prio);
+void			 pe_playground_save_last_pgid(uint64_t pgid);
+uint64_t		 pe_playground_load_last_pgid();
 
 /*
  * Entry points exported for the benefit of unit tests.

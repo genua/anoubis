@@ -166,17 +166,33 @@
 #define CERT_DIR_CHROOT			ANOUBISD_POLICYCHROOT "/pubkeys"
 
 /**
- * The directory where the persistent playgroud  information is stored
+ * The directory where the persistent playground information is stored
  * (system global value).
  */
 #define ANOUBISD_PG			PACKAGE_POLICYDIR ANOUBISD_PGCHROOT
 
 /**
- * The directory where the persistent playgroud  information is stored
+ * The directory where the persistent playground information is stored
  * relative to the chroot environment in the policy engine.
  */
 #define ANOUBISD_PGCHROOT		"/playground"
 
+/**
+ * The file containing the last playground ID.
+ * The ID is being retrieved for initialization after system reboot and updated
+ * whenever a new playground has been created. If not present, assumed to be 0.
+ */
+#define ANOUBISD_PG_LAST_PGID_FILENAME	"last.pgid"
+
+/**
+ * The file containing the last playground ID (with absolute path).
+ */
+#define ANOUBISD_PG_LAST_PGID_FILE		ANOUBISD_PG "/last.pgid"
+
+/**
+ * The file containing the last playground ID relative to ANOUBISD_POLICYCHROOT.
+ */
+#define ANOUBISD_PG_LAST_PGID_FILE_CHROOT	ANOUBISD_PGCHROOT "/last.pgid"
 
 /**
  * The version file of the sfs tree (system global value). This file is
