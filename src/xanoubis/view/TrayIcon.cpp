@@ -711,7 +711,7 @@ TrayIcon::OnPgForced(wxCommandEvent &ev)
 	n = NotificationCtrl::instance()->getNotification(id);
 	if (n == NULL)
 		return;
-	msg = wxString::Format(_("Program %ls will be started in a playground"),
+	msg = wxString::Format(_("Starting in playground: %ls"),
 	    n->getPath().c_str());
 	ShowPgAlert(msg);
 }
@@ -724,7 +724,7 @@ TrayIcon::OnPgChange(wxCommandEvent &ev)
 	wxString		pgnam;
 
 	pgnam = PlaygroundCtrl::instance()->getPlaygroundName(pgid);
-	msg = wxString::Format(_("Playground %s terminated"), pgnam.c_str());
+	msg = wxString::Format(_("Terminated: playground %ls"), pgnam.c_str());
 	ShowPgAlert(msg);
 }
 
