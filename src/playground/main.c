@@ -946,6 +946,8 @@ pgcli_delete_filelist(struct anoubis_msg *msg)
 					    " path=%s\n", dev, ino, rec->path);
 				continue;
 			}
+			if (path == NULL)
+				continue;
 			if (unlink(path) == 0
 			    || (errno == EISDIR && rmdir(path) == 0)) {
 				ret = 1;
@@ -1004,7 +1006,7 @@ pgcli_remove(anoubis_cookie_t pgid)
 		}
 		if (get_value(transaction->msg->u.listreply->nrec) == 0) {
 			fprintf(stderr, "No more playground files but "
-			    "playground is still active");
+			    "playground is still active\n");
 			rc = 1;
 			break;
 		}
@@ -1062,7 +1064,7 @@ pgcli_find_file(struct anoubis_msg *filelist, const char *filename)
 			ino = get_value(rec->ino);
 
 			if ((rec->path[0] == 0) || pgfile_composename(
-			    &path, dev, ino, rec->path) < 0) {
+			    &path, dev, ino, rec->path) < 0 || path == NULL) {
 				/* this happens quite often for files that we
 				 * just deleted and if this happens because the
 				 * file is really unknown we don't care. */
@@ -1220,6 +1222,8 @@ pgcli_files_print_record(Anoubis_PgFileRecord *record, int needpath)
 		if (needpath)
 			return 0;
 		path = anoubis_strerror(-error);
+	} else if (path == NULL) {
+		return 1;
 	} else {
 		pgfile_normalize_file(path);
 	}
@@ -1558,6 +1562,13 @@ pgcli_commit_file(struct anoubis_client *client, uint64_t pgid, uint64_t dev,
 				free(errpath);
 				return rc;
 			}
+			else if (abspath == NULL) {
+				/* this would mean that we tried to commit a
+				 * whiteout marker. This should not happen
+				 */
+				free(errpath);
+				return -ENOENT;
+			}
 
 			anoubis_msg_free(notification);
 			have_notification = 1;
@@ -1694,9 +1705,11 @@ pgcli_commit(uint64_t pgid, const char* file)
 						if(rc < 0){
 							return rc;
 						}
-						filenames[file_index] = path;
-						abspaths[file_index]  = abspath;
-						file_index++;
+						if (abspath) {
+							filenames[file_index] = path;
+							abspaths[file_index]  = abspath;
+							file_index++;
+						}
 					}
 				}
 			}

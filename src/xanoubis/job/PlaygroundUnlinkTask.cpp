@@ -260,7 +260,7 @@ PlaygroundUnlinkTask::extractFileList(struct anoubis_msg *message)
 			dev = get_value(record->dev);
 			ino = get_value(record->ino);
 			if (record->path[0] == 0 || pgfile_composename(&path,
-			    dev, ino, record->path) < 0) {
+			    dev, ino, record->path) < 0 || path == NULL) {
 				continue;
 			}
 

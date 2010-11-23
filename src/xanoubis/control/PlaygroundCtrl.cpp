@@ -555,6 +555,18 @@ PlaygroundCtrl::extractFilesTask(PlaygroundFilesTask *task)
 		char			*path_abs = NULL;
 		std::pair<std::set<PlaygroundFileEntry*>::iterator, bool> ret;
 
+#ifdef LINUX
+		/* compose the absolute, validated path */
+		int res = pgfile_composename(&path_abs,
+		    task->getDevice(), task->getInode(), task->getPathData());
+#else
+		int res = -ENOSYS;
+#endif
+
+		if (res == 0 && path_abs == NULL) {
+			/* obsolete whiteout  */
+			continue;
+		}
 
 		/* assume that we have to create one */
 		entry = new PlaygroundFileEntry(task->getPGID(),
@@ -565,14 +577,6 @@ PlaygroundCtrl::extractFilesTask(PlaygroundFilesTask *task)
 		if (!ret.second)
 			delete(entry);
 		entry = *(ret.first);
-
-#ifdef LINUX
-		/* compose the absolute, validated path */
-		int res = pgfile_composename(&path_abs,
-		    task->getDevice(), task->getInode(), task->getPathData());
-#else
-		int res = -ENOSYS;
-#endif
 
 		switch (res) {
 		case 0: {

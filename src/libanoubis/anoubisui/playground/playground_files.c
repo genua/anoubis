@@ -497,7 +497,8 @@ pgfile_whiteout_to_file(const char *whiteout)
  * @param name The name of the file relative to the directory dirfd.
  * @return The number of links to the file as returned by stat. This
  *     value is zero if the name is invalid or if the name references
- *     a different file.
+ *     a different file. If the file is a whiteout marker and the
+ *     corresponding file exists, the return value is -1.
  */
 static int
 pgfile_validate_one_name(uint64_t dev, uint64_t ino, int dirfd,
@@ -534,7 +535,7 @@ pgfile_validate_one_name(uint64_t dev, uint64_t ino, int dirfd,
 	q = pgfile_whiteout_to_file(p);
 	if (q) {
 		if (fstatat(dirfd, q, &statbuf, AT_SYMLINK_NOFOLLOW) == 0)
-			ret = 0;
+			ret = -1;
 		free(q);
 	}
 	return ret;
@@ -762,7 +763,9 @@ next:
  * by this function an must be freed by the caller.
  *
  * @param pathp The path name of the file is malloced and a pointer to the
- *     malloced path name is returned in this location.
+ *     malloced path name is returned in this location. If the file is an
+ *     obsolete whiteout marker (i.e. the corresponding file exists), NULL
+ *     is returned and the whiteout marker is unlinked.
  * @param dev The device number of the device.
  * @param ino The inode number of the file.
  * @param The path of the file relative to the root of the file system
@@ -788,9 +791,18 @@ pgfile_composename(char **pathp, uint64_t dev, uint64_t ino, const char *nam)
 	if (pgfile_normalize_file_list(&list, names) < 0)
 		return -ENOMEM;
 	for (i=0; i<list.listlen; ++i) {
-		if (pgfile_validate_one_name(dev, ino, mnt->dirfd,
-		    list.list[i]))
+		int nlink = pgfile_validate_one_name(dev, ino, mnt->dirfd,
+		    list.list[i]);
+		if (nlink > 0)
 			break;
+		else if (nlink == -1) {
+			if (asprintf(pathp, "%s%s", mnt->prefix, list.list[i]) < 0)
+				return -ENOMEM;
+			unlink(*pathp);
+			free(*pathp);
+			*pathp = NULL;
+			return 0;
+		}
 	}
 	ret = -EBUSY;
 	if (i < list.listlen) {
