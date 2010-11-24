@@ -290,6 +290,8 @@ ModPlaygroundMainPanelImpl::startApplication(void)
 	wxString  command;
 
 	command = applicationComboBox->GetValue();
+	if (command.IsEmpty())
+		return;
 	argv = convertStringToArgV(command);
 	if (argv == NULL) {
 		message = wxString::Format(_("System error: %hs"),
