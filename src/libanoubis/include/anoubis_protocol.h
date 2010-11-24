@@ -45,9 +45,10 @@
  *     Version 4: Add key based authentication.
  *     Version 5: Add CSMULTI messages
  *     Version 6: Add Playground and file browser messages
+ *     Version 7: Add Playground-unlink message
  */
-#define ANOUBIS_PROTO_VERSION		6
-#define ANOUBIS_PROTO_MINVERSION	6
+#define ANOUBIS_PROTO_VERSION		7
+#define ANOUBIS_PROTO_MINVERSION	7
 
 #define ANOUBIS_PROTO_CONNECT		0
 #define ANOUBIS_PROTO_POLICY		1
@@ -186,6 +187,7 @@ static inline u_int64_t __ntohll(u_int64_t arg)
 #define		ANOUBIS_P_LISTREP	0x3A01
 #define		ANOUBIS_P_PGCOMMIT	0x3A02
 #define		ANOUBIS_P_PROCLIST	0x3A03
+#define		ANOUBIS_P_PGUNLINK	0x3A04
 
 #define		ANOUBIS_P_MAX		0x3FFF
 
@@ -675,6 +677,39 @@ typedef struct {
 	u_int8_t    ignore_recommended_scanners;
 	char	    payload[0];
 } __attribute__((packed)) Anoubis_PgCommitMessage;
+
+/**
+ * This message is send by the client to ask the daemon to unlink a file.
+ * This operation does not really removes the file. It removes
+ * maintenance-information and should only be used, if it is impossible to
+ * locate the related file.
+ */
+typedef struct {
+	/**
+	 * The tyoe of the message. Must be ANOUBISD_P_PGUNLINK.
+	 */
+	u32n	type;
+
+	/**
+	 * Unused, se to zero.
+	 */
+	u32n	_pad;
+
+	/**
+	 * The playground ID of the file to be removed.
+	 */
+	u64n	pgid;
+
+	/**
+	 * The device ID of the file to be removed.
+	 */
+	u64n	dev;
+
+	/**
+	 * The inode of the file to be removed.
+	 */
+	u64n	ino;
+} __attribute__((packed)) Anoubis_PgUnlinkMessage;
 
 /**
  * This structure contains information about a single playground. It is

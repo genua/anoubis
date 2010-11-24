@@ -2107,6 +2107,42 @@ anoubis_client_pgcommit_start(struct anoubis_client *client, uint64_t pgid,
 	return t;
 }
 
+struct anoubis_transaction *anoubis_client_pgunlink_start(
+    struct anoubis_client *client, uint64_t pgid, uint64_t dev, uint64_t ino)
+{
+	static const uint32_t		 nextops[] = { ANOUBIS_REPLY, -1 };
+	struct anoubis_msg		*m;
+	struct anoubis_transaction	*t = NULL;
+
+	if ((client->proto & ANOUBIS_PROTO_POLICY) == 0)
+		return NULL;
+	if (client->state != ANOUBIS_STATE_CONNECTED)
+		return NULL;
+	if (client->flags & FLAG_POLICY_PENDING)
+		return NULL;
+	m = anoubis_msg_new(sizeof(Anoubis_PgUnlinkMessage));
+	if (!m)
+		return NULL;
+	set_value(m->u.pgunlink->type, ANOUBIS_P_PGUNLINK);
+	set_value(m->u.pgunlink->_pad, 0);
+	set_value(m->u.pgunlink->pgid, pgid);
+	set_value(m->u.pgunlink->dev, dev);
+	set_value(m->u.pgunlink->ino, ino);
+
+	t = anoubis_transaction_create(0,
+	    ANOUBIS_T_INITSELF|ANOUBIS_T_WANT_ALL|ANOUBIS_T_DEQUEUE,
+	    &anoubis_client_ack_steps, NULL, client);
+	if (anoubis_client_send(client, m) < 0) {
+		anoubis_transaction_destroy(t);
+		return NULL;
+	}
+	anoubis_transaction_setopcodes(t, nextops);
+	LIST_INSERT_HEAD(&client->ops, t, next);
+	client->flags |= FLAG_POLICY_PENDING;
+
+	return t;
+}
+
 const char **
 anoubis_client_parse_pgcommit_reply(struct anoubis_msg *m)
 {

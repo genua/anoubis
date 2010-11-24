@@ -106,6 +106,13 @@ The playground is specified by its id (in hexadecimal as supplied by the
 command). Removing an active playground requires the
 .Fl f
 option.
+You cannot remove playgrounds with files, which cannot be located anymore.
+This can happen with files on a non-persistent filesystem (like tmpfs) after a
+reboot.
+Passing the
+.Fl f
+option to the command, will detach such files from the playground, and the
+playground is removed.
 .It delete \&<playground id\&> \&<file\&>
 Delete the specified file(s) from the specified playground. The playground is
 specified by its id in hexadecimal, the files are specified with their
@@ -115,6 +122,14 @@ command. Files from active playgrounds
 can be deleted with the
 .Fl f
 option.
+If a file is still in a playground but it cannot be located anymore, you are
+able to delete the file with the
+.Fl f
+option.
+This can happen with files on non-persistent filesystem (like tmpfs) after a
+reboot.
+Pass the device- and inode-number separated by a colon to the operation
+(e.g. playground -f delete 78776:ab).
 .It commit \&<playground id\&> \&<file\&>
 Move the specified file(s) from the specified playground to the normal
 file system. The playground is specified by its id in hexadecimal, the files

@@ -255,6 +255,32 @@ static void pgcli_list_print_msg(struct anoubis_msg *);
 static void pgcli_list_print_record(Anoubis_PgInfoRecord *);
 
 /**
+ * Removes a file by unlinking it.
+ *
+ * This is the normal way to remove a file from a playground.
+ *
+ * @param filelist Message contains files of a playground
+ * @param filename Name of file to be remove
+ * @return On success true is returned.
+ */
+static int pgcli_unlink_local(struct anoubis_msg *, const char *);
+
+/**
+ * Removes a file by sending a messag to the daemon.
+ *
+ * This method should only by used if the file cannot be located in the
+ * filesystem.
+ *
+ * @param client Anoubis-client used to send the message to the daemon.
+ * @param pgid The requested playground-id
+ * @param dev Device number of file to be removed
+ * @param ino Inode number of file to be removed
+ * @return On success true is returned.
+ */
+static int pgcli_unlink_remote(struct anoubis_client *, uint64_t, uint64_t,
+    uint64_t);
+
+/**
  * Command: files
  * This function implements the files command. Communication with the
  * daemon is established and the list of files of a playground is requested.
@@ -916,12 +942,13 @@ pgcli_validate_playground(anoubis_cookie_t pgid, struct achat_channel *channel,
  * the record does not lead to any error message. Instead the caller must
  * retry the removal until no more progress is made.
  *
+ * @param client  The connected anoubis client structure for communication
  * @param msg The first message in the message list.
  * @return Zero if no file was removed, one if at least one file was
  *     removed.
  */
 static int
-pgcli_delete_filelist(struct anoubis_msg *msg)
+pgcli_delete_filelist(struct anoubis_client *client, struct anoubis_msg *msg)
 {
 	int	ret = 0;
 
@@ -931,16 +958,20 @@ pgcli_delete_filelist(struct anoubis_msg *msg)
 		for (i=offset=0; i<get_value(msg->u.listreply->nrec); ++i) {
 			Anoubis_PgFileRecord	*rec;
 			char			*path;
-			uint64_t		 dev, ino;
+			uint64_t		 pgid, dev, ino;
 
 			rec = (Anoubis_PgFileRecord *)
 			    (msg->u.listreply->payload + offset);
 			offset += get_value(rec->reclen);
+			pgid = get_value(rec->pgid);
 			dev = get_value(rec->dev);
 			ino = get_value(rec->ino);
 			if (rec->path[0] == 0 || pgfile_composename(&path,
 			    dev, ino, rec->path) < 0) {
-				if (opts & PGCLI_OPT_VERBOSE)
+			    	if (opts & PGCLI_OPT_FORCE &&
+				    pgcli_unlink_remote(client, pgid, dev, ino))
+					ret = 1;
+				else if (opts & PGCLI_OPT_VERBOSE)
 					printf(" ERROR invalid file data: "
 					    "dev=0x%" PRIx64 " ino=0x%" PRIx64
 					    " path=%s\n", dev, ino, rec->path);
@@ -1010,7 +1041,7 @@ pgcli_remove(anoubis_cookie_t pgid)
 			rc = 1;
 			break;
 		}
-		if (pgcli_delete_filelist(transaction->msg)) {
+		if (pgcli_delete_filelist(client, transaction->msg)) {
 			noprogress = 0;
 		} else {
 			/*
@@ -1093,14 +1124,59 @@ pgcli_find_file(struct anoubis_msg *filelist, const char *filename)
 }
 
 static int
+pgcli_unlink_local(struct anoubis_msg *filelist, const char *filename)
+{
+	char *path;
+	int result = 1;
+
+	path = pgcli_find_file(filelist, filename);
+	if (path == NULL) {
+		printf(" ERROR file not in playground: %s\n", filename);
+		return 1; /* No error skip file */
+	}
+
+	if ((unlink(path) == 0) ||
+	    (errno == EISDIR && rmdir(path) == 0)) {
+		printf(" UNLINKED %s\n", filename);
+	} else {
+		printf(" ERROR for %s: %s\n", path,
+		    strerror(errno));
+		result = 0;
+	}
+	free(path);
+
+	return result;
+}
+
+static int
+pgcli_unlink_remote(struct anoubis_client *client, uint64_t pgid, uint64_t dev,
+    uint64_t ino) {
+	struct anoubis_transaction *ta;
+	int rc;
+
+	ta = anoubis_client_pgunlink_start(client, pgid, dev, ino);
+	rc = anoubis_transaction_complete(client, ta, NULL);
+
+	if (rc == 0) {
+		printf(" UNLINKED %"PRIx64":%"PRIx64"\n", dev, ino);
+		anoubis_transaction_destroy(ta);
+		return 1;
+	} else {
+		printf(" ERROR for %"PRIx64":%"PRIx64": %s\n", dev, ino,
+		    strerror(-rc));
+		return 0;
+	}
+}
+
+static int
 pgcli_delete(anoubis_cookie_t pgid, int filecnt, char** filenames)
 {
 	struct achat_channel        *channel = NULL;
 	struct anoubis_client       *client = NULL;
 	struct anoubis_transaction  *transaction = NULL;
+	struct anoubis_msg          *msg = NULL;
 
-	int rc, fileidx, errcnt = 0;
-	char *path;
+	int rc, fileidx;
 
 	rc = pgcli_ui_init();
 	if (rc != 0)
@@ -1123,33 +1199,30 @@ pgcli_delete(anoubis_cookie_t pgid, int filecnt, char** filenames)
 
 	transaction = anoubis_client_list_start(client,
 	    ANOUBIS_REC_PGFILELIST, pgid);
-	rc = anoubis_transaction_complete(client, transaction, NULL);
+	rc = anoubis_transaction_complete(client, transaction, &msg);
+
 	if (rc < 0)
 		return rc;
+	else
+		anoubis_transaction_destroy(transaction);
 
-	/* check if files exist and delete them */
+	/* If a device/inode-pair was passed, send an unlink-request to the
+	* daemon. Otherwise check if files exist and delete them */
 	for (fileidx=0; fileidx<filecnt; fileidx++) {
-		path = pgcli_find_file(transaction->msg, filenames[fileidx]);
-		if (path == NULL) {
-			printf(" ERROR file not in playground: %s\n",
-			    filenames[fileidx]);
-			continue;
-		}
+		uint64_t dev, ino;
 
-		if ((unlink(path) == 0) ||
-		    (errno == EISDIR && rmdir(path) == 0)) {
-			printf(" UNLINKED %s\n", filenames[fileidx]);
+		if ((opts & PGCLI_OPT_FORCE) &&
+		   sscanf(filenames[fileidx],
+		   "%"PRIx64":%"PRIx64, &dev, &ino) == 2) {
+			if (!pgcli_unlink_remote(client, pgid, dev, ino))
+				rc |= 1;
 		} else {
-			printf(" ERROR for %s: %s\n", path,
-			    strerror(errno));
-			errcnt++;
+			if (!pgcli_unlink_local(msg, filenames[fileidx]))
+				rc |= 1;
 		}
-		free(path);
 	}
-	rc = errcnt? 1:0;
 
 	/* Cleanup. */
-	anoubis_transaction_destroy(transaction);
 	PGCLI_CONNECTION_WIPE(channel, client);
 
 	return rc;

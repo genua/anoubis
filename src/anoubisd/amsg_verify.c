@@ -398,6 +398,8 @@ DEFINE_LEN_CHECK_FUNCTION(struct, anoubisd_msg_csumreply, data, len)
 DEFINE_LEN_CHECK_FUNCTION(struct, anoubisd_msg_listreply, data, len)
 DEFINE_STRING_CHECK_FUNCTION(struct, anoubisd_msg_pgcommit, path)
 DEFINE_LEN_CHECK_FUNCTION(struct, anoubisd_msg_pgcommit_reply, payload, len)
+DEFINE_CHECK_FUNCTION(struct, anoubisd_msg_pgunlink)
+DEFINE_CHECK_FUNCTION(struct, anoubisd_msg_pgunlink_reply)
 DEFINE_CHECK_FUNCTION(struct, alf_event)
 DEFINE_CHECK_FUNCTION(struct, ac_process_message)
 DEFINE_CHECK_FUNCTION(struct, ac_ipc_message)
@@ -837,6 +839,9 @@ anoubisd_msg_size(const char *buf, int buflen)
 	VARIANT(ANOUBISD_MSG_LISTREPLY, anoubisd_msg_listreply, buf, buflen);
 	VARIANT(ANOUBISD_MSG_PGCOMMIT, anoubisd_msg_pgcommit, buf, buflen);
 	VARIANT(ANOUBISD_MSG_PGCOMMIT_REPLY, anoubisd_msg_pgcommit_reply,
+	    buf, buflen);
+	VARIANT(ANOUBISD_MSG_PGUNLINK, anoubisd_msg_pgunlink, buf, buflen);
+	VARIANT(ANOUBISD_MSG_PGUNLINK_REPLY, anoubisd_msg_pgunlink_reply,
 	    buf, buflen);
 	default:
 		log_warnx("anoubisd_msg_size: Bad message type %d",

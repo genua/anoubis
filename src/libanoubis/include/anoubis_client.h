@@ -232,6 +232,17 @@ struct anoubis_transaction *anoubis_client_pgcommit_start(
     uint8_t ignore_recommended_scanners);
 
 /**
+ * Start a transaction that request an unlink-operation.
+ *
+ * @param client The protocol client object for the request.
+ * @param pgid The playground ID of the file.
+ * @param dev The device ID of the file.
+ * @param ino The inode of the file.
+ */
+struct anoubis_transaction *anoubis_client_pgunlink_start(
+    struct anoubis_client *client, uint64_t pgid, uint64_t dev, uint64_t ino);
+
+/**
  * Decompose the strings contained in the reply message to a commit request
  * into a list of individual strings.
  *

@@ -1336,6 +1336,9 @@ dispatch_s2p(int fd, short sig __used, void *arg __used)
 			    &eventq_p2m);
 			msg = NULL;
 			break;
+		case ANOUBISD_MSG_PGUNLINK:
+			pe_playground_dispatch_unlink(msg, &eventq_p2s);
+			break;
 		default:
 
 			DEBUG(DBG_TRACE, "dispatch_s2p: msg type %d",

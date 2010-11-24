@@ -411,6 +411,8 @@ void			 pe_playground_dispatch_commit(struct anoubisd_msg *,
 			     Queue *session, Queue *master);
 void			 pe_playground_dispatch_commitreply(
 			     struct anoubisd_msg*);
+void			 pe_playground_dispatch_unlink(struct anoubisd_msg *,
+			     Queue *session);
 void			 pe_playground_notify_forced(struct pe_proc_ident *,
 			     struct eventdev_hdr *hdr, uint32_t ruleid,
 			     uint32_t prio);

@@ -207,6 +207,8 @@ static void	dispatch_list_request(struct anoubis_server *,
 		    struct anoubis_msg *, uid_t, void *);
 static void	dispatch_pgcommit(struct anoubis_server *,
 		    struct anoubis_msg *, uid_t, void *);
+static void	dispatch_pgunlink(struct anoubis_server *,
+		    struct anoubis_msg *, uid_t, void *);
 static int	dispatch_csmulti_reply(void *, int, const void *, int, int);
 static int	dispatch_list_reply(void *, int, const void *, int, int);
 static void	dispatch_m2s(int, short, void *);
@@ -221,6 +223,7 @@ static void	dispatch_p2s_evt_cancel(const struct anoubisd_msg *);
 static void	dispatch_p2s_pol_reply(const struct anoubisd_msg *);
 static void	dispatch_p2s_list_reply(const struct anoubisd_msg *);
 static void	dispatch_p2s_commit_reply(const struct anoubisd_msg *msg);
+static void	dispatch_p2s_unlink_reply(const struct anoubisd_msg *msg);
 static void	dispatch_m2s_checksum_reply(const struct anoubisd_msg *msg);
 static void	dispatch_m2s_upgrade_notify(const struct anoubisd_msg *msg);
 static void	session_rxclient(int, short, void *);
@@ -361,6 +364,8 @@ session_connect(int fd __used, short event __used, void *arg __used)
 	    &dispatch_list_request, NULL);
 	anoubis_dispatch_create(session->proto, ANOUBIS_P_PGCOMMIT,
 	    &dispatch_pgcommit, NULL);
+	anoubis_dispatch_create(session->proto, ANOUBIS_P_PGUNLINK,
+	    &dispatch_pgunlink, NULL);
 	anoubis_dispatch_create(session->proto, ANOUBIS_C_AUTHDATA,
 	    &dispatch_authdata, NULL);
 	LIST_INSERT_HEAD(&sessionList, session, nextSession);
@@ -874,6 +879,61 @@ dispatch_pgcommit(struct anoubis_server *server, struct anoubis_msg *m,
 	enqueue(&eventq_s2p, msg);
 	DEBUG(DBG_QUEUE, " >eventq_s2p: token=%" PRId64, pgmsg->token);
 	DEBUG(DBG_TRACE, "<dispatch_pgcommit");
+}
+
+/**
+ * This is the dispatcher function for ANOUBIS_P_PGUNLINK protocol
+ * requests received from a user session. It translates the request into
+ * an ANOUBIS_P_PGUNLINK daemon message and forwards it to
+ * the policy process.
+ *
+ * @param server The server object associated with the client session.
+ * @param m The request message as received from the client.
+ * @param auth_uid The authenticated user ID of the client session.
+ * @param arg The callback argument (unused).
+ */
+static void
+dispatch_pgunlink(struct anoubis_server *server, struct anoubis_msg *m,
+    uid_t auth_uid, void *arg __used)
+{
+	struct anoubisd_msg			*msg;
+	struct anoubisd_msg_pgunlink		*pgmsg;
+	struct achat_channel			*chan;
+	int					 err;
+
+	DEBUG(DBG_TRACE, ">dispatch_pgunlink");
+
+	if (!VERIFY_LENGTH(m, sizeof(Anoubis_PgUnlinkMessage))) {
+		dispatch_generic_reply(server, EINVAL, NULL, 0,
+		    ANOUBIS_P_PGUNLINK);
+		DEBUG(DBG_TRACE, "<dispatch_pgunlink: verify length");
+		return;
+	}
+
+	msg = msg_factory(ANOUBISD_MSG_PGUNLINK,
+	    sizeof(struct anoubisd_msg_pgunlink));
+	if (!msg)
+		master_terminate();
+
+	pgmsg = (struct anoubisd_msg_pgunlink *)msg->msg;
+	pgmsg->auth_uid = auth_uid;
+	pgmsg->pgid = get_value(m->u.pgunlink->pgid);
+	pgmsg->dev = get_value(m->u.pgunlink->dev);
+	pgmsg->ino = get_value(m->u.pgunlink->ino);
+
+	chan = anoubis_server_getchannel(server);
+	err = anoubis_policy_comm_addrequest(policy_comm, chan,
+	    POLICY_FLAG_START | POLICY_FLAG_END, &dispatch_generic_reply,
+	    NULL, server, &pgmsg->token);
+	if (err < 0) {
+		log_warnx("Dropping pgunlink request (error %d)", -err);
+		free(msg);
+		return;
+	}
+
+	enqueue(&eventq_s2p, msg);
+	DEBUG(DBG_QUEUE, " >eventq_s2p: token=%" PRId64, pgmsg->token);
+	DEBUG(DBG_TRACE, "<dispatch_pgunlink");
 }
 
 /**
@@ -1766,6 +1826,11 @@ dispatch_p2s(int fd, short sig __used, void *arg __used)
 			dispatch_p2s_commit_reply(msg);
 			break;
 
+		case ANOUBISD_MSG_PGUNLINK_REPLY:
+			DEBUG(DBG_QUEUE, " >p2s: unlinkreply");
+			dispatch_p2s_unlink_reply(msg);
+			break;
+
 		case ANOUBISD_MSG_EVENTASK:
 			DEBUG(DBG_QUEUE, ">p2s: eventask");
 			dispatch_p2s_evt_request(msg);
@@ -2194,6 +2259,31 @@ dispatch_p2s_commit_reply(const struct anoubisd_msg *msg)
 	if (ret < 0)
 		log_warnx("Dropping unexpected playground commit reply");
 	DEBUG(DBG_TRACE, "<dispatch_p2s_commit_reply");
+}
+
+/**
+ * Handle a reply to a unlink request received from the policy engine.
+ * This function uses policy_comm to process the message which then calls
+ * the approriate callback.
+ *
+ * @param msg The commit reply message.
+ */
+static void
+dispatch_p2s_unlink_reply(const struct anoubisd_msg *msg)
+{
+	const struct anoubisd_msg_pgunlink_reply	*unlinkreply;
+	const void					*buf = NULL;
+	int						 ret;
+
+	DEBUG(DBG_TRACE, ">dispatch_p2s_unlink_reply");
+	unlinkreply = (struct anoubisd_msg_pgunlink_reply *)msg->msg;
+	DEBUG(DBG_QUEUE, " dispatch_p2s_unlink_reply: token=%" PRId64,
+	    unlinkreply->token);
+	ret = anoubis_policy_comm_answer(policy_comm, unlinkreply->token,
+	    unlinkreply->error, buf, 0, POLICY_FLAG_START | POLICY_FLAG_END);
+	if (ret < 0)
+		log_warnx("Dropping unexpected playground unlink reply");
+	DEBUG(DBG_TRACE, "<dispatch_p2s_unlink_reply");
 }
 
 /**

@@ -424,6 +424,8 @@ enum anoubisd_msg_type {
 	ANOUBISD_MSG_LISTREPLY,		/** anoubisd_msg_listreply */
 	ANOUBISD_MSG_PGCOMMIT,		/** anoubisd_msg_pgcommit */
 	ANOUBISD_MSG_PGCOMMIT_REPLY,	/** anoubisd_msg_pgcommit_reply */
+	ANOUBISD_MSG_PGUNLINK,		/** anoubisd_msg_pgunlink */
+	ANOUBISD_MSG_PGUNLINK_REPLY,	/** anoubisd_msg_pgunlink_reply */
 };
 
 /**
@@ -1102,6 +1104,54 @@ struct anoubisd_msg_pgcommit_reply {
 	 * are listed.
 	 */
 	char		payload[0];
+};
+
+/**
+ * Message format for ANOUBISD_MSG_PGREPLY messages. These messages are
+ * sent during a playground unlink.
+ */
+struct anoubisd_msg_pgunlink {
+	/**
+	 * The token of the request as assigned by the session engine.
+	 */
+	uint64_t	token;
+
+	/**
+	 * The playground ID of the file to be removed.
+	 */
+	uint64_t	pgid;
+
+	/**
+	 * The device number of the file to be removed. This is the
+	 * kernel representation of device numbers.
+	 */
+	uint64_t	dev;
+
+	/**
+	 * The inode number of the file to be removed.
+	 */
+	uint64_t	ino;
+
+	/**
+	 * The authenticated user ID of the requesting user.
+	 */
+	uint32_t	auth_uid;
+};
+
+/**
+ * Message format for ANOUBISD_MSG_PGUNLINK_REPLY messages. These are
+ * sent in response to a unlink request.
+ */
+struct anoubisd_msg_pgunlink_reply {
+	/**
+	 * The token of the request as assigned by the session engine.
+	 */
+	uint64_t	token;
+
+	/**
+	 * The result of the unlink-operation. Zero in case of success.
+	 */
+	uint32_t	error;
 };
 
 /* Pre-declare important abstract types. */

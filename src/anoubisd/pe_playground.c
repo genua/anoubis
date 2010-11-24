@@ -1236,6 +1236,40 @@ pe_playground_dispatch_commitreply(struct anoubisd_msg *msg)
 	pg->scantok = 0;
 }
 
+void
+pe_playground_dispatch_unlink(struct anoubisd_msg *msg, Queue *session)
+{
+	struct anoubisd_msg			*repmsg;
+	struct anoubisd_msg_pgunlink		*pgmsg;
+	struct anoubisd_msg_pgunlink_reply	*pgrep;
+	struct playground			*pg;
+	int					 err = 0;
+
+	pgmsg = (struct anoubisd_msg_pgunlink *)msg->msg;
+
+	pg = pe_playground_find(pgmsg->pgid);
+	if (pg == NULL) {
+		err = ESRCH;
+		goto error;
+	}
+
+	if (pgmsg->auth_uid && pg->uid != pgmsg->auth_uid) {
+		err = EPERM;
+		goto error;
+	}
+
+	pe_playground_file_delete(pgmsg->pgid, pgmsg->dev, pgmsg->ino);
+
+error:
+	repmsg = msg_factory(ANOUBISD_MSG_PGUNLINK_REPLY,
+	    sizeof(struct anoubisd_msg_pgunlink_reply));
+	pgrep = (struct anoubisd_msg_pgunlink_reply *)repmsg->msg;
+
+	pgrep->error = err;
+	pgrep->token = pgmsg->token;
+	enqueue(session, repmsg);
+}
+
 /**
  * Store Playground ID of newest playground for later retrieval.
  * The ID has to be saved to disk to be avoid collisions of playground IDs after

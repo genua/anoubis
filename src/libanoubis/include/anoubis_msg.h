@@ -69,6 +69,7 @@ struct anoubis_msg {
 		Anoubis_ListRequestMessage *listreq;
 		Anoubis_ListMessage *listreply;
 		Anoubis_PgCommitMessage *pgcommit;
+		Anoubis_PgUnlinkMessage *pgunlink;
 		void * buf;
 	} u;
 };
