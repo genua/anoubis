@@ -592,7 +592,7 @@ pe_playground_file_delete(anoubis_cookie_t pgid, uint64_t dev, uint64_t ino)
 	struct playground *pg = pe_playground_find(pgid);
 	char buf[50];
 
-	if (!pgid)
+	if (!pg)
 		return;
 	pe_playground_devtoname(buf, sizeof(buf), dev, ino);
 	if (atfd_unlinkat(&pg->dirfd, buf) == 0) {
