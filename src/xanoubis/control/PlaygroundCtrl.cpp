@@ -164,8 +164,17 @@ PlaygroundCtrl::handleComTaskResult(ComTask *task)
 		sendEvent(anEVT_PLAYGROUND_ERROR);
 		break;
 	case ComTask::RESULT_LOCAL_ERROR:
-		addError(wxString::Format(_("Error in playground request:"
-		    " %hs"), anoubis_strerror(task->getResultDetails())));
+		if (task->getResultDetails() == EBUSY)
+			addError(wxString::Format(
+			    _("Error in playground request: %hs\n"
+			    "You can use the following command on the "
+			    "commandline to remove the playground:\n"
+			    "playground -f remove <Playground Id>"),
+			    anoubis_strerror(task->getResultDetails())));
+		else
+			addError(wxString::Format(
+		    _("Error in playground request: %hs"),
+		    anoubis_strerror(task->getResultDetails())));
 		sendEvent(anEVT_PLAYGROUND_ERROR);
 		break;
 	case ComTask::RESULT_SUCCESS:
@@ -414,7 +423,17 @@ PlaygroundCtrl::OnPlaygroundUnlinkDone(TaskEvent &event)
 		 * error processing (right delete button used)
 		 */
 		int _error = task->getResultDetails();
-		if (_error != ESRCH) {
+		if (_error == EBUSY) {
+			msg = wxString::Format(
+			    _("Removing Playground (ID %llx) failed: %hs\n"
+			    "You can use the following command on the "
+			    "commandline to remove the playground:\n"
+			    "playground -f remove %llx"),
+			    (long long)task->getPgId(),
+			    anoubis_strerror(_error), (long long)task->getPgId());
+			addError(msg);
+			sendEvent(anEVT_PLAYGROUND_ERROR);
+		} else if (_error != ESRCH) {
 			msg = wxString::Format(
 			    _("Removing Playground (ID %llx) failed: %hs"),
 			    (long long)task->getPgId(),

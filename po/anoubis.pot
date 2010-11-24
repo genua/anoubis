@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: anoubis 0.9.4.27.11.122\n"
+"Project-Id-Version: anoubis 0.9.4.27.18.143\n"
 "Report-Msgid-Bugs-To: anoubis@lists.anoubis.org\n"
-"POT-Creation-Date: 2010-11-19 18:52+0100\n"
+"POT-Creation-Date: 2010-11-24 13:11+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3727,59 +3727,68 @@ msgstr ""
 msgid "The daemon returned an error for the playground request: %hs"
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:167
+#: src/xanoubis/control/PlaygroundCtrl.cpp:169
+#, c-format
+msgid ""
+"Error in playground request: %hs\n"
+"You can use the following command on the commandline to remove the "
+"playground:\n"
+"playground -f remove <Playground Id>"
+msgstr ""
+
+#: src/xanoubis/control/PlaygroundCtrl.cpp:176
 #, c-format
 msgid "Error in playground request: %hs"
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:174
+#: src/xanoubis/control/PlaygroundCtrl.cpp:183
 #, c-format
 msgid "Got unexpected result (%d) for playground request"
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:234
+#: src/xanoubis/control/PlaygroundCtrl.cpp:243
 msgid "The device is not mounted."
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:236
+#: src/xanoubis/control/PlaygroundCtrl.cpp:245
 msgid "Cannot find all hard links to the file."
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:241
+#: src/xanoubis/control/PlaygroundCtrl.cpp:250
 msgid "Parent directory must be committed first."
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:243
+#: src/xanoubis/control/PlaygroundCtrl.cpp:252
 msgid "Did not try to commit the file."
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:247
+#: src/xanoubis/control/PlaygroundCtrl.cpp:256
 msgid "Target file exists and has multiple hard links."
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:250
+#: src/xanoubis/control/PlaygroundCtrl.cpp:259
 msgid "Target file exists."
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:256
+#: src/xanoubis/control/PlaygroundCtrl.cpp:265
 msgid "Recommended file scanners reported a problem with the file."
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:259
+#: src/xanoubis/control/PlaygroundCtrl.cpp:268
 msgid "Required file scanners reported a permanent problem with the file."
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:262
+#: src/xanoubis/control/PlaygroundCtrl.cpp:271
 #, c-format
 msgid "File scanners reported a problem with the file: %hs"
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:267
+#: src/xanoubis/control/PlaygroundCtrl.cpp:276
 #, c-format
 msgid "File was removed from the playground but could not be renamed (%hs)."
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:310
+#: src/xanoubis/control/PlaygroundCtrl.cpp:319
 #, c-format
 msgid ""
 "Commit for file(s) '%ls' failed.\n"
@@ -3787,26 +3796,35 @@ msgid ""
 "%ls"
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:313
+#: src/xanoubis/control/PlaygroundCtrl.cpp:322
 msgid " Commit anyway?"
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:314
+#: src/xanoubis/control/PlaygroundCtrl.cpp:323
 msgid "Playground Commit"
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:405
+#: src/xanoubis/control/PlaygroundCtrl.cpp:414
 #, c-format
 msgid "Unlink '%ls' failed: %hs"
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:419
-#: src/xanoubis/control/PlaygroundCtrl.cpp:431
+#: src/xanoubis/control/PlaygroundCtrl.cpp:428
+#, c-format
+msgid ""
+"Removing Playground (ID %llx) failed: %hs\n"
+"You can use the following command on the commandline to remove the "
+"playground:\n"
+"playground -f remove %llx"
+msgstr ""
+
+#: src/xanoubis/control/PlaygroundCtrl.cpp:438
+#: src/xanoubis/control/PlaygroundCtrl.cpp:450
 #, c-format
 msgid "Removing Playground (ID %llx) failed: %hs"
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:597
+#: src/xanoubis/control/PlaygroundCtrl.cpp:620
 #, c-format
 msgid "Could not determine filename for playground-file: %hs"
 msgstr ""
