@@ -162,17 +162,20 @@ NotificationCtrl::getPerspective(enum ListPerspectives list)
 
 bool
 NotificationCtrl::answerEscalation(EscalationNotify *escalation,
-    bool sendAnswer)
+    bool sendAnswer, wxString &errMsg)
 {
 	bool		 rc = false;
 	long		 id = -1;
 	NotifyAnswer	*answer = NULL;
 
-	if (escalation == NULL)
+	if (escalation == NULL) {
+		errMsg = _("No escalation...???");
 		return false;
+	}
 
 	answer = escalation->getAnswer();
 	if (answer == NULL) {
+		errMsg = _("Can't access answer of escalation.");
 		Debug::err(wxT("Can't access answer of escalation."));
 		return false;
 	}
@@ -190,13 +193,24 @@ NotificationCtrl::answerEscalation(EscalationNotify *escalation,
 		ruleSet = policyCtrl->getRuleSet(id);
 		if (ruleSet == NULL) {
 			Debug::err(wxT("Can't access user ruleset."));
+			errMsg = _("Can't access user ruleset.");
 			goto out;
 		}
 
 
 		/* Create policy */
-		if (!ruleSet->createAnswerPolicy(escalation))
+		if (!ruleSet->createAnswerPolicy(escalation)) {
+			if (ruleSet->isModified())
+				errMsg = _("Failed to create a policy based on "
+				    "your decision.\nYour ruleset is modified. "
+				    "Please send your ruleset to the daemon or "
+				    "reload your policies from the daemon. "
+				    "Then try again.");
+			else
+				errMsg = _("Failed to create a policy based on "
+				    "your decision.");
 			goto out;
+		}
 		/*
 		 * We are going to activate the modified rule set.
 		 * Even though the result is 'ok' the policy may not have
@@ -246,6 +260,7 @@ NotificationCtrl::onDaemonDisconnect(wxCommandEvent & event)
 	NotifyAnswer		*answer;
 	Notification		*notify;
 	EscalationNotify	*escalation;
+	wxString		 msg;
 
 	event.Skip();
 
@@ -262,7 +277,7 @@ NotificationCtrl::onDaemonDisconnect(wxCommandEvent & event)
 				answer = new NotifyAnswer(NOTIFY_ANSWER_ONCE,
 				    false);
 				escalation->setAnswer(answer);
-				answerEscalation(escalation, false);
+				answerEscalation(escalation, false, msg);
 			}
 		}
 	}
@@ -424,6 +439,7 @@ NotificationCtrl::fixupEscalationAnswer(int type, anoubis_token_t token,
 	NotifyAnswer			*answer;
 	Notification			*notify;
 	EscalationNotify		*escalation;
+	wxString			 msg;
 
 	if (type == ANOUBIS_N_RESOTHER) {
 		/* Search it in the list of unanswered requests. */
@@ -439,7 +455,7 @@ NotificationCtrl::fixupEscalationAnswer(int type, anoubis_token_t token,
 				answer = new NotifyAnswer(NOTIFY_ANSWER_ONCE,
 				    allow);
 				escalation->setAnswer(answer);
-				answerEscalation(escalation, true);
+				answerEscalation(escalation, true, msg);
 				return (escalation);
 			}
 		}

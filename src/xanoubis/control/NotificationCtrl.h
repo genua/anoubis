@@ -108,12 +108,15 @@ class NotificationCtrl : public wxEvtHandler, public Singleton<NotificationCtrl>
 		 * escalation already. This method will cause the creation of
 		 * policies if nessesary and sends them to the daemon. After
 		 * That the causing event is answered.
-		 * @param[in] 1st The escalation in question.
-		 * @param[in] 2nd True if answer of causing event shall be send
-		 *	to daemon.
+		 * @param escalation The escalation in question.
+		 * @param sendAnswer True if answer of causing event shall be
+		 *                   send daemon.
+		 * @param errMsg In case of an error, the method fills the
+		 *               string with a more detailed explanation. On
+		 *               success, the string is untouched.
 		 * @return True on success.
 		 */
-		bool answerEscalation(EscalationNotify *, bool);
+		bool answerEscalation(EscalationNotify *, bool, wxString &);
 
 		/**
 		 * Return the latest playground file notification. Each

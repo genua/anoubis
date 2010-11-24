@@ -1142,6 +1142,7 @@ ModAnoubisMainPanelImpl::answerEscalation(bool permit)
 {
 	bool			 rc = false;
 	wxString		 escalationType;
+	wxString		 answerError;
 	NotifyAnswer		*answer = NULL;
 	EscalationNotify	*escalation = NULL;
 	NotificationCtrl	*notificationCtrl = NULL;
@@ -1179,10 +1180,9 @@ ModAnoubisMainPanelImpl::answerEscalation(bool permit)
 	}
 
 	escalation->setAnswer(answer);
-	rc = notificationCtrl->answerEscalation(escalation, true);
+	rc = notificationCtrl->answerEscalation(escalation, true, answerError);
 	if (rc != true) {
-		anMessageBox(_("Failed to create a rule from escalation"),
-		    _("Error"), wxICON_ERROR);
+		anMessageBox(answerError, _("Error"), wxICON_ERROR);
 	}
 	currentNotify_ = NULL;
 	update();
