@@ -465,7 +465,13 @@ pe_playground_devtoname(char *buf, int buflen, uint64_t dev, uint64_t ino)
 }
 
 /**
- * return -1 on error, 0 if not new file, 1 if new file
+ * Add a name to a file in the PG data dir
+ *
+ * @param pg The playground data structure
+ * @param name The name of the PG data file ("device:inode")
+ * @param path The new path name to add
+ * @return -1 on error, 0 if name was not a new file,
+ *         1 if name was a new file
  */
 static int
 pe_playground_file_add(struct playground *pg, const char *name,
@@ -562,6 +568,16 @@ done:
 	return ret;
 }
 
+/**
+ * Search through one PG data file and look for files in a renamed directory.
+ * If any are found, add the corresponding names with the new name of the
+ * directory.
+ *
+ * @param pg The playground data structure
+ * @param name The name of the PG data file ("device:inode")
+ * @param new_path The new name of the dir (without trailing slash)
+ * @param old_path The old name of the dir (with a trailing slash)
+ */
 static void
 pe_playground_rename_dir_one_file(struct playground *pg, const char *name,
     const char *new_path, const char *old_path)
@@ -645,6 +661,16 @@ done:
 	return;
 }
 
+/**
+ * Search through one playground and add new names for files in a renamed
+ * directory.
+ *
+ * @param pg The playground data structure
+ * @param dir_dev The device node of the renamed directory
+ * @param dir_ino The inode of the renamed directory
+ * @param path The new name of the dir (without trailing slash)
+ * @param old_path_no_slash The old name of the dir (without trailing slash)
+ */
 static void
 pe_playground_dir_rename(struct playground *pg, uint64_t dir_dev,
     uint64_t dir_ino, const char *path, const char *old_path_no_slash)

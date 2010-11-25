@@ -101,6 +101,11 @@ compat_get_event(struct anoubisd_msg *old, unsigned long version)
 		free(old);
 		return NULL;
 	}
+	if (version == 0x10005UL) {
+		/* XXX: pg_file_messages need to be converted from 0x10005UL */
+		return old;
+	}
+	/* from here, version is 0x00010003 or older */
 	total = old->size - sizeof(struct anoubisd_msg);
 	pre = sizeof(struct eventdev_hdr);
 	if (total < pre + (int)sizeof(struct anoubis_event_common_10004)) {
