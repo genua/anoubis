@@ -90,11 +90,14 @@ compat_get_event(struct anoubisd_msg *old, unsigned long version)
 		return old;
 	/*
 	 * The rest of this conversion function assumes that the current
-	 * ANOUBISCORE_VERSION is 0x00010005UL. Abort if this is not the case.
+	 * ANOUBISCORE_VERSION is 0x00010005UL or 0x00010006UL.
+	 * Abort if this is not the case.
 	 */
-	if (ANOUBISCORE_VERSION != 0x10005UL) {
+	if (ANOUBISCORE_VERSION != 0x10005UL &&
+	    ANOUBISCORE_VERSION != 0x10006UL) {
 		log_warnx("compat_get_event: Current verion is %lx but we "
-		    "only support 0x00010005", ANOUBISCORE_VERSION);
+		    "only support 0x00010005 and 0x00010006",
+		    ANOUBISCORE_VERSION);
 		free(old);
 		return NULL;
 	}

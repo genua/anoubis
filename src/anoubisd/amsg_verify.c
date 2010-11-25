@@ -427,7 +427,19 @@ pg_open_message_size(const char *buf, int buflen)
 }
 
 DEFINE_CHECK_FUNCTION(struct, pg_proc_message)
-DEFINE_STRING_CHECK_FUNCTION(struct, pg_file_message, path)
+
+static int
+pg_file_message_size(const char *buf, int buflen)
+{
+	struct pg_file_message *pg;
+	DECLARE_SIZE();
+
+	CAST(pg, buf, buflen);
+	SHIFT_FIELD(pg, path, buf, buflen);
+	SHIFT_STRING(buf, buflen);
+	SHIFT_STRING(buf, buflen);
+	RETURN_SIZE();
+}
 
 #ifdef ANOUBIS_SOURCE_SFSPATH
 /*

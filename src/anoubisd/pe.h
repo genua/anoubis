@@ -394,7 +394,8 @@ void			 pe_proc_set_playgroundid(struct pe_proc *,
 void			 pe_playground_postexec(anoubis_cookie_t pgid,
 			     struct pe_proc *);
 void			 pe_playground_file_instantiate(anoubis_cookie_t pgid,
-			     uint64_t dev, uint64_t ino, const char *path);
+			     uint64_t dev, uint64_t ino, const char *path,
+			     const char *old_path);
 void			 pe_playground_file_delete(anoubis_cookie_t pgid,
 			     uint64_t dev, uint64_t ino);
 int			 pe_playground_file_scanrequest(anoubis_cookie_t,

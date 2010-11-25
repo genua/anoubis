@@ -465,41 +465,22 @@ pe_playground_devtoname(char *buf, int buflen, uint64_t dev, uint64_t ino)
 }
 
 /**
- * Add the file name of a newly instantiated playground file to the
- * playground structure on disk.
- *
- * @param pgid The playground ID.
- * @param dev The device of the file system that the file lives on.
- * @param ino The inode of the file.
- * @param path The path name of the file relative to the root of the
- *     file system.
- * @return None.
+ * return -1 on error, 0 if not new file, 1 if new file
  */
-void
-pe_playground_file_instantiate(anoubis_cookie_t pgid, uint64_t dev,
-    uint64_t ino, const char *path)
+static int
+pe_playground_file_add(struct playground *pg, const char *name,
+	const char *path)
 {
-	char buf[512];
-	struct playground *pg;
 	int fd, pathoff;
 	int newfile = 1;
+	int ret = -1;
+	char buf[512];
 
-	if (!path || path[0] == 0)
-		return;
-	pg = pe_playground_find(pgid);
-	if (!pg) {
-		log_warnx("pe_playground_file_instantiate: File instantiated "
-		    "in unknown playground");
-		pg = pe_playground_create(pgid, 1);
-		if (!pg)
-			master_terminate();
-	}
-	pe_playground_devtoname(buf, sizeof(buf), dev, ino);
-	fd = atfd_openat(&pg->dirfd, buf, O_RDWR | O_CREAT, 0640);
+	fd = atfd_openat(&pg->dirfd, name, O_RDWR | O_CREAT, 0640);
 	if (fd < 0) {
 		log_warn("pe_playground_file_instantiate: Cannot open %s "
-		    "in playground %" PRIx64, buf, pgid);
-		return;
+		    "in playground %" PRIx64, name, pg->pgid);
+		return -1;
 	}
 	pathoff = 0;
 	while (1) {
@@ -509,10 +490,9 @@ pe_playground_file_instantiate(anoubis_cookie_t pgid, uint64_t dev,
 		if (count == 0)
 			break;
 		if (count < 0) {
-			pe_playground_devtoname(buf, sizeof(buf), dev, ino);
 			log_warn("pe_playground_file_instantiate: Error while "
 			    "reading file %s in playgournd %" PRIx64,
-			    buf, pgid);
+			    name, pg->pgid);
 			goto done;
 		}
 		newfile = 0;
@@ -569,13 +549,172 @@ pe_playground_file_instantiate(anoubis_cookie_t pgid, uint64_t dev,
 	if (write(fd, path, pathoff) != pathoff) {
 		log_warn("pe_playground_file_instantiate: Failed to "
 		    "write path name");
+		goto done;
 	}
-	if (newfile)
-		pg->nrfiles++;
+	ret = newfile;
 done:
-	if (close(fd) < 0)
+	if (close(fd) < 0) {
 		log_warn("pe_playground_file_instantiate: Failed to "
 		    "write path name");
+		ret = -1;
+	}
+	/* XXX: unlink file again if it was new and there was an error */
+	return ret;
+}
+
+static void
+pe_playground_rename_dir_one_file(struct playground *pg, const char *name,
+    const char *new_path, const char *old_path)
+{
+	int fd;
+	char buf[PATH_MAX];
+	char *bufend = buf + sizeof(buf);	/* end of buffer */
+	char *endp = buf;			/* end of valid data */
+	char *p = buf;				/* start of current name */
+	int pathlen = strlen(old_path);
+	char **files = NULL;
+	int size = 0, alloc = 0;
+
+	fd = atfd_openat(&pg->dirfd, name, O_RDONLY, 0);
+	if (fd < 0) {
+		log_warn("pe_playground_rename_dir_one_file: Cannot open %s "
+		    "in playground %" PRIx64, name, pg->pgid);
+		return;
+	}
+	while (1) {
+		char *nameend;		/* pointer to \0 end of current name */
+		int count = read(fd, endp, bufend - endp);
+
+		if (count == 0)
+			break;
+		if (count < 0) {
+			log_warn("pe_playground_rename_dir_one_file: Error "
+			    "while reading file %s in playgournd %" PRIx64,
+			    name, pg->pgid);
+			goto done;
+		}
+		endp += count;
+
+		while (endp > p) {
+			nameend = memchr(p, '\0', endp - p);
+			if (!nameend) {
+				if (buf == p) {
+					log_warn("pe_playground_rename_dir_one_file: "
+					    "Name too long while reading file %s in "
+					    "playgournd %" PRIx64, name, pg->pgid);
+					return;
+				}
+				/* move data to start of buffer and read more */
+				memmove(buf, p, endp - p);
+				endp = buf + (endp - p);
+				break;
+			}
+			if (nameend - p > pathlen &&
+			    strncmp(old_path, p, pathlen) == 0) {
+				/* match */
+				if (size == alloc) {
+					char **new;
+					alloc += 5;
+					new = realloc(files,
+					    alloc * sizeof(char *));
+					if (!new)
+						goto done;
+					files = new;
+				}
+				if (asprintf(&files[size], "%s/%s", new_path,
+				    p + pathlen) < 0)
+					goto done;
+				size++;
+			}
+			p = nameend + 1;
+		}
+	}
+done:
+	if (close(fd) < 0) {
+		log_warn("pe_playground_rename_dir_one_file: Failed to "
+		    "read %s", name);
+	}
+	if (files) {
+		int i;
+		for (i = 0; i < size; i++) {
+			pe_playground_file_add(pg, name, files[i]);
+			free(files[i]);
+		}
+		free(files);
+	}
+	return;
+}
+
+static void
+pe_playground_dir_rename(struct playground *pg, uint64_t dir_dev,
+    uint64_t dir_ino, const char *path, const char *old_path_no_slash)
+{
+	DIR		*dir;
+	struct dirent	*dent;
+	char *old_path;
+	if (asprintf(&old_path, "%s/", old_path_no_slash) < 0)
+		return;
+
+	dir = atfd_fdopendir(&pg->dirfd);
+	if (dir == NULL) {
+		log_warn("pe_playground_read: Cannot read playground "
+		    "directory for %" PRIx64, pg->pgid);
+		free(old_path);
+		return;
+	}
+	while((dent = readdir(dir)) != NULL) {
+		uint64_t	dev, ino;
+		char		ch;
+		if (sscanf(dent->d_name, "%" PRIx64 ":%" PRIx64 "%c",
+		    &dev, &ino, &ch) == 2) {
+			if (dev == dir_dev && ino != dir_ino)
+				pe_playground_rename_dir_one_file(pg,
+				    dent->d_name, path, old_path);
+		}
+	}
+	closedir(dir);
+	free(old_path);
+}
+
+/**
+ * Add the file name of a newly instantiated playground file to the
+ * playground structure on disk. If old_path was given, triger a rename
+ * of the PG-files in the dir.
+ *
+ * @param pgid The playground ID.
+ * @param dev The device of the file system that the file lives on.
+ * @param ino The inode of the file.
+ * @param path The path name of the file relative to the root of the
+ *     file system.
+ * @param old_path If file is a dir that is renamed, the old path name of the
+ *                 dir relative to the root of the file system. NULL otherwise.
+ * @return None.
+ */
+void
+pe_playground_file_instantiate(anoubis_cookie_t pgid, uint64_t dev,
+    uint64_t ino, const char *path, const char *old_path)
+{
+	struct playground *pg;
+	char buf[50];
+	int newfile;
+
+	if (!path || path[0] == 0)
+		return;
+	pg = pe_playground_find(pgid);
+	if (!pg) {
+		log_warnx("pe_playground_file_instantiate: File instantiated "
+		    "in unknown playground");
+		pg = pe_playground_create(pgid, 1);
+		if (!pg)
+			master_terminate();
+	}
+	pe_playground_devtoname(buf, sizeof(buf), dev, ino);
+	newfile = pe_playground_file_add(pg, buf, path);
+	if (newfile == 1)
+		pg->nrfiles++;
+	else if (old_path) {
+		pe_playground_dir_rename(pg, dev, ino, path, old_path);
+	}
 }
 
 /**
@@ -624,7 +763,7 @@ pe_playground_file_scanrequest(anoubis_cookie_t pgid, uint64_t dev,
 
 	if (path == NULL || path[0] == 0)
 		return -EINVAL;
-	pe_playground_file_instantiate(pgid, dev, ino, path);
+	pe_playground_file_instantiate(pgid, dev, ino, path, NULL);
 	pg = pe_playground_find(pgid);
 	if (pg == NULL)
 		return -ESRCH;

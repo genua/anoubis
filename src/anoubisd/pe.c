@@ -1048,6 +1048,8 @@ static struct anoubisd_reply *
 pe_handle_playgroundfile(struct eventdev_hdr *hdr)
 {
 	int				 plen;
+	int				 path_len;
+	const char			*old_path = NULL;
 	struct pg_file_message		*pg;
 
 	if (!hdr || hdr->msg_size < sizeof(struct eventdev_hdr)
@@ -1063,8 +1065,12 @@ pe_handle_playgroundfile(struct eventdev_hdr *hdr)
 	switch (pg->op) {
 	case ANOUBIS_PGFILE_INSTANTIATE:
 		if (pg->path[0]) {
+			path_len = strlen(pg->path);
+			if (path_len < plen-1 && pg->path[path_len+1] != '\0') {
+				old_path = pg->path + path_len + 1;
+			}
 			pe_playground_file_instantiate(pg->pgid, pg->dev,
-			    pg->ino, pg->path);
+			    pg->ino, pg->path, old_path);
 		} else {
 			log_warnx("pe_handle_playgroundfile: "
 			    "Empty file name length=%d", plen);
