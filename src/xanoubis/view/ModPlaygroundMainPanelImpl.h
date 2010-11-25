@@ -203,6 +203,18 @@ class ModPlaygroundMainPanelImpl : public ModPlaygroundMainPanelBase
 			event.Skip();
 			updateButtonState();
 		}
+
+
+	protected:
+		/**
+		 * Refresh the list of playgrounds in order to remove the
+		 * dead entry after a playground quit without changing
+		 * any files.
+		 *
+		 * @param event The event.
+		 * @return None.
+		 */
+		void onAppEnd(wxCommandEvent &event);
 };
 
 

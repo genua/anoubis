@@ -64,6 +64,7 @@ ModPlaygroundMainPanelImpl::ModPlaygroundMainPanelImpl(wxWindow* parent,
 	struct sigaction		 act;
 	PlaygroundCtrl			*playgroundCtrl = NULL;
 	AnRowProvider			*provider;
+	AnEvents			*anEvents;
 
 	act.sa_flags = 0;
 	sigemptyset(&act.sa_mask);
@@ -99,6 +100,11 @@ ModPlaygroundMainPanelImpl::ModPlaygroundMainPanelImpl(wxWindow* parent,
 	    ModPlaygroundMainPanelImpl::onRowChange), NULL, this);
 	provider->Connect(anEVT_ROW_SIZECHANGE, wxCommandEventHandler(
 	    ModPlaygroundMainPanelImpl::onRowChange), NULL, this);
+
+	anEvents = AnEvents::instance();
+	anEvents->Connect(anEVT_PG_CHANGE, wxCommandEventHandler(
+	    ModPlaygroundMainPanelImpl::onAppEnd), NULL, this);
+
 }
 
 ModPlaygroundMainPanelImpl::~ModPlaygroundMainPanelImpl(void)
@@ -158,6 +164,13 @@ void
 ModPlaygroundMainPanelImpl::onAppStart(wxCommandEvent &)
 {
 	startApplication();
+}
+
+void
+ModPlaygroundMainPanelImpl::onAppEnd(wxCommandEvent &event)
+{
+	refreshPlaygroundList();
+	event.Skip();
 }
 
 void

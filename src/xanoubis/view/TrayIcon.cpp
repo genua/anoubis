@@ -702,9 +702,9 @@ TrayIcon::OnPgNotifyClosed(wxCommandEvent &ev)
 }
 
 void
-TrayIcon::OnPgForced(wxCommandEvent &ev)
+TrayIcon::OnPgForced(wxCommandEvent &event)
 {
-	long			 id = ev.GetExtraLong();
+	long			 id = event.GetExtraLong();
 	Notification		*n;
 	wxString		 msg;
 
@@ -714,6 +714,7 @@ TrayIcon::OnPgForced(wxCommandEvent &ev)
 	msg = wxString::Format(_("Starting in playground: %ls"),
 	    n->getPath().c_str());
 	ShowPgAlert(msg);
+	event.Skip();
 }
 
 void
