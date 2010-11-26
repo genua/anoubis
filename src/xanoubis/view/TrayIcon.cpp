@@ -736,7 +736,7 @@ TrayIcon::ShowPgAlert(wxString &msg)
 
 	notify = notify_notification_new("Anoubis", msg.fn_str(), NULL, NULL);
 	g_signal_connect(notify, "closed", G_CALLBACK(pg_close_callback), this);
-	notify_notification_set_timeout(notify, 5*ONE_SECOND);
+	notify_notification_set_timeout(notify, NOTIFY_EXPIRES_NEVER);
 #ifdef __WXGTK__
 	{
 		/*
