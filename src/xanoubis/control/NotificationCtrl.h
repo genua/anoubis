@@ -103,6 +103,17 @@ class NotificationCtrl : public wxEvtHandler, public Singleton<NotificationCtrl>
 		NotificationPerspective *getPerspective(enum ListPerspectives);
 
 		/**
+		 * Tests whether there are any unanswered escalations of the
+		 * given module.
+		 *
+		 * @param module The requested module (e.g. ALF, SFS, SANDBOX,
+		 *               PLAYGROUND).
+		 * @return If you have at least one unanswered escalatiobn of
+		 *         the given module, true is returned.
+		 */
+		bool havePendingEscalation(const wxString &) const;
+
+		/**
 		 * Answer an escalation.
 		 * In fact the answer object has to be assigned to the
 		 * escalation already. This method will cause the creation of

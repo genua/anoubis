@@ -40,6 +40,7 @@
 #include "AnEvents.h"
 #include "DlgPlaygroundScanResultImpl.h"
 #include "JobCtrl.h"
+#include "NotificationCtrl.h"
 #include "PlaygroundCtrl.h"
 #include "PlaygroundFileEntry.h"
 #include "PlaygroundInfoEntry.h"
@@ -74,10 +75,14 @@ PlaygroundCtrl::getInfoProvider(void)
 	return (&playgroundInfo_);
 }
 
-bool
+PlaygroundCtrl::Result
 PlaygroundCtrl::updatePlaygroundInfo(void)
 {
-	return (createListTask());
+	NotificationCtrl *ctrl = NotificationCtrl::instance();
+	if (!ctrl->havePendingEscalation(wxT("PLAYGROUND")))
+		return createListTask() ? OK : ERROR;
+	else
+		return BUSY;
 }
 
 AnGenericRowProvider *
@@ -86,50 +91,62 @@ PlaygroundCtrl::getFileProvider(void)
 	return (&playgroundFiles_);
 }
 
-bool
+PlaygroundCtrl::Result
 PlaygroundCtrl::updatePlaygroundFiles(uint64_t pgid, bool reportESRCH)
 {
-	return createFileTask(pgid, reportESRCH);
+	NotificationCtrl *ctrl = NotificationCtrl::instance();
+	if (!ctrl->havePendingEscalation(wxT("PLAYGROUND")))
+		return createFileTask(pgid, reportESRCH) ? OK : ERROR;
+	else
+		return BUSY;
 }
 
-bool
+PlaygroundCtrl::Result
 PlaygroundCtrl::removePlayground(uint64_t pgid)
 {
-	return createUnlinkTask(pgid);
+	NotificationCtrl *ctrl = NotificationCtrl::instance();
+	if (!ctrl->havePendingEscalation(wxT("PLAYGROUND")))
+		return createUnlinkTask(pgid) ? OK : ERROR;
+	else
+		return BUSY;
 }
 
-bool
+PlaygroundCtrl::Result
 PlaygroundCtrl::removeFiles(const std::vector<int> &indexes)
 {
-	std::vector<PlaygroundFileEntry *>	 files;
-	uint64_t				 pgid = 0;
-	AnListClass				*item = NULL;
-	AnRowProvider				*provider = NULL;
-	PlaygroundFileEntry			*entry;
+	NotificationCtrl *ctrl = NotificationCtrl::instance();
+	if (!ctrl->havePendingEscalation(wxT("PLAYGROUND"))) {
+		std::vector<PlaygroundFileEntry *>	 files;
+		uint64_t				 pgid = 0;
+		AnListClass				*item = NULL;
+		AnRowProvider				*provider = NULL;
+		PlaygroundFileEntry			*entry;
 
-	provider = getFileProvider();
-	for (unsigned int i=0; i<indexes.size(); ++i) {
-		item = provider->getRow(indexes[i]);
-		if (item == NULL) {
-			continue;
+		provider = getFileProvider();
+		for (unsigned int i=0; i<indexes.size(); ++i) {
+			item = provider->getRow(indexes[i]);
+			if (item == NULL) {
+				continue;
+			}
+
+			entry = dynamic_cast<PlaygroundFileEntry *>(item);
+			if (entry == NULL) {
+				continue;
+			}
+
+			files.push_back(entry);
+			if (pgid == 0) {
+				pgid = entry->getPgid();
+			}
 		}
 
-		entry = dynamic_cast<PlaygroundFileEntry *>(item);
-		if (entry == NULL) {
-			continue;
+		if (pgid == 0 || files.size() == 0) {
+			return ERROR;
 		}
 
-		files.push_back(entry);
-		if (pgid == 0) {
-			pgid = entry->getPgid();
-		}
-	}
-
-	if (pgid == 0 || files.size() == 0) {
-		return (false);
-	}
-
-	return createUnlinkTask(pgid, files);
+		return createUnlinkTask(pgid, files) ? OK : ERROR;
+	} else
+		return BUSY;
 }
 
 PlaygroundCtrl::PlaygroundCtrl(void) : Singleton<PlaygroundCtrl>()
@@ -693,33 +710,37 @@ PlaygroundCtrl::fileIdentification(uint64_t dev, uint64_t ino)
 	return ret;
 }
 
-bool
+PlaygroundCtrl::Result
 PlaygroundCtrl::commitFiles(const std::vector<int> &files)
 {
-	AnRowProvider			*provider;
-	std::vector<uint64_t>		 devs;
-	std::vector<uint64_t>		 inos;
-	uint64_t			 pgid = 0;
+	NotificationCtrl *ctrl = NotificationCtrl::instance();
+	if (!ctrl->havePendingEscalation(wxT("PLAYGROUND"))) {
+		AnRowProvider			*provider;
+		std::vector<uint64_t>		 devs;
+		std::vector<uint64_t>		 inos;
+		uint64_t			 pgid = 0;
 
-	provider = getFileProvider();
-	for (unsigned int i=0; i<files.size(); ++i) {
-		AnListClass		*item = provider->getRow(files[i]);
-		PlaygroundFileEntry	*e;
+		provider = getFileProvider();
+		for (unsigned int i=0; i<files.size(); ++i) {
+			AnListClass		*item = provider->getRow(files[i]);
+			PlaygroundFileEntry	*e;
 
-		if (!item)
-			continue;
-		e = dynamic_cast<PlaygroundFileEntry *>(item);
-		if (!e)
-			continue;
-		devs.push_back(e->getDevice());
-		inos.push_back(e->getInode());
-		if (pgid == 0)
-			pgid = e->getPgid();
-	}
-	if (pgid == 0 || inos.size() == 0)
-		return false;
-	commitFiles(pgid, devs, inos, false, false);
-	return true;
+			if (!item)
+				continue;
+			e = dynamic_cast<PlaygroundFileEntry *>(item);
+			if (!e)
+				continue;
+			devs.push_back(e->getDevice());
+			inos.push_back(e->getInode());
+			if (pgid == 0)
+				pgid = e->getPgid();
+		}
+		if (pgid == 0 || inos.size() == 0)
+			return ERROR;
+		commitFiles(pgid, devs, inos, false, false);
+		return OK;
+	} else
+		return BUSY;
 }
 
 void

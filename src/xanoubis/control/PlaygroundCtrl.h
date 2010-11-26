@@ -47,6 +47,18 @@
 class PlaygroundCtrl : public GenericCtrl, public Singleton<PlaygroundCtrl>
 {
 	public:
+		enum Result {
+			OK,	/**< The request was successfully send to the
+				     daemon. */
+			ERROR,	/**< An error occured while generating the
+				     request resp. sending the request to the
+				     daemon. */
+			BUSY	/**< Currently is it not possible to send a
+				     request to the daemon because there is at
+				     least one pending playground-escalation,
+				     which needs to be answered by the user. */
+		};
+
 		/**
 		 * Destructor.
 		 */
@@ -66,10 +78,9 @@ class PlaygroundCtrl : public GenericCtrl, public Singleton<PlaygroundCtrl>
 		 * This method will trigger all steps to update the list of
 		 * playgrounds. The caller may also want to register to
 		 * anEVT_PLAYGROUND_ERROR events to know about errors.
-		 * @param None.
-		 * @return True on success.
+		 * @return Result of request-operation
 		 */
-		bool updatePlaygroundInfo(void);
+		Result updatePlaygroundInfo(void);
 
 		/**
 		 * Get file provider.
@@ -89,9 +100,9 @@ class PlaygroundCtrl : public GenericCtrl, public Singleton<PlaygroundCtrl>
 		 * @param 1st  the ID of the playground to read.
 		 * @param 2nd True if a non-existing playground should
 		 *     be reported as an error.
-		 * @return True on success.
+		 * @return Result of request-operation
 		 */
-		bool updatePlaygroundFiles(uint64_t pgid, bool err = true);
+		Result updatePlaygroundFiles(uint64_t pgid, bool err = true);
 
 		/**
 		 * Command: Remove a playground.
@@ -99,16 +110,16 @@ class PlaygroundCtrl : public GenericCtrl, public Singleton<PlaygroundCtrl>
 		 * the selected playground. Once the task is finished an event
 		 * is sent.
 		 * @param 1st  The ID of the playground to remove.
-		 * @return True on success.
+		 * @return Result of request-operation
 		 */
-		bool removePlayground(uint64_t pgid);
+		Result removePlayground(uint64_t pgid);
 
 		/**
 		 * Command: Remove files of a playground.
 		 * @param[in] 1st List of indexes of row provider.
-		 * @return True on success.
+		 * @return Result of request-operation
 		 */
-		bool removeFiles(const std::vector<int> &files);
+		Result removeFiles(const std::vector<int> &files);
 
 		/**
 		 * Command: Commit a set of files.
@@ -118,9 +129,9 @@ class PlaygroundCtrl : public GenericCtrl, public Singleton<PlaygroundCtrl>
 		 * @param[in] 1st The list of file to commit. This
 		 *     is a list of indexes into the file list maintained
 		 *     by the row provider.
-		 * @return True on success.
+		 * @return Result of request-operation
 		 */
-		bool commitFiles(const std::vector<int> &files);
+		Result commitFiles(const std::vector<int> &files);
 
 		/**
 		 * Return the program name saved for a particular playground.

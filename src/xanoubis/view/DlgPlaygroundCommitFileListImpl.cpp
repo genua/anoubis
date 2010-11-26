@@ -32,6 +32,7 @@
 #include <wx/log.h>
 
 #include "AnListCtrl.h"
+#include "AnMessageDialog.h"
 #include "DlgPlaygroundCommitFileListImpl.h"
 #include "PlaygroundCtrl.h"
 #include "JobCtrl.h"
@@ -107,9 +108,15 @@ DlgPlaygroundCommitFileListImpl::onDeleteClicked(wxCommandEvent &event)
 	    i=fileList->getNextSelection(i)) {
 		selection.push_back(i);
 	}
-	if (PlaygroundCtrl::instance()->removeFiles(selection)) {
+
+	PlaygroundCtrl::Result result =
+	    PlaygroundCtrl::instance()->removeFiles(selection);
+	if (result == PlaygroundCtrl::OK)
 		beginActivity();
-	}
+	else if (result == PlaygroundCtrl::BUSY)
+		anMessageBox(_("You have a pending playground escalation.\n"
+		    "Please answer the escalation first and try again!"),
+		    _("Playground notification"), wxOK | wxICON_WARNING, this);
 }
 
 void
@@ -122,9 +129,15 @@ DlgPlaygroundCommitFileListImpl::onCommitClicked(wxCommandEvent &event)
 	    i=fileList->getNextSelection(i)) {
 		sel.push_back(i);
 	}
-	if (PlaygroundCtrl::instance()->commitFiles(sel)) {
+
+	PlaygroundCtrl::Result result =
+	    PlaygroundCtrl::instance()->commitFiles(sel);
+	if (result == PlaygroundCtrl::OK)
 		beginActivity();
-	}
+	else if (result == PlaygroundCtrl::BUSY)
+		anMessageBox(_("You have a pending playground escalation.\n"
+		    "Please answer the escalation first and try again!"),
+		    _("Playground notification"), wxOK | wxICON_WARNING, this);
 }
 
 void

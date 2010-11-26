@@ -161,6 +161,18 @@ NotificationCtrl::getPerspective(enum ListPerspectives list)
 }
 
 bool
+NotificationCtrl::havePendingEscalation(const wxString &module) const
+{
+	Str2LongHash::const_iterator it = escalationCount_.find(module);
+
+	if (it != escalationCount_.end()) {
+		long count = (*it).second;
+		return (count > 0);
+	} else
+		return false;
+}
+
+bool
 NotificationCtrl::answerEscalation(EscalationNotify *escalation,
     bool sendAnswer, wxString &errMsg)
 {

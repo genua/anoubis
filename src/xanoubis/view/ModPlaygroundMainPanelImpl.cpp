@@ -48,6 +48,7 @@
 #include "JobCtrl.h"
 #include "ModPlaygroundMainPanelImpl.h"
 #include "ModPlaygroundRowProperty.h"
+#include "NotificationCtrl.h"
 #include "PlaygroundCtrl.h"
 #include "PlaygroundInfoEntry.h"
 #include "PlaygroundListProperty.h"
@@ -244,10 +245,15 @@ ModPlaygroundMainPanelImpl::onDeleteFiles(wxCommandEvent &event)
 	}
 
 	/* start delete task */
-	if (!PlaygroundCtrl::instance()->removePlayground(pgId)) {
+	PlaygroundCtrl::Result result =
+	    PlaygroundCtrl::instance()->removePlayground(pgId);
+	if (result == PlaygroundCtrl::ERROR)
 		anMessageBox(_("Could not delete playground.\n"),
 		    _("Playground error"), wxOK | wxICON_ERROR, this);
-	}
+	else if (result == PlaygroundCtrl::BUSY)
+		anMessageBox(_("You have a pending playground escalation.\n"
+		    "Please answer the escalation first and try again!"),
+		    _("Playground notification"), wxOK | wxICON_WARNING, this);
 }
 
 void
@@ -364,22 +370,27 @@ ModPlaygroundMainPanelImpl::startApplication(void)
 void
 ModPlaygroundMainPanelImpl::updateButtonState(void)
 {
+	NotificationCtrl	*ctrl = NotificationCtrl::instance();
 	bool			 enable = false;
 	AnListClass		*item;
 	AnRowProvider		*rowProvider;
 	PlaygroundInfoEntry	*entry = NULL;
 	int			 sel;
 
-	sel = pgList->getFirstSelection();
-	if (JobCtrl::instance()->isConnected() && sel >= 0) {
-		rowProvider = PlaygroundCtrl::instance()->getInfoProvider();
-		item = rowProvider->getRow(sel);
-		if (item)
-			entry = dynamic_cast<PlaygroundInfoEntry *>(item);
-		if ((entry != NULL) && (entry->getNumFiles() > 0) &&
-		    (entry->getUid() == geteuid()) && !entry->isActive())
-			enable = true;
-	}
+	if (!ctrl->havePendingEscalation(wxT("PLAYGROUND"))) {
+		sel = pgList->getFirstSelection();
+		if (JobCtrl::instance()->isConnected() && sel >= 0) {
+			rowProvider = PlaygroundCtrl::instance()->getInfoProvider();
+			item = rowProvider->getRow(sel);
+			if (item)
+				entry = dynamic_cast<PlaygroundInfoEntry *>(item);
+			if ((entry != NULL) && (entry->getNumFiles() > 0) &&
+			    (entry->getUid() == geteuid()) && !entry->isActive())
+				enable = true;
+		}
+	} else
+		enable = false;
+
 	pgDeleteButton->Enable(enable);
 	pgCommitButton->Enable(enable);
 }
@@ -387,13 +398,22 @@ ModPlaygroundMainPanelImpl::updateButtonState(void)
 void
 ModPlaygroundMainPanelImpl::refreshPlaygroundList(void)
 {
-	if (!PlaygroundCtrl::instance()->updatePlaygroundInfo()) {
+	PlaygroundCtrl::Result result =
+	    PlaygroundCtrl::instance()->updatePlaygroundInfo();
+
+	if (result == PlaygroundCtrl::OK) {
+		updateButtonState();
+	} else if (result == PlaygroundCtrl::ERROR) {
 		anMessageBox(_("Could not refresh list of playgrounds."),
 		    _("Playground error"), wxOK | wxICON_ERROR, this);
 		pgDeleteButton->Disable();
 		pgCommitButton->Disable();
-	} else {
-		updateButtonState();
+	} else { // PlaygroundCtrl::BUSY
+		anMessageBox(_("You have a pending playground escalation.\n"
+		    "Please answer the escalation first and try again!"),
+		    _("Playground notification"), wxOK | wxICON_WARNING, this);
+		pgDeleteButton->Disable();
+		pgCommitButton->Disable();
 	}
 }
 
