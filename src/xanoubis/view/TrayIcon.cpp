@@ -57,9 +57,10 @@
 #include "NotificationCtrl.h"
 #include "PlaygroundCtrl.h"
 
-#define MAX_MESSAGE	128
-#define MAX_PATH	1024
-#define ONE_SECOND	1000
+#define MAX_MESSAGE			128
+#define MAX_PATH			1024
+#define ONE_SECOND			1000
+#define PG_NOTIFICATION_TIMEOUT	10
 
 #define SELECT_ICON_ID(id, basename, size) \
 	do { \
@@ -713,7 +714,7 @@ TrayIcon::OnPgForced(wxCommandEvent &event)
 		return;
 	msg = wxString::Format(_("Starting in playground: %ls"),
 	    n->getPath().c_str());
-	ShowPgAlert(msg);
+	ShowPgAlert(msg, false);
 	event.Skip();
 }
 
@@ -726,17 +727,21 @@ TrayIcon::OnPgChange(wxCommandEvent &ev)
 
 	pgnam = PlaygroundCtrl::instance()->getPlaygroundName(pgid);
 	msg = wxString::Format(_("Terminated: playground %ls"), pgnam.c_str());
-	ShowPgAlert(msg);
+	ShowPgAlert(msg, true);
 }
 
 void
-TrayIcon::ShowPgAlert(wxString &msg)
+TrayIcon::ShowPgAlert(wxString &msg, bool infinite)
 {
 	NotifyNotification	*notify;
 
 	notify = notify_notification_new("Anoubis", msg.fn_str(), NULL, NULL);
 	g_signal_connect(notify, "closed", G_CALLBACK(pg_close_callback), this);
-	notify_notification_set_timeout(notify, NOTIFY_EXPIRES_NEVER);
+	if (infinite)
+		notify_notification_set_timeout(notify, NOTIFY_EXPIRES_NEVER);
+	else
+		notify_notification_set_timeout(notify,
+		    (PG_NOTIFICATION_TIMEOUT * ONE_SECOND));
 #ifdef __WXGTK__
 	{
 		/*

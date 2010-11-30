@@ -220,9 +220,9 @@ class TrayIcon : public wxTaskBarIcon
 		/**
 		 * Show a notification message to the user.
 		 *
-		 * @param msg The message.
+		 * @param msg The message, infinite TRUE when timeout==infinite.
 		 */
-		void ShowPgAlert(wxString &msg);
+		void ShowPgAlert(wxString &msg, bool infinite);
 
 	enum {
 		GUI_EXIT = 12001,
