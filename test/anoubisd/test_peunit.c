@@ -92,7 +92,7 @@ send_policychange(uint32_t uid __used, uint32_t prio __used)
 
 void
 send_pgchange(unsigned int uid __used, anoubis_cookie_t pgid __used,
-    unsigned int pgop __used)
+    unsigned int pgop __used, const char *cmd __used)
 {
 }
 

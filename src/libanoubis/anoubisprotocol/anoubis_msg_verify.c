@@ -584,7 +584,17 @@ verify_listreply(const struct anoubis_msg *m)
 
 DEFINE_STRICT_CHECK_FUNCTION(notifyresult, Anoubis_NotifyResultMessage)
 DEFINE_STRICT_CHECK_FUNCTION(policychange, Anoubis_PolicyChangeMessage)
-DEFINE_STRICT_CHECK_FUNCTION(pgchange, Anoubis_PgChangeMessage)
+
+static int
+verify_pgchange(const struct anoubis_msg *m)
+{
+	if (!VERIFY_LENGTH(m, sizeof(Anoubis_PgChangeMessage)))
+		return 0;
+	if (strlen(m->u.pgchange->cmd) == 0)
+		return 0;
+	return 1;
+}
+
 DEFINE_STRICT_CHECK_FUNCTION(statusnotify, Anoubis_StatusNotifyMessage)
 
 int

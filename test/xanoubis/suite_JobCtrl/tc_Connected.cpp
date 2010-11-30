@@ -187,7 +187,7 @@ START_TEST(test_fetchversion)
 	    "Failed to receive versionlist: %i\n", task.getComTaskResult());
 	mark_point();
 
-	fail_unless(task.getProtocolVersion() == 7,
+	fail_unless(task.getProtocolVersion() == 8,
 	    "Unexpected protocol version received (%i)\n",
 	    task.getProtocolVersion());
 	fail_unless(task.getApnVersion() == 0x10003,

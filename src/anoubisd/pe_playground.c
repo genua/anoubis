@@ -402,7 +402,8 @@ pe_playground_postexec(anoubis_cookie_t pgid, struct pe_proc *proc)
 	}
 	if (pe_playground_initproc(pg, proc)) {
 		pg->did_exec = 1;
-		send_pgchange(pg->uid, pg->pgid, ANOUBIS_PGCHANGE_CREATE);
+		send_pgchange(pg->uid, pg->pgid, ANOUBIS_PGCHANGE_CREATE,
+		    pg->cmd);
 		pe_playground_save_last_pgid(pg->pgid);
 	}
 }
@@ -449,7 +450,7 @@ pe_playground_delete(anoubis_cookie_t pgid, struct pe_proc *proc)
 		    pe_proc_task_cookie(proc), pg->nrprocs);
 		if (pg->nrprocs == 0) {
 			send_pgchange(pg->uid, pgid,
-			    ANOUBIS_PGCHANGE_TERMINATE);
+			    ANOUBIS_PGCHANGE_TERMINATE, pg->cmd);
 		}
 		pe_playground_trykill(pg);
 	} else {
@@ -615,9 +616,11 @@ pe_playground_rename_dir_one_file(struct playground *pg, const char *name,
 			nameend = memchr(p, '\0', endp - p);
 			if (!nameend) {
 				if (buf == p) {
-					log_warn("pe_playground_rename_dir_one_file: "
-					    "Name too long while reading file %s in "
-					    "playgournd %" PRIx64, name, pg->pgid);
+					log_warn(
+					   "pe_playground_rename_dir_one_file: "
+					   "Name too long while reading file "
+					   "%s in playgournd %" PRIx64,
+					   name, pg->pgid);
 					return;
 				}
 				/* move data to start of buffer and read more */

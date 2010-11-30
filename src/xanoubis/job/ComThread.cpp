@@ -507,14 +507,21 @@ ComThread::sendNotify(struct anoubis_msg *notifyMsg)
 	} else if (type == ANOUBIS_N_PGCHANGE) {
 		unsigned int	pgop = get_value(notifyMsg->u.pgchange->pgop);
 		uint64_t	pgid = get_value(notifyMsg->u.pgchange->pgid);
+		const char	*cmd = notifyMsg->u.pgchange->cmd;
+
 		if (pgop == ANOUBIS_PGCHANGE_TERMINATE) {
 			wxCommandEvent	pgchange(anEVT_PG_CHANGE);
+
+			Debug::info(_("Playground %llx (%hs) terminated"),
+			    pgid, cmd);
 
 			/* XXX CEH: Should be a long long... */
 			pgchange.SetExtraLong(pgid);
 			if (dynamic_cast<AnoubisGuiApp *>(wxTheApp))
 				wxPostEvent(AnEvents::instance(), pgchange);
-		}
+		} else if (pgop == ANOUBIS_PGCHANGE_CREATE)
+			Debug::info(_("Playground %llx (%hs) created"),
+			    pgid, cmd);
 	} else if (type == ANOUBIS_N_STATUSNOTIFY) {
 		unsigned int		key, value;
 

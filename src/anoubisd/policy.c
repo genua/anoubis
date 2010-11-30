@@ -1182,23 +1182,31 @@ oom:
  * @param uid The user Id of the playground owner.
  * @param pgid The playground ID of the playground.
  * @param pgop The playground operation.
+ * @param cmd The command executed in the playground
  */
 void
-send_pgchange(unsigned int uid, anoubis_cookie_t pgid, unsigned int pgop)
+send_pgchange(unsigned int uid, anoubis_cookie_t pgid, unsigned int pgop,
+    const char *cmd)
 {
 	struct anoubisd_msg		*msg;
 	struct anoubisd_msg_pgchange	*pgmsg;
+	int				 cmdlen = 0;
 
-	DEBUG(DBG_PG, "send_pgchange: uid=%d pgid=%llx pgop=%d",
-	    uid, (long long)pgid, pgop);
+	DEBUG(DBG_PG, "send_pgchange: uid=%d pgid=%llx pgop=%d cmd=%s",
+	    uid, (long long)pgid, pgop, cmd);
+
+	if (cmd != NULL)
+		cmdlen = strlen(cmd);
+
 	msg = msg_factory(ANOUBISD_MSG_PGCHANGE,
-	    sizeof(struct anoubisd_msg_pgchange));
+	    sizeof(struct anoubisd_msg_pgchange) + cmdlen + 1);
 	if (msg == NULL)
 		return;
 	pgmsg = (struct anoubisd_msg_pgchange *)msg->msg;
 	pgmsg->uid = uid;
 	pgmsg->pgid = pgid;
 	pgmsg->pgop = pgop;
+	strcpy(pgmsg->cmd, cmd);
 	enqueue(&eventq_p2s, msg);
 }
 

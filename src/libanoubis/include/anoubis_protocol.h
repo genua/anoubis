@@ -46,9 +46,10 @@
  *     Version 5: Add CSMULTI messages
  *     Version 6: Add Playground and file browser messages
  *     Version 7: Add Playground-unlink message
+ *     Version 8: Add cmd to Anoubis_PgChange message
  */
-#define ANOUBIS_PROTO_VERSION		7
-#define ANOUBIS_PROTO_MINVERSION	7
+#define ANOUBIS_PROTO_VERSION		8
+#define ANOUBIS_PROTO_MINVERSION	8
 
 #define ANOUBIS_PROTO_CONNECT		0
 #define ANOUBIS_PROTO_POLICY		1
@@ -369,17 +370,32 @@ typedef struct {
 /*
  * Notify a client about a change to one of its playgrounds. This is
  * a message of type ANOUBIS_SOURCE_STAT wrt. registration.
- * Fileds:
- * type: The message type (ANOUBIS_N_PGCHANGE).
- * uid: The user ID of the playground owner.
- * pgop: The playground operation (ANOUBIS_PGCHANGE_*)
- * pgid: The playground ID.
  */
 typedef struct {
-	u32n	type;		/* ANOUIBS_N_PGCHANGE */
+	/**
+	 * The message type (ANOUBIS_N_PGCHANGE).
+	 */
+	u32n	type;
+
+	/**
+	 * The user ID of the playground owner.
+	 */
 	u32n	uid;
+
+	/**
+	 * The playground operation (ANOUBIS_PGCHANGE_*)
+	 */
 	u32n	pgop;
+
+	/**
+	 * The playground ID.
+	 */
 	u64n	pgid;
+
+	/**
+	 * Command executed in the playground.
+	 */
+	char	cmd[0];
 } __attribute__((packed)) Anoubis_PgChangeMessage;
 
 typedef struct {

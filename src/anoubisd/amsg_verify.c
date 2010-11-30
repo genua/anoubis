@@ -671,7 +671,7 @@ anoubisd_msg_eventask_size(const char *buf, int buflen)
 #undef ADDOFFSET
 
 DEFINE_CHECK_FUNCTION(struct, anoubisd_msg_pchange);
-DEFINE_CHECK_FUNCTION(struct, anoubisd_msg_pgchange);
+DEFINE_STRING_CHECK_FUNCTION(struct, anoubisd_msg_pgchange, cmd)
 
 static int
 anoubisd_sfscache_invalidate_size(const char *buf, int buflen)

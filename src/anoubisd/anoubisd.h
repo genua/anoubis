@@ -747,6 +747,11 @@ struct anoubisd_msg_pgchange
 	 * The playground operation.
 	 */
 	uint32_t			pgop;
+
+	/**
+	 * The command executed in the playground.
+	 */
+	char				cmd[0];
 };
 
 /**
@@ -1221,7 +1226,7 @@ extern void	dazukofs_ignore(void);
 
 extern int	send_policy_data(uint64_t token, int fd);
 void		send_pgchange(unsigned int uid, anoubis_cookie_t pgid,
-		    unsigned int pgop);
+		    unsigned int pgop, const char *cmd);
 extern void	__send_lognotify(struct pe_proc_ident *pident,
 		    struct pe_proc_ident *ctxident, struct eventdev_hdr *,
 		    uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);

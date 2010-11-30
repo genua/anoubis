@@ -1918,13 +1918,15 @@ dispatch_p2s_pgchange(const struct anoubisd_msg *msg)
 	struct anoubis_msg		*m;
 
 	pgchange = (struct anoubisd_msg_pgchange *)msg->msg;
-	m = anoubis_msg_new(sizeof(Anoubis_PgChangeMessage));
+	m = anoubis_msg_new(sizeof(Anoubis_PgChangeMessage) +
+	    strlen(pgchange->cmd) + 1);
 	if (!m)
 		return;
 	set_value(m->u.pgchange->type, ANOUBIS_N_PGCHANGE);
 	set_value(m->u.pgchange->uid, pgchange->uid);
 	set_value(m->u.pgchange->pgid, pgchange->pgid);
 	set_value(m->u.pgchange->pgop, pgchange->pgop);
+	strcpy(m->u.pgchange->cmd, pgchange->cmd);
 	__send_notify(m);
 }
 

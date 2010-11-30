@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: anoubis 0.9.4.27.26.159\n"
+"Project-Id-Version: anoubis 0.9.4.27.29.168\n"
 "Report-Msgid-Bugs-To: anoubis@lists.anoubis.org\n"
-"POT-Creation-Date: 2010-11-26 14:36+0100\n"
+"POT-Creation-Date: 2010-11-30 11:19+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3627,73 +3627,73 @@ msgid ""
 "of WRITING file access:"
 msgstr ""
 
-#: src/xanoubis/view/TrayIcon.cpp:310
+#: src/xanoubis/view/TrayIcon.cpp:311
 msgid "&Restore xanoubis"
 msgstr ""
 
-#: src/xanoubis/view/TrayIcon.cpp:311
+#: src/xanoubis/view/TrayIcon.cpp:312
 msgid "E&xit xanoubis"
 msgstr ""
 
-#: src/xanoubis/view/TrayIcon.cpp:330
+#: src/xanoubis/view/TrayIcon.cpp:331
 #, c-format
 msgid ""
 "Messages: %d\n"
 "not connected"
 msgstr ""
 
-#: src/xanoubis/view/TrayIcon.cpp:332
+#: src/xanoubis/view/TrayIcon.cpp:333
 msgid ""
 "No messages\n"
 "not connected"
 msgstr ""
 
-#: src/xanoubis/view/TrayIcon.cpp:339
+#: src/xanoubis/view/TrayIcon.cpp:340
 #, c-format
 msgid ""
 "Messages: %d\n"
 "connected with %ls"
 msgstr ""
 
-#: src/xanoubis/view/TrayIcon.cpp:343
+#: src/xanoubis/view/TrayIcon.cpp:344
 #, c-format
 msgid ""
 "No messages\n"
 "connected with %ls"
 msgstr ""
 
-#: src/xanoubis/view/TrayIcon.cpp:349
+#: src/xanoubis/view/TrayIcon.cpp:350
 #, c-format
 msgid "Received Escalations: %d"
 msgstr ""
 
-#: src/xanoubis/view/TrayIcon.cpp:353
+#: src/xanoubis/view/TrayIcon.cpp:354
 msgid "ESCALATION"
 msgstr ""
 
-#: src/xanoubis/view/TrayIcon.cpp:356
+#: src/xanoubis/view/TrayIcon.cpp:357
 msgid "Couldn't send Escalation"
 msgstr ""
 
-#: src/xanoubis/view/TrayIcon.cpp:359
+#: src/xanoubis/view/TrayIcon.cpp:360
 #, c-format
 msgid "Received Alerts: %d"
 msgstr ""
 
-#: src/xanoubis/view/TrayIcon.cpp:363
+#: src/xanoubis/view/TrayIcon.cpp:364
 msgid "ALERT"
 msgstr ""
 
-#: src/xanoubis/view/TrayIcon.cpp:366
+#: src/xanoubis/view/TrayIcon.cpp:367
 msgid "Couldn't send Alert"
 msgstr ""
 
-#: src/xanoubis/view/TrayIcon.cpp:714
+#: src/xanoubis/view/TrayIcon.cpp:715
 #, c-format
 msgid "Starting in playground: %ls"
 msgstr ""
 
-#: src/xanoubis/view/TrayIcon.cpp:728
+#: src/xanoubis/view/TrayIcon.cpp:729
 #, c-format
 msgid "Terminated: playground %ls"
 msgstr ""
@@ -4264,11 +4264,21 @@ msgstr ""
 msgid "Permissions"
 msgstr ""
 
-#: src/xanoubis/job/ComThread.cpp:524
+#: src/xanoubis/job/ComThread.cpp:515
+#, c-format
+msgid "Playground %llx (%hs) terminated"
+msgstr ""
+
+#: src/xanoubis/job/ComThread.cpp:523
+#, c-format
+msgid "Playground %llx (%hs) created"
+msgstr ""
+
+#: src/xanoubis/job/ComThread.cpp:531
 msgid "Dropping short message from Daemon"
 msgstr ""
 
-#: src/xanoubis/job/ComThread.cpp:538
+#: src/xanoubis/job/ComThread.cpp:545
 #, c-format
 msgid "Unkown status message key=%x value=%d"
 msgstr ""
