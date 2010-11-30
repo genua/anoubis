@@ -93,7 +93,6 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase, public Subject,
 		void versionListUpdateFromSelection(void);
 		void profileTabInit(void);
 		void profileTabUpdate(void);
-		void toolTipParamsUpdate(void);
 		void editOptionsEnable(void);
 		void initPathLabel(void);
 		void setPathLabel(void);
@@ -166,10 +165,6 @@ class ModAnoubisMainPanelImpl : public ModAnoubisMainPanelBase, public Subject,
 		void OnVersionActivePolicyClicked(wxCommandEvent &);
 		void OnVersionProfilePolicyClicked(wxCommandEvent &);
 		void OnVersionProfileChoice(wxCommandEvent &);
-
-		void OnToolTipCheckBox(wxCommandEvent &);
-		void OnToolTipSpinCtrl(wxSpinEvent &);
-		void OnToolTipSpinCtrlText(wxCommandEvent &);
 
 		void OnEscalationSfsPathLeft(wxCommandEvent &);
 		void OnEscalationSfsPathRight(wxCommandEvent &);
