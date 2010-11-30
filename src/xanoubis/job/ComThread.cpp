@@ -516,6 +516,7 @@ ComThread::sendNotify(struct anoubis_msg *notifyMsg)
 			    pgid, cmd);
 
 			/* XXX CEH: Should be a long long... */
+			pgchange.SetString(wxString::Format(wxT("%hs"), cmd));
 			pgchange.SetExtraLong(pgid);
 			if (dynamic_cast<AnoubisGuiApp *>(wxTheApp))
 				wxPostEvent(AnEvents::instance(), pgchange);

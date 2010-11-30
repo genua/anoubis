@@ -725,8 +725,9 @@ TrayIcon::OnPgChange(wxCommandEvent &ev)
 	wxString		msg;
 	wxString		pgnam;
 
-	pgnam = PlaygroundCtrl::instance()->getPlaygroundName(pgid);
-	msg = wxString::Format(_("Terminated: playground %ls"), pgnam.c_str());
+	pgnam = ev.GetString();
+	msg = wxString::Format(_("Terminated: playground %ls (%llx)"),
+	    pgnam.c_str(), pgid);
 	ShowPgAlert(msg, true);
 }
 

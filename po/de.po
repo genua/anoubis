@@ -33,8 +33,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: anoubis. 10.972.C388\n"
 "Report-Msgid-Bugs-To: anoubis@lists.anoubis.org\n"
-"POT-Creation-Date: 2010-11-30 11:19+0100\n"
-"PO-Revision-Date: 2010-11-30 11:20+0100\n"
+"POT-Creation-Date: 2010-11-30 15:36+0100\n"
+"PO-Revision-Date: 2010-11-30 15:37+0100\n"
 "Last-Translator: Robin <robin_doer@genua.de>\n"
 "Language-Team: German <translation-team-de@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -161,8 +161,8 @@ msgstr "Einschränkungen"
 #: src/xanoubis/model/SbOverviewTable.cpp:74
 #: src/xanoubis/model/SfsOverviewTable.cpp:74
 #: src/xanoubis/view/DlgRuleEditorListProperty.cpp:59
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:146
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:219
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:145
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:218
 #: src/xanoubis/view/PlaygroundListProperty.cpp:57
 #: src/xanoubis/view/VersionListCtrl.cpp:57
 msgid "User"
@@ -210,7 +210,7 @@ msgstr "Ja"
 #: src/xanoubis/model/DefaultConversions.h:115
 #: src/xanoubis/view/MainFrame.cpp:289
 #: src/xanoubis/view/MainFrameBase.cpp:112
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:2113
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:2058
 msgid "no"
 msgstr "Nein"
 
@@ -532,8 +532,8 @@ msgstr "fortführen"
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:796
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:825
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:854
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:387
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:392
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:377
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:382
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:436
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:463
 msgid "none"
@@ -666,7 +666,7 @@ msgstr "Kopieren der Regel fehlgeschlagen."
 #: src/xanoubis/view/DlgRuleEditor.cpp:974
 #: src/xanoubis/view/MainFrame.cpp:549
 #: src/xanoubis/view/MainFrame.cpp:816
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1185
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1175
 #: src/xanoubis/view/ModSfsGenerateKeyDlg.cpp:192
 #: src/xanoubis/control/MainUtils.cpp:282
 #: src/xanoubis/control/MainUtils.cpp:290
@@ -733,7 +733,7 @@ msgstr "Sende an Daemon"
 
 #: src/xanoubis/view/DlgRuleEditor.cpp:1086
 #: src/xanoubis/view/DlgRuleEditor.cpp:1110
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:530
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:520
 #: src/xanoubis/view/ModSfsMainPanelImpl.cpp:524
 #: src/xanoubis/view/RuleWizard.cpp:423
 msgid "The entered password is incorrect."
@@ -809,17 +809,17 @@ msgid "App-Rules"
 msgstr "App-Regeln"
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:84
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:220
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:219
 msgid "ALF"
 msgstr "ALF"
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:84
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:221
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:220
 msgid "SB"
 msgstr "SB"
 
 #: src/xanoubis/view/DlgRuleEditorBase.cpp:84
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:222
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:221
 msgid "CTX"
 msgstr "CTX"
 
@@ -1248,7 +1248,7 @@ msgstr "Schlüssel"
 #: src/xanoubis/view/DlgRuleEditorFilterSubjectPage.cpp:84
 #: src/xanoubis/view/DlgRuleEditorFilterSubjectPage.cpp:140
 #: src/xanoubis/view/DlgRuleEditorFilterSubjectPage.cpp:148
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:636
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:626
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:706
 #: src/xanoubis/view/ModSfsPanelsBase.cpp:507
 msgid "Path:"
@@ -1444,7 +1444,7 @@ msgid "Choose a policy file:"
 msgstr "Wähle eine Regeldatei:"
 
 #: src/xanoubis/view/MainFrame.cpp:557
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1651
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1641
 msgid "Choose a file to write the policies to:"
 msgstr "Wähle eine Datei um Regeln dort hinein zu schreiben:"
 
@@ -1473,7 +1473,7 @@ msgid "An unexpected error (%i) occured while while fetching list of upgraded fi
 msgstr "Ein unerwarteter Fehler (%i) ist beim Abfrage der Liste von Dateien, die durch ein Upgrade veränderten wurden, aufgetreten."
 
 #: src/xanoubis/view/MainFrameBase.cpp:44
-#: src/xanoubis/view/ModAnoubisPanelsBase.cpp:1250
+#: src/xanoubis/view/ModAnoubisPanelsBase.cpp:1223
 msgid "Connect"
 msgstr "Verbinden"
 
@@ -1604,73 +1604,73 @@ msgstr "offene Anfragen (ALF):"
 msgid "everything OK"
 msgstr "alles OK"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:144
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:143
 msgid "User/Admin"
 msgstr "User/Admin:"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:148
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:147
 msgid "Admin"
 msgstr "Admin"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:218
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:217
 msgid "Process ID"
 msgstr "Prozess ID"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:223
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:222
 msgid "Playground ID"
 msgstr "Playground ID"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:225
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:224
 #: src/xanoubis/view/PlaygroundListProperty.cpp:61
 msgid "Command"
 msgstr "Kommando"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:433
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:423
 #, c-format
 msgid "Failed to remove \"%ls\"."
 msgstr "Konnte \"%ls\" nicht entfernen."
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:435
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:425
 msgid "Remove profile"
 msgstr "Profil entfernt"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:452
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:507
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:442
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:497
 #, c-format
 msgid "Failed to import from \"%ls\"."
 msgstr "Konnte \"%ls\" nicht importieren."
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:454
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:444
 msgid "Load profile"
 msgstr "Profil laden"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:475
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:465
 #, c-format
 msgid "The profile \"%ls\" is not writable!"
 msgstr "Das Profil \"%ls\" ist nicht beschreibbar!"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:477
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:490
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:467
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:480
 msgid "Save profile"
 msgstr "Profil speichern"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:488
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:478
 #, c-format
 msgid "Failed to export to \"%ls\": %ls."
 msgstr "Konnte nicht nach \"%ls\" exportieren: %ls."
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:509
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:517
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:526
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:531
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:499
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:507
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:516
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:521
 msgid "Activate profile"
 msgstr "Profil aktivieren"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:516
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:506
 msgid "Could not obtain user-policy."
 msgstr "Benutzerprofil nicht verfügbar."
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:524
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:514
 msgid ""
 "Could not activate user-policy.\n"
 "No connection to anoubisd."
@@ -1678,134 +1678,133 @@ msgstr ""
 "Konnte Benutzerprofil nicht aktivieren.\n"
 "Keine Verbindung zu anoubisd."
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:595
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:585
 msgid "Repository not initialized."
 msgstr "Repository nicht initalisiert."
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:596
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:602
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:610
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:586
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:592
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:600
 msgid "Update versions"
 msgstr "Aktualisierung Versionsverwaltung"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:601
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:591
 msgid "Failed to prepare versioning system."
 msgstr "Konnte Versionssystem nicht vorbereiten."
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:609
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:599
 msgid "Failed to fetch versioning information."
 msgstr "Konnte Versionsinforamtion nicht abrufen."
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:629
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:619
 msgid "Time:"
 msgstr "Zeit:"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:630
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:620
 msgid "Module:"
 msgstr "Modul:"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:631
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:621
 #: src/xanoubis/view/RuleWizardHistory.cpp:442
 #: src/xanoubis/view/RuleWizardPanelsBase.cpp:293
 msgid "Program:"
 msgstr "Programm:"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:632
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:622
 msgid "On behalf of:"
 msgstr "Im Auftrag von:"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:634
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:624
 msgid "Traffic:"
 msgstr "Verkehr:"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:638
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:628
 msgid "Operation:"
 msgstr "Operation:"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1124
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1114
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:214
-#: src/xanoubis/view/ModAnoubisPanelsBase.cpp:1138
 msgid "Seconds"
 msgstr "Sekunden"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1126
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1116
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:214
 msgid "Minutes"
 msgstr "Minuten"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1128
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1118
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:214
 msgid "Hours"
 msgstr "Stunden"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1130
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1120
 #: src/xanoubis/view/ModAnoubisPanelsBase.cpp:214
 msgid "Days"
 msgstr "Tage"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1585
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1575
 msgid "No profile selected"
 msgstr "Kein Profil ausgewählt"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1585
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1575
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1592
 #: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1602
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1612
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1619
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1625
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1609
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1615
 msgid "Restore version"
 msgstr "Version wiederherstellen"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1596
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1586
 msgid "Failed to fetch the active policy."
 msgstr "Konnte aktive Regel nicht abfragen."
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1599
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1589
 #, c-format
 msgid ""
 "Failed to fetch the policy\n"
 "of the \"%ls\" profile"
 msgstr "Abholen des Profils \"%ls\" fehlgeschlagen."
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1611
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1601
 msgid "Failed to import the active policy."
 msgstr "Konnte aktive Regel nicht importieren."
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1616
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1606
 #, c-format
 msgid ""
 "Failed to import the policy\n"
 "of the \"%ls\" profile"
 msgstr "Einlesen des Profils \"%ls\" fehlgeschlagen."
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1623
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1613
 msgid "automatically created by restore"
 msgstr "durch Wiederherstellung automatisch erzeugt"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1624
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1614
 msgid "Old version imported but could not create a new version"
 msgstr "Alte Version eingelesen konnte jedoch keine Neue erzeugen"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1658
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1648
 msgid "Failed to export a version!"
 msgstr "Konnte Version nicht exportieren!"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1659
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1649
 msgid "Export version"
 msgstr "Schreibe Version"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1680
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1670
 msgid "Failed to remove the selected version!"
 msgstr "Konnte ausgewählte Version nicht entfernen!"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1682
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1672
 msgid "Remove version"
 msgstr "Entferne Version"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:2052
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:1997
 msgid "Multiple errors occured while fetching the process list"
 msgstr "Beim Abfragen der Prozess-Liste sind mehrere Fehler aufgetreten"
 
-#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:2115
+#: src/xanoubis/view/ModAnoubisMainPanelImpl.cpp:2060
 #, c-format
 msgid "yes (ID: %llx)"
 msgstr "Ja (ID: %llx)"
@@ -2205,43 +2204,31 @@ msgstr "Automatisches Verbinden zum Daemon"
 msgid "Check to auto-connect at startup"
 msgstr "Auswählen um die Verbindung automatisch herzustellen"
 
-#: src/xanoubis/view/ModAnoubisPanelsBase.cpp:1123
-msgid "Tool Tips"
-msgstr "Tool Tips"
-
-#: src/xanoubis/view/ModAnoubisPanelsBase.cpp:1128
-msgid "Enable Tool Tips after"
-msgstr "Ermögliche Tool Tips nach"
-
-#: src/xanoubis/view/ModAnoubisPanelsBase.cpp:1131
-msgid "Check to enable tooltips"
-msgstr "Auswählen um Tooltips zu aktivieren"
-
-#: src/xanoubis/view/ModAnoubisPanelsBase.cpp:1151
+#: src/xanoubis/view/ModAnoubisPanelsBase.cpp:1127
 msgid "Options"
 msgstr "Einstellungen"
 
-#: src/xanoubis/view/ModAnoubisPanelsBase.cpp:1240
+#: src/xanoubis/view/ModAnoubisPanelsBase.cpp:1213
 msgid "Connection to localhost:"
 msgstr "Verbindung zu localhost:"
 
-#: src/xanoubis/view/ModAnoubisPanelsBase.cpp:1251
+#: src/xanoubis/view/ModAnoubisPanelsBase.cpp:1224
 msgid "Establishes a connection to the Anoubis daemon"
 msgstr "Stellt Verbindung mit dem Anoubis-Daemon her"
 
-#: src/xanoubis/view/ModAnoubisPanelsBase.cpp:1255
+#: src/xanoubis/view/ModAnoubisPanelsBase.cpp:1228
 msgid "Disconnect"
 msgstr "Trennen"
 
-#: src/xanoubis/view/ModAnoubisPanelsBase.cpp:1256
+#: src/xanoubis/view/ModAnoubisPanelsBase.cpp:1229
 msgid "Disconnects from the Anoubis daemon"
 msgstr "Trennt die Verbindung vom Anoubis-Daemon"
 
-#: src/xanoubis/view/ModAnoubisPanelsBase.cpp:1280
+#: src/xanoubis/view/ModAnoubisPanelsBase.cpp:1253
 msgid "Select a profile from the list below or enter a new profile."
 msgstr "Auswahl eines Profils aus unterer Liste oder Eingabe eines neuen Profils."
 
-#: src/xanoubis/view/ModAnoubisPanelsBase.h:406
+#: src/xanoubis/view/ModAnoubisPanelsBase.h:400
 msgid "Select a profile"
 msgstr "Auswahl eines Profils"
 
@@ -3767,8 +3754,8 @@ msgstr "Starte im Playground: %ls"
 
 #: src/xanoubis/view/TrayIcon.cpp:729
 #, c-format
-msgid "Terminated: playground %ls"
-msgstr "Beendet: Playground %ls"
+msgid "Terminated: playground %ls (%llx)"
+msgstr "Beendet: Playground %ls (%llx)"
 
 #: src/xanoubis/view/VersionListCtrl.cpp:36
 msgid "Auto"
@@ -4363,16 +4350,16 @@ msgstr "Berechtigungen"
 msgid "Playground %llx (%hs) terminated"
 msgstr "Playground %llx (%hs) beendet"
 
-#: src/xanoubis/job/ComThread.cpp:523
+#: src/xanoubis/job/ComThread.cpp:524
 #, c-format
 msgid "Playground %llx (%hs) created"
 msgstr "Playground %llx (%hs) erzeugt"
 
-#: src/xanoubis/job/ComThread.cpp:531
+#: src/xanoubis/job/ComThread.cpp:532
 msgid "Dropping short message from Daemon"
 msgstr "Nachrichtvom Daemon wird verworfen (zu kurz)"
 
-#: src/xanoubis/job/ComThread.cpp:545
+#: src/xanoubis/job/ComThread.cpp:546
 #, c-format
 msgid "Unkown status message key=%x value=%d"
 msgstr "Unbekannter Status der Nachricht key=%x value=%d"
@@ -4447,6 +4434,13 @@ msgstr ""
 "Das eingegebene Passwort war falsch!\n"
 "Eingabe des Passwortes für:\n"
 "%ls"
+
+#~ msgid "Tool Tips"
+#~ msgstr "Tool Tips"
+#~ msgid "Enable Tool Tips after"
+#~ msgstr "Ermögliche Tool Tips nach"
+#~ msgid "Check to enable tooltips"
+#~ msgstr "Auswählen um Tooltips zu aktivieren"
 
 #, fuzzy
 #~ msgid "Failed to create a rule from escalation: %ls"
