@@ -1709,6 +1709,7 @@ pgcli_commit(uint64_t pgid, const char* file)
 	rc = anoubis_transaction_complete(client, transaction, NULL);
 	if (rc < 0) {
 		PGCLI_CONNECTION_WIPE(channel, client);
+		fprintf(stderr, "commit: could not get file list\n");
 		return rc;
 	}
 
@@ -1775,9 +1776,8 @@ pgcli_commit(uint64_t pgid, const char* file)
 						char *path = rec->path;
 						rc = pgfile_composename(
 						    &abspath, dev, ino, path);
-						if(rc < 0){
-							return rc;
-						}
+						if (rc < 0)
+							continue;
 						if (abspath) {
 							filenames[file_index] = path;
 							abspaths[file_index]  = abspath;
@@ -1791,6 +1791,9 @@ pgcli_commit(uint64_t pgid, const char* file)
 		/* rewind filelist */
 		filelist = transaction->msg;
 	}
+	if (file_index == 0)
+		return -ENOENT;
+
 	filenames[file_index] = 0;
 	abspaths[file_index] = 0;
 
