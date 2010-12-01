@@ -514,7 +514,7 @@ get_event(int fd)
 	struct msg_buf			*mbp;
 	struct eventdev_hdr		*evt;
 	struct anoubisd_msg		*msg_r;
-	int				 size;
+	int				 size, ret;
 
 	if ((mbp = _get_mbp(fd)) == NULL) {
 		log_warnx("msg_buf not initialized");
@@ -552,15 +552,19 @@ get_event(int fd)
 	if (version < ANOUBISCORE_VERSION) {
 		msg_r = compat_get_event(msg_r, version);
 		if (!msg_r) {
+			/*
+			 * XXX: This is not optimal: compat_get_event also
+			 * XXX: returns NULL for short messaged
+			 */
 			log_warnx("Cannot convert Message from version %ld",
 			    version);
 			master_terminate();
 		}
 		evt = (struct eventdev_hdr *)msg_r->msg;
 	}
-	if (eventdev_hdr_size(msg_r->msg, evt->msg_size) < 0) {
-		log_warnx("Dropping malformed kernel event, src=%d, size=%d",
-		    evt->msg_source, evt->msg_size);
+	if ((ret = eventdev_hdr_size(msg_r->msg, evt->msg_size)) < 0) {
+		log_warnx("Dropping malformed kernel event, src=%d, size=%d, "
+		    "check=%d", evt->msg_source, evt->msg_size, ret);
 		free(msg_r);
 		return NULL;
 	}

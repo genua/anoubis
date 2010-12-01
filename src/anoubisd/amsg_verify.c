@@ -571,12 +571,20 @@ eventdev_hdr_size(const char *buf, int buflen)
 	VARIANT(ANOUBIS_SOURCE_PLAYGROUNDPROC, pg_proc_message, buf, buflen);
 	VARIANT(ANOUBIS_SOURCE_PLAYGROUNDFILE, pg_file_message, buf, buflen);
 	default:
-		return -1;
+		return -2;
 	}
-	if (__local_size > hdr->msg_size)
-		return -1;
-	if (__local_size + 8 < hdr->msg_size)
-		return -1;
+	if (__local_size > hdr->msg_size) {
+		if (__local_size <= 0)
+			return -3;
+		else
+			return -(__local_size);
+	}
+	if (__local_size + 8 < hdr->msg_size) {
+		if (__local_size <= 0)
+			return -4;
+		else
+			return -(__local_size + 100000);
+	}
 	/*
 	 * NOTE: Do NOT return the calculated size here because this
 	 * NOTE: is usually used within a container and that container

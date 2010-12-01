@@ -43,11 +43,13 @@
 #include <linux/anoubis.h>
 #include <linux/anoubis_alf.h>
 #include <linux/anoubis_sfs.h>
+#include <linux/anoubis_playground.h>
 #else
 #include <dev/eventdev.h>
 #include <dev/anoubis.h>
 #include <sys/anoubis_alf.h>
 #include <sys/anoubis_sfs.h>
+#include <bsdcompat/dev/anoubis_playground.h>
 #endif
 
 /**
@@ -78,59 +80,106 @@ compat_get_event(struct anoubisd_msg *old, unsigned long version)
 	struct anoubis_event_common_10004	*oldcommon;
 	struct eventdev_hdr			*hdr;
 
-	if (version < 0x10001UL) {
+#if ANOUBISCORE_VERSION > 0x10006UL
+#error "compat_get_event function needs to be extended for compatibility"
+#endif
+
+	if (version == 0x10005UL) {
+		/*
+		 * We 'just' need to add another trailing 0-byte to
+		 * pg_file_message->path
+		 */
+		int msg_size;
+		struct pg_file_message *pg;
+		char *end;
+		hdr = (struct eventdev_hdr *)old->msg;
+
+		if (old->size < (int)sizeof(struct eventdev_hdr)) {
+			log_warnx("compat_get_event: Dropping short message");
+			free(old);
+			return NULL;
+		}
+		else if (hdr->msg_source != ANOUBIS_SOURCE_PLAYGROUNDFILE) {
+			return old;
+		} else if (old->size < (int)sizeof(struct eventdev_hdr) +
+		    (int)sizeof(struct pg_file_message)) {
+			log_warnx("compat_get_event: "
+			    "Dropping short pg_file_message");
+			free(old);
+			return NULL;
+		}
+
+		n = msg_factory(ANOUBISD_MSG_EVENTDEV, old->size + 1);
+		if (n == NULL) {
+			free(old);
+			log_warnx("compat_get_event: Out of memory");
+			return NULL;
+		}
+		memcpy(n->msg, old->msg, old->size);
+		msg_size = hdr->msg_size + 1;
+		hdr = (struct eventdev_hdr *)n->msg;
+		hdr->msg_size = msg_size;
+		pg = (struct pg_file_message*)(n->msg +
+		    sizeof(struct eventdev_hdr));
+		free(old);
+
+		/*
+		 * Now actually add the 0-byte.
+		 * We can't simply use msg_size for the position because of
+		 * potential padding.
+		 */
+		end = memchr(pg->path, 0, msg_size - sizeof(struct pg_file_message));
+		if (!end) {
+			/* pg->path was not 0-terminated */
+			free(n);
+			return NULL;
+		}
+		end++;
+		*end = 0;
+		return n;
+	} else if (ANOUBISCORE_VERSION == 0x00010004UL) {
+		/*
+		 * If we convert to 0x00010004UL there is nothing todo.
+		 */
+		return old;
+	} else if (version >= 0x10001UL && version <= 0x10003UL) {
+		total = old->size - sizeof(struct anoubisd_msg);
+		pre = sizeof(struct eventdev_hdr);
+		if (total <
+		    pre + (int)sizeof(struct anoubis_event_common_10004)) {
+			log_warnx("compat_get_event: Dropping short message");
+			free(old);
+			return NULL;
+		}
+		post = total - pre - sizeof(struct anoubis_event_common_10004);
+		n = msg_factory(ANOUBISD_MSG_EVENTDEV,
+		    pre + sizeof(struct anoubis_event_common) + post);
+		if (n == NULL) {
+			free(old);
+			log_warnx("compat_get_event: Out of memory");
+			return NULL;
+		}
+		memcpy(n->msg, old->msg, pre);
+		oldcommon = (struct anoubis_event_common_10004 *)(old->msg +
+		    pre);
+		common = (struct anoubis_event_common *)(n->msg + pre);
+		common->task_cookie = oldcommon->task_cookie;
+#if ANOUBISCORE_VERSION >= ANOUBISCORE_PG_VERSION
+		common->pgid = 0;
+#endif
+		hdr = (struct eventdev_hdr *)n->msg;
+		hdr->msg_size += n->size - old->size;
+		memcpy(common+1, oldcommon+1, post);
+		free(old);
+		return n;
+	} else if (version < 0x10001UL) {
 		log_warnx("compat_get_event: Version %lx is too old", version);
 		free(old);
 		return  NULL;
-	}
-	/*
-	 * If we convert to 0x00010004UL there is nothing todo.
-	 */
-	if (ANOUBISCORE_VERSION == 0x00010004UL)
-		return old;
-	/*
-	 * The rest of this conversion function assumes that the current
-	 * ANOUBISCORE_VERSION is 0x00010005UL or 0x00010006UL.
-	 * Abort if this is not the case.
-	 */
-	if (ANOUBISCORE_VERSION != 0x10005UL &&
-	    ANOUBISCORE_VERSION != 0x10006UL) {
-		log_warnx("compat_get_event: Current verion is %lx but we "
-		    "only support 0x00010005 and 0x00010006",
-		    ANOUBISCORE_VERSION);
+	} else {
+		log_warnx("compat_get_event: don't know how to convert "
+		    "version %ld to %ld", version, ANOUBISCORE_VERSION);
 		free(old);
 		return NULL;
 	}
-	if (version == 0x10005UL) {
-		/* XXX: pg_file_messages need to be converted from 0x10005UL */
-		return old;
-	}
-	/* from here, version is 0x00010003 or older */
-	total = old->size - sizeof(struct anoubisd_msg);
-	pre = sizeof(struct eventdev_hdr);
-	if (total < pre + (int)sizeof(struct anoubis_event_common_10004)) {
-		log_warnx("compat_get_event: Dropping short message");
-		free(old);
-		return NULL;
-	}
-	post = total - pre - sizeof(struct anoubis_event_common_10004);
-	n = msg_factory(ANOUBISD_MSG_EVENTDEV,
-	    pre + sizeof(struct anoubis_event_common) + post);
-	if (n == NULL) {
-		free(old);
-		log_warnx("compat_get_event: Out of memory");
-		return NULL;
-	}
-	memcpy(n->msg, old->msg, pre);
-	oldcommon = (struct anoubis_event_common_10004 *)(old->msg + pre);
-	common = (struct anoubis_event_common *)(n->msg + pre);
-	common->task_cookie = oldcommon->task_cookie;
-#if ANOUBISCORE_VERSION >= ANOUBISCORE_PG_VERSION
-	common->pgid = 0;
-#endif
-	hdr = (struct eventdev_hdr *)n->msg;
-	hdr->msg_size += n->size - old->size;
-	memcpy(common+1, oldcommon+1, post);
-	free(old);
-	return n;
 }
