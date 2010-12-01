@@ -75,6 +75,8 @@ int		 pgfile_process(uint64_t dev, uint64_t ino,
 		     const char *names[]);
 int		 pgfile_composename(char **, uint64_t dev, uint64_t ino,
 		     const char *);
+int		 pgfile_composename_missing(char **, uint64_t dev, uint64_t ino,
+		     const char *);
 void		 pgfile_normalize_file(char *);
 const char	*pgfile_resolve_dev(uint64_t dev);
 
@@ -118,6 +120,8 @@ int		 pgfile_check(uint64_t dev, uint64_t ino, const char *names[],
 int		 pgfile_process(uint64_t dev, uint64_t ino,
 		     const char *names[]);
 int		 pgfile_composename(char **, uint64_t dev, uint64_t ino,
+		     const char *);
+int		 pgfile_composename_missing(char **, uint64_t dev, uint64_t ino,
 		     const char *);
 void		 pgfile_normalize_file(char *);
 const char	*pgfile_resolve_dev(uint64_t dev);

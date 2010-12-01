@@ -754,6 +754,48 @@ next:
 	return reason;
 }
 
+static int
+pgfile_composename_common(char **pathp, uint64_t dev, uint64_t ino,
+    const char *nam, int show_missing)
+{
+	struct pgmount		*mnt = pgmounts_find(dev);
+	const char		*names[2];
+	int			 i, ret;
+	struct pgfile_list	 list;
+
+	names[0] = nam;
+	names[1] = NULL;
+	if (!mnt)
+		return -EXDEV;
+	if (pgfile_normalize_file_list(&list, names) < 0)
+		return -ENOMEM;
+	for (i=0; i<list.listlen; ++i) {
+		int nlink = pgfile_validate_one_name(dev, ino, mnt->dirfd,
+		    list.list[i]);
+		if (nlink > 0)
+			break;
+		else if (nlink == -1) {
+			if (asprintf(pathp, "%s%s", mnt->prefix, list.list[i])
+			    < 0)
+				return -ENOMEM;
+			unlink(*pathp);
+			free(*pathp);
+			*pathp = NULL;
+			return 0;
+		}
+	}
+	ret = -EBUSY;
+	if (show_missing && i >= list.listlen)
+		i = 0;
+	if (i < list.listlen) {
+		ret = -ENOMEM;
+		if (asprintf(pathp, "%s%s", mnt->prefix, list.list[i]) >= 0)
+			ret = 0;
+	}
+	pgfile_free_list(&list);
+	return ret;
+}
+
 /**
  * This function constructs an absolute path for the file given by
  * the device/inode pair. This is done be appending the given name to
@@ -779,41 +821,37 @@ next:
 int
 pgfile_composename(char **pathp, uint64_t dev, uint64_t ino, const char *nam)
 {
-	struct pgmount		*mnt = pgmounts_find(dev);
-	const char		*names[2];
-	int			 i, ret;
-	struct pgfile_list	 list;
-
-	names[0] = nam;
-	names[1] = NULL;
-	if (!mnt)
-		return -EXDEV;
-	if (pgfile_normalize_file_list(&list, names) < 0)
-		return -ENOMEM;
-	for (i=0; i<list.listlen; ++i) {
-		int nlink = pgfile_validate_one_name(dev, ino, mnt->dirfd,
-		    list.list[i]);
-		if (nlink > 0)
-			break;
-		else if (nlink == -1) {
-			if (asprintf(pathp, "%s%s", mnt->prefix, list.list[i]) < 0)
-				return -ENOMEM;
-			unlink(*pathp);
-			free(*pathp);
-			*pathp = NULL;
-			return 0;
-		}
-	}
-	ret = -EBUSY;
-	if (i < list.listlen) {
-		ret = -ENOMEM;
-		if (asprintf(pathp, "%s%s", mnt->prefix, list.list[i]) >= 0)
-			ret = 0;
-	}
-	pgfile_free_list(&list);
-	return ret;
+	return pgfile_composename_common(pathp, dev, ino, nam, 0);
 }
 
+/**
+ * This function constructs an absolute path for the file given by
+ * the device/inode pair. This is done be appending the given name to
+ * the mount point of the file system. This function works like
+ * pgfile_composename() but also returns a name if the file is not found or
+ * references a different file by now.
+ * Memory for the return value is allocated by this function an must be
+ * freed by the caller.
+ *
+ * @param pathp The path name of the file is malloced and a pointer to the
+ *     malloced path name is returned in this location. If the file is an
+ *     obsolete whiteout marker (i.e. the corresponding file exists), NULL
+ *     is returned and the whiteout marker is unlinked.
+ * @param dev The device number of the device.
+ * @param ino The inode number of the file.
+ * @param The path of the file relative to the root of the file system
+ *     on the given device.
+ * @return Zero if the path name was found, a negative error code if the
+ *     file was not found. In particular:
+ *     -EXDEV: The given device is currently not mounted.
+ *     -ENOMEM: Out of memory.
+ */
+int
+pgfile_composename_missing(char **pathp, uint64_t dev, uint64_t ino,
+    const char *nam)
+{
+	return pgfile_composename_common(pathp, dev, ino, nam, 1);
+}
 #else
 
 #define __used __attribute__((unused))
@@ -823,6 +861,14 @@ pgfile_composename(char **pathp __used, uint64_t dev __used,
 {
 	return -ENOSYS;
 }
+
+int
+pgfile_composename_missing(char **pathp __used, uint64_t dev __used,
+    uint64_t ino __used, const char *nam __used)
+{
+	return -ENOSYS;
+}
+
 
 int
 pgfile_check(uint64_t dev __used, uint64_t ino __used,

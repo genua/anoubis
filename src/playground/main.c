@@ -968,7 +968,7 @@ pgcli_delete_filelist(struct anoubis_client *client, struct anoubis_msg *msg)
 			ino = get_value(rec->ino);
 			if (rec->path[0] == 0 || pgfile_composename(&path,
 			    dev, ino, rec->path) < 0) {
-			    	if (opts & PGCLI_OPT_FORCE &&
+				if (opts & PGCLI_OPT_FORCE &&
 				    pgcli_unlink_remote(client, pgid, dev, ino))
 					ret = 1;
 				else if (opts & PGCLI_OPT_VERBOSE)
@@ -1286,25 +1286,40 @@ pgcli_files_print_record(Anoubis_PgFileRecord *record, int needpath)
 {
 	char		*path = NULL;
 	uint64_t	 dev, ino;
-	int		 error;
+	int		 error, missing = 0;
 
 	dev = get_value(record->dev);
 	ino = get_value(record->ino);
 	error = pgfile_composename(&path, dev, ino, record->path);
-	if (error) {
-		if (needpath)
-			return 0;
-		path = anoubis_strerror(-error);
-	} else if (path == NULL) {
-		return 1;
-	} else {
+	if (error && needpath)
+		return 0;
+	if (error == -EBUSY) {
+		missing = 1;
+		error = pgfile_composename_missing(&path, dev, ino,
+		    record->path);
+	}
+	if (!error) {
+		if (path == NULL) {
+			/* don't print obsolete whiteout */
+			return 1;
+		}
 		pgfile_normalize_file(path);
+		if (missing) {
+			char *new;
+			if (asprintf(&new, "not found: %s", path) > 0) {
+				free(path);
+				path = new;
+			}
+		}
+	}
+	else {
+		path = anoubis_strerror(-error);
 	}
 
 	printf("%*"PRIx64" ", PGCLI_OUTLEN_ID, get_value(record->pgid));
 	printf("%*"PRIx64" ", PGCLI_OUTLEN_DEV, dev);
 	printf("%*"PRIx64" ", PGCLI_OUTLEN_INODE, ino);
-	if (needpath) {
+	if (!error) {
 		printf("%s\n", path);
 		free(path);
 	} else {
@@ -1779,8 +1794,10 @@ pgcli_commit(uint64_t pgid, const char* file)
 						if (rc < 0)
 							continue;
 						if (abspath) {
-							filenames[file_index] = path;
-							abspaths[file_index]  = abspath;
+							filenames[file_index] =
+							    path;
+							abspaths[file_index] =
+							    abspath;
 							file_index++;
 						}
 					}
