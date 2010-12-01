@@ -193,18 +193,6 @@ class ModPlaygroundMainPanelImpl : public ModPlaygroundMainPanelBase
 		 */
 		char **convertStringToArgV(const wxString &) const;
 
-		/**
-		 * Update playground button state after a row change event.
-		 *
-		 * @param event The event.
-		 * @return None.
-		 */
-		void onRowChange(wxCommandEvent &event) {
-			event.Skip();
-			updateButtonState();
-		}
-
-
 	protected:
 		/**
 		 * Refresh the list of playgrounds in order to remove the

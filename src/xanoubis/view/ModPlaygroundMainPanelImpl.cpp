@@ -97,10 +97,6 @@ ModPlaygroundMainPanelImpl::ModPlaygroundMainPanelImpl(wxWindow* parent,
 	    NULL, this);
 	/* NOTE: This only works as long as the provider is never freed. */
 	provider = playgroundCtrl->getInfoProvider();
-	provider->Connect(anEVT_ROW_UPDATE, wxCommandEventHandler(
-	    ModPlaygroundMainPanelImpl::onRowChange), NULL, this);
-	provider->Connect(anEVT_ROW_SIZECHANGE, wxCommandEventHandler(
-	    ModPlaygroundMainPanelImpl::onRowChange), NULL, this);
 
 	anEvents = AnEvents::instance();
 	anEvents->Connect(anEVT_PG_CHANGE, wxCommandEventHandler(
@@ -121,10 +117,6 @@ ModPlaygroundMainPanelImpl::~ModPlaygroundMainPanelImpl(void)
 	    NULL, this);
 	/* NOTE: This only works as long as the provider is never freed. */
 	provider = PlaygroundCtrl::instance()->getInfoProvider();
-	provider->Disconnect(anEVT_ROW_UPDATE, wxCommandEventHandler(
-	    ModPlaygroundMainPanelImpl::onRowChange), NULL, this);
-	provider->Disconnect(anEVT_ROW_SIZECHANGE, wxCommandEventHandler(
-	    ModPlaygroundMainPanelImpl::onRowChange), NULL, this);
 }
 
 void
