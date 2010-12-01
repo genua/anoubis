@@ -162,7 +162,8 @@ ModPlaygroundMainPanelImpl::onAppStart(wxCommandEvent &)
 void
 ModPlaygroundMainPanelImpl::onAppEnd(wxCommandEvent &event)
 {
-	refreshPlaygroundList();
+	if (event.GetInt() == 0) /* Terminated */
+		refreshPlaygroundList();
 	event.Skip();
 }
 

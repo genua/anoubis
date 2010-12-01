@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: anoubis 0.9.4.27.31.169\n"
+"Project-Id-Version: anoubis 0.9.4.27.37.173\n"
 "Report-Msgid-Bugs-To: anoubis@lists.anoubis.org\n"
-"POT-Creation-Date: 2010-11-30 15:36+0100\n"
+"POT-Creation-Date: 2010-12-01 16:59+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -585,8 +585,8 @@ msgstr ""
 
 #: src/xanoubis/view/DlgPlaygroundCommitFileListImpl.cpp:117
 #: src/xanoubis/view/DlgPlaygroundCommitFileListImpl.cpp:138
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:254
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:412
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:247
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:405
 msgid ""
 "You have a pending playground escalation.\n"
 "Please answer the escalation first and try again!"
@@ -594,13 +594,13 @@ msgstr ""
 
 #: src/xanoubis/view/DlgPlaygroundCommitFileListImpl.cpp:119
 #: src/xanoubis/view/DlgPlaygroundCommitFileListImpl.cpp:140
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:256
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:414
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:249
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:407
 msgid "Playground notification"
 msgstr ""
 
 #: src/xanoubis/view/DlgPlaygroundCommitFileListImpl.cpp:160
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:188
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:181
 msgid "Multiple errors occured while processing the Playground request"
 msgstr ""
 
@@ -2217,42 +2217,42 @@ msgstr ""
 msgid "Overview"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:242
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:235
 msgid "Cannot get data of selected entry."
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:243
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:252
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:294
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:318
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:333
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:408
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:236
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:245
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:287
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:311
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:326
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:401
 msgid "Playground error"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:251
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:244
 msgid "Could not delete playground.\n"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:293
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:286
 msgid "There are no files to commit!"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:316
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:309
 #, c-format
 msgid "System error: %hs"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:330
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:323
 #, c-format
 msgid "Could not start program \"%ls\" within playground: %ls"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:407
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:400
 msgid "Could not refresh list of playgrounds."
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:452
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:445
 #, c-format
 msgid "Commit files for playground %llx"
 msgstr ""
@@ -3680,7 +3680,7 @@ msgstr ""
 msgid "Starting in playground: %ls"
 msgstr ""
 
-#: src/xanoubis/view/TrayIcon.cpp:729
+#: src/xanoubis/view/TrayIcon.cpp:730
 #, c-format
 msgid "Terminated: playground %ls (%llx)"
 msgstr ""
@@ -3740,16 +3740,16 @@ msgstr ""
 msgid "Failed to create a policy based on your decision."
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:173
+#: src/xanoubis/control/PlaygroundCtrl.cpp:177
 msgid "Communication error during playground request."
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:178
+#: src/xanoubis/control/PlaygroundCtrl.cpp:182
 #, c-format
 msgid "The daemon returned an error for the playground request: %hs"
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:186
+#: src/xanoubis/control/PlaygroundCtrl.cpp:190
 #, c-format
 msgid ""
 "Error in playground request: %hs\n"
@@ -3758,59 +3758,59 @@ msgid ""
 "playground -f remove <Playground Id>"
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:193
+#: src/xanoubis/control/PlaygroundCtrl.cpp:197
 #, c-format
 msgid "Error in playground request: %hs"
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:200
+#: src/xanoubis/control/PlaygroundCtrl.cpp:204
 #, c-format
 msgid "Got unexpected result (%d) for playground request"
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:260
+#: src/xanoubis/control/PlaygroundCtrl.cpp:264
 msgid "The device is not mounted."
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:262
+#: src/xanoubis/control/PlaygroundCtrl.cpp:266
 msgid "Cannot find all hard links to the file."
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:267
+#: src/xanoubis/control/PlaygroundCtrl.cpp:271
 msgid "Parent directory must be committed first."
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:269
+#: src/xanoubis/control/PlaygroundCtrl.cpp:273
 msgid "Did not try to commit the file."
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:273
+#: src/xanoubis/control/PlaygroundCtrl.cpp:277
 msgid "Target file exists and has multiple hard links."
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:276
+#: src/xanoubis/control/PlaygroundCtrl.cpp:280
 msgid "Target file exists."
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:282
+#: src/xanoubis/control/PlaygroundCtrl.cpp:286
 msgid "Recommended file scanners reported a problem with the file."
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:285
+#: src/xanoubis/control/PlaygroundCtrl.cpp:289
 msgid "Required file scanners reported a permanent problem with the file."
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:288
+#: src/xanoubis/control/PlaygroundCtrl.cpp:292
 #, c-format
 msgid "File scanners reported a problem with the file: %hs"
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:293
+#: src/xanoubis/control/PlaygroundCtrl.cpp:297
 #, c-format
 msgid "File was removed from the playground but could not be renamed (%hs)."
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:336
+#: src/xanoubis/control/PlaygroundCtrl.cpp:340
 #, c-format
 msgid ""
 "Commit for file(s) '%ls' failed.\n"
@@ -3818,20 +3818,20 @@ msgid ""
 "%ls"
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:339
+#: src/xanoubis/control/PlaygroundCtrl.cpp:343
 msgid " Commit anyway?"
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:340
+#: src/xanoubis/control/PlaygroundCtrl.cpp:344
 msgid "Playground Commit"
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:431
+#: src/xanoubis/control/PlaygroundCtrl.cpp:435
 #, c-format
 msgid "Unlink '%ls' failed: %hs"
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:445
+#: src/xanoubis/control/PlaygroundCtrl.cpp:449
 #, c-format
 msgid ""
 "Removing Playground (ID %llx) failed: %hs\n"
@@ -3840,13 +3840,22 @@ msgid ""
 "playground -f remove %llx"
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:455
-#: src/xanoubis/control/PlaygroundCtrl.cpp:467
+#: src/xanoubis/control/PlaygroundCtrl.cpp:459
+#: src/xanoubis/control/PlaygroundCtrl.cpp:471
 #, c-format
 msgid "Removing Playground (ID %llx) failed: %hs"
 msgstr ""
 
-#: src/xanoubis/control/PlaygroundCtrl.cpp:637
+#: src/xanoubis/control/PlaygroundCtrl.cpp:505
+#, c-format
+msgid ""
+"The runtime of the playground %llx (%ls) was very short.\n"
+"However, if the application was started (e.g. you see an window), the "
+"application does not run in a playground! This can happen, when the "
+"application was started before outside the playground."
+msgstr ""
+
+#: src/xanoubis/control/PlaygroundCtrl.cpp:675
 #, c-format
 msgid "Could not determine filename for playground-file: %hs"
 msgstr ""
@@ -4251,21 +4260,21 @@ msgstr ""
 msgid "Permissions"
 msgstr ""
 
-#: src/xanoubis/job/ComThread.cpp:515
+#: src/xanoubis/job/ComThread.cpp:519
 #, c-format
 msgid "Playground %llx (%hs) terminated"
 msgstr ""
 
-#: src/xanoubis/job/ComThread.cpp:524
+#: src/xanoubis/job/ComThread.cpp:523
 #, c-format
 msgid "Playground %llx (%hs) created"
 msgstr ""
 
-#: src/xanoubis/job/ComThread.cpp:532
+#: src/xanoubis/job/ComThread.cpp:535
 msgid "Dropping short message from Daemon"
 msgstr ""
 
-#: src/xanoubis/job/ComThread.cpp:546
+#: src/xanoubis/job/ComThread.cpp:549
 #, c-format
 msgid "Unkown status message key=%x value=%d"
 msgstr ""

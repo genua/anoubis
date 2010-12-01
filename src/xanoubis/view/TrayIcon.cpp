@@ -721,14 +721,16 @@ TrayIcon::OnPgForced(wxCommandEvent &event)
 void
 TrayIcon::OnPgChange(wxCommandEvent &ev)
 {
-	unsigned long long	pgid = ev.GetExtraLong();
-	wxString		msg;
-	wxString		pgnam;
+	if (ev.GetInt() == 0) { /* Terminated */
+		unsigned long long	pgid = ev.GetExtraLong();
+		wxString		msg;
+		wxString		pgnam;
 
-	pgnam = ev.GetString();
-	msg = wxString::Format(_("Terminated: playground %ls (%llx)"),
-	    pgnam.c_str(), pgid);
-	ShowPgAlert(msg, true);
+		pgnam = ev.GetString();
+		msg = wxString::Format(_("Terminated: playground %ls (%llx)"),
+		    pgnam.c_str(), pgid);
+		ShowPgAlert(msg, true);
+	}
 }
 
 void

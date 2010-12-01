@@ -65,6 +65,8 @@ PlaygroundCtrl::~PlaygroundCtrl(void)
 	JobCtrl::instance()->Disconnect(anTASKEVT_PG_UNLINK,
 	    wxTaskEventHandler(PlaygroundCtrl::OnPlaygroundUnlinkDone),
 	    NULL, this);
+	AnEvents::instance()->Disconnect(anEVT_PG_CHANGE,
+	    wxCommandEventHandler(PlaygroundCtrl::onPgChange), NULL, this);
 	clearPlaygroundInfo();
 	clearPlaygroundFiles();
 }
@@ -163,6 +165,8 @@ PlaygroundCtrl::PlaygroundCtrl(void) : Singleton<PlaygroundCtrl>()
 	JobCtrl::instance()->Connect(anTASKEVT_PG_UNLINK,
 	    wxTaskEventHandler(PlaygroundCtrl::OnPlaygroundUnlinkDone),
 	    NULL, this);
+	AnEvents::instance()->Connect(anEVT_PG_CHANGE,
+	    wxCommandEventHandler(PlaygroundCtrl::onPgChange), NULL, this);
 }
 
 void
@@ -478,6 +482,40 @@ PlaygroundCtrl::OnPlaygroundUnlinkDone(TaskEvent &event)
 		sendEvent(anEVT_PLAYGROUND_COMPLETED);
 	}
 	delete task;
+}
+
+void
+PlaygroundCtrl::onPgChange(wxCommandEvent &event)
+{
+	unsigned long long pgid = event.GetExtraLong();
+
+	event.Skip();
+
+	if (event.GetInt() == 1) { /* Created */
+		pgTimeTrack_[pgid] = time(NULL);
+	} else { /* Terminated */
+		std::map<unsigned long long, time_t>::iterator it =
+		    pgTimeTrack_.find(pgid);
+	
+		if (it != pgTimeTrack_.end()) {
+			time_t start = (*it).second;
+			time_t runtime = time(NULL) - start;
+
+			if (runtime < 3) {
+				addError(wxString::Format(_("The runtime of "
+				    "the playground %llx (%ls) was very "
+				    "short.\nHowever, if the application was "
+				    "started (e.g. you see an window), the "
+				    "application does not run in a playground! "
+				    "This can happen, when the application was "
+				    "started before outside the playground."),
+				    pgid, event.GetString().c_str()));
+				sendEvent(anEVT_PLAYGROUND_ERROR);
+			}
+
+			pgTimeTrack_.erase(it);
+		}
+	}
 }
 
 bool

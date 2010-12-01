@@ -198,6 +198,14 @@ class PlaygroundCtrl : public GenericCtrl, public Singleton<PlaygroundCtrl>
 		AnGenericRowProvider playgroundFiles_;
 
 		/**
+		 * Timetracking for playgrounds.
+		 * The key is the playground-id. As the value the start-time
+		 * of the playground is stored. Later, when a playground is
+		 * terminated, you are able to calculate the running-time.
+		 */
+		std::map<unsigned long long, time_t> pgTimeTrack_;
+
+		/**
 		 * Event handler for completed PlaygroundListTasks.
 		 * @param[in] 1st The event for PlaygroundListTask in question.
 		 * @return Nothing.
@@ -226,6 +234,13 @@ class PlaygroundCtrl : public GenericCtrl, public Singleton<PlaygroundCtrl>
 		 * @return Nothing.
 		 */
 		void OnPlaygroundUnlinkDone(TaskEvent &);
+
+		/**
+		 * Event-handler tracks creation and termination of
+		 * playgrounds.
+		 * @param event The event send on anEVT_PG_CHANGE
+		 */
+		void onPgChange(wxCommandEvent &);
 
 		/**
 		 * Create Playground list task.

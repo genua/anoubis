@@ -505,24 +505,27 @@ ComThread::sendNotify(struct anoubis_msg *notifyMsg)
 			wxPostEvent(AnEvents::instance(), pce);
 		}
 	} else if (type == ANOUBIS_N_PGCHANGE) {
+		wxCommandEvent	pgchange(anEVT_PG_CHANGE);
 		unsigned int	pgop = get_value(notifyMsg->u.pgchange->pgop);
 		uint64_t	pgid = get_value(notifyMsg->u.pgchange->pgid);
 		const char	*cmd = notifyMsg->u.pgchange->cmd;
 
-		if (pgop == ANOUBIS_PGCHANGE_TERMINATE) {
-			wxCommandEvent	pgchange(anEVT_PG_CHANGE);
+		/* XXX CEH: Should be a long long... */
+		pgchange.SetString(wxString::Format(wxT("%hs"), cmd));
+		pgchange.SetExtraLong(pgid);
 
+		if (pgop == ANOUBIS_PGCHANGE_TERMINATE) {
+			pgchange.SetInt(0); /* Terminated := not running */
 			Debug::info(_("Playground %llx (%hs) terminated"),
 			    pgid, cmd);
-
-			/* XXX CEH: Should be a long long... */
-			pgchange.SetString(wxString::Format(wxT("%hs"), cmd));
-			pgchange.SetExtraLong(pgid);
-			if (dynamic_cast<AnoubisGuiApp *>(wxTheApp))
-				wxPostEvent(AnEvents::instance(), pgchange);
-		} else if (pgop == ANOUBIS_PGCHANGE_CREATE)
+		} else if (pgop == ANOUBIS_PGCHANGE_CREATE) {
+			pgchange.SetInt(1); /* Running */
 			Debug::info(_("Playground %llx (%hs) created"),
 			    pgid, cmd);
+		}
+
+		if (dynamic_cast<AnoubisGuiApp *>(wxTheApp))
+			wxPostEvent(AnEvents::instance(), pgchange);
 	} else if (type == ANOUBIS_N_STATUSNOTIFY) {
 		unsigned int		key, value;
 

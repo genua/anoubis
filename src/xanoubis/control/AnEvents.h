@@ -530,8 +530,10 @@ BEGIN_DECLARE_EVENT_TYPES()
 
 	/**
 	 * A playground change event.
-	 * @param GetExtraLong() The playground ID of the terminated
-	 *     playground.
+	 * @param GetExtraLong() The playground ID of the playground.
+	 * @param GetString() The command which runs in the playground
+	 * @param GetInt() Returns 1 of the playground was started. 0 is
+	 *                 returned, if the playground was terminated.
 	 */
 	DECLARE_LOCAL_EVENT_TYPE(anEVT_PG_CHANGE, wxNewEventType())
 
