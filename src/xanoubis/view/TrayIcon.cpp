@@ -741,7 +741,12 @@ TrayIcon::ShowPgAlert(wxString &msg, bool infinite)
 	notify = notify_notification_new("Anoubis", msg.fn_str(), NULL, NULL);
 	g_signal_connect(notify, "closed", G_CALLBACK(pg_close_callback), this);
 	if (infinite)
-		notify_notification_set_timeout(notify, NOTIFY_EXPIRES_NEVER);
+		/* 3600 * ONE_SECOND = 1h. Ok, this is not infinite, but
+		 * setting the timeout to really infinite will display a
+		 * modal message-box (with an ok- and a cancel-button) on
+		 * Ubuntu. One hour should be long enough to simulate
+		 * infinite. */
+		notify_notification_set_timeout(notify, 3600 * ONE_SECOND);
 	else
 		notify_notification_set_timeout(notify,
 		    (PG_NOTIFICATION_TIMEOUT * ONE_SECOND));
