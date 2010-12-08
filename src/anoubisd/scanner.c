@@ -463,7 +463,8 @@ scanner_run(struct anoubisd_pg_scanner *scanner, int fd, int toclose[])
 
 		argv[0] = scanner->path;
 		argv[1] = NULL;
-		execve(scanner->path, argv, envp);
+		if (execve(scanner->path, argv, envp) == -1)
+			perror(scanner->path);
 		_exit(2);
 	}
 	/*
