@@ -74,15 +74,13 @@ struct anoubis_event_common_10004 {
 struct anoubisd_msg *
 compat_get_event(struct anoubisd_msg *old, unsigned long version)
 {
+#if ANOUBISCORE_VERSION == 0x10006UL
 	int					 pre, post, total;
 	struct anoubisd_msg			*n;
 	struct anoubis_event_common		*common;
 	struct anoubis_event_common_10004	*oldcommon;
 	struct eventdev_hdr			*hdr;
 
-#if ANOUBISCORE_VERSION > 0x10006UL
-#error "compat_get_event function needs to be extended for compatibility"
-#endif
 
 	if (version == 0x10005UL) {
 		/*
@@ -128,7 +126,8 @@ compat_get_event(struct anoubisd_msg *old, unsigned long version)
 		 * We can't simply use msg_size for the position because of
 		 * potential padding.
 		 */
-		end = memchr(pg->path, 0, msg_size - sizeof(struct pg_file_message));
+		end = memchr(pg->path, 0,
+		    msg_size - sizeof(struct pg_file_message));
 		if (!end) {
 			/* pg->path was not 0-terminated */
 			free(n);
@@ -137,12 +136,7 @@ compat_get_event(struct anoubisd_msg *old, unsigned long version)
 		end++;
 		*end = 0;
 		return n;
-	} else if (ANOUBISCORE_VERSION == 0x00010004UL) {
-		/*
-		 * If we convert to 0x00010004UL there is nothing todo.
-		 */
-		return old;
-	} else if (version >= 0x10001UL && version <= 0x10003UL) {
+	} else if (version >= 0x10001UL && version <= 0x10004UL) {
 		total = old->size - sizeof(struct anoubisd_msg);
 		pre = sizeof(struct eventdev_hdr);
 		if (total <
@@ -164,9 +158,7 @@ compat_get_event(struct anoubisd_msg *old, unsigned long version)
 		    pre);
 		common = (struct anoubis_event_common *)(n->msg + pre);
 		common->task_cookie = oldcommon->task_cookie;
-#if ANOUBISCORE_VERSION >= ANOUBISCORE_PG_VERSION
 		common->pgid = 0;
-#endif
 		hdr = (struct eventdev_hdr *)n->msg;
 		hdr->msg_size += n->size - old->size;
 		memcpy(common+1, oldcommon+1, post);
@@ -182,4 +174,24 @@ compat_get_event(struct anoubisd_msg *old, unsigned long version)
 		free(old);
 		return NULL;
 	}
+
+#elif ANOUBISCORE_VERSION == 0x10004UL
+
+	/*
+	 * If the compile time version is 0x10004UL (this happens e.g.
+	 * on OpenBSD!) there is no need to convert messages with changes
+	 * that happend in later versions.
+	 */
+	if (version < 0x10001UL) {
+		log_warnx("compat_get_event: Version %lx is too old", version);
+		free(old);
+		return  NULL;
+	}
+	return old;
+
+#else
+
+#error "compat_get_event function needs to be extended for compatibility"
+
+#endif
 }
