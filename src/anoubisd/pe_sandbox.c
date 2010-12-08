@@ -435,7 +435,12 @@ pe_decide_sandbox(struct pe_proc *proc, struct pe_file_event *sbevent)
 			 */
 			if (res[j].log > final.log)
 				final.log = res[j].log;
+			/*
+			 * Do not report the rule ID and prio if the partial
+			 * verdict is not equal to the final verdict.
+			 */
 			if (res[j].decision != final.decision)
+				continue;
 			final.rule_id = res[j].rule_id;
 			final.prio = res[j].prio;
 		}

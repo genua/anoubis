@@ -171,15 +171,7 @@ sandbox {
 	}
 
 	@kdeinit4@  {
-		allow path "/tmp" rw
-		allow path "/var/tmp" rw
-		allow path "/var" r
-		allow path "/usr" rx
-		allow path "/lib" rx
-		allow path "/bin" rx
-		allow path "/home" r
-		allow path "/etc" r
-		default ask
+		default allow
 	}
 
 	# daemon socket
@@ -236,6 +228,7 @@ context {
 		context open /usr/lib/kde3/kio_ftp.so
 		context open /usr/lib/kde3/kio_sftp.so
 		context open /usr/lib/kde3/kio_smtp.so
+		context new any
 	}
 
 	@kmail@ {
