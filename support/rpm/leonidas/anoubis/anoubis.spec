@@ -67,6 +67,10 @@ Requires:	%{daemon} >= 0.9.4.27.015
 Requires:	wxGTK >= 2.8
 Requires:	openssl
 Requires:	cvs
+Requires:	xorg-x11-server-Xephyr
+Requires:	xorg-x11-utils
+Requires:	xorg-x11-xkb-utils
+Requires:	icewm
 
 %description -n %{gui}
 Graphical user interface of the Anoubis Security Suite.

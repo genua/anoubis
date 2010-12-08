@@ -19,7 +19,7 @@ Description: Central daemon of the Anoubis Security Suite
 Package: xanoubis
 Architecture: any
 Depends: ${shlibs:Depends}, notification-daemon, anoubisd (>= 0.9.4.27.015),
-  cvs, wx2.8-i18n, openssl
+  cvs, wx2.8-i18n, openssl, xserver-xephyr, x11-utils, mktemp, x11-xkb-utils, icewm|matchbox-window-manager
 Description: Graphical user interface of the Anoubis Security Suite
  xanoubis is the GUI of the anoubis security suite. Users can use xanoubis
  to create rules and signatures for the Application Level Firewall

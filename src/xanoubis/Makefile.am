@@ -75,7 +75,7 @@ profiledir = $(datadir)/$(bin_PROGRAMS)/profiles
 wizarddir = $(profiledir)/wizard
 desktopdir = $(datadir)/$(bin_PROGRAMS)
 
-dist_util_SCRIPTS = utils/xanoubis_guessApp.sh
+dist_util_SCRIPTS = utils/xanoubis_guessApp.sh utils/xpgwrapper
 dist_icon_DATA = \
 	icons/General_alert_16.png \
 	icons/General_alert_48.png \

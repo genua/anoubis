@@ -67,6 +67,8 @@ Requires:	wxGTK >= 2.8
 Requires:	xorg-x11-fonts
 Requires:	openssl
 Requires:	cvs
+Requires:	xorg-x11-server-extra
+Requires:	icewm
 
 %description -n %{gui}
 Graphical user interface of the Anoubis Security Suite.

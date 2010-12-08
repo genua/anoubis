@@ -1,0 +1,127 @@
+#!/bin/sh
+##########################################################################
+# Copyright (c) 2010 GeNUA mbH <info@genua.de>
+#
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+# TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+##########################################################################
+
+##########################################################################
+# Simple wrapper script that runs an X11 program in an isolated session.
+# The first command line argument is the program name, all other command
+# line arguments are passed to the program. If the user does not like the
+# Behaviour of this script, he can store a script in
+# $HOME/.xanoubis/xpgwrapper that will be executed instead of this script.
+##########################################################################
+
+if [ -x "$HOME/.xanoubis/xpgwrapper" ]
+then
+	exec "$HOME/.xanoubis/xpgwrapper" "$@"
+fi
+
+AUTHFILE=$(mktemp)
+ERRORFILE=$(mktemp)
+STARTWAIT=3
+SERVERNUM=99
+
+# Disconnect from any running DBUS immediately
+unset DBUS_SESSION_BUS_ADDRESS
+
+# Display an error message.
+error () {
+	echo "error: $*" >&2
+	exit 1
+}
+
+# Find a free server number by looking at .X*-lock files in /tmp.
+find_free_servernum() {
+	i=$SERVERNUM
+	while [ -f /tmp/.X$i-lock -o -e /tmp/.X11-unix/X$i ]; do
+		i=$(($i + 1))
+	done
+	echo $i
+}
+
+# Clean up files
+clean_up() {
+	if [ -e "$AUTHFILE" ]
+	then
+		rm -f $AUTHFILE
+	fi
+	rm -f $ERRORFILE
+	rm -f /tmp/.X11-unix/X$SERVERNUM
+	rm -f /tmp/.X${SERVERNUM}-lock
+}
+
+SERVERNUM=$(find_free_servernum)
+
+# tidy up after ourselves
+trap clean_up EXIT
+
+# Setup authorization file
+rm -f "$AUTHFILE"
+xauth -f "$AUTHFILE" add ":$SERVERNUM" . $(mcookie) 2>"$ERRORFILE" ||
+    error "Failed to create XAUTHORITY file"
+
+# Start Xserver
+Xephyr ":$SERVERNUM" -auth "$AUTHFILE" -nolisten tcp \
+    -screen 1024x768x24 2>"$ERRORFILE" &
+PID1=$!
+
+sleep 2
+
+if ! kill -0 $PID1 2>/dev/null; then
+	error "Xserver failed to start"
+fi
+
+TITLE="Xephyr on :$SERVERNUM ( ctrl+shift grabs mouse and keyboard )"
+TITLE2="Xephyr on :${SERVERNUM}.0 ( ctrl+shift grabs mouse and keyboard )"
+xprop -name "$TITLE" -set WM_NAME "Playground $TITLE"
+xprop -name "$TITLE2" -set WM_NAME "Playground $TITLE2"
+KBD=$( setxkbmap -print ) 2>"$ERRORFILE"
+
+export DISPLAY=":$SERVERNUM"
+export XAUTHORITY="$AUTHFILE"
+
+# Set Keyboard mapping
+echo "$KBD" | xkbcomp - $DISPLAY 2>"$ERRORFILE"
+PID2=""
+if which icewm >/dev/null
+then
+	icewm 2>"$ERRORFILE" &
+	PID2=$!
+else
+	if which matchbox-window-manager >/dev/null
+	then
+		matchbox-window-manager 2>"$ERRORFILE" &
+		PID2=$!
+	fi
+fi
+
+"$@"
+CODE=$?
+
+[ -z "$PID2" ] || wait $PID2
+wait $PID1
+
+exit $CODE
