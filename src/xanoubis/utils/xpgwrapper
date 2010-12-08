@@ -96,8 +96,8 @@ fi
 
 TITLE="Xephyr on :$SERVERNUM ( ctrl+shift grabs mouse and keyboard )"
 TITLE2="Xephyr on :${SERVERNUM}.0 ( ctrl+shift grabs mouse and keyboard )"
-xprop -name "$TITLE" -set WM_NAME "Playground $TITLE"
-xprop -name "$TITLE2" -set WM_NAME "Playground $TITLE2"
+xprop -name "$TITLE" -set WM_NAME "Playground $TITLE" 2>/dev/null
+xprop -name "$TITLE2" -set WM_NAME "Playground $TITLE2" 2>/dev/null
 KBD=$( setxkbmap -print ) 2>"$ERRORFILE"
 
 export DISPLAY=":$SERVERNUM"

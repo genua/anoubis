@@ -38,6 +38,7 @@
 .Op Fl hfF
 .Op Fl k Ar keyfile
 .Op Fl c Ar certificate
+.Op Fl X
 .Ar command
 .Sh DESCRIPTION
 The
@@ -63,6 +64,12 @@ This option is only valid for the commit-operation.
 Specify the private key (default ~/.xanoubis/default.key)
 .It Fl c Ar certfile
 Specify the certificate. (default ~/.xanoubis/default.crt)
+.It Fl X
+Start playground programs in an isolated X session. This flag is
+recommended for all X11 applications unless you want to run them in
+insecure mode. It is only valid for the
+.Ar start
+command.
 .It Ar command
 .Pp
 .Bl -tag -width Ds

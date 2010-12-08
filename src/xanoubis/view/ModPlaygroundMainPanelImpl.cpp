@@ -38,6 +38,7 @@
 #include <signal.h>
 #include <wx/log.h>
 #include <wx/tokenzr.h>
+#include <wx/stdpaths.h>
 
 #include "AnEvents.h"
 #include "AnListCtrl.h"
@@ -300,10 +301,16 @@ ModPlaygroundMainPanelImpl::startApplication(void)
 	char	**argv;
 	wxString  message;
 	wxString  command;
+	wxString  wrapper = wxEmptyString;
 
 	command = applicationComboBox->GetValue();
 	if (command.IsEmpty())
 		return;
+	if (xwrapperCheckbox->GetValue()) {
+		wrapper = wxStandardPaths::Get().GetDataDir()
+		    +  wxT("/utils/xpgwrapper ");
+		command = wrapper + command;
+	}
 	argv = convertStringToArgV(command);
 	if (argv == NULL) {
 		message = wxString::Format(_("System error: %hs"),

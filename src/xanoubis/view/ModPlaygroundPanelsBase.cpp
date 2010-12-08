@@ -62,6 +62,13 @@ ModPlaygroundMainPanelBase::ModPlaygroundMainPanelBase( wxWindow* parent, wxWind
 	applicationComboBox = new wxComboBox( pgPage, PG_APP_COMBOBOX, wxEmptyString, wxDefaultPosition, wxSize( 350,-1 ), 0, NULL, wxTE_PROCESS_ENTER ); 
 	startSizer->Add( applicationComboBox, 0, wxALL, 5 );
 	
+	xwrapperCheckbox = new wxCheckBox( pgPage, wxID_ANY, _("Start program in an isolated X session"), wxDefaultPosition, wxDefaultSize, 0 );
+	xwrapperCheckbox->SetValue(true);
+	
+	xwrapperCheckbox->SetToolTip( _("If checked the program is started in an isolated X session disconnecting it from other DBUS sessions and the main X display. This box should normally be checked. Uncheck it only if your program is not an X11 client or if you really want to run an X window program in insecure mode.") );
+	
+	startSizer->Add( xwrapperCheckbox, 0, wxALL, 5 );
+	
 	applicationStartButton = new wxButton( pgPage, PG_APP_STARTBUTTON, _("Start Playground"), wxDefaultPosition, wxDefaultSize, 0 );
 	applicationStartButton->Enable( false );
 	

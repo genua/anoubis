@@ -43,6 +43,7 @@ class AnListCtrl;
 #include <wx/colour.h>
 #include <wx/settings.h>
 #include <wx/combobox.h>
+#include <wx/checkbox.h>
 #include <wx/button.h>
 #include <wx/sizer.h>
 #include <wx/statbox.h>
@@ -79,6 +80,7 @@ class ModPlaygroundMainPanelBase : public wxPanel
 		wxPanel* pgPage;
 		wxStaticText* applicationLabel;
 		wxComboBox* applicationComboBox;
+		wxCheckBox* xwrapperCheckbox;
 		wxButton* applicationStartButton;
 		AnListCtrl* pgList;
 		wxButton* pgRefreshButton;

@@ -91,6 +91,11 @@
 #define PGCLI_OPT_IGNRECOMM 0x0010
 
 /**
+ * Run the program with the playground X wrapper in its own X session.
+ */
+#define PGCLI_OPT_XWRAPPER 0x0020
+
+/**
  * Field width for playground id.
  */
 #define PGCLI_OUTLEN_ID 8
@@ -392,7 +397,9 @@ usage(void)
 	    "ignore recommended scanners during commit\n");
 	fprintf(stderr, "    -h                        this help\n");
 	fprintf(stderr, "    -k key                    private key file\n");
-	fprintf(stderr, "    -c cert                   certificate file\n\n");
+	fprintf(stderr, "    -c cert                   certificate file\n");
+	fprintf(stderr, "    -X                        "
+	    "start program in isolated X session\n\n");
 	fprintf(stderr, "    <command>:\n");
 	fprintf(stderr, "	start <program>\n");
 	fprintf(stderr, "	list\n");
@@ -432,7 +439,7 @@ main(int argc, char *argv[])
 	};
 
 	/* Get command line arguments. */
-	while ((ch = getopt_long(argc, argv, "+vfhc:k:F",
+	while ((ch = getopt_long(argc, argv, "+Xvfhc:k:F",
 	    options, NULL)) != -1) {
 		switch (ch) {
 		case 'f':
@@ -464,6 +471,9 @@ main(int argc, char *argv[])
 				return 1;
 			}
 			break;
+		case 'X':
+			opts |= PGCLI_OPT_XWRAPPER;
+			break;
 		default:
 			usage();
 			/* NOTREACHED */
@@ -479,6 +489,12 @@ main(int argc, char *argv[])
 	command = *argv++;
 	argc--;
 
+	if ((opts & PGCLI_OPT_XWRAPPER) && strcmp(command, "start") != 0) {
+		fprintf(stderr, "-X option is only allowed with the "
+		    "start command");
+		usage();
+		/* NOTREACHED */
+	}
 	if (strcmp(command, "commit") && (opts & PGCLI_OPT_IGNRECOMM)) {
 		/* ignore-recommended option only allowed
 		 * for the commit-command */
@@ -493,6 +509,10 @@ main(int argc, char *argv[])
 		if (argc < 1) {
 			usage();
 			/* NOTREACHED */
+		}
+		if (opts & PGCLI_OPT_XWRAPPER) {
+			argv--;
+			argv[0] = "/usr/share/xanoubis/utils/xpgwrapper";
 		}
 		error = playground_start_exec(argv);
 	} else if (strcmp(command, "list") == 0) {
