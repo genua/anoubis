@@ -291,8 +291,6 @@ ModPlaygroundMainPanelImpl::onPgListItemActivate(wxListEvent &event)
 	}
 }
 
-#include <stdio.h>
-
 void
 ModPlaygroundMainPanelImpl::startApplication(void)
 {
@@ -309,9 +307,8 @@ ModPlaygroundMainPanelImpl::startApplication(void)
 	if (xwrapperCheckbox->GetValue()) {
 		wrapper = wxStandardPaths::Get().GetDataDir()
 		    +  wxT("/utils/xpgwrapper ");
-		command = wrapper + command;
 	}
-	argv = convertStringToArgV(command);
+	argv = convertStringToArgV(wrapper + command);
 	if (argv == NULL) {
 		message = wxString::Format(_("System error: %hs"),
 		    anoubis_strerror(errno));
@@ -326,14 +323,21 @@ ModPlaygroundMainPanelImpl::startApplication(void)
 	rc = -ENOSYS;
 #endif
 	if (rc < 1) {
-		/* Start failed, got no pid. */
+		/*
+		 * Start failed, got no pid. We include the wrapper (if any)
+		 * in the error message produced below.
+		 */
+		command = wrapper + command;
 		message = wxString::Format(_("Could not start program \"%ls\" "
 		    "within playground: %ls"), command.BeforeFirst(' ').c_str(),
 		    wxString::From8BitData(anoubis_strerror(-rc)).c_str());
 		anMessageBox(message, _("Playground error"),
 		    wxOK | wxICON_ERROR, this);
 	} else {
-		/* Successfull start. */
+		/*
+		 * Successfull start. Do _not_ include the wrapper in the
+		 * string that is inserted into the combo box history.
+		 */
 		Debug::trace(wxString::Format(wxT("Playground - start "
 		    "program \"%ls\" with pid %d"), command.c_str(), rc));
 

@@ -47,6 +47,29 @@ SERVERNUM=99
 # Disconnect from any running DBUS immediately
 unset DBUS_SESSION_BUS_ADDRESS
 
+# Save the current playground ID if any
+PGID=""
+
+mypgid()
+{
+	/sbin/anoubisctl ps 2>/dev/null | while read line
+	do
+		set $line
+		if [ "$1" = "pid=$$" ]
+		then
+			case "$6" in
+			pgid=*)
+				PGID=$( echo "$6" | sed 's/pgid=//' )
+				echo $PGID
+				return
+			;;
+			esac
+		fi
+	done
+}
+
+PGID=$( mypgid )
+
 # Display an error message.
 error () {
 	echo "error: $*" >&2
@@ -71,6 +94,27 @@ clean_up() {
 	rm -f $ERRORFILE
 	rm -f /tmp/.X11-unix/X$SERVERNUM
 	rm -f /tmp/.X${SERVERNUM}-lock
+	# Kill remaining processes in the playground after sleeping 2 seconds
+	if ! [ -z "$PGID" ]
+	then
+		if /sbin/anoubisctl ps | grep " pgid=$PGID " >/dev/null
+		then
+			sleep 2
+			/sbin/anoubisctl ps 2>/dev/null | while read line
+			do
+				set $line
+				if [ "$6" = "pgid=$PGID" ]
+				then
+					PID=$( echo "$1" | sed 's/^pid=//' )
+					case "$PID" in
+					[1-9]*)
+						kill -- "$PID" 2>/dev/null
+					;;
+					esac
+				fi
+			done
+		fi
+	fi
 }
 
 SERVERNUM=$(find_free_servernum)
@@ -95,9 +139,11 @@ if ! kill -0 $PID1 2>/dev/null; then
 fi
 
 TITLE="Xephyr on :$SERVERNUM ( ctrl+shift grabs mouse and keyboard )"
-TITLE2="Xephyr on :${SERVERNUM}.0 ( ctrl+shift grabs mouse and keyboard )"
-xprop -name "$TITLE" -set WM_NAME "Playground $TITLE" 2>/dev/null
-xprop -name "$TITLE2" -set WM_NAME "Playground $TITLE2" 2>/dev/null
+TITLE2="Xephyr on :${SERVERNUM}.0 (ctrl+shift grabs mouse and keyboard)"
+
+OD="$DISPLAY"
+OX="$XAUTHORITY"
+
 KBD=$( setxkbmap -print ) 2>"$ERRORFILE"
 
 export DISPLAY=":$SERVERNUM"
@@ -117,6 +163,25 @@ else
 		PID2=$!
 	fi
 fi
+
+(
+	# Set the window title. This must be done after starting the
+	# window manager on some distros.
+	DISPLAY="$OD"
+	if [ -z "$OX" ]
+	then
+		unset XAUTHORITY
+	else
+		XAUTHORITY="$OX"
+	fi
+	export DISPLAY
+	export XAUTHORITY
+	xprop -name "$TITLE" -set WM_NAME "Playground $TITLE" 2>/dev/null
+	xprop -name "$TITLE2" -set WM_NAME "Playground $TITLE2" 2>/dev/null
+)
+
+unset OD
+unset OX
 
 "$@"
 CODE=$?

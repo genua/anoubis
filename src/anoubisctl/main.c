@@ -1687,7 +1687,7 @@ proc_list_print_record(Anoubis_ProcRecord *rec)
 	    get_value(rec->sbrule[0]), get_value(rec->sbrule[1]),
 	    get_value(rec->ctxrule[0]), get_value(rec->ctxrule[1]));
 	if (get_value(rec->pgid))
-		printf(" pgid=%lld", (long long)get_value(rec->pgid));
+		printf(" pgid=%llx", (long long)get_value(rec->pgid));
 	if (get_value(rec->secureexec))
 		printf(" secureexec");
 	printf(" ");
