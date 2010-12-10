@@ -39,24 +39,27 @@
 __BEGIN_DECLS
 
 /**
- * Set playground marker.
- * This will enter the playground. It will tell the kernel to mark this
- * process to be a playground process.
- * @param None.
- * @return 0 on success else negative error code.
- */
-int playground_setMarker(void);
-
-/**
- * Start new process within playground.
+ * Start a new process within playground.
  * This will run given command (and its arguments) by using exec().
  * The current program is marked and replaced.
  * @note It is the duty of the caller to close all open file handles!
  * @see playground_setMarker()
  * @param[in] 1st List of strings with arguments.
- * @return error of exec() or return code of command.
+ * @return Zero in case of success or a negative error code in case
+ *     of an error. The function does not return at all if the program
+ *     executes successfully.
  */
 int playground_start_exec(char **);
+
+/**
+ * Start a new process in an existing playground. The playground's name
+ * is ammeded with the program that is executed.
+ * @param[in] 1st The program name and its command line arguments.
+ * @return Zero in case of success or a negative error code in case
+ *     of an error. The function does not return at all if the program
+ *     executes successfully.
+ */
+int playground_start_rename(char **);
 
 /**
  * Start new process within playground.

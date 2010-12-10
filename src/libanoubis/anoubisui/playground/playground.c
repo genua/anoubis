@@ -54,8 +54,8 @@
  */
 #define MSG_SIZE 16
 
-int
-playground_setMarker(void)
+static int
+playground_ioctl(int rename)
 {
 	int fd;
 	int rc;
@@ -65,7 +65,7 @@ playground_setMarker(void)
 		return (-errno);
 	}
 
-	rc = ioctl(fd, ANOUBIS_CREATE_PLAYGROUND, 0);
+	rc = ioctl(fd, ANOUBIS_CREATE_PLAYGROUND, rename);
 	close(fd);
 	if (rc != 0) {
 		rc = -errno;
@@ -74,19 +74,30 @@ playground_setMarker(void)
 	return (rc);
 }
 
-int
-playground_start_exec(char **argv)
+static int
+playground_start(char **argv, int rename)
 {
 	int rc;
 
-	rc = playground_setMarker();
-	if (rc != 0) {
-		return (rc);
-	}
+	rc = playground_ioctl(rename);
+	if (rc < 0)
+		return rc;
 
 	execvp(argv[0], argv);
 	/* Only reached if execvp returns an error. */
-	return (-errno);
+	return -errno;
+}
+
+int
+playground_start_exec(char **argv)
+{
+	return playground_start(argv, 0);
+}
+
+int
+playground_start_rename(char **argv)
+{
+	return playground_start(argv, 1);
 }
 
 int
@@ -113,7 +124,7 @@ playground_start_fork(char **argv)
 		fcntl(pipes[1], F_SETFD, FD_CLOEXEC);
 
 		/* Mark ourself as playground process. */
-		rc = playground_setMarker();
+		rc = playground_ioctl(0);
 		if (rc != 0) {
 			/* Error: inform parent and exit! */
 			snprintf(buffer, MSG_SIZE, "%d\n", rc);

@@ -84,7 +84,7 @@ struct playground {
 	 * playground name is derived from the command of this process and
 	 * the first exec of this process changes the playground name.
 	 */
-	anoubis_cookie_t			 founder;
+	anoubis_cookie_t			 founder, namefounder;
 
 	/**
 	 * The time that the playground was started.
@@ -111,7 +111,19 @@ struct playground {
 	 * make sure that anoubisctl and/or xanoubis do not show up as the
 	 * playground processes.
 	 */
-	char					*cmd;
+	char					*realcmd;
+
+	/**
+	 * The name of the last playground program that renamed the
+	 * playground. May be NULL.
+	 */
+	char					*namecmd;
+
+	/**
+	 * The composed playground name. This consists of the namecmd
+	 * followed by the realcmd in parenthesis.
+	 */
+	char					*fullname;
 
 	/**
 	 * The user-ID of the user that starts the playground process.
@@ -199,9 +211,12 @@ pe_playground_create(anoubis_cookie_t pgid, int do_mkdir)
 		    "directory: %s", anoubis_strerror(-err));
 	pg->pgid = pgid;
 	pg->founder = 0;
+	pg->namefounder = 0;
 	pg->nrprocs = 0;
 	pg->nrfiles = 0;
-	pg->cmd = NULL;
+	pg->realcmd = NULL;
+	pg->namecmd = NULL;
+	pg->fullname = NULL;
 	pg->uid = (uid_t)-1;
 	pg->did_exec = 0;
 	pg->starttime = 0;
@@ -250,8 +265,12 @@ pe_playground_trykill(struct playground *pg)
 		log_warn("pe_playground_trykill: Cannot remove playground "
 		    "directory %" PRIx64, pg->pgid);
 	LIST_REMOVE(pg, next);
-	if (pg->cmd)
-		free(pg->cmd);
+	if (pg->realcmd)
+		free(pg->realcmd);
+	if (pg->namecmd)
+		free(pg->namecmd);
+	if (pg->fullname)
+		free(pg->fullname);
 	abuf_free_type(pg, struct playground);
 }
 
@@ -345,6 +364,31 @@ pe_playground_writefile(struct playground *pg, const char *path, char *str)
 }
 
 /**
+ * Build the user visible playground name from the playground's given
+ * name (pg->name) and the program it executes.
+ *
+ * @param pg The playground.
+ * @return A malloced string that contains the playground name.
+ */
+void
+pe_playground_buildname(struct playground *pg)
+{
+	char		*name = NULL;
+
+	if (pg->fullname) {
+		free(pg->fullname);
+		pg->fullname = NULL;
+	}
+	if (pg->namecmd && pg->realcmd) {
+		if (asprintf(&name, "%s (%s)", pg->namecmd, pg->realcmd) < 0)
+			name = NULL;
+	} else if (pg->realcmd) {
+		name = strdup(pg->realcmd);
+	}
+	pg->fullname = name;
+}
+
+/**
  * Initialize the fields of the playground structure that depend on
  * the first process that creates the playground.
  *
@@ -371,13 +415,14 @@ pe_playground_initproc(struct playground *pg, struct pe_proc *proc)
 	pg->starttime = time(NULL);
 	snprintf(buf, sizeof(buf), "%" PRId64, pg->starttime);
 	pe_playground_writefile(pg, "STARTTIME", buf);
-	if (pg->cmd) {
-		free(pg->cmd);
-		pg->cmd = NULL;
+	if (pg->realcmd) {
+		free(pg->realcmd);
+		pg->realcmd = NULL;
 	}
 	if (ident && ident->pathhint)
-		pg->cmd = strdup(ident->pathhint);
-	pe_playground_writefile(pg, "CMD", ident ? ident->pathhint : NULL);
+		pg->realcmd = strdup(ident->pathhint);
+	pe_playground_writefile(pg, "CMD", pg->realcmd);
+	pe_playground_buildname(pg);
 	return 1;
 }
 
@@ -403,8 +448,22 @@ pe_playground_postexec(anoubis_cookie_t pgid, struct pe_proc *proc)
 	if (pe_playground_initproc(pg, proc)) {
 		pg->did_exec = 1;
 		send_pgchange(pg->uid, pg->pgid, ANOUBIS_PGCHANGE_CREATE,
-		    pg->cmd);
+		    pg->fullname);
 		pe_playground_save_last_pgid(pg->pgid);
+	}
+	if (pg->namefounder == pe_proc_task_cookie(proc)) {
+		struct pe_proc_ident		*ident;
+
+		pg->namefounder = 0;
+		if (pg->namecmd) {
+			free(pg->namecmd);
+			pg->namecmd = NULL;
+		}
+		ident = pe_proc_ident(proc);
+		if (ident && ident->pathhint)
+			pg->namecmd = strdup(ident->pathhint);
+		pe_playground_writefile(pg, "NAME", pg->namecmd);
+		pe_playground_buildname(pg);
 	}
 }
 
@@ -431,6 +490,18 @@ pe_playground_add(anoubis_cookie_t pgid, struct pe_proc *proc)
 }
 
 /**
+ * Change the user controlled playground name.
+ */
+void
+pe_playground_rename(anoubis_cookie_t pgid, struct pe_proc *proc)
+{
+	struct playground	*pg = pe_playground_create(pgid, 0);
+
+	if (pg)
+		pg->namefounder = pe_proc_task_cookie(proc);
+}
+
+/**
  * Remove a process from a playground. This usually happens when the
  * process exits.
  *
@@ -450,7 +521,7 @@ pe_playground_delete(anoubis_cookie_t pgid, struct pe_proc *proc)
 		    pe_proc_task_cookie(proc), pg->nrprocs);
 		if (pg->nrprocs == 0) {
 			send_pgchange(pg->uid, pgid,
-			    ANOUBIS_PGCHANGE_TERMINATE, pg->cmd);
+			    ANOUBIS_PGCHANGE_TERMINATE, pg->fullname);
 		}
 		pe_playground_trykill(pg);
 	} else {
@@ -857,12 +928,19 @@ pe_playground_read(anoubis_cookie_t pgid)
 		if (sscanf(buf, "%" PRId64, &pg->starttime) != 1)
 			pg->starttime = 0;
 	}
-	if (pg->cmd) {
-		free(pg->cmd);
-		pg->cmd = NULL;
+	if (pg->realcmd) {
+		free(pg->realcmd);
+		pg->realcmd = NULL;
+	}
+	if (pg->namecmd) {
+		free(pg->namecmd);
+		pg->namecmd = NULL;
 	}
 	if (pe_playground_readfile(pg, "CMD", buf, sizeof(buf)) >= 0)
-		pg->cmd = strdup(buf);
+		pg->realcmd = strdup(buf);
+	if (pe_playground_readfile(pg, "NAME", buf, sizeof(buf)) >= 0)
+		pg->namecmd = strdup(buf);
+	pe_playground_buildname(pg);
 	dir = atfd_fdopendir(&pg->dirfd);
 	if (dir == NULL) {
 		log_warn("pe_playground_read: Cannot read playground "
@@ -920,8 +998,12 @@ pe_playground_shutdown(void)
 
 	while ((pg = LIST_FIRST(&playgrounds)) != NULL) {
 		LIST_REMOVE(pg, next);
-		if (pg->cmd)
-			free(pg->cmd);
+		if (pg->realcmd)
+			free(pg->realcmd);
+		if (pg->namecmd)
+			free(pg->namecmd);
+		if (pg->fullname)
+			free(pg->fullname);
 		abuf_free_type(pg, struct playground);
 	}
 }
@@ -1017,8 +1099,8 @@ pe_playground_send_pglist(uint64_t token, anoubis_cookie_t pgid,
 		if (pgid && pg->pgid != pgid)
 			continue;
 		size = sizeof(Anoubis_PgInfoRecord) + 1;
-		if (pg->cmd)
-			size += strlen(pg->cmd);
+		if (pg->fullname)
+			size += strlen(pg->fullname);
 		size = (size+7UL) & ~7UL;
 		if (size > abuf_length(ctx.buf)) {
 			amsg_list_send(&ctx, q);
@@ -1041,8 +1123,8 @@ pe_playground_send_pglist(uint64_t token, anoubis_cookie_t pgid,
 		set_value(rec->starttime, pg->starttime);
 		set_value(rec->nrprocs, pg->nrprocs);
 		set_value(rec->nrfiles, pg->nrfiles);
-		if (pg->cmd) {
-			strcpy(rec->path, pg->cmd);
+		if (pg->fullname) {
+			strcpy(rec->path, pg->fullname);
 		} else {
 			rec->path[0] = 0;
 		}

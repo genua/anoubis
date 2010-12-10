@@ -245,6 +245,8 @@ pe_proc_set_playgroundid(struct pe_proc *proc, anoubis_cookie_t pgid)
 		proc->pgid = pgid;
 		if (proc->pgid && proc->threads)
 			pe_playground_add(pgid, proc);
+	} else if (proc && proc->pgid && proc->pgid == pgid) {
+		pe_playground_rename(pgid, proc);
 	}
 }
 

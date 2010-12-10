@@ -386,6 +386,8 @@ int			 pe_build_prefixhash(struct apn_rule *);
 /* Playground management */
 void			 pe_playground_add(anoubis_cookie_t pgid,
 			     struct pe_proc *);
+void			 pe_playground_rename(anoubis_cookie_t pgid,
+			     struct pe_proc *);
 void			 pe_playground_delete(anoubis_cookie_t pgid,
 			     struct pe_proc *);
 anoubis_cookie_t	 pe_proc_get_playgroundid(struct pe_proc *);

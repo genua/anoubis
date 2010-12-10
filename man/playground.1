@@ -85,6 +85,13 @@ After execution of
 or the exit code of \&<program\&> in case of
 a successful
 .Xr exec 3 .
+.It rename
+This is similar to the
+.Ar start
+command. However, it is only allowed in an already running playground.
+It tells the anoubis daemon to use the name of the executed program
+as an addition to the playground name. This is useful in wrapper scripts
+that start a sophisticated playground session.
 .It list
 This will print out a list of all known playgrounds.
 The list contains the following items for each playground:

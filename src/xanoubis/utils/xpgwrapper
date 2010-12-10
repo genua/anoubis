@@ -41,34 +41,17 @@ fi
 
 AUTHFILE=$(mktemp)
 ERRORFILE=$(mktemp)
+ICEWMCONFIG=$(mktemp -d)
 STARTWAIT=3
 SERVERNUM=99
 
-# Disconnect from any running DBUS immediately
+# Disconnect from any running DBUS and session immediately
 unset DBUS_SESSION_BUS_ADDRESS
-
-# Save the current playground ID if any
-PGID=""
-
-mypgid()
-{
-	/sbin/anoubisctl ps 2>/dev/null | while read line
-	do
-		set $line
-		if [ "$1" = "pid=$$" ]
-		then
-			case "$6" in
-			pgid=*)
-				PGID=$( echo "$6" | sed 's/pgid=//' )
-				echo $PGID
-				return
-			;;
-			esac
-		fi
-	done
-}
-
-PGID=$( mypgid )
+unset KDE_FULL_SESSION
+unset SESSION_MANAGER
+unset XDG_SESSION_COOKIE
+unset DESKTOP_STARTUP_ID
+unset XDG_SESSION_COOKIE
 
 # Display an error message.
 error () {
@@ -91,30 +74,10 @@ clean_up() {
 	then
 		rm -f $AUTHFILE
 	fi
-	rm -f $ERRORFILE
+	rm -f "$ERRORFILE"
+	rm -fr "$ICEWMCONFIG"
 	rm -f /tmp/.X11-unix/X$SERVERNUM
 	rm -f /tmp/.X${SERVERNUM}-lock
-	# Kill remaining processes in the playground after sleeping 2 seconds
-	if ! [ -z "$PGID" ]
-	then
-		if /sbin/anoubisctl ps | grep " pgid=$PGID " >/dev/null
-		then
-			sleep 2
-			/sbin/anoubisctl ps 2>/dev/null | while read line
-			do
-				set $line
-				if [ "$6" = "pgid=$PGID" ]
-				then
-					PID=$( echo "$1" | sed 's/^pid=//' )
-					case "$PID" in
-					[1-9]*)
-						kill -- "$PID" 2>/dev/null
-					;;
-					esac
-				fi
-			done
-		fi
-	fi
 }
 
 SERVERNUM=$(find_free_servernum)
@@ -132,7 +95,7 @@ Xephyr ":$SERVERNUM" -auth "$AUTHFILE" -nolisten tcp \
     -screen 1024x768x24 2>"$ERRORFILE" &
 PID1=$!
 
-sleep 2
+sleep 1
 
 if ! kill -0 $PID1 2>/dev/null; then
 	error "Xserver failed to start"
@@ -149,19 +112,16 @@ KBD=$( setxkbmap -print ) 2>"$ERRORFILE"
 export DISPLAY=":$SERVERNUM"
 export XAUTHORITY="$AUTHFILE"
 
-# Set Keyboard mapping
-echo "$KBD" | xkbcomp - $DISPLAY 2>"$ERRORFILE"
 PID2=""
-if which icewm >/dev/null
+# Try to start the program from within the icewm window manager
+if which icewm-session >/dev/null
 then
-	icewm 2>"$ERRORFILE" &
+	touch "$ICEWMCONFIG/preferences"
+	echo "#!/bin/sh" >"$ICEWMCONFIG/startup"
+	echo playground rename "$@" >>"$ICEWMCONFIG/startup"
+	chmod 755 "$ICEWMCONFIG/startup"
+	ICEWM_PRIVCFG="$ICEWMCONFIG" icewm-session 2>>"$ERRORFILE" &
 	PID2=$!
-else
-	if which matchbox-window-manager >/dev/null
-	then
-		matchbox-window-manager 2>"$ERRORFILE" &
-		PID2=$!
-	fi
 fi
 
 (
@@ -183,10 +143,17 @@ fi
 unset OD
 unset OX
 
-"$@"
-CODE=$?
+# Set Keyboard mapping
+echo "$KBD" | xkbcomp - $DISPLAY 2>>"$ERRORFILE"
 
-[ -z "$PID2" ] || wait $PID2
+if [ -z "$PID2" ]
+then
+	# icewm-session not found. Start program without a window manager
+	playground rename "$@"
+else
+	# icewm-session found. Wait for its termination.
+	wait $PID2
+fi
 wait $PID1
 
-exit $CODE
+exit 0

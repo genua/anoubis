@@ -402,6 +402,7 @@ usage(void)
 	    "start program in isolated X session\n\n");
 	fprintf(stderr, "    <command>:\n");
 	fprintf(stderr, "	start <program>\n");
+	fprintf(stderr, "	rename <program>\n");
 	fprintf(stderr, "	list\n");
 	fprintf(stderr, "	files <playground id>\n");
 	fprintf(stderr, "	remove <playground id>\n");
@@ -515,6 +516,8 @@ main(int argc, char *argv[])
 			argv[0] = "/usr/share/xanoubis/utils/xpgwrapper";
 		}
 		error = playground_start_exec(argv);
+	} else if (strcmp(command, "rename") == 0) {
+		error = playground_start_rename(argv);
 	} else if (strcmp(command, "list") == 0) {
 		if (argc != 0) {
 			usage();
