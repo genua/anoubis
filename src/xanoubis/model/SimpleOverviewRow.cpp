@@ -90,6 +90,19 @@ SimpleOverviewRow::getApplicationPolicyIndex(void) const
 	return applicationIndex_;
 }
 
+bool
+SimpleOverviewRow::haveBinary(void) const
+{
+	if (applicationPolicy_ != 0) {
+		if (applicationPolicy_->isAnyBlock())
+			return (filterIndex_ == 0);
+		else
+			return (filterIndex_ <
+			    applicationPolicy_->getBinaryCount());
+	} else
+		return false;
+}
+
 void
 SimpleOverviewRow::update(Subject *)
 {

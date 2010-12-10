@@ -33,8 +33,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: anoubis. 10.972.C388\n"
 "Report-Msgid-Bugs-To: anoubis@lists.anoubis.org\n"
-"POT-Creation-Date: 2010-12-08 14:15+0100\n"
-"PO-Revision-Date: 2010-12-01 17:00+0100\n"
+"POT-Creation-Date: 2010-12-10 11:01+0100\n"
+"PO-Revision-Date: 2010-12-10 10:54+0100\n"
 "Last-Translator: Robin <robin_doer@genua.de>\n"
 "Language-Team: German <translation-team-de@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -173,13 +173,13 @@ msgstr "Benutzer"
 #: src/xanoubis/model/AlfOverviewTable.cpp:73
 #: src/xanoubis/model/AlfOverviewTable.cpp:99
 #: src/xanoubis/model/AlfOverviewTable.cpp:104
-#: src/xanoubis/model/AlfOverviewTable.cpp:159
-#: src/xanoubis/model/AlfOverviewTable.cpp:169
+#: src/xanoubis/model/AlfOverviewTable.cpp:165
+#: src/xanoubis/model/AlfOverviewTable.cpp:178
 #: src/xanoubis/model/SbOverviewTable.cpp:77
 #: src/xanoubis/model/SbOverviewTable.cpp:103
 #: src/xanoubis/model/SbOverviewTable.cpp:108
-#: src/xanoubis/model/SbOverviewTable.cpp:160
-#: src/xanoubis/model/SbOverviewTable.cpp:170
+#: src/xanoubis/model/SbOverviewTable.cpp:166
+#: src/xanoubis/model/SbOverviewTable.cpp:179
 #: src/xanoubis/model/SfsOverviewTable.cpp:77
 #: src/xanoubis/model/SfsOverviewTable.cpp:90
 #: src/xanoubis/model/SfsOverviewTable.cpp:95
@@ -197,8 +197,15 @@ msgstr "Benutzer"
 msgid "???"
 msgstr "???"
 
-#: src/xanoubis/model/AlfOverviewTable.cpp:174
-#: src/xanoubis/model/SbOverviewTable.cpp:175
+#: src/xanoubis/model/AlfOverviewTable.cpp:137
+#: src/xanoubis/model/AlfOverviewTable.cpp:142
+#: src/xanoubis/model/SbOverviewTable.cpp:141
+#: src/xanoubis/model/SbOverviewTable.cpp:146
+msgid "(applies to playground processes only)"
+msgstr "(Gilt ausschließlich für Playground-Prozesse.)"
+
+#: src/xanoubis/model/AlfOverviewTable.cpp:195
+#: src/xanoubis/model/SbOverviewTable.cpp:196
 #: src/xanoubis/model/SfsOverviewTable.cpp:142
 #, c-format
 msgid "admin ruleset of %ls"
@@ -616,7 +623,7 @@ msgstr "Anoubis Log Viewer"
 #: src/xanoubis/view/DlgPlaygroundCommitFileListImpl.cpp:117
 #: src/xanoubis/view/DlgPlaygroundCommitFileListImpl.cpp:138
 #: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:248
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:412
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:416
 msgid ""
 "You have a pending playground escalation.\n"
 "Please answer the escalation first and try again!"
@@ -628,7 +635,7 @@ msgstr ""
 #: src/xanoubis/view/DlgPlaygroundCommitFileListImpl.cpp:119
 #: src/xanoubis/view/DlgPlaygroundCommitFileListImpl.cpp:140
 #: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:250
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:414
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:418
 msgid "Playground notification"
 msgstr "Playground Hinweis"
 
@@ -2304,9 +2311,9 @@ msgstr "Kein Zugriff auf Daten des selektierten Eintrags."
 #: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:237
 #: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:246
 #: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:288
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:318
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:333
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:408
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:315
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:334
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:412
 msgid "Playground error"
 msgstr "Playgroundfehler"
 
@@ -2318,21 +2325,21 @@ msgstr "Playground konnte nicht gelöscht werden.\n"
 msgid "There are no files to commit!"
 msgstr "Keine Dateien zum übernehmen vorhanden!"
 
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:316
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:313
 #, c-format
 msgid "System error: %hs"
 msgstr "Systemfehler: %hs"
 
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:330
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:331
 #, c-format
 msgid "Could not start program \"%ls\" within playground: %ls"
 msgstr "Kann Programm \"%ls\" nicht im Playground starten: %ls"
 
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:407
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:411
 msgid "Could not refresh list of playgrounds."
 msgstr "Die Playground-Liste konnte nicht aktualisiert werden."
 
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:452
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:456
 #, c-format
 msgid "Commit files for playground %llx"
 msgstr "Dateien aus Playground %llx übernehmen"
@@ -2359,7 +2366,11 @@ msgid ""
 "from other DBUS sessions and the main X display. This box should normally be "
 "checked. Uncheck it only if your program is not an X11 client or if you "
 "really want to run an X window program in insecure mode."
-msgstr "Wenn diese Option ausgewählt ist, dann wird das Programm in einer eigenen isolierten X-Sitzung gestartet. Deaktivieren Sie diese Box, wenn Ihr Programm kein X11 Programm ist oder wenn sie das Programm wirklich im unsicheren Modus laufen lassen wollen."
+msgstr ""
+"Wenn diese Option ausgewählt ist, dann wird das Programm in einer eigenen "
+"isolierten X-Sitzung gestartet. Deaktivieren Sie diese Box, wenn Ihr "
+"Programm kein X11 Programm ist oder wenn sie das Programm wirklich im "
+"unsicheren Modus laufen lassen wollen."
 
 #: src/xanoubis/view/ModPlaygroundPanelsBase.cpp:72
 msgid "Start Playground"

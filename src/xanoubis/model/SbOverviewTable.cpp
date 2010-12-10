@@ -136,8 +136,14 @@ SbOverviewTable::getProgramText(SimpleOverviewRow *row) const
 
 	if (filterIndex == 0 && appPolicy->getBinaryCount() == 0)
 		return (wxT("any"));
+	else if (filterIndex == 1 && appPolicy->getBinaryCount() == 0 &&
+	    appPolicy->getFlag(APN_RULE_PGONLY))
+		return _("(applies to playground processes only)");
 	else if (filterIndex < appPolicy->getBinaryCount())
 		return (appPolicy->getBinaryName(filterIndex));
+	else if (appPolicy->getFlag(APN_RULE_PGONLY) &&
+	    filterIndex == appPolicy->getBinaryCount())
+		return _("(applies to playground processes only)");
 	else
 		return (wxEmptyString);
 }
@@ -165,9 +171,24 @@ wxString
 SbOverviewTable::getUserText(SimpleOverviewRow *row) const
 {
 	PolicyRuleSet *ruleSet = row->getRuleSet();
+	AppPolicy *appPolicy;
+	FilterPolicy *filterPolicy;
+	unsigned int filterIndex;
 
 	if (ruleSet == 0)
 		return _("???");
+
+	if ((appPolicy = row->getApplicationPolicy()) == 0)
+		return (wxEmptyString);
+	filterPolicy = row->getFilterPolicy();
+	filterIndex = row->getFilterPolicyIndex();
+
+	/* The current row does not contain a policy */
+	if (appPolicy->isAnyBlock() && filterIndex > 0)
+		return wxEmptyString;
+	if (!appPolicy->isAnyBlock() &&
+	    filterIndex >= appPolicy->getBinaryCount() && filterPolicy == 0)
+		return wxEmptyString;
 
 	if (ruleSet->isAdmin()) {
 		wxString userName = MainUtils::instance()->getUserNameById(

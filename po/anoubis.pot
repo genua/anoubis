@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: anoubis 0.9.4.27.40.182\n"
+"Project-Id-Version: anoubis 0.9.4.27.48.193\n"
 "Report-Msgid-Bugs-To: anoubis@lists.anoubis.org\n"
-"POT-Creation-Date: 2010-12-08 14:15+0100\n"
+"POT-Creation-Date: 2010-12-10 11:01+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -146,13 +146,13 @@ msgstr ""
 #: src/xanoubis/model/AlfOverviewTable.cpp:73
 #: src/xanoubis/model/AlfOverviewTable.cpp:99
 #: src/xanoubis/model/AlfOverviewTable.cpp:104
-#: src/xanoubis/model/AlfOverviewTable.cpp:159
-#: src/xanoubis/model/AlfOverviewTable.cpp:169
+#: src/xanoubis/model/AlfOverviewTable.cpp:165
+#: src/xanoubis/model/AlfOverviewTable.cpp:178
 #: src/xanoubis/model/SbOverviewTable.cpp:77
 #: src/xanoubis/model/SbOverviewTable.cpp:103
 #: src/xanoubis/model/SbOverviewTable.cpp:108
-#: src/xanoubis/model/SbOverviewTable.cpp:160
-#: src/xanoubis/model/SbOverviewTable.cpp:170
+#: src/xanoubis/model/SbOverviewTable.cpp:166
+#: src/xanoubis/model/SbOverviewTable.cpp:179
 #: src/xanoubis/model/SfsOverviewTable.cpp:77
 #: src/xanoubis/model/SfsOverviewTable.cpp:90
 #: src/xanoubis/model/SfsOverviewTable.cpp:95
@@ -170,8 +170,15 @@ msgstr ""
 msgid "???"
 msgstr ""
 
-#: src/xanoubis/model/AlfOverviewTable.cpp:174
-#: src/xanoubis/model/SbOverviewTable.cpp:175
+#: src/xanoubis/model/AlfOverviewTable.cpp:137
+#: src/xanoubis/model/AlfOverviewTable.cpp:142
+#: src/xanoubis/model/SbOverviewTable.cpp:141
+#: src/xanoubis/model/SbOverviewTable.cpp:146
+msgid "(applies to playground processes only)"
+msgstr ""
+
+#: src/xanoubis/model/AlfOverviewTable.cpp:195
+#: src/xanoubis/model/SbOverviewTable.cpp:196
 #: src/xanoubis/model/SfsOverviewTable.cpp:142
 #, c-format
 msgid "admin ruleset of %ls"
@@ -586,7 +593,7 @@ msgstr ""
 #: src/xanoubis/view/DlgPlaygroundCommitFileListImpl.cpp:117
 #: src/xanoubis/view/DlgPlaygroundCommitFileListImpl.cpp:138
 #: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:248
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:412
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:416
 msgid ""
 "You have a pending playground escalation.\n"
 "Please answer the escalation first and try again!"
@@ -595,7 +602,7 @@ msgstr ""
 #: src/xanoubis/view/DlgPlaygroundCommitFileListImpl.cpp:119
 #: src/xanoubis/view/DlgPlaygroundCommitFileListImpl.cpp:140
 #: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:250
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:414
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:418
 msgid "Playground notification"
 msgstr ""
 
@@ -2224,9 +2231,9 @@ msgstr ""
 #: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:237
 #: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:246
 #: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:288
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:318
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:333
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:408
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:315
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:334
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:412
 msgid "Playground error"
 msgstr ""
 
@@ -2238,21 +2245,21 @@ msgstr ""
 msgid "There are no files to commit!"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:316
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:313
 #, c-format
 msgid "System error: %hs"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:330
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:331
 #, c-format
 msgid "Could not start program \"%ls\" within playground: %ls"
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:407
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:411
 msgid "Could not refresh list of playgrounds."
 msgstr ""
 
-#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:452
+#: src/xanoubis/view/ModPlaygroundMainPanelImpl.cpp:456
 #, c-format
 msgid "Commit files for playground %llx"
 msgstr ""

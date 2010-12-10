@@ -169,6 +169,13 @@ SimpleOverviewVisitor::visitAppPolicy(AppPolicy *policy)
 				count = 1;
 			}
 
+			/*
+			 * In case of a pgonly-rule, you need another row to
+			 * display the related hint.
+			 */
+			if (policy->getFlag(APN_RULE_PGONLY))
+				count += 1;
+
 			for (unsigned int i = 0; i < count; i++) {
 				Debug::trace(
 				    wxT("(%ls) Appending application"),
@@ -212,12 +219,21 @@ SimpleOverviewVisitor::visitFilterPolicy(FilterPolicy *policy)
 	filterIndex_++;
 
 	if (currentApp_->getFilterPolicyCount() == filterIndex_) {
+		unsigned int max = currentApp_->getBinaryCount();
+
+		/*
+		 * In case of a pgonly-policy, you need one more row to display
+		 * the related hint.
+		 */
+		if (currentApp_->getFlag(APN_RULE_PGONLY))
+			max += 1;
+
 		/*
 		 * This is the last filter-policy of the current application.
 		 * But maybe the application-policy has more binaries than
 		 * filter. In this case we have to add some more rows.
 		 */
-		while (filterIndex_ < currentApp_->getBinaryCount()) {
+		while (filterIndex_ < max) {
 			SimpleOverviewRow *row = new SimpleOverviewRow(
 			    currentRuleSet_, appIndex_ - 1, currentApp_,
 			    filterIndex_, 0);

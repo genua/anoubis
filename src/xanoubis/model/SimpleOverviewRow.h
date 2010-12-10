@@ -95,6 +95,17 @@ class SimpleOverviewRow : private Observer
 		 */
 		unsigned int getApplicationPolicyIndex(void) const;
 
+		/**
+		 * Checks, if the row can display a binary.
+		 *
+		 * It depends on on the number of binaries in the
+		 * application-policy.
+		 *
+		 * @return true if the row can display a binary, false
+		 *         otherwise.
+		 */
+		bool haveBinary(void) const;
+
 	private:
 		/**
 		 * Index of a filter policy.

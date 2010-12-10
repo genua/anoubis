@@ -82,9 +82,21 @@ class OverviewAttrProvider : public wxGridCellAttrProvider
 		wxGridCellAttr *attrProgramOdd_;
 
 		/**
+		 * Template attribute for an odd program-column, which does
+		 * not display a binary.
+		 */
+		wxGridCellAttr *attrProgramOddNob_;
+
+		/**
 		 * Template attribute for an even program-column.
 		 */
 		wxGridCellAttr *attrProgramEven_;
+
+		/**
+		 * Template attribute for an even program-column, which does
+		 * not display a binary.
+		 */
+		wxGridCellAttr *attrProgramEvenNob_;
 
 		/**
 		 * Template attribute for an even filter-column.

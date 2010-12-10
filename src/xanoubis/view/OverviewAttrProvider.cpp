@@ -25,6 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <wx/settings.h>
+
 #include "AlfOverviewTable.h"
 #include "OverviewAttrProvider.h"
 #include "SimpleOverviewRow.h"
@@ -33,11 +35,24 @@ OverviewAttrProvider::OverviewAttrProvider(SimpleOverviewTable *table)
 {
 	table_ = table;
 
+	wxFont noBinaryFont = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
+	noBinaryFont.SetPointSize(7);
+
 	attrProgramOdd_ = new wxGridCellAttr;
 	attrProgramOdd_->SetBackgroundColour(wxColour(0xef, 0xef, 0xef));
 
+	attrProgramOddNob_ = new wxGridCellAttr;
+	attrProgramOddNob_->SetBackgroundColour(wxColour(0xef, 0xef, 0xef));
+	attrProgramOddNob_->SetTextColour(wxColour(0x70, 0x70, 0x70));
+	attrProgramOddNob_->SetFont(noBinaryFont);
+
 	attrProgramEven_ = new wxGridCellAttr;
 	attrProgramEven_->SetBackgroundColour(wxColour(0xdf, 0xdf, 0xdf));
+
+	attrProgramEvenNob_ = new wxGridCellAttr;
+	attrProgramEvenNob_->SetBackgroundColour(wxColour(0xdf, 0xdf, 0xdf));
+	attrProgramEvenNob_->SetTextColour(wxColour(0x70, 0x70, 0x70));
+	attrProgramEvenNob_->SetFont(noBinaryFont);
 
 	attrFilterEven_ = new wxGridCellAttr;
 	attrFilterEven_->SetBackgroundColour(wxColour(0xee, 0xee, 0xee));
@@ -63,10 +78,14 @@ OverviewAttrProvider::GetAttr(int row, int col,
 	unsigned int appIndex = tableRow->getApplicationPolicyIndex();
 
 	if (col == 0) {
+		bool haveBinary = tableRow->haveBinary();
+
 		if (appIndex % 2 ) { /* Odd application */
-			attr = setupAttr(attr, attrProgramOdd_);
+			attr = setupAttr(attr,
+			   haveBinary ? attrProgramOdd_ : attrProgramOddNob_);
 		} else { /* Even application */
-			attr = setupAttr(attr, attrProgramEven_);
+			attr = setupAttr(attr,
+			   haveBinary ? attrProgramEven_ : attrProgramEvenNob_);
 		}
 	} else if (appIndex % 2 == 0) { /* Even filter */
 		attr = setupAttr(attr, attrFilterEven_);
@@ -87,7 +106,6 @@ OverviewAttrProvider::setupAttr(wxGridCellAttr *in, wxGridCellAttr *tpl) const
 	} else {
 		/* Copy properties from template */
 		wxGridCellAttr *out = in->Clone();
-		out->SetBackgroundColour(in->GetBackgroundColour());
 
 		in->DecRef();
 
