@@ -55,9 +55,20 @@ class PlaygroundUnlinkTask : public ComTask
 		 * Constructor whole playground.
 		 * If this constructor is used all files of the given playground
 		 * will be removed.
-		 * @param[in] 1st Id of playground in question.
+		 * @param pgId Id of playground in question.
 		 */
 		PlaygroundUnlinkTask(uint64_t);
+
+		/**
+		 * Constructor whole playground.
+		 * If this constructor is used all files of the given playground
+		 * will be removed.
+		 * @param pgId Id of playground in question.
+		 * @param force If set to true, a force-unlink is performed.
+		 *              option should be used very rarely and with
+		 *              caution.
+		 */
+		PlaygroundUnlinkTask(uint64_t, bool);
 
 		/**
 		 * Destructor.
@@ -145,6 +156,11 @@ class PlaygroundUnlinkTask : public ComTask
 			 * Fetch file list.
 			 */
 			FILEFETCH,
+
+			/**
+			 * Performs force-unlink-operation.
+			 */
+			FORCEUNLINK,
 		};
 
 		/**
@@ -178,6 +194,13 @@ class PlaygroundUnlinkTask : public ComTask
 		void extractFileList(struct anoubis_msg *);
 
 		/**
+		 * Extracts files from message and fills forceUnlinkList_ with
+		 * device/inode-pairs.
+		 * @param message the source-message to be read
+		 */
+		void extractForceUnlinkList(struct anoubis_msg *);
+
+		/**
 		 * Do unlink loop
 		 * @param None.
 		 * @return The number of unlinked items.
@@ -201,9 +224,26 @@ class PlaygroundUnlinkTask : public ComTask
 		void cleanUnlinkList(void);
 
 		/**
+		 * Sends a force-unlink-request to the daemon.
+		 *
+		 * It takes the first file from forceUnlinkList_. If the
+		 * request was send to the daemon, the file is removed from
+		 * forceUnlinkList_.
+		 *
+		 * @return true is returned, if forceUnlinkList_ is empty. It
+		 *         means, that all files were removed.
+		 */
+		bool forceUnlink(void);
+
+		/**
 		 * Store id of playground.
 		 */
 		uint64_t pgId_;
+
+		/**
+		 * Force-unlink-flag.
+		 */
+		bool force_;
 
 		/**
 		 * The current state.
@@ -224,6 +264,11 @@ class PlaygroundUnlinkTask : public ComTask
 		 * These files will be deleted.
 		 */
 		std::map<char *, devInodePair> unlinkList_;
+
+		/**
+		 * These files will be deleted, if the force-option is set.
+		 */
+		std::set<devInodePair> forceUnlinkList_;
 
 		/**
 		 * Mask list: only unlink these files.

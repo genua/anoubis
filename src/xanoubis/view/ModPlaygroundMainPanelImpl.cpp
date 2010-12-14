@@ -240,7 +240,7 @@ ModPlaygroundMainPanelImpl::onDeleteFiles(wxCommandEvent &event)
 
 	/* start delete task */
 	PlaygroundCtrl::Result result =
-	    PlaygroundCtrl::instance()->removePlayground(pgId);
+	    PlaygroundCtrl::instance()->removePlayground(pgId, false);
 	if (result == PlaygroundCtrl::ERROR)
 		anMessageBox(_("Could not delete playground.\n"),
 		    _("Playground error"), wxOK | wxICON_ERROR, this);
@@ -384,12 +384,15 @@ ModPlaygroundMainPanelImpl::updateButtonState(void)
 	if (!ctrl->havePendingEscalation(wxT("PLAYGROUND"))) {
 		sel = pgList->getFirstSelection();
 		if (JobCtrl::instance()->isConnected() && sel >= 0) {
-			rowProvider = PlaygroundCtrl::instance()->getInfoProvider();
+			rowProvider =
+			    PlaygroundCtrl::instance()->getInfoProvider();
 			item = rowProvider->getRow(sel);
 			if (item)
-				entry = dynamic_cast<PlaygroundInfoEntry *>(item);
+				entry =
+				    dynamic_cast<PlaygroundInfoEntry *>(item);
 			if ((entry != NULL) && (entry->getNumFiles() > 0) &&
-			    (entry->getUid() == geteuid()) && !entry->isActive())
+			    (entry->getUid() == geteuid()) &&
+			    !entry->isActive())
 				enable = true;
 		}
 	} else

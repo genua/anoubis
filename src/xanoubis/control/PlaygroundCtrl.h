@@ -109,17 +109,25 @@ class PlaygroundCtrl : public GenericCtrl, public Singleton<PlaygroundCtrl>
 		 * This method will start a task that deletes all files from
 		 * the selected playground. Once the task is finished an event
 		 * is sent.
-		 * @param 1st  The ID of the playground to remove.
+		 * @param pgid  The ID of the playground to remove.
+		 * @param force If set to true, a force-unlink is performed.
+		 *              Metainformation are removed by the daemon. This
+		 *              option should be used very rarely and with
+		 *              caution.
 		 * @return Result of request-operation
 		 */
-		Result removePlayground(uint64_t pgid);
+		Result removePlayground(uint64_t pgid, bool);
 
 		/**
 		 * Command: Remove files of a playground.
-		 * @param[in] 1st List of indexes of row provider.
+		 * @param files List of indexes of row provider.
+		 * @param force If set to true, a force-unlink is performed.
+		 *              Metainformation are removed by the daemon. This
+		 *              option should be used very rarely and with
+		 *              caution.
 		 * @return Result of request-operation
 		 */
-		Result removeFiles(const std::vector<int> &files);
+		Result removeFiles(const std::vector<int> &files, bool);
 
 		/**
 		 * Command: Commit a set of files.
@@ -266,20 +274,29 @@ class PlaygroundCtrl : public GenericCtrl, public Singleton<PlaygroundCtrl>
 		 * Create playground delete task.
 		 * This method creates and starts the task to delete all files
 		 * of a playground.
-		 * @param[in] 1st The id of playground in question.
+		 * @param pgId The id of playground in question.
+		 * @param force If set to true, a force-unlink is performed.
+		 *              Metainformation are removed by the daemon. This
+		 *              option should be used very rarely and with
+		 *              caution.
 		 * @return True on success.
 		 */
-		bool createUnlinkTask(uint64_t);
+		bool createUnlinkTask(uint64_t, bool);
 
 		/**
 		 * Create playground file delete task.
 		 * This method creates and starts the task to delete given files
 		 * of a playground.
-		 * @param[in] 1st The id of playground in question.
+		 * @param pgId The id of playground in question.
+		 * @param list List of files to be removed
+		 * @param force If set to true, a force-unlink is performed.
+		 *              Metainformation are removed by the daemon. This
+		 *              option should be used very rarely and with
+		 *              caution.
 		 * @return True on success.
 		 */
 		bool createUnlinkTask(uint64_t,
-		    std::vector<PlaygroundFileEntry *> &);
+		    std::vector<PlaygroundFileEntry *> &, bool);
 
 		/**
 		 * Extract list task.

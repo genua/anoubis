@@ -110,7 +110,7 @@ DlgPlaygroundCommitFileListImpl::onDeleteClicked(wxCommandEvent &event)
 	}
 
 	PlaygroundCtrl::Result result =
-	    PlaygroundCtrl::instance()->removeFiles(selection);
+	    PlaygroundCtrl::instance()->removeFiles(selection, false);
 	if (result == PlaygroundCtrl::OK)
 		beginActivity();
 	else if (result == PlaygroundCtrl::BUSY)

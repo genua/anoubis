@@ -417,6 +417,36 @@ START_TEST(unlink_errorList)
 }
 END_TEST
 
+START_TEST(unlink_force)
+{
+	JobCtrl *jobCtrl = JobCtrl::instance();
+	TaskEventSpy eventSpy(jobCtrl, anTASKEVT_PG_UNLINK);
+	PlaygroundUnlinkTask unlinkTask(5, true);
+	PlaygroundUnlinkTask checkTask(5);
+	std::map<std::pair<uint64_t, uint64_t>, int> list;
+
+	DUMP_PLAYGROUND;
+	jobCtrl->addTask(&unlinkTask);
+	eventSpy.waitForInvocation(1);
+	mark_point();
+
+	fail_unless(!unlinkTask.hasErrorList());
+	list = unlinkTask.getErrorList();
+	fail_unless(list.size() == 0);
+	fail_unless(unlinkTask.getComTaskResult() == ComTask::RESULT_SUCCESS);
+
+	/*
+	 * Removing the same playground again will result in a ESRCH because
+	 * the playground is alredy removed.
+	 */
+	jobCtrl->addTask(&checkTask);
+	eventSpy.waitForInvocation(2);
+
+	fail_if(checkTask.getComTaskResult() == ComTask::RESULT_SUCCESS);
+	fail_unless(checkTask.getResultDetails() == ESRCH);
+}
+END_TEST
+
 TCase *
 getTc_JobCtrlPlayground(void)
 {
@@ -434,6 +464,7 @@ getTc_JobCtrlPlayground(void)
 	tcase_add_test(tcase, unlink_listEmpty);
 	tcase_add_test(tcase, unlink_listComplex);
 	tcase_add_test(tcase, unlink_errorList);
+	tcase_add_test(tcase, unlink_force);
 
 	return (tcase);
 }

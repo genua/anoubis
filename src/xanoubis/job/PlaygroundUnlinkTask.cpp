@@ -36,6 +36,19 @@ PlaygroundUnlinkTask::PlaygroundUnlinkTask(uint64_t pgId)
 {
 	reset();
 	pgId_ = pgId;
+	force_ = false;
+	state_ = INFO;
+	considerMatchList_ = false;
+	no_progress_ = 0;
+	matchList_.clear();
+	unlinkList_.clear();
+}
+
+PlaygroundUnlinkTask::PlaygroundUnlinkTask(uint64_t pgId, bool force)
+{
+	reset();
+	pgId_ = pgId;
+	force_ = force;
 	state_ = INFO;
 	considerMatchList_ = false;
 	no_progress_ = 0;
@@ -111,7 +124,8 @@ PlaygroundUnlinkTask::done(void)
 		anoubis_transaction_destroy(transaction_);
 		transaction_ = NULL;
 		return true;
-	} else if (transaction_ && (transaction_->msg == NULL ||
+	} else if (transaction_ && state_ != FORCEUNLINK &&
+	    (transaction_->msg == NULL ||
 	    !VERIFY_LENGTH(transaction_->msg, sizeof(Anoubis_ListMessage)) ||
 	    get_value(transaction_->msg->u.listreply->error) != 0)) {
 		/* Message verification failed */
@@ -151,8 +165,23 @@ PlaygroundUnlinkTask::done(void)
 		ret = false;
 		break;
 	case FILEFETCH:
-		extractFileList(message);
-		type_ = Task::TYPE_FS;
+		if (!force_) {
+			extractFileList(message);
+			type_ = Task::TYPE_FS;
+		} else {
+			extractForceUnlinkList(message);
+
+			if (!forceUnlink()) {
+				ret = false;
+				state_ = FORCEUNLINK;
+			} else
+				setComTaskResult(RESULT_SUCCESS);
+		}
+
+		break;
+	case FORCEUNLINK:
+		if ((ret = forceUnlink()))
+			setComTaskResult(RESULT_SUCCESS);
 		break;
 	}
 	while ((tmp = message) != NULL) {
@@ -278,6 +307,36 @@ PlaygroundUnlinkTask::extractFileList(struct anoubis_msg *message)
 	}
 }
 
+void
+PlaygroundUnlinkTask::extractForceUnlinkList(struct anoubis_msg *message)
+{
+	int			 i = 0;
+	int			 offset = 0;
+	Anoubis_PgFileRecord	*record = NULL;
+	uint64_t		 dev = 0;
+	uint64_t		 ino = 0;
+	devInodePair		 dip;
+
+	forceUnlinkList_.clear();
+	for(; message; message = message->next) {
+		for (i=offset=0; i<get_value(message->u.listreply->nrec); ++i) {
+			record = (Anoubis_PgFileRecord *)
+			    (message->u.listreply->payload + offset);
+			offset += get_value(record->reclen);
+
+			dev = get_value(record->dev);
+			ino = get_value(record->ino);
+			dip = devInodePair(dev,ino);
+
+			if (considerMatchList_) {
+				if (matchList_.find(dip) != matchList_.end())
+					forceUnlinkList_.insert(dip);
+			} else
+				forceUnlinkList_.insert(dip);
+		}
+	}
+}
+
 int
 PlaygroundUnlinkTask::unlinkLoop(void)
 {
@@ -344,4 +403,31 @@ PlaygroundUnlinkTask::cleanUnlinkList(void)
 		}
 		unlinkList_.erase(it);
 	}
+}
+
+bool
+PlaygroundUnlinkTask::forceUnlink(void)
+{
+	if (forceUnlinkList_.empty()) {
+		/* Done */
+		return true;
+	}
+
+	/* Unlink first element */
+	std::set<devInodePair>::iterator it = forceUnlinkList_.begin();
+	uint64_t dev = (*it).first;
+	uint64_t ino = (*it).second;
+
+	forceUnlinkList_.erase(it);
+
+	transaction_ =
+	    anoubis_client_pgunlink_start(getClient(), pgId_, dev, ino);
+	if (transaction_ == NULL) {
+		setComTaskResult(RESULT_LOCAL_ERROR);
+		setResultDetails(ENOMEM);
+
+		return true;
+	}
+
+	return false;
 }

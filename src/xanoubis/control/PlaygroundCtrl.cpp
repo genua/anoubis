@@ -38,6 +38,7 @@
 #include "anoubis_errno.h"
 #include "anoubis_playground.h"
 #include "AnEvents.h"
+#include "AnMessageDialog.h"
 #include "DlgPlaygroundScanResultImpl.h"
 #include "JobCtrl.h"
 #include "NotificationCtrl.h"
@@ -104,17 +105,17 @@ PlaygroundCtrl::updatePlaygroundFiles(uint64_t pgid, bool reportESRCH)
 }
 
 PlaygroundCtrl::Result
-PlaygroundCtrl::removePlayground(uint64_t pgid)
+PlaygroundCtrl::removePlayground(uint64_t pgid, bool force)
 {
 	NotificationCtrl *ctrl = NotificationCtrl::instance();
 	if (!ctrl->havePendingEscalation(wxT("PLAYGROUND")))
-		return createUnlinkTask(pgid) ? OK : ERROR;
+		return createUnlinkTask(pgid, force) ? OK : ERROR;
 	else
 		return BUSY;
 }
 
 PlaygroundCtrl::Result
-PlaygroundCtrl::removeFiles(const std::vector<int> &indexes)
+PlaygroundCtrl::removeFiles(const std::vector<int> &indexes, bool force)
 {
 	NotificationCtrl *ctrl = NotificationCtrl::instance();
 	if (!ctrl->havePendingEscalation(wxT("PLAYGROUND"))) {
@@ -146,7 +147,7 @@ PlaygroundCtrl::removeFiles(const std::vector<int> &indexes)
 			return ERROR;
 		}
 
-		return createUnlinkTask(pgid, files) ? OK : ERROR;
+		return createUnlinkTask(pgid, files, force) ? OK : ERROR;
 	} else
 		return BUSY;
 }
@@ -187,10 +188,7 @@ PlaygroundCtrl::handleComTaskResult(ComTask *task)
 	case ComTask::RESULT_LOCAL_ERROR:
 		if (task->getResultDetails() == EBUSY)
 			addError(wxString::Format(
-			    _("Error in playground request: %hs\n"
-			    "You can use the following command on the "
-			    "commandline to remove the playground:\n"
-			    "playground -f remove <Playground Id>"),
+			    _("Error in playground request: %hs"),
 			    anoubis_strerror(task->getResultDetails())));
 		else
 			addError(wxString::Format(
@@ -444,27 +442,24 @@ PlaygroundCtrl::OnPlaygroundUnlinkDone(TaskEvent &event)
 		 * error processing (right delete button used)
 		 */
 		int _error = task->getResultDetails();
-		if (_error == EBUSY) {
-			msg = wxString::Format(
+
+		/*  _error == ESRCH means playground already removed -> silent */
+		if (_error != ESRCH) {
+			/*
+			 * XXX Displaying a messagebox at this point is evil
+			 * XXX but the easiest solution :(
+			 */
+			int yesno = anMessageBox(wxString::Format(
 			    _("Removing Playground (ID %llx) failed: %hs\n"
-			    "You can use the following command on the "
-			    "commandline to remove the playground:\n"
-			    "playground -f remove %llx"),
+			    "If you still want to delete the playground, click on 'Yes'."),
 			    (long long)task->getPgId(),
-			    anoubis_strerror(_error), (long long)task->getPgId());
-			addError(msg);
-			sendEvent(anEVT_PLAYGROUND_ERROR);
-		} else if (_error != ESRCH) {
-			msg = wxString::Format(
-			    _("Removing Playground (ID %llx) failed: %hs"),
-			    (long long)task->getPgId(),
-			    anoubis_strerror(_error));
-			addError(msg);
-			sendEvent(anEVT_PLAYGROUND_ERROR);
+			    anoubis_strerror(_error)),
+			    _("Playground delete error"),
+			    wxYES_NO | wxNO_DEFAULT);
+
+			if (yesno == wxYES)
+				removePlayground(task->getPgId(), true);
 		}
-		/*
-		 *  _error == ESRCH means playground already removed -> silent
-		 */
 	} else if (task->hasMatchList() && !task->hasErrorList()) {
 		if (task->getComTaskResult() != ComTask::RESULT_SUCCESS) {
 			msg = wxString::Format(
@@ -496,7 +491,7 @@ PlaygroundCtrl::onPgChange(wxCommandEvent &event)
 	} else { /* Terminated */
 		std::map<unsigned long long, time_t>::iterator it =
 		    pgTimeTrack_.find(pgid);
-	
+
 		if (it != pgTimeTrack_.end()) {
 			time_t start = (*it).second;
 			time_t runtime = time(NULL) - start;
@@ -559,11 +554,11 @@ PlaygroundCtrl::createFileTask(uint64_t pgid, bool reportESRCH)
 }
 
 bool
-PlaygroundCtrl::createUnlinkTask(uint64_t pgId)
+PlaygroundCtrl::createUnlinkTask(uint64_t pgId, bool force)
 {
 	PlaygroundUnlinkTask *task = NULL;
 
-	task = new PlaygroundUnlinkTask(pgId);
+	task = new PlaygroundUnlinkTask(pgId, force);
 	if (task == NULL)
 		return false;
 
@@ -580,11 +575,11 @@ PlaygroundCtrl::createUnlinkTask(uint64_t pgId)
 
 bool
 PlaygroundCtrl::createUnlinkTask(uint64_t pgId,
-    std::vector<PlaygroundFileEntry *> &list)
+    std::vector<PlaygroundFileEntry *> &list, bool force)
 {
 	PlaygroundUnlinkTask *task = NULL;
 
-	task = new PlaygroundUnlinkTask(pgId);
+	task = new PlaygroundUnlinkTask(pgId, force);
 	if (task == NULL)
 		return false;
 
@@ -760,7 +755,8 @@ PlaygroundCtrl::commitFiles(const std::vector<int> &files)
 
 		provider = getFileProvider();
 		for (unsigned int i=0; i<files.size(); ++i) {
-			AnListClass		*item = provider->getRow(files[i]);
+			AnListClass		*item =
+			    provider->getRow(files[i]);
 			PlaygroundFileEntry	*e;
 
 			if (!item)
