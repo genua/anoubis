@@ -66,7 +66,7 @@ xanoubis_ldadd = \
 	$(SSL_LIBS) \
 	-lfl
 
-xanoubis_LDADD = $(xanoubis_ldadd) $(libanoubis)
+xanoubis_LDADD = $(xanoubis_ldadd) -lX11 $(libanoubis)
 
 programdir = $(datadir)/$(bin_PROGRAMS)
 utildir = $(datadir)/$(bin_PROGRAMS)/utils
