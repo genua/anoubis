@@ -41,6 +41,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include "anoubis_playground.h"
 
@@ -120,8 +121,21 @@ playground_start_fork(char **argv)
 	bzero(buffer, MSG_SIZE);
 	if (pid == 0) {
 		/* Child */
+		struct sigaction	act;
+
 		close(pipes[0]);
 		fcntl(pipes[1], F_SETFD, FD_CLOEXEC);
+
+		/*
+		 * Reset the SIGCHLD handler. Ignore errors if this
+		 * does not work. Normally, we can still start the
+		 * playground. However, some versions of Xephyr don't
+		 * like this.
+		 */
+		act.sa_handler = SIG_DFL;
+		act.sa_flags = 0;
+		sigemptyset(&act.sa_mask);
+		sigaction(SIGCHLD, &act, NULL);
 
 		/* Mark ourself as playground process. */
 		rc = playground_ioctl(0);
