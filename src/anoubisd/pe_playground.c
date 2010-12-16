@@ -464,6 +464,8 @@ pe_playground_postexec(anoubis_cookie_t pgid, struct pe_proc *proc)
 			pg->namecmd = strdup(ident->pathhint);
 		pe_playground_writefile(pg, "NAME", pg->namecmd);
 		pe_playground_buildname(pg);
+		send_pgchange(pg->uid, pg->pgid, ANOUBIS_PGCHANGE_CREATE,
+		    pg->fullname);
 	}
 }
 

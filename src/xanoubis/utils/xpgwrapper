@@ -119,6 +119,12 @@ then
 	touch "$ICEWMCONFIG/preferences"
 	echo "#!/bin/sh" >"$ICEWMCONFIG/startup"
 	echo playground rename "$@" >>"$ICEWMCONFIG/startup"
+	if which xmessage >/dev/null
+	then
+		echo '[ $? == 0 ] || xmessage \
+		    "Program '"$@"' terminated with exit code $?"' \
+		    >> "$ICEWMCONFIG/startup"
+	fi
 	chmod 755 "$ICEWMCONFIG/startup"
 	ICEWM_PRIVCFG="$ICEWMCONFIG" icewm-session 2>>"$ERRORFILE" &
 	PID2=$!

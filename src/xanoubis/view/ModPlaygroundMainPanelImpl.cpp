@@ -101,7 +101,7 @@ ModPlaygroundMainPanelImpl::ModPlaygroundMainPanelImpl(wxWindow* parent,
 
 	anEvents = AnEvents::instance();
 	anEvents->Connect(anEVT_PG_CHANGE, wxCommandEventHandler(
-	    ModPlaygroundMainPanelImpl::onAppEnd), NULL, this);
+	    ModPlaygroundMainPanelImpl::onPgChange), NULL, this);
 
 }
 
@@ -161,10 +161,9 @@ ModPlaygroundMainPanelImpl::onAppStart(wxCommandEvent &)
 }
 
 void
-ModPlaygroundMainPanelImpl::onAppEnd(wxCommandEvent &event)
+ModPlaygroundMainPanelImpl::onPgChange(wxCommandEvent &event)
 {
-	if (event.GetInt() == 0) /* Terminated */
-		refreshPlaygroundList();
+	refreshPlaygroundList();
 	event.Skip();
 }
 

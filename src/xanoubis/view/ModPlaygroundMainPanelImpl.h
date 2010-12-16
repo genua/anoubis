@@ -195,14 +195,13 @@ class ModPlaygroundMainPanelImpl : public ModPlaygroundMainPanelBase
 
 	protected:
 		/**
-		 * Refresh the list of playgrounds in order to remove the
-		 * dead entry after a playground quit without changing
-		 * any files.
+		 * Refresh the list of playgrounds if significant playground
+		 * information changed.
 		 *
 		 * @param event The event.
 		 * @return None.
 		 */
-		void onAppEnd(wxCommandEvent &event);
+		void onPgChange(wxCommandEvent &event);
 };
 
 
