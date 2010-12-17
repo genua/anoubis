@@ -41,7 +41,7 @@ CFLAGS += $(SSL_CFLAGS)
 
 LIBS += $(SSL_LIBS)
 
-sfssig_LDFLAGS = $(AM_LDFLAGS) $(SSL_LDFLAGS)
+sfssig_LDFLAGS = $(AM_LDFLAGS) $(SSL_LDFLAGS) $(STATIC)
 
 sources = \
 	main.c \

@@ -54,7 +54,7 @@ WRKOBJDIR =
 USE_X11 =		YES
 
 CONFIGURE_STYLE =	gnu
-CONFIGURE_ARGS +=	--enable-static-anoubisd
+CONFIGURE_ARGS +=	--enable-static --disable-pie
 
 REGRESS_DEPENDS =	${BUILD_DEPENDS}
 

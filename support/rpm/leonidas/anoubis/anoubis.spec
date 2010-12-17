@@ -85,7 +85,6 @@ Graphical user interface of the Anoubis Security Suite.
 %{?suse_update_config}
 export CFLAGS="$RPM_OPT_FLAGS"
 ./configure --prefix=%{_prefix} \
- --enable-static-%{daemon} \
  --infodir=%{_infodir} \
  --mandir=%{_mandir} \
  --sbindir=%{sbindir} \

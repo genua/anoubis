@@ -234,32 +234,23 @@ AC_ARG_ENABLE(gcov,
 	[gcovenabled=no])
 AM_CONDITIONAL(GCOV_ENABLED, [test "x$gcovenabled" = "xyes"])
 
-dnl on some systems like openbsd, anoubisd must be linked statically
-AC_ARG_ENABLE(static-anoubisd,
-	AC_HELP_STRING([--enable-static-anoubisd], [link anoubisd statically]),
+dnl on some systems like openbsd, anoubis-tools must be linked statically
+AC_ARG_ENABLE(static,
+	AC_HELP_STRING([--enable-static], [link anoubis-tools statically]),
 	[case "${enableval}" in
-		yes) linkanoubisdstatic=yes ;;
-		no)  linkanoubisdstatic=no ;;
+		yes) linkstatic=yes ;;
+		no)  linkstatic=no ;;
 		*)
 		    AC_MSG_ERROR(bad value ${enableval} for
-				 --enable-static-anoubisd) ;;
+				 --enable-static) ;;
 	esac],
-	[linkanoubisdstatic=no])
-AM_CONDITIONAL(STATIC_LINKING, [test "x$linkanoubisdstatic" = "xyes"])
+	[linkstatic=no])
+AM_CONDITIONAL(STATIC_LINKING, [test "x$linkstatic" = "xyes"])
 
-dnl on some systems like openbsd, anoubisctl must be linked statically
-AC_ARG_ENABLE(static-anoubisctl,
-	AC_HELP_STRING([--enable-static-anoubisctl], \
-	    [link anoubisctl statically]),
-	[case "${enableval}" in
-		yes) linkanoubisctlstatic=yes ;;
-		no)  linkanoubisctlstatic=no ;;
-		*)
-		    AC_MSG_ERROR(bad value ${enableval} for
-				 --enable-static-anoubisctl) ;;
-	esac],
-	[linkanoubisctlstatic=no])
-AM_CONDITIONAL(STATIC_LINKING, [test "x$linkanoubisctlstatic" = "xyes"])
+AC_ARG_ENABLE(pie,
+	AC_HELP_STRING([--disable-pie], [disable position independent executables]),
+	[ use_pie=$enableval ],
+	[ use_pie=yes ])
 
 dnl provide configure option for conditional "xanoubis"
 dnl the implicit default is to enable "xanoubis"
@@ -410,13 +401,24 @@ shared_AM_LDFLAGS="-shared $AM_LDFLAGS"
 dnl check if compiler can create position independent executables
 dnl this must be the last change of AM_*FLAGS
 dnl
-AX_CHECK_COMPILER_FLAGS(-fPIE,
-[
-	AM_CFLAGS="-fPIE $AM_CFLAGS"
-	AM_CXXFLAGS="-fPIE $AM_CXXFLAGS"
-	AM_LDFLAGS="-pie $AM_LDFLAGS"
-	use_pie=yes
-])
+if [ test "x$use_pie" = "xyes" ]; then
+	AX_CHECK_COMPILER_FLAGS(-fPIE,
+	[
+		AM_CFLAGS="-fPIE $AM_CFLAGS"
+		AM_CXXFLAGS="-fPIE $AM_CXXFLAGS"
+		AM_LDFLAGS="-pie $AM_LDFLAGS"
+	])
+fi
+
+dnl check if compiler can create static position independent executables
+if [ test "x$use_pie" = "xyes" -a "x$linkstatic" = "xyes" ]; then
+	AX_CHECK_COMPILER_FLAGS(-pie -static, [],
+	[
+		AC_MSG_ERROR([-pie and -static cannot be combined.
+		    Either disable static linking or disable pie-code
+		    (--disable-pie).])
+	])
+fi
 
 dnl If we use -fPIE, we need to link our tests with a PIC version of libcheck
 dnl (unless we are on i386).
