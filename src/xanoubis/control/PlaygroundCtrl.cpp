@@ -419,8 +419,6 @@ PlaygroundCtrl::OnPlaygroundUnlinkDone(TaskEvent &event)
 
 	event.Skip(false); /* "My" task -> stop propagating */
 
-	/* Progress for the finished task. */
-	clearPlaygroundInfo();
 	if (task->hasErrorList()) {
 		/*
 		 * error processing (commit window used)
@@ -470,7 +468,11 @@ PlaygroundCtrl::OnPlaygroundUnlinkDone(TaskEvent &event)
 			sendEvent(anEVT_PLAYGROUND_ERROR);
 		}
 	}
+
+	/* Progress for the finished task. */
+	clearPlaygroundInfo();
 	removeTask(task);
+
 	if (taskListEmpty()) {
 		updatePlaygroundInfo();
 		updatePlaygroundFiles(task->getPgId(), false);
