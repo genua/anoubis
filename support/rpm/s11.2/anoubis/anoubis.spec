@@ -15,6 +15,14 @@ URL:		http://www.genua.de
 Source0:	%{name}-%{version}.tar.gz
 Source1:	anoubisd.init
 Source2:	anoubisd.conf
+Source3:	anoubisd.udev
+Source4:	policy.admin.0
+Source5:	policy.admin.default
+Source6:	policy.profiles.admin
+Source7:	policy.profiles.high
+Source8:	policy.profiles.medium
+Source9:	policy.user.0
+Source10:	policy.user.default
 Vendor:		GeNUA mbH
 BuildRoot:	%(mktemp -d %{_tmppath}/%{name}-%{version}-build.XXXX)
 
