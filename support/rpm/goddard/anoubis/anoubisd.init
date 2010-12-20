@@ -1,0 +1,141 @@
+#!/bin/bash
+#
+#	/etc/rc.d/init.d/anoubisd
+#
+# Starts the anoubis daemon
+#
+# chkconfig: 345 14 91
+# description: Listen and dispatch anoubis events from the kernel
+# processname: anoubisd
+
+### BEGIN INIT INFO
+# Provides: anoubisd
+# Required-Start: $syslog $local_fs
+# Required-Stop: $local_fs
+# Default-Start:  2 3 4 5
+# Default-Stop: 0 1 6
+# X-Start-Before: $remote_fs
+# X-Stop-After: $remote_fs
+# Short-Description: start and stop anoubisd
+# Description: Listen and dispatch anoubis events from the kernel
+### END INIT INFO
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+# Check that we're a priviledged user
+[ `id -u` = 0 ] || exit 1
+
+# Check if anoubisd is executable
+test -x /sbin/anoubisd || exit 1
+
+RETVAL=0
+CTRL=/sbin/anoubisctl
+DAEMON=/sbin/anoubisd
+
+do_test()
+{
+	if [ -x /usr/share/anoubisd/upgrade_sfs.pl ]; then
+		/usr/share/anoubisd/upgrade_sfs.pl
+	fi
+
+	msg=$($DAEMON -n 2>&1);
+	RC=$?
+	if [ "$RC" != "0" ]; then
+		echo $msg
+		return $RC
+	else
+		return 0;
+	fi
+}
+
+start() {
+	if [ ! -d /var/run/anoubisd ]; then
+	    mkdir /var/run/anoubisd
+	    chown root:_anoubisd /var/run/anoubisd
+	    chmod 0770 /var/run/anoubisd
+	fi
+
+	# XXX: MG: We need a better way to load our modules so early
+	# (Bug 262)
+	modprobe alf || true
+	modprobe sfs || true
+	modprobe ipc || true
+	# make sure dazukofs is loaded before anoubisd
+	modprobe -q dazukofs || true
+
+	echo -n $"Starting anoubis daemon: "
+	daemon /sbin/anoubisd $@
+	RETVAL=$?
+	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/anoubisd
+	echo
+
+	return $RETVAL
+}
+
+stop() {
+	echo -n $"Stopping anoubis daemon: "
+	$CTRL stop
+	RETVAL=$?
+	[ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/anoubisd
+	echo
+	return $RETVAL
+}
+
+
+restart() {
+	echo -n $"Restarting anoubis daemon: "
+	$CTRL restart
+	RETVAL=$?
+	echo
+	return $RETVAL
+}
+
+reload() {
+	echo -n $"Reloading anoubis daemon: "
+	$CTRL reload
+	RETVAL=$?
+	echo
+	return $RETVAL
+}
+
+case "$1" in
+start)
+	if ! do_test ; then
+		exit 3
+	fi
+
+	start $2
+	;;
+stop)
+	stop
+	;;
+configtest)
+	if ! do_test ; then
+		echo "This anoubisd is not compatible with the running kernel."
+		exit 3
+	fi
+	exit 0
+	;;
+reload|force-reload)
+	reload
+	;;
+restart)
+	restart $2
+	;;
+condrestart)
+	if [ -f /var/lock/subsys/anoubisd ]; then
+	    restart $2
+	fi
+	;;
+status)
+	status anoubisd
+	RETVAL=$?
+	;;
+*)
+	echo $"Usage: $0"\
+	"{start|stop|status|restart|condrestart|reload|force-reload}"
+	RETVAL=2
+esac
+
+exit $RETVAL

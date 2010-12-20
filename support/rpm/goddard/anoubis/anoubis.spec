@@ -22,6 +22,7 @@ Source6:	policy.profiles.high
 Source7:	policy.profiles.medium
 Source8:	policy.user.0
 Source9:	policy.user.default
+# Source10:	xanoubis.png
 Vendor:		GeNUA mbH
 BuildRoot:	%(mktemp -d %{_tmppath}/%{name}-%{version}-build.XXXX)
 
