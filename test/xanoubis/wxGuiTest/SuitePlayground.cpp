@@ -88,6 +88,7 @@ SuitePlayground::startPlayground(void)
 	wxWindow *mainFrame;
 	wxWindow *toolBar;
 	wxComboBox *appComboBox;
+	wxCheckBox *xwrapperCheckbox;
 	wxWindow *startButton;
 
 	mainFrame = wxWindow::FindWindowById(ID_MAINFRAME);
@@ -97,6 +98,14 @@ SuitePlayground::startPlayground(void)
 	toolBar = mainFrame->FindWindow(ID_TOOLBAR);
 	CPPUNIT_ASSERT_MESSAGE("Can't find toolbar!", toolBar != NULL);
 	wxTst::EventSimulationHelper::ToggleToolOnlyEvent(15003, true, toolBar);
+	wxTst::WxGuiTestHelper::FlushEventQueue();
+
+	/* Disable xwrapper */
+	xwrapperCheckbox = dynamic_cast<wxCheckBox *>(
+	    wxWindow::FindWindowById(PG_XWRAPPER_CHECKBOX));
+	CPPUNIT_ASSERT_MESSAGE("Can't find xwrapper-checkbox!",
+	    xwrapperCheckbox != NULL);
+	wxTst::EventSimulationHelper::SetCheckboxState(xwrapperCheckbox, false);
 	wxTst::WxGuiTestHelper::FlushEventQueue();
 
 	/* Enter test app. */

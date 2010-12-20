@@ -79,7 +79,11 @@ AnoubisGuiApp::AnoubisGuiApp(void)
 {
 	mainFrame = NULL;
 	onInitProfile_ = true;
+	#ifndef USE_WXGUITESTING
 	trayVisible_ = true;
+	#else
+	trayVisible_ = false;
+	#endif
 	hide_ = false;
 	oldhandle_ = -1;
 

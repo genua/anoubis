@@ -59,12 +59,13 @@ class AnListCtrl;
 ///////////////////////////////////////////////////////////////////////////
 
 #define PG_APP_COMBOBOX 8500
-#define PG_APP_STARTBUTTON 8501
-#define PG_VIEW_LIST 8502
-#define PG_VIEW_REFRESHBUTTON 8503
-#define PG_VIEW_COMMITBUTTON 8504
-#define PG_COMMIT_LIST 8505
-#define PG_FILE_COMMITBUTTON 8506
+#define PG_XWRAPPER_CHECKBOX 8501
+#define PG_APP_STARTBUTTON 8502
+#define PG_VIEW_LIST 8503
+#define PG_VIEW_REFRESHBUTTON 8504
+#define PG_VIEW_COMMITBUTTON 8505
+#define PG_COMMIT_LIST 8506
+#define PG_FILE_COMMITBUTTON 8507
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Class ModPlaygroundMainPanelBase
