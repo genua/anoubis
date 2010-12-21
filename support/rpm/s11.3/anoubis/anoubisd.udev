@@ -1,0 +1,2 @@
+KERNEL=="anoubis" NAME="anoubis" MODE="0644"
+KERNEL=="eventdev" NAME="eventdev" OPTIONS="last_rule"

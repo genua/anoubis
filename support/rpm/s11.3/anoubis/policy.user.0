@@ -1,0 +1,37 @@
+apnversion 1.1
+alf {
+	# AntiVirus software
+	@avupdate@ {
+		default allow
+	}
+
+	any {
+		default allow
+	}
+}
+context {
+	# AntiVirus software
+	"/usr/lib/AntiVir/savapi" nosfs {
+		context new any
+	}
+
+	any {
+		context new any
+	}
+}
+sfs {
+}
+
+sandbox {
+
+	# Only allow anoubis to edit .xanoubis
+	{"/usr/bin/xanoubis", "/sbin/anoubisctl", "/sbin/sfssig", "/usr/bin/playground"} {
+		allow  path "@home@/.xanoubis"  rwx
+		allow  any rwx
+	}
+
+	any {
+		deny path "@home@/.xanoubis"  rwx
+		allow  any rwx
+	}
+}
