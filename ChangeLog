@@ -1,4 +1,20 @@
 
+2011-01-05 - Changes between 0.9.4 and 0.9.5
+
+New features:
+
+o This release includes packages for OpenSuSE 11.3 and Fedora 13.
+o X11 applications running in a playground can now be started in a
+  nested and isolated X11 session.
+o It is now possible to force removal of dead playgrounds even if some files
+  are no longer present.
+
+Bugfixes:
+
+o Creating permanent rules from sandbox escalations was broken. This is
+  fixed now.
+o Fix a deadlock with dazukofs.
+o Reset SIGCHLD handler for playground processes.
 
 2010-10-21 - Changes between 0.9.3 and 0.9.4
 
